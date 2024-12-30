@@ -162,6 +162,7 @@ class Program
                 if(!string.IsNullOrEmpty(url))
                 {
                     await command.RespondAsync($"URL déjà définie sur {url}. Supprimez l'url avant d'ajoutez une nouvelle url.");
+                    break;
                 }
                 var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
                 if (!string.IsNullOrEmpty(newUrl))
@@ -173,6 +174,7 @@ class Program
                     StartTracking(true);
                 }
                 break;
+
             case "delete-url":
                 if(string.IsNullOrEmpty(url))
                 {
