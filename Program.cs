@@ -294,18 +294,19 @@ class Program
                 string key = $"{sphere} - {finder} - {receiver} - {item} - {location} - {game}";
                 string value;
 
-                if (receiverAliases.ContainsKey(receiver))
-                {
-                    var userId = receiverAliases.FirstOrDefault(x => x.Key == receiver).Value;
-                    receiver = $"<@{userId}>";
-                }
-
                 if (finder.Equals(receiver))
                 {
                     value = $"{finder} found their {item} ({location})";
                 }
                 else
                 {
+                    var reveiverWithoutAlias = receiver;
+                    if (receiverAliases.ContainsKey(receiver))
+                    {
+                        var userId = receiverAliases.FirstOrDefault(x => x.Key == receiver).Value;
+                        receiver = $"<@{userId}> ({reveiverWithoutAlias})";
+                    }
+
                     value = $"{finder} sent {item} to {receiver} ({location})";
                 }
 
