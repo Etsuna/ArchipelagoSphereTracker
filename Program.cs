@@ -83,7 +83,11 @@ class Program
         new SlashCommandBuilder()
             .WithName("add-url")
             .WithDescription("Add Url")
-            .AddOption("url", ApplicationCommandOptionType.String, "The URL to track", isRequired: true)
+            .AddOption("url", ApplicationCommandOptionType.String, "The URL to track", isRequired: true),
+
+        new SlashCommandBuilder()
+            .WithName("delete-url")
+            .WithDescription("Delete Url")
     };
 
         foreach (var guild in client.Guilds)
@@ -155,7 +159,7 @@ class Program
                 break;
 
             case "add-url":
-                if(url != null)
+                if(!string.IsNullOrEmpty(url))
                 {
                     await command.RespondAsync($"URL déjà définie sur {url}. Supprimez l'url avant d'ajoutez une nouvelle url.");
                 }
@@ -169,6 +173,19 @@ class Program
                     StartTracking(true);
                 }
                 break;
+            case "delete-url":
+                if(string.IsNullOrEmpty(url))
+                {
+                    await command.RespondAsync($"Aucune URL est définie.");
+                    break;
+                }
+                url = string.Empty;
+                if(File.Exists(urlChannelFile))
+                {
+                    File.Delete(urlChannelFile);
+                }
+                break;
+                
 
             default:
                 await command.RespondAsync("Commande inconnue.");
