@@ -186,6 +186,7 @@ class Program
                 {
                     File.Delete(urlChannelFile);
                 }
+                await command.RespondAsync($"URL Supprimée.");
                 break;
                 
 
