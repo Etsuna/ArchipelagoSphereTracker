@@ -6,6 +6,8 @@ using Newtonsoft.Json;
 using DotNetEnv;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Net;
+using System.Text.Encodings.Web;
 
 class Program
 {
@@ -259,7 +261,7 @@ class Program
                     oldData = newData;
                     SaveDisplayedItems(displayedItems);
 
-                    await Task.Delay(10000, token);
+                    await Task.Delay(60000, token);
                 }
             }
             catch (TaskCanceledException)
@@ -287,9 +289,9 @@ class Program
                 var sphere = cells[0].InnerText.Trim();
                 var finder = cells[1].InnerText.Trim();
                 var receiver = cells[2].InnerText.Trim();
-                var item = cells[3].InnerText.Trim();
-                var location = cells[4].InnerText.Trim();
-                var game = cells[5].InnerText.Trim();
+                var item = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
+                var location = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
+                var game = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
 
                 string key = $"{sphere} - {finder} - {receiver} - {item} - {location} - {game}";
                 string value;
