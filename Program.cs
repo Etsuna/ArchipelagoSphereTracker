@@ -284,7 +284,7 @@ class Program
         {
             var cells = row.SelectNodes("td");
 
-            if (cells != null && cells.Count == 6)
+            if (cells?.Count == 6)
             {
                 var sphere = cells[0].InnerText.Trim();
                 var finder = cells[1].InnerText.Trim();
@@ -294,23 +294,12 @@ class Program
                 var game = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
 
                 string key = $"{sphere} - {finder} - {receiver} - {item} - {location} - {game}";
-                string value;
 
-                if (finder.Equals(receiver))
-                {
-                    value = $"{finder} found their {item} ({location})";
-                }
-                else
-                {
-                    var reveiverWithoutAlias = receiver;
-                    if (receiverAliases.ContainsKey(receiver))
-                    {
-                        var userId = receiverAliases[receiver];
-                        receiver = $"<@{userId}>" + $" ({reveiverWithoutAlias})";
-                    }
-
-                    value = $"{finder} sent {item} to {receiver} ({location})";
-                }
+                string value = finder.Equals(receiver)
+                    ? $"{finder} found their {item} ({location})"
+                    : receiverAliases.TryGetValue(receiver, out var userId)
+                        ? $"{finder} sent {item} to <@{userId}> {receiver} ({location})"
+                        : $"{finder} sent {item} to {receiver} ({location})";
 
                 data[key] = value;
             }
