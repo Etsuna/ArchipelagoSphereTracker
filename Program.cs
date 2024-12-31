@@ -305,8 +305,8 @@ class Program
                     var reveiverWithoutAlias = receiver;
                     if (receiverAliases.ContainsKey(receiver))
                     {
-                        var userId = receiverAliases.FirstOrDefault(x => x.Key == receiver).Value;
-                        receiver = $"<@{userId}> ({reveiverWithoutAlias})";
+                        var userId = receiverAliases[receiver];
+                        receiver = $"<@{userId}>" + $" ({reveiverWithoutAlias})";
                     }
 
                     value = $"{finder} sent {item} to {receiver} ({location})";
