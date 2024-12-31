@@ -178,22 +178,25 @@ class Program
                 break;
 
             case "delete-url":
-                if(string.IsNullOrEmpty(url))
+                if (string.IsNullOrEmpty(url))
                 {
                     await command.RespondAsync($"Aucune URL est définie.");
                     break;
                 }
-                url = string.Empty;
-                if(File.Exists(urlChannelFile))
+                                
+                try
                 {
-                    File.Delete(urlChannelFile);
+                    if (File.Exists(urlChannelFile))
+                    {
+                        File.Delete(urlChannelFile);
+                    }
+                    url = string.Empty;
+                    await command.RespondAsync($"URL Supprimée.");
                 }
-                await command.RespondAsync($"URL Supprimée.");
-                break;
-                
-
-            default:
-                await command.RespondAsync("Commande inconnue.");
+                catch (Exception ex)
+                {
+                    await command.RespondAsync($"Erreur lors de la suppression du fichier : {ex.Message}");
+                }
                 break;
         }
     }
