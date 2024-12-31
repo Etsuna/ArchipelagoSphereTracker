@@ -103,6 +103,7 @@ class Program
 
     static async Task HandleSlashCommandAsync(SocketSlashCommand command)
     {
+        var guildUser = command.User as IGuildUser;
         switch (command.CommandName)
         {
             case "get-aliases":
@@ -126,12 +127,24 @@ class Program
                 var aliasToDelete = command.Data.Options.FirstOrDefault()?.Value as string;
                 if (aliasToDelete != null)
                 {
-                    // Vérifier si l'alias existe et le supprimer
-                    if (receiverAliases.ContainsKey(aliasToDelete))
+                    if (receiverAliases.TryGetValue(aliasToDelete, out var value))
                     {
-                        receiverAliases.Remove(aliasToDelete);
-                        SaveReceiverAliases();
-                        await command.RespondAsync($"Alias '{aliasToDelete}' supprimé.");
+                        if (value == command.User.Id.ToString())
+                        {
+                            receiverAliases.Remove(aliasToDelete);
+                            SaveReceiverAliases();
+                            await command.RespondAsync($"Alias '{aliasToDelete}' supprimé.");
+                        }
+                        else if (guildUser != null && guildUser.GuildPermissions.Administrator)
+                        {
+                            receiverAliases.Remove(aliasToDelete);
+                            SaveReceiverAliases();
+                            await command.RespondAsync($"ADMIN : Alias '{aliasToDelete}' supprimé.");
+                        }
+                        else
+                        {
+                            await command.RespondAsync($"Vous n'êtes pas le détenteur de cet alias : '{aliasToDelete}'. Suppression non effectuée..");
+                        }
                     }
                     else
                     {
@@ -146,7 +159,6 @@ class Program
                 {
                     var receiverId = command.User.Id.ToString();
 
-                    // Vérifier si l'alias existe déjà
                     if (!receiverAliases.ContainsKey(aliasToAdd))
                     {
                         receiverAliases[aliasToAdd] = receiverId;
@@ -161,7 +173,13 @@ class Program
                 break;
 
             case "add-url":
-                if(!string.IsNullOrEmpty(url))
+                if (guildUser != null && !guildUser.GuildPermissions.Administrator)
+                {
+                    await command.RespondAsync("Seuls les administrateurs sont autorisés à ajouter une URL.");
+                    break;
+                }
+
+                if (!string.IsNullOrEmpty(url))
                 {
                     await command.RespondAsync($"URL déjà définie sur {url}. Supprimez l'url avant d'ajoutez une nouvelle url.");
                     break;
@@ -178,25 +196,46 @@ class Program
                 break;
 
             case "delete-url":
-                if (string.IsNullOrEmpty(url))
+                if (guildUser != null && !guildUser.GuildPermissions.Administrator)
                 {
-                    await command.RespondAsync($"Aucune URL est définie.");
+                    await command.RespondAsync($"Seuls les administrateurs sont autorisés à supprimer une URL.");
                     break;
                 }
-                                
+
                 try
                 {
                     if (File.Exists(urlChannelFile))
                     {
                         File.Delete(urlChannelFile);
                     }
-                    url = string.Empty;
-                    await command.RespondAsync($"URL Supprimée.");
+
                 }
                 catch (Exception ex)
                 {
                     await command.RespondAsync($"Erreur lors de la suppression du fichier : {ex.Message}");
                 }
+
+                try
+                {
+                    if (File.Exists(displayedItemsFile))
+                    {
+                        File.Delete(displayedItemsFile);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    await command.RespondAsync($"Erreur lors de la suppression du fichier : {ex.Message}");
+                }
+
+                if (string.IsNullOrEmpty(url))
+                {
+                    await command.RespondAsync($"Aucune URL est définie.");
+                    break;
+                }
+
+                url = string.Empty;
+                await command.RespondAsync($"URL Supprimée.");
                 break;
         }
     }
@@ -392,7 +431,6 @@ class Program
 
     static void SaveReceiverAliases()
     {
-        // Sauvegarder le dictionnaire en JSON
         var json = JsonConvert.SerializeObject(receiverAliases, Formatting.Indented);
         File.WriteAllText(aliasFile, json);
     }
