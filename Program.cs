@@ -466,6 +466,7 @@ class Program
                             foreach (var subElement in subElementList)
                             {
                                 subElement.Values.Clear();
+                                subElement.Values.Add("Aucun élément");
                             }
                         }
                         SaveRecapList();
@@ -490,7 +491,10 @@ class Program
                 }
                 break;
         }
-        await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+        if(!command.CommandName.Contains("recap"))
+        {
+            await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+        }
     }
 
     static async Task MessageReceivedAsync(SocketMessage arg)
