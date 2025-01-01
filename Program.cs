@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using DotNetEnv;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
+using System.Linq;
 
 class Program
 {
@@ -145,6 +146,7 @@ class Program
         switch (command.CommandName)
         {
             case "get-aliases":
+                await command.DeferAsync();
                 LoadReceiverAliases();
                 if (receiverAliases.Count == 0)
                 {
@@ -162,6 +164,7 @@ class Program
                 break;
 
             case "delete-alias":
+                await command.DeferAsync();
                 LoadReceiverAliases();
                 if (receiverAliases.Count == 0)
                 {
@@ -229,6 +232,7 @@ class Program
                 break;
 
             case "add-alias":
+                await command.DeferAsync();
                 LoadReceiverAliases();
                 var aliasToAdd = command.Data.Options.FirstOrDefault()?.Value as string;
                 if (aliasToAdd != null)
@@ -266,6 +270,7 @@ class Program
                 break;
 
             case "add-url":
+                await command.DeferAsync();
                 if (guildUser != null && !guildUser.GuildPermissions.Administrator)
                 {
                     message = "Seuls les administrateurs sont autorisés à ajouter une URL.";
@@ -296,6 +301,7 @@ class Program
                 break;
 
             case "delete-url":
+                await command.DeferAsync();
                 if (guildUser != null && !guildUser.GuildPermissions.Administrator)
                 {
                     message = "Seuls les administrateurs sont autorisés à supprimer une URL.";
@@ -373,6 +379,7 @@ class Program
                 break;
 
             case "recap":
+                await command.DeferAsync();
                 LoadReceiverAliases();
                 receiverId = command.User.Id.ToString();
 
@@ -396,7 +403,12 @@ class Program
                                 ? string.Join(", ", subElement.Values)
                                 : "Aucun élément";
 
-                            message += $"**{subElement.SubKey}** : {values} \n";
+                            int maxLength = 1600;
+                            int subKeyCount = subElements.Count;
+                            int maxchar = maxLength / subKeyCount;
+
+                            int startIndex = Math.Max(0, values.Length - maxchar);
+                            message += $"**{subElement.SubKey}** : {values.ToString().Remove(0, startIndex)} \n";
                         }
                     }
                     else
@@ -407,6 +419,7 @@ class Program
                 break;
 
             case "recap-and-clean":
+                await command.DeferAsync();
                 LoadReceiverAliases();
                 receiverId = command.User.Id.ToString();
 
@@ -426,9 +439,14 @@ class Program
                                 ? string.Join(", ", subElement.Values)
                                 : "Aucun élément";
 
-                            message += $"**{subElement.SubKey}** : {values} \n";
-                        }
+                            int maxLength = 1600;
+                            int subKeyCount = subElements.Count;
+                            int maxchar = maxLength / subKeyCount;
 
+                            int startIndex = Math.Max(0, values.Length - maxchar);
+                            message += $"**{subElement.SubKey}** : {values.ToString().Remove(0, startIndex)} \n";
+                        }
+                                            
                         foreach (var subElementList in recapList.Values)
                         {
                             foreach (var subElement in subElementList)
@@ -446,8 +464,7 @@ class Program
                 }
                 break;
         }
-
-        await command.RespondAsync(message, options: new RequestOptions { Timeout = 10000 });
+        await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
     }
 
 
@@ -612,6 +629,7 @@ class Program
                         if (itemToAdd != null)
                         {
                             itemToAdd.Values.Add(item);
+                            itemToAdd.Values.Remove("Aucun élément");
                         }
                         else
                         {
@@ -620,6 +638,11 @@ class Program
                                 SubKey = receiver,
                                 Values = new List<string> { item }
                             });
+
+                            if (itemToAdd != null)
+                            {
+                                itemToAdd.Values.Remove("Aucun élément");
+                            };
                         }
 
                         SaveRecapList(recapList);
