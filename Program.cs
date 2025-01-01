@@ -5,25 +5,32 @@ using HtmlAgilityPack;
 using Newtonsoft.Json;
 using DotNetEnv;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Net;
-using System.Text.Encodings.Web;
 
 class Program
 {
     private static readonly string displayedItemsFile = "displayedItems.json";
     private static readonly string aliasFile = "aliases.json";
     private static readonly string urlChannelFile = "url_channel.json";
+    private static readonly string recapListFile = "recap.json";
     private static readonly string discordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
 
 
     private static string url = string.Empty;
     private static ulong channelId = 0;
     private static Dictionary<string, string> receiverAliases = new Dictionary<string, string>();
+    private static Dictionary<string, List<SubElement>> recapList = new Dictionary<string, List<SubElement>>();
+    private static IDictionary<string, string> aliasChoices = new Dictionary<string, string>();
     private static CancellationTokenSource cts;
     private static DiscordSocketClient client;
     private static CommandService commandService;
     private static IServiceProvider services;
+
+    public class SubElement
+    {
+        public string SubKey { get; set; }
+        public List<string> Values { get; set; }
+    }
 
     static async Task Main(string[] args)
     {
@@ -31,8 +38,10 @@ class Program
 
         var config = new DiscordSocketConfig
         {
-            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
+            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
+            UseInteractionSnowflakeDate = false
         };
+
 
         client = new DiscordSocketClient(config);
         commandService = new CommandService();
@@ -45,6 +54,8 @@ class Program
 
         LoadReceiverAliases();
         LoadUrlAndChannel();
+        LoadRecapList();
+        AddMissingRecapUser();
 
         await client.LoginAsync(TokenType.Bot, discordToken);
         await client.StartAsync();
@@ -61,7 +72,7 @@ class Program
     {
         await RegisterCommandsAsync();
         Console.WriteLine("Bot is connected!");
-        StartTracking();
+        StartTracking(isLauchedProcess: true);
     }
 
     static async Task RegisterCommandsAsync()
@@ -75,12 +86,12 @@ class Program
         new SlashCommandBuilder()
             .WithName("delete-alias")
             .WithDescription("Delete Alias")
-            .AddOption("alias", ApplicationCommandOptionType.String, "The alias to delete", isRequired: true),
+            .AddOption(BuildAliasOption(aliasChoices)),
 
-        new SlashCommandBuilder()
+         new SlashCommandBuilder()
             .WithName("add-alias")
             .WithDescription("Add Alias")
-            .AddOption("alias", ApplicationCommandOptionType.String, "The alias to add", isRequired: true),
+            .AddOption(BuildAliasOption(aliasChoices)),
 
         new SlashCommandBuilder()
             .WithName("add-url")
@@ -89,7 +100,15 @@ class Program
 
         new SlashCommandBuilder()
             .WithName("delete-url")
-            .WithDescription("Delete Url")
+            .WithDescription("Delete Url, clean Alias and Recap"),
+
+        new SlashCommandBuilder()
+        .WithName("recap")
+        .WithDescription("Recap List of items"),
+
+        new SlashCommandBuilder()
+        .WithName("recap-and-clean")
+        .WithDescription("Recap and clean List of items")
     };
 
         foreach (var guild in client.Guilds)
@@ -101,73 +120,147 @@ class Program
         client.SlashCommandExecuted += HandleSlashCommandAsync;
     }
 
+    static SlashCommandOptionBuilder BuildAliasOption(IDictionary<string, string> aliasChoices)
+    {
+        var optionBuilder = new SlashCommandOptionBuilder()
+            .WithName("alias")
+            .WithDescription("Choose an alias to add")
+            .WithType(ApplicationCommandOptionType.String)
+            .WithRequired(true);
+
+        foreach (var alias in aliasChoices)
+        {
+            optionBuilder.AddChoice(alias.Key, alias.Value);
+        }
+
+        return optionBuilder;
+    }
+
     static async Task HandleSlashCommandAsync(SocketSlashCommand command)
     {
         var guildUser = command.User as IGuildUser;
+        var receiverId = "";
+        string message = "";
+
         switch (command.CommandName)
         {
             case "get-aliases":
+                LoadReceiverAliases();
                 if (receiverAliases.Count == 0)
                 {
-                    await command.RespondAsync("Aucun Alias est enregistré.");
-                    return;
+                    message = "Aucun Alias est enregistré.";
                 }
-
-                var tableMessage = "Voici le tableau des utilisateurs :\n";
-                foreach (var kvp in receiverAliases)
+                else
                 {
-                    var user = await client.GetUserAsync(ulong.Parse(kvp.Value));
-                    tableMessage += $"| {user.Username} | {kvp.Key} |\n";
+                    message = "Voici le tableau des utilisateurs :\n";
+                    foreach (var kvp in receiverAliases)
+                    {
+                        var user = await client.GetUserAsync(ulong.Parse(kvp.Value));
+                        message += $"| {user.Username} | {kvp.Key} |\n";
+                    }
                 }
-
-                await command.RespondAsync(tableMessage);
                 break;
 
             case "delete-alias":
-                var aliasToDelete = command.Data.Options.FirstOrDefault()?.Value as string;
-                if (aliasToDelete != null)
+                LoadReceiverAliases();
+                if (receiverAliases.Count == 0)
                 {
-                    if (receiverAliases.TryGetValue(aliasToDelete, out var value))
+                    message = "Aucun Alias est enregistré.";
+                }
+                else
+                {
+                    var aliasToDelete = command.Data.Options.FirstOrDefault()?.Value as string;
+                    if (aliasToDelete != null)
                     {
-                        if (value == command.User.Id.ToString())
+                        if (receiverAliases.TryGetValue(aliasToDelete, out var value))
                         {
-                            receiverAliases.Remove(aliasToDelete);
-                            SaveReceiverAliases();
-                            await command.RespondAsync($"Alias '{aliasToDelete}' supprimé.");
-                        }
-                        else if (guildUser != null && guildUser.GuildPermissions.Administrator)
-                        {
-                            receiverAliases.Remove(aliasToDelete);
-                            SaveReceiverAliases();
-                            await command.RespondAsync($"ADMIN : Alias '{aliasToDelete}' supprimé.");
+                            if (value == command.User.Id.ToString())
+                            {
+                                receiverAliases.Remove(aliasToDelete);
+                                SaveReceiverAliases();
+                                message = $"Alias '{aliasToDelete}' supprimé.";
+
+                                if (recapList.ContainsKey(value))
+                                {
+                                    LoadRecapList();
+                                    var subElements = recapList[value];
+                                    subElements.RemoveAll(e => e.SubKey == aliasToDelete);
+
+                                    if (subElements.Count == 0)
+                                    {
+                                        recapList.Remove(value);
+                                    }
+
+                                    SaveRecapList(recapList);
+                                }
+
+                            }
+                            else if (guildUser != null && guildUser.GuildPermissions.Administrator)
+                            {
+                                receiverAliases.Remove(aliasToDelete);
+                                SaveReceiverAliases();
+                                message = $"ADMIN : Alias '{aliasToDelete}' supprimé.";
+
+                                if (recapList.ContainsKey(value))
+                                {
+                                    LoadRecapList();
+                                    var subElements = recapList[value];
+                                    subElements.RemoveAll(e => e.SubKey == aliasToDelete);
+
+                                    if (subElements.Count == 0)
+                                    {
+                                        recapList.Remove(value);
+                                    }
+
+                                    SaveRecapList(recapList);
+                                }
+                            }
+                            else
+                            {
+                                message = $"Vous n'êtes pas le détenteur de cet alias : '{aliasToDelete}'. Suppression non effectuée..";
+                            }
                         }
                         else
                         {
-                            await command.RespondAsync($"Vous n'êtes pas le détenteur de cet alias : '{aliasToDelete}'. Suppression non effectuée..");
+                            message = $"Aucun alias trouvé pour '{aliasToDelete}'.";
                         }
-                    }
-                    else
-                    {
-                        await command.RespondAsync($"Aucun alias trouvé pour '{aliasToDelete}'.");
                     }
                 }
                 break;
 
             case "add-alias":
+                LoadReceiverAliases();
                 var aliasToAdd = command.Data.Options.FirstOrDefault()?.Value as string;
                 if (aliasToAdd != null)
                 {
-                    var receiverId = command.User.Id.ToString();
+                    receiverId = command.User.Id.ToString();
 
                     if (!receiverAliases.ContainsKey(aliasToAdd))
                     {
                         receiverAliases[aliasToAdd] = receiverId;
                         SaveReceiverAliases();
-                        await command.RespondAsync($"Alias ajouté : {aliasToAdd} est maintenant associé à <@{receiverId}>.");
+                        message = $"Alias ajouté : {aliasToAdd} est maintenant associé à <@{receiverId}>.";
+
+                        LoadRecapList();
+                        if (!recapList.ContainsKey(receiverId))
+                        {
+                            recapList[receiverId] = new List<SubElement>();
+                        }
+
+                        var recapUser = recapList[receiverId].Find(e => e.SubKey == aliasToAdd);
+                        if (recapUser == null)
+                        {
+                            recapList[receiverId].Add(new SubElement
+                            {
+                                SubKey = aliasToAdd,
+                                Values = new List<string> { "Aucun élément" }
+                            });
+                        }
+                        SaveRecapList(recapList);
                     }
                     else
                     {
-                        await command.RespondAsync($"L'alias '{aliasToAdd}' est déjà utilisé par <@{receiverAliases[aliasToAdd]}>.");
+                        message = $"L'alias '{aliasToAdd}' est déjà utilisé par <@{receiverAliases[aliasToAdd]}>.";
                     }
                 }
                 break;
@@ -175,70 +268,188 @@ class Program
             case "add-url":
                 if (guildUser != null && !guildUser.GuildPermissions.Administrator)
                 {
-                    await command.RespondAsync("Seuls les administrateurs sont autorisés à ajouter une URL.");
-                    break;
+                    message = "Seuls les administrateurs sont autorisés à ajouter une URL.";
                 }
-
-                if (!string.IsNullOrEmpty(url))
+                else if (!string.IsNullOrEmpty(url))
                 {
-                    await command.RespondAsync($"URL déjà définie sur {url}. Supprimez l'url avant d'ajoutez une nouvelle url.");
-                    break;
+                    message = $"URL déjà définie sur {url}. Supprimez l'url avant d'ajouter une nouvelle url.";
                 }
-                var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
-                if (!string.IsNullOrEmpty(newUrl))
+                else
                 {
-                    url = newUrl;
-                    channelId = command.Channel.Id;
-                    SaveUrlAndChannel();
-                    await command.RespondAsync($"URL définie sur {url}. Messages configurés pour ce canal.");
-                    StartTracking(true);
+                    var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
+                    if (!string.IsNullOrEmpty(newUrl))
+                    {
+                        if (!newUrl.Contains("sphere_tracker"))
+                        {
+                            message = $"Le lien n'est pas bon, utilisez l'url sphere_tracker.";
+                        }
+                        else
+                        {
+                            url = newUrl;
+                            channelId = command.Channel.Id;
+                            SaveUrlAndChannel();
+                            message = $"URL définie sur {url}. Messages configurés pour ce canal.";
+                            StartTracking(true, true);
+                        }
+                    }
                 }
                 break;
 
             case "delete-url":
                 if (guildUser != null && !guildUser.GuildPermissions.Administrator)
                 {
-                    await command.RespondAsync($"Seuls les administrateurs sont autorisés à supprimer une URL.");
-                    break;
+                    message = "Seuls les administrateurs sont autorisés à supprimer une URL.";
                 }
-
-                try
+                else
                 {
-                    if (File.Exists(urlChannelFile))
+                    try
                     {
-                        File.Delete(urlChannelFile);
+                        if (File.Exists(urlChannelFile))
+                        {
+                            File.Delete(urlChannelFile);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        message = $"Erreur lors de la suppression du fichier urlChannelFile : {ex.Message}";
+                        Console.WriteLine(ex.Message);
                     }
 
-                }
-                catch (Exception ex)
-                {
-                    await command.RespondAsync($"Erreur lors de la suppression du fichier : {ex.Message}");
-                }
-
-                try
-                {
-                    if (File.Exists(displayedItemsFile))
+                    try
                     {
-                        File.Delete(displayedItemsFile);
+                        if (File.Exists(displayedItemsFile))
+                        {
+                            File.Delete(displayedItemsFile);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        message += $"\nErreur lors de la suppression du fichier displayedItemsFile : {ex.Message}";
+                        Console.WriteLine(ex.Message);
                     }
 
-                }
-                catch (Exception ex)
-                {
-                    await command.RespondAsync($"Erreur lors de la suppression du fichier : {ex.Message}");
-                }
+                    try
+                    {
+                        if (File.Exists(recapListFile))
+                        {
+                            File.Delete(recapListFile);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        message += $"\nErreur lors de la suppression du fichier recapListFile : {ex.Message}";
+                        Console.WriteLine(ex.Message);
+                    }
 
-                if (string.IsNullOrEmpty(url))
-                {
-                    await command.RespondAsync($"Aucune URL est définie.");
-                    break;
-                }
+                    try
+                    {
+                        if (File.Exists(aliasFile))
+                        {
+                            File.Delete(aliasFile);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        message += $"\nErreur lors de la suppression du fichier aliasFile : {ex.Message}";
+                        Console.WriteLine(message);
+                    }
 
-                url = string.Empty;
-                await command.RespondAsync($"URL Supprimée.");
+                    if (string.IsNullOrEmpty(url))
+                    {
+                        message = "Aucune URL définie.";
+                    }
+                    else
+                    {
+                        url = string.Empty;
+
+                        recapList?.Clear();
+                        receiverAliases?.Clear();
+
+                        message = "URL Supprimée.";
+                        aliasChoices.Clear();
+                        await RegisterCommandsAsync();
+                    }
+                }
+                break;
+
+            case "recap":
+                LoadReceiverAliases();
+                receiverId = command.User.Id.ToString();
+
+                if (!receiverAliases.ContainsValue(receiverId))
+                {
+                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                }
+                else
+                {
+                    LoadRecapList();
+                    if (recapList == null)
+                    {
+                        message = "Il existe aucune liste.";
+                    }
+                    else if (recapList.TryGetValue(receiverId, out var subElements))
+                    {
+                        message = $"Détails pour <@{receiverId}> :\n";
+                        foreach (var subElement in subElements)
+                        {
+                            string values = subElement.Values != null && subElement.Values.Any()
+                                ? string.Join(", ", subElement.Values)
+                                : "Aucun élément";
+
+                            message += $"**{subElement.SubKey}** : {values} \n";
+                        }
+                    }
+                    else
+                    {
+                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    }
+                }
+                break;
+
+            case "recap-and-clean":
+                LoadReceiverAliases();
+                receiverId = command.User.Id.ToString();
+
+                if (!receiverAliases.ContainsValue(receiverId))
+                {
+                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                }
+                else
+                {
+                    LoadRecapList();
+                    if (recapList.TryGetValue(receiverId, out var subElements))
+                    {
+                        message = $"Détails pour <@{receiverId}> :\n";
+                        foreach (var subElement in subElements)
+                        {
+                            string values = subElement.Values != null && subElement.Values.Any()
+                                ? string.Join(", ", subElement.Values)
+                                : "Aucun élément";
+
+                            message += $"**{subElement.SubKey}** : {values} \n";
+                        }
+
+                        foreach (var subElementList in recapList.Values)
+                        {
+                            foreach (var subElement in subElementList)
+                            {
+                                subElement.Values.Clear();
+                            }
+                        }
+                        SaveRecapList(recapList);
+                        LoadRecapList();
+                    }
+                    else
+                    {
+                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    }
+                }
                 break;
         }
+
+        await command.RespondAsync(message, options: new RequestOptions { Timeout = 10000 });
     }
+
 
     static async Task MessageReceivedAsync(SocketMessage arg)
     {
@@ -267,7 +478,7 @@ class Program
             .BuildServiceProvider();
     }
 
-    static void StartTracking(bool skipPreviousItems = false)
+    static void StartTracking(bool skipPreviousItems = false, bool isLauchedProcess = false)
     {
         if (cts != null)
         {
@@ -293,13 +504,47 @@ class Program
                         break;
                     }
 
-                    LoadReceiverAliases();
-                    var newData = await GetTableDataAsync(url, client);
+                    if (isLauchedProcess)
+                    {
+                        var trackerUrl = url;
+                        trackerUrl.Replace("sphere_", "");
+
+                        var html = await client.GetStringAsync(trackerUrl);
+                        var doc = new HtmlDocument();
+                        doc.LoadHtml(html);
+
+                        var data = new Dictionary<string, string>();
+                        var rows = doc.DocumentNode.SelectNodes("//table//tr");
+
+                        foreach (var row in rows)
+                        {
+                            var cells = row.SelectNodes("td");
+
+                            if (cells?.Count == 6)
+                            {
+                                var Name = cells[1].InnerText.Trim();
+                                if (!aliasChoices.ContainsKey(Name))
+                                {
+                                    aliasChoices.Add(Name, Name);
+                                }
+                            }
+                        }
+
+                        await RegisterCommandsAsync();
+                    }
+
+                    var newData = await GetTableDataAsync(url, client, isLauchedProcess);
                     await CompareAndSendChangesAsync(oldData, newData, displayedItems, skipPreviousItems);
+
                     if (skipPreviousItems == true)
                     {
                         skipPreviousItems = false;
                     }
+                    if (isLauchedProcess == true)
+                    {
+                        isLauchedProcess = false;
+                    }
+
                     oldData = newData;
                     SaveDisplayedItems(displayedItems);
 
@@ -313,8 +558,9 @@ class Program
         }, token);
     }
 
-    static async Task<Dictionary<string, string>> GetTableDataAsync(string url, HttpClient client)
+    static async Task<Dictionary<string, string>> GetTableDataAsync(string url, HttpClient client, bool isLauchedProcess)
     {
+        LoadReceiverAliases();
         var html = await client.GetStringAsync(url);
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
@@ -337,11 +583,48 @@ class Program
 
                 string key = $"{sphere} - {finder} - {receiver} - {item} - {location} - {game}";
 
-                string value = finder.Equals(receiver)
-                    ? $"{finder} found their {item} ({location})"
-                    : receiverAliases.TryGetValue(receiver, out var userId)
-                        ? $"{finder} sent {item} to <@{userId}> {receiver} ({location})"
-                        : $"{finder} sent {item} to {receiver} ({location})";
+                string value;
+                string userId = null;
+
+                if (finder.Equals(receiver))
+                {
+                    value = $"{finder} found their {item} ({location})";
+                }
+                else if (receiverAliases.TryGetValue(receiver, out userId))
+                {
+                    value = $"{finder} sent {item} to <@{userId}> {receiver} ({location})";
+                }
+                else
+                {
+                    value = $"{finder} sent {item} to {receiver} ({location})";
+                }
+
+                if (!isLauchedProcess)
+                {
+                    if (!string.IsNullOrEmpty(userId))
+                    {
+                        if (!recapList.ContainsKey(userId))
+                        {
+                            recapList[userId] = new List<SubElement>();
+                        }
+
+                        var itemToAdd = recapList[userId].Find(e => e.SubKey == receiver);
+                        if (itemToAdd != null)
+                        {
+                            itemToAdd.Values.Add(item);
+                        }
+                        else
+                        {
+                            recapList[userId].Add(new SubElement
+                            {
+                                SubKey = receiver,
+                                Values = new List<string> { item }
+                            });
+                        }
+
+                        SaveRecapList(recapList);
+                    }
+                }
 
                 data[key] = value;
             }
@@ -406,6 +689,7 @@ class Program
 
     static HashSet<string> LoadDisplayedItems()
     {
+
         if (File.Exists(displayedItemsFile))
         {
             var json = File.ReadAllText(displayedItemsFile);
@@ -422,6 +706,10 @@ class Program
 
     static void LoadReceiverAliases()
     {
+        if (receiverAliases != null)
+        {
+            receiverAliases.Clear();
+        }
         if (File.Exists(aliasFile))
         {
             var json = File.ReadAllText(aliasFile);
@@ -437,6 +725,7 @@ class Program
 
     static void LoadUrlAndChannel()
     {
+        url = string.Empty;
         if (File.Exists(urlChannelFile))
         {
             var json = File.ReadAllText(urlChannelFile);
@@ -455,5 +744,49 @@ class Program
         };
         var json = JsonConvert.SerializeObject(data);
         File.WriteAllText(urlChannelFile, json);
+    }
+
+    static void SaveRecapList(Dictionary<string, List<SubElement>> data)
+    {
+        string json = JsonConvert.SerializeObject(data);
+        File.WriteAllText(recapListFile, json);
+    }
+
+    static void LoadRecapList()
+    {
+        if (recapList != null)
+        {
+            recapList.Clear();
+        }
+        if (File.Exists(recapListFile))
+        {
+            var json = File.ReadAllText(recapListFile);
+            recapList = JsonConvert.DeserializeObject<Dictionary<string, List<SubElement>>>(json);
+        }
+    }
+
+    static void AddMissingRecapUser()
+    {
+        LoadRecapList();
+
+        foreach(var alias in receiverAliases)
+        {
+            var receiverId = alias.Value;
+            if (!recapList.ContainsKey(receiverId))
+            {
+                recapList[receiverId] = new List<SubElement>();
+            }
+
+            var recapUser = recapList[receiverId].Find(e => e.SubKey == alias.Key);
+            if (recapUser == null)
+            {
+                recapList[receiverId].Add(new SubElement
+                {
+                    SubKey = alias.Key,
+                    Values = new List<string> { "Aucun élément" }
+                });
+            }
+            SaveRecapList(recapList);
+        }
     }
 }
