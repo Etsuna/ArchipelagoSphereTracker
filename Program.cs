@@ -22,6 +22,7 @@ class Program
     private static Dictionary<string, string> receiverAliases = new Dictionary<string, string>();
     private static Dictionary<string, List<SubElement>> recapList = new Dictionary<string, List<SubElement>>();
     private static IDictionary<string, string> aliasChoices = new Dictionary<string, string>();
+    private static List<displayedItemsElement> displayedItems = new List<displayedItemsElement>();
     private static CancellationTokenSource cts;
     private static DiscordSocketClient client;
     private static CommandService commandService;
@@ -31,6 +32,16 @@ class Program
     {
         public string SubKey { get; set; }
         public List<string> Values { get; set; }
+    }
+
+    public class displayedItemsElement
+    {
+        public string sphere { get; set; }
+        public string finder { get; set; }
+        public string receiver { get; set; }
+        public string item { get; set; }
+        public string location { get; set; }
+        public string game { get; set; }
     }
 
     static async Task Main(string[] args)
@@ -142,6 +153,7 @@ class Program
         var guildUser = command.User as IGuildUser;
         var receiverId = "";
         string message = "";
+        const int maxMessageLength = 1999;
 
         switch (command.CommandName)
         {
@@ -194,7 +206,7 @@ class Program
                                         recapList.Remove(value);
                                     }
 
-                                    SaveRecapList(recapList);
+                                    SaveRecapList();
                                 }
 
                             }
@@ -215,7 +227,7 @@ class Program
                                         recapList.Remove(value);
                                     }
 
-                                    SaveRecapList(recapList);
+                                    SaveRecapList();
                                 }
                             }
                             else
@@ -260,7 +272,7 @@ class Program
                                 Values = new List<string> { "Aucun élément" }
                             });
                         }
-                        SaveRecapList(recapList);
+                        SaveRecapList();
                     }
                     else
                     {
@@ -294,7 +306,7 @@ class Program
                             channelId = command.Channel.Id;
                             SaveUrlAndChannel();
                             message = $"URL définie sur {url}. Messages configurés pour ce canal.";
-                            StartTracking(true, true);
+                            StartTracking();
                         }
                     }
                 }
@@ -403,18 +415,25 @@ class Program
                                 ? string.Join(", ", subElement.Values)
                                 : "Aucun élément";
 
-                            int maxLength = 1600;
-                            int subKeyCount = subElements.Count;
-                            int maxchar = maxLength / subKeyCount;
-
-                            int startIndex = Math.Max(0, values.Length - maxchar);
-                            message += $"**{subElement.SubKey}** : {values.ToString().Remove(0, startIndex)} \n";
+                            message += $"**{subElement.SubKey}** : {values} \n";
                         }
                     }
                     else
                     {
                         message = $"L'utilisateur <@{receiverId}> n'existe pas.";
                     }
+                }
+
+                while (message.Length > maxMessageLength)
+                {
+                    string messagePart = message.Substring(0, maxMessageLength);
+                    await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
+                    message = message.Substring(maxMessageLength);
+                }
+
+                if (!string.IsNullOrEmpty(message))
+                {
+                    await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                 }
                 break;
 
@@ -439,14 +458,9 @@ class Program
                                 ? string.Join(", ", subElement.Values)
                                 : "Aucun élément";
 
-                            int maxLength = 1600;
-                            int subKeyCount = subElements.Count;
-                            int maxchar = maxLength / subKeyCount;
-
-                            int startIndex = Math.Max(0, values.Length - maxchar);
-                            message += $"**{subElement.SubKey}** : {values.ToString().Remove(0, startIndex)} \n";
+                            message += $"**{subElement.SubKey}** : {values} \n";
                         }
-                                            
+
                         foreach (var subElementList in recapList.Values)
                         {
                             foreach (var subElement in subElementList)
@@ -454,7 +468,7 @@ class Program
                                 subElement.Values.Clear();
                             }
                         }
-                        SaveRecapList(recapList);
+                        SaveRecapList();
                         LoadRecapList();
                     }
                     else
@@ -462,11 +476,22 @@ class Program
                         message = $"L'utilisateur <@{receiverId}> n'existe pas.";
                     }
                 }
+
+                while (message.Length > maxMessageLength)
+                {
+                    string messagePart = message.Substring(0, maxMessageLength);
+                    await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
+                    message = message.Substring(maxMessageLength);
+                }
+
+                if (!string.IsNullOrEmpty(message))
+                {
+                    await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+                }
                 break;
         }
         await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
     }
-
 
     static async Task MessageReceivedAsync(SocketMessage arg)
     {
@@ -495,7 +520,7 @@ class Program
             .BuildServiceProvider();
     }
 
-    static void StartTracking(bool skipPreviousItems = false, bool isLauchedProcess = false)
+    static void StartTracking(bool isLauchedProcess = false)
     {
         if (cts != null)
         {
@@ -508,19 +533,13 @@ class Program
         Task.Run(async () =>
         {
             var oldData = new Dictionary<string, string>();
-            var displayedItems = LoadDisplayedItems();
+            LoadDisplayedItems();
             var client = new HttpClient();
 
             try
             {
                 while (!token.IsCancellationRequested)
                 {
-                    if (string.IsNullOrEmpty(url))
-                    {
-                        Console.WriteLine("Aucune URL définie. Arrêt du suivi.");
-                        break;
-                    }
-
                     if (isLauchedProcess)
                     {
                         var trackerUrl = url;
@@ -550,20 +569,18 @@ class Program
                         await RegisterCommandsAsync();
                     }
 
-                    var newData = await GetTableDataAsync(url, client, isLauchedProcess);
-                    await CompareAndSendChangesAsync(oldData, newData, displayedItems, skipPreviousItems);
-
-                    if (skipPreviousItems == true)
+                    if (string.IsNullOrEmpty(url))
                     {
-                        skipPreviousItems = false;
+                        Console.WriteLine("Aucune URL définie. Arrêt du suivi.");
+                        break;
                     }
+
+                    await GetTableDataAsync(url, client, isLauchedProcess);
+
                     if (isLauchedProcess == true)
                     {
                         isLauchedProcess = false;
                     }
-
-                    oldData = newData;
-                    SaveDisplayedItems(displayedItems);
 
                     await Task.Delay(60000, token);
                 }
@@ -575,7 +592,7 @@ class Program
         }, token);
     }
 
-    static async Task<Dictionary<string, string>> GetTableDataAsync(string url, HttpClient client, bool isLauchedProcess)
+    static async Task GetTableDataAsync(string url, HttpClient client, bool isLauchedProcess)
     {
         LoadReceiverAliases();
         var html = await client.GetStringAsync(url);
@@ -598,80 +615,84 @@ class Program
                 var location = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
                 var game = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
 
-                string key = $"{sphere} - {finder} - {receiver} - {item} - {location} - {game}";
+                var newItem = new displayedItemsElement
+                {
+                    sphere = sphere,
+                    finder = finder,
+                    receiver = receiver,
+                    item = item,
+                    location = location,
+                    game = game
+                };
 
-                string value;
-                string userId = null;
+                bool exists = displayedItems.Any(x =>
+                x.sphere == newItem.sphere &&
+                x.finder == newItem.finder &&
+                x.receiver == newItem.receiver &&
+                x.item == newItem.item &&
+                x.location == newItem.location &&
+                x.game == newItem.game);
 
-                if (finder.Equals(receiver))
+                if (!exists)
                 {
-                    value = $"{finder} found their {item} ({location})";
-                }
-                else if (receiverAliases.TryGetValue(receiver, out userId))
-                {
-                    value = $"{finder} sent {item} to <@{userId}> {receiver} ({location})";
-                }
-                else
-                {
-                    value = $"{finder} sent {item} to {receiver} ({location})";
-                }
+                    displayedItems.Add(newItem);
 
-                if (!isLauchedProcess)
-                {
-                    if (!string.IsNullOrEmpty(userId))
+                    string value;
+                    string userId = null;
+
+                    if (finder.Equals(receiver))
                     {
-                        if (!recapList.ContainsKey(userId))
-                        {
-                            recapList[userId] = new List<SubElement>();
-                        }
+                        value = $"{finder} found their {item} ({location})";
+                    }
+                    else if (receiverAliases.TryGetValue(receiver, out userId))
+                    {
+                        value = $"{finder} sent {item} to <@{userId}> {receiver} ({location})";
+                    }
+                    else
+                    {
+                        value = $"{finder} sent {item} to {receiver} ({location})";
+                    }
 
-                        var itemToAdd = recapList[userId].Find(e => e.SubKey == receiver);
-                        if (itemToAdd != null)
+                    if (File.Exists(displayedItemsFile))
+                    {
+                        if (!string.IsNullOrEmpty(userId))
                         {
-                            itemToAdd.Values.Add(item);
-                            itemToAdd.Values.Remove("Aucun élément");
-                        }
-                        else
-                        {
-                            recapList[userId].Add(new SubElement
+                            if (!recapList.ContainsKey(userId))
                             {
-                                SubKey = receiver,
-                                Values = new List<string> { item }
-                            });
+                                recapList[userId] = new List<SubElement>();
+                            }
 
+                            var itemToAdd = recapList[userId].Find(e => e.SubKey == receiver);
                             if (itemToAdd != null)
                             {
+                                itemToAdd.Values.Add(item);
                                 itemToAdd.Values.Remove("Aucun élément");
-                            };
+                            }
+                            else
+                            {
+                                recapList[userId].Add(new SubElement
+                                {
+                                    SubKey = receiver,
+                                    Values = new List<string> { item }
+                                });
+
+                                if (itemToAdd != null)
+                                {
+                                    itemToAdd.Values.Remove("Aucun élément");
+                                };
+                            }
                         }
-
-                        SaveRecapList(recapList);
                     }
-                }
 
-                data[key] = value;
-            }
-        }
-
-        return data;
-    }
-
-    static async Task CompareAndSendChangesAsync(Dictionary<string, string> oldData, Dictionary<string, string> newData, HashSet<string> displayedItems, bool skipPreviousItems)
-    {
-        foreach (var newItem in newData)
-        {
-            if (!oldData.ContainsKey(newItem.Key) || oldData[newItem.Key] != newItem.Value)
-            {
-                if (!displayedItems.Contains(newItem.Key))
-                {
-                    if (!skipPreviousItems)
+                    if (File.Exists(displayedItemsFile))
                     {
-                        await SendMessageAsync(newItem.Value);
+                        await SendMessageAsync(value);
                     }
-                    displayedItems.Add(newItem.Key);
                 }
             }
         }
+        SaveRecapList();
+        SaveDisplayedItems();
     }
 
     static async Task SendMessageAsync(string message)
@@ -710,18 +731,16 @@ class Program
         }
     }
 
-    static HashSet<string> LoadDisplayedItems()
+    static void LoadDisplayedItems()
     {
-
         if (File.Exists(displayedItemsFile))
         {
             var json = File.ReadAllText(displayedItemsFile);
-            return JsonConvert.DeserializeObject<HashSet<string>>(json);
+            displayedItems = JsonConvert.DeserializeObject<List<displayedItemsElement>>(json);
         }
-        return new HashSet<string>();
     }
 
-    static void SaveDisplayedItems(HashSet<string> displayedItems)
+    static void SaveDisplayedItems()
     {
         var json = JsonConvert.SerializeObject(displayedItems);
         File.WriteAllText(displayedItemsFile, json);
@@ -769,9 +788,9 @@ class Program
         File.WriteAllText(urlChannelFile, json);
     }
 
-    static void SaveRecapList(Dictionary<string, List<SubElement>> data)
+    static void SaveRecapList()
     {
-        string json = JsonConvert.SerializeObject(data);
+        string json = JsonConvert.SerializeObject(recapList);
         File.WriteAllText(recapListFile, json);
     }
 
@@ -792,7 +811,7 @@ class Program
     {
         LoadRecapList();
 
-        foreach(var alias in receiverAliases)
+        foreach (var alias in receiverAliases)
         {
             var receiverId = alias.Value;
             if (!recapList.ContainsKey(receiverId))
@@ -809,7 +828,7 @@ class Program
                     Values = new List<string> { "Aucun élément" }
                 });
             }
-            SaveRecapList(recapList);
+            SaveRecapList();
         }
     }
 }
