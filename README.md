@@ -15,7 +15,7 @@ Un bot Discord conçu pour être lié au sphere_tracker pour Archipelago (Exempl
 ## Jeux Pris en Charge
 Tous les jeux pris en charge par le Randomizer Multi-Monde [Archipelago](https://github.com/ArchipelagoMW/Archipelago) sont compatibles et ont une compatibilité MultiWorld complète entre eux.
 
-## Prerequisites
+## Prérequis
 ```
 dotnet-sdk-8.0
 Fonctionne sous Linux et Windows
