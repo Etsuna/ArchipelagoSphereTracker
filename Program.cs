@@ -461,14 +461,12 @@ class Program
                             message += $"**{subElement.SubKey}** : {values} \n";
                         }
 
-                        foreach (var subElementList in recapList.Values)
+                        foreach (var subElement in subElements)
                         {
-                            foreach (var subElement in subElementList)
-                            {
-                                subElement.Values.Clear();
-                                subElement.Values.Add("Aucun élément");
-                            }
+                            subElement.Values.Clear();
+                            subElement.Values.Add("Aucun élément");
                         }
+
                         SaveRecapList();
                         LoadRecapList();
                     }
