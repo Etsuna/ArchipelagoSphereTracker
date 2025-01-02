@@ -507,22 +507,29 @@ class Program
                     ItemName = group.Key,
                     Count = group.Count()
                 })
-                .OrderBy(group => group.ItemName) // Trier par ordre alphabétique
+                .OrderBy(group => group.ItemName)
                 .ToList();
 
                 if (filteredItems.Any())
                 {
                     message = $"Items pour {receiverId} :\n";
 
-                    foreach (var groupedItem in filteredItems)
+                    for (int i = 0; i < filteredItems.Count; i++)
                     {
+                        var groupedItem = filteredItems[i];
+
                         if (groupedItem.Count > 1)
                         {
-                            message += $"- **{groupedItem.Count} x {groupedItem.ItemName}**\n";
+                            message += $"- {groupedItem.Count} x {groupedItem.ItemName}";
                         }
                         else
                         {
-                            message += $"- **{groupedItem.ItemName}**\n";
+                            message += $"- {groupedItem.ItemName}";
+                        }
+
+                        if (i < filteredItems.Count - 1)
+                        {
+                            message += ", ";
                         }
                     }
 
@@ -538,7 +545,7 @@ class Program
                         await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                     }
                 }
-                if (!command.CommandName.Contains("recap") || !command.CommandName.Contains("list"))
+                if (!(command.CommandName.Contains("recap") || command.CommandName.Contains("list")))
                 {
                     await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                 }
