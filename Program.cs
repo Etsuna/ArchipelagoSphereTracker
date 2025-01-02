@@ -558,11 +558,12 @@ class Program
                         await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                     }
                 }
-                if (!(command.CommandName.Contains("recap") || command.CommandName.Contains("list")))
-                {
-                    await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
-                }
                 break;
+                
+        }
+        if (!(command.CommandName.Contains("recap") || command.CommandName.Contains("list")))
+        {
+            await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
         }
     }
 
