@@ -125,7 +125,8 @@ class Program
         new SlashCommandBuilder()
         .WithName("list-items")
         .WithDescription("List all items for alias")
-        .AddOption(BuildAliasOption(aliasChoices)),
+        .AddOption(BuildAliasOption(aliasChoices))
+        .AddOption(BuildListItemsOption())
     };
 
         foreach (var guild in client.Guilds)
@@ -149,6 +150,17 @@ class Program
         {
             optionBuilder.AddChoice(alias.Key, alias.Value);
         }
+
+        return optionBuilder;
+    }
+
+    static SlashCommandOptionBuilder BuildListItemsOption()
+    {
+        var optionBuilder = new SlashCommandOptionBuilder()
+            .WithName("list-by-line")
+            .WithDescription("Choose whether to display items line by line (true) or comma separated (false).")
+            .WithType(ApplicationCommandOptionType.Boolean)
+            .WithRequired(true);
 
         return optionBuilder;
     }
@@ -497,7 +509,8 @@ class Program
                 await command.DeferAsync();
                 LoadDisplayedItems();
 
-                receiverId = command.Data.Options.FirstOrDefault()?.Value as string;
+                receiverId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
+                bool listByLine = (bool)command.Data.Options.FirstOrDefault(o => o.Name == "list-by-line")?.Value;
 
                 var filteredItems = displayedItems
                 .Where(item => item.receiver == receiverId)
@@ -529,7 +542,7 @@ class Program
 
                         if (i < filteredItems.Count - 1)
                         {
-                            message += ", ";
+                            message += listByLine ? "\n":", ";
                         }
                     }
 
