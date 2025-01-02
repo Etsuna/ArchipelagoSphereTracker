@@ -120,7 +120,12 @@ class Program
 
         new SlashCommandBuilder()
         .WithName("recap-and-clean")
-        .WithDescription("Recap and clean List of items")
+        .WithDescription("Recap and clean List of items"),
+
+        new SlashCommandBuilder()
+        .WithName("list-items")
+        .WithDescription("List all items for alias")
+        .AddOption(BuildAliasOption(aliasChoices)),
     };
 
         foreach (var guild in client.Guilds)
@@ -488,10 +493,56 @@ class Program
                     await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                 }
                 break;
-        }
-        if(!command.CommandName.Contains("recap"))
-        {
-            await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+            case "list-items":
+                await command.DeferAsync();
+                LoadDisplayedItems();
+
+                receiverId = command.Data.Options.FirstOrDefault()?.Value as string;
+
+                var filteredItems = displayedItems
+                .Where(item => item.receiver == receiverId)
+                .GroupBy(item => item.item)
+                .Select(group => new
+                {
+                    ItemName = group.Key,
+                    Count = group.Count()
+                })
+                .OrderBy(group => group.ItemName) // Trier par ordre alphabétique
+                .ToList();
+
+                if (filteredItems.Any())
+                {
+                    message = $"Items pour {receiverId} :\n";
+
+                    foreach (var groupedItem in filteredItems)
+                    {
+                        if (groupedItem.Count > 1)
+                        {
+                            message += $"- **{groupedItem.Count} x {groupedItem.ItemName}**\n";
+                        }
+                        else
+                        {
+                            message += $"- **{groupedItem.ItemName}**\n";
+                        }
+                    }
+
+                    while (message.Length > maxMessageLength)
+                    {
+                        string messagePart = message.Substring(0, maxMessageLength);
+                        await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
+                        message = message.Substring(maxMessageLength);
+                    }
+
+                    if (!string.IsNullOrEmpty(message))
+                    {
+                        await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+                    }
+                }
+                if (!command.CommandName.Contains("recap") || !command.CommandName.Contains("list"))
+                {
+                    await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+                }
+                break;
         }
     }
 
