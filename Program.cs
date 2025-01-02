@@ -520,11 +520,11 @@ class Program
 
                         if (groupedItem.Count > 1)
                         {
-                            message += $"- {groupedItem.Count} x {groupedItem.ItemName}";
+                            message += $"{groupedItem.Count} x {groupedItem.ItemName}";
                         }
                         else
                         {
-                            message += $"- {groupedItem.ItemName}";
+                            message += $"{groupedItem.ItemName}";
                         }
 
                         if (i < filteredItems.Count - 1)
