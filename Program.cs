@@ -426,13 +426,24 @@ class Program
                     else if (recapList.TryGetValue(receiverId, out var subElements))
                     {
                         message = $"Détails pour <@{receiverId}> :\n";
+
                         foreach (var subElement in subElements)
                         {
-                            string values = subElement.Values != null && subElement.Values.Any()
-                                ? string.Join(", ", subElement.Values)
-                                : "Aucun élément";
+                            if (subElement.Values != null && subElement.Values.Any())
+                            {
+                                var groupedValues = subElement.Values
+                                    .GroupBy(value => value)
+                                    .Select(group => new { Value = group.Key, Count = group.Count() });
 
-                            message += $"**{subElement.SubKey}** : {values} \n";
+                                string groupedMessage = string.Join(", ", groupedValues.Select(g =>
+                                    g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
+
+                                message += $"**{subElement.SubKey}** : {groupedMessage} \n";
+                            }
+                            else
+                            {
+                                message += $"**{subElement.SubKey}** : Aucun élément \n";
+                            }
                         }
                     }
                     else
@@ -469,13 +480,24 @@ class Program
                     if (recapList.TryGetValue(receiverId, out var subElements))
                     {
                         message = $"Détails pour <@{receiverId}> :\n";
+
                         foreach (var subElement in subElements)
                         {
-                            string values = subElement.Values != null && subElement.Values.Any()
-                                ? string.Join(", ", subElement.Values)
-                                : "Aucun élément";
+                            if (subElement.Values != null && subElement.Values.Any())
+                            {
+                                var groupedValues = subElement.Values
+                                    .GroupBy(value => value)
+                                    .Select(group => new { Value = group.Key, Count = group.Count() });
 
-                            message += $"**{subElement.SubKey}** : {values} \n";
+                                string groupedMessage = string.Join(", ", groupedValues.Select(g =>
+                                    g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
+
+                                message += $"**{subElement.SubKey}** : {groupedMessage} \n";
+                            }
+                            else
+                            {
+                                message += $"**{subElement.SubKey}** : Aucun élément \n";
+                            }
                         }
 
                         foreach (var subElement in subElements)
