@@ -375,8 +375,8 @@ public static class BotCommands
                     {
                         Declare.url = string.Empty;
 
-                        Declare.recapList?.Clear();
-                        Declare.receiverAliases?.Clear();
+                        Declare.recapList.Clear();
+                        Declare.receiverAliases.Clear();
                         Declare.displayedItems.Clear();
                         Declare.aliasChoices.Clear();
 

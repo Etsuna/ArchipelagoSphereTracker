@@ -32,34 +32,55 @@ public static class TrackingDataManager
                     if (isLauchedProcess)
                     {
                         var trackerUrl = Declare.url;
-                        trackerUrl.Replace("sphere_", "");
+                        var updatedHtml = trackerUrl.Replace("sphere_", "");
 
-                        var html = await clientHttp.GetStringAsync(trackerUrl);
+                        var html = await clientHttp.GetStringAsync(updatedHtml);
                         var doc = new HtmlDocument();
                         doc.LoadHtml(html);
 
-                        var data = new Dictionary<string, string>();
-                        var rows = doc.DocumentNode.SelectNodes("//table//tr");
+                        var tables = doc.DocumentNode.SelectNodes("//table");
 
-                        foreach (var row in rows)
+                        if (tables != null && tables.Any())
                         {
-                            var cells = row.SelectNodes("td");
+                            var firstTable = tables.FirstOrDefault();
 
-                            if (cells?.Count == 6)
+                            if (firstTable != null)
                             {
-                                var Name = cells[1].InnerText.Trim();
-                                if (!Declare.aliasChoices.ContainsKey(Name))
+                                var rows = firstTable.SelectNodes(".//tr");
+
+                                if (rows != null)
                                 {
-                                    Declare.aliasChoices.Add(Name, Name);
+                                    bool isFirstRow = true;
+                                    foreach (var row in rows)
+                                    {
+                                        var cells = row.SelectNodes("td");
+
+                                        if (cells == null)
+                                        {
+                                            cells = row.SelectNodes("th");
+                                        }
+
+                                        if (cells != null && cells.Count == 7)
+                                        {
+                                            var Name = cells[1].InnerText.Trim();
+                                            if (isFirstRow)
+                                            {
+                                                isFirstRow = false;
+                                                continue; 
+                                            }
+
+                                            if (!Declare.aliasChoices.ContainsKey(Name))
+                                            {
+                                                Declare.aliasChoices.Add(Name, Name);
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                        }
 
-                        await BotCommands.RegisterCommandsAsync();
-                        await BotCommands.SendMessageAsync("Bot Ready ! GLHF !");
+                            await BotCommands.RegisterCommandsAsync();
+                            await BotCommands.SendMessageAsync("Bot ready ! GLHF !");
 
-                        if (isLauchedProcess == true)
-                        {
                             isLauchedProcess = false;
                         }
                     }
