@@ -399,9 +399,10 @@ class Program
 
                         recapList?.Clear();
                         receiverAliases?.Clear();
+                        displayedItems.Clear();
+                        aliasChoices.Clear();
 
                         message = "URL Supprimée.";
-                        aliasChoices.Clear();
                         await RegisterCommandsAsync();
                     }
                 }
