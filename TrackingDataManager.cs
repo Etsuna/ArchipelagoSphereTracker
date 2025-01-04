@@ -44,7 +44,6 @@ public static class TrackingDataManager
     {
         bool isUpdated = false;
         var clientHttp = new HttpClient();
-        DataManager.LoadReceiverAliases();
         var html = await clientHttp.GetStringAsync(Declare.urlSphereTracker);
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
