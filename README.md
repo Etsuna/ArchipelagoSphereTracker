@@ -10,6 +10,7 @@ Un bot Discord conçu pour être lié au sphere_tracker pour Archipelago (Exempl
 * Récapituler la table de loot des objets depuis le dernier récapitulatif et nettoyage (uniquement si un alias a été créé).
 * Récapituler et nettoyer la table de loot des objets (uniquement si un alias a été créé).
 * Envoyer automatiquement des messages concernant les nouveaux objets lootés sur Discord (avec le tag Discord, uniquement si un alias a été créé).
+* Envoyer automatiquement un message quand un joueur complète son objectif.
 * Lister les items reçus par le nom du joueur (avec l'option d'affichage en retour à la ligne pour chaque item ou séparés par une virgule).
 
 ## Jeux Pris en Charge
