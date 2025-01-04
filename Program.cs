@@ -26,6 +26,8 @@ class Program
         await BotCommands.InstallCommandsAsync();
 
         DataManager.LoadReceiverAliases();
+        DataManager.LoadAliasChoices();
+        DataManager.LoadGameStatus();
         DataManager.LoadUrlAndChannel();
         DataManager.LoadRecapList();
         DataManager.AddMissingRecapUser();
@@ -45,6 +47,6 @@ class Program
     {
         await BotCommands.RegisterCommandsAsync();
         Console.WriteLine("Bot is connected!");
-        TrackingDataManager.StartTracking(true);
+        TrackingDataManager.StartTracking();
     }
 }

@@ -283,9 +283,9 @@ public static class BotCommands
                 {
                     message = "Seuls les administrateurs sont autorisés à ajouter une URL.";
                 }
-                else if (!string.IsNullOrEmpty(Declare.url))
+                else if (!string.IsNullOrEmpty(Declare.urlSphereTracker))
                 {
-                    message = $"URL déjà définie sur {Declare.url}. Supprimez l'url avant d'ajouter une nouvelle url.";
+                    message = $"URL déjà définie sur {Declare.urlSphereTracker}. Supprimez l'url avant d'ajouter une nouvelle url.";
                 }
                 else
                 {
@@ -298,11 +298,11 @@ public static class BotCommands
                         }
                         else
                         {
-                            Declare.url = newUrl;
+                            Declare.urlSphereTracker = newUrl;
                             Declare.channelId = command.Channel.Id;
                             DataManager.SaveUrlAndChannel();
-                            message = $"URL définie sur {Declare.url}. Messages configurés pour ce canal.";
-                            TrackingDataManager.StartTracking(true);
+                            message = $"URL définie sur {Declare.urlSphereTracker}. Messages configurés pour ce canal.";
+                            TrackingDataManager.StartTracking();
                         }
                     }
                 }
@@ -367,18 +367,47 @@ public static class BotCommands
                         Console.WriteLine(message);
                     }
 
-                    if (string.IsNullOrEmpty(Declare.url))
+                    try
+                    {
+                        if (File.Exists(Declare.aliasChoicesFile))
+                        {
+                            File.Delete(Declare.aliasChoicesFile);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        message += $"\nErreur lors de la suppression du fichier aliasFile : {ex.Message}";
+                        Console.WriteLine(message);
+                    }
+
+                    try
+                    {
+                        if (File.Exists(Declare.gameStatusFile))
+                        {
+                            File.Delete(Declare.gameStatusFile);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        message += $"\nErreur lors de la suppression du fichier aliasFile : {ex.Message}";
+                        Console.WriteLine(message);
+                    }
+
+
+                    if (string.IsNullOrEmpty(Declare.urlSphereTracker))
                     {
                         message = "Aucune URL définie.";
                     }
                     else
                     {
-                        Declare.url = string.Empty;
+                        Declare.urlSphereTracker = string.Empty;
+                        Declare.urlTracker = string.Empty;
 
                         Declare.recapList.Clear();
                         Declare.receiverAliases.Clear();
                         Declare.displayedItems.Clear();
                         Declare.aliasChoices.Clear();
+                        Declare.gameStatus.Clear();
 
                         message = "URL Supprimée.";
                         await RegisterCommandsAsync();

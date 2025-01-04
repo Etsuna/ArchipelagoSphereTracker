@@ -3,7 +3,7 @@ using System.Net;
 
 public static class TrackingDataManager
 {
-    public static void StartTracking(bool isLauchedProcess = false)
+    public static void StartTracking()
     {
         if (Declare.cts != null)
         {
@@ -15,77 +15,22 @@ public static class TrackingDataManager
 
         Task.Run(async () =>
         {
-            var oldData = new Dictionary<string, string>();
             DataManager.LoadDisplayedItems();
-            var clientHttp = new HttpClient();
+
 
             try
             {
                 while (!token.IsCancellationRequested)
                 {
-                    if (string.IsNullOrEmpty(Declare.url))
+                    if (string.IsNullOrEmpty(Declare.urlSphereTracker))
                     {
                         Console.WriteLine("Aucune URL définie. Arrêt du suivi.");
                         break;
                     }
 
-                    if (isLauchedProcess)
-                    {
-                        var trackerUrl = Declare.url;
-                        var updatedHtml = trackerUrl.Replace("sphere_", "");
-
-                        var html = await clientHttp.GetStringAsync(updatedHtml);
-                        var doc = new HtmlDocument();
-                        doc.LoadHtml(html);
-
-                        var tables = doc.DocumentNode.SelectNodes("//table");
-
-                        if (tables != null && tables.Any())
-                        {
-                            var firstTable = tables.FirstOrDefault();
-
-                            if (firstTable != null)
-                            {
-                                var rows = firstTable.SelectNodes(".//tr");
-
-                                if (rows != null)
-                                {
-                                    bool isFirstRow = true;
-                                    foreach (var row in rows)
-                                    {
-                                        var cells = row.SelectNodes("td");
-
-                                        if (cells == null)
-                                        {
-                                            cells = row.SelectNodes("th");
-                                        }
-
-                                        if (cells != null && cells.Count == 7)
-                                        {
-                                            var Name = cells[1].InnerText.Trim();
-                                            if (isFirstRow)
-                                            {
-                                                isFirstRow = false;
-                                                continue; 
-                                            }
-
-                                            if (!Declare.aliasChoices.ContainsKey(Name))
-                                            {
-                                                Declare.aliasChoices.Add(Name, Name);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            await BotCommands.RegisterCommandsAsync();
-                            await BotCommands.SendMessageAsync("Bot ready ! GLHF !");
-
-                            isLauchedProcess = false;
-                        }
-                    }
-
-                    await GetTableDataAsync(Declare.url, clientHttp);
+                    await setAliasAndGameStatusAsync();
+                    await checkGameStatus();
+                    await GetTableDataAsync();
 
                     await Task.Delay(60000, token);
                 }
@@ -97,10 +42,11 @@ public static class TrackingDataManager
         }, token);
     }
 
-    static async Task GetTableDataAsync(string url, HttpClient client)
+    static async Task GetTableDataAsync()
     {
+        var clientHttp = new HttpClient();
         DataManager.LoadReceiverAliases();
-        var html = await client.GetStringAsync(url);
+        var html = await clientHttp.GetStringAsync(Declare.urlSphereTracker);
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
@@ -198,5 +144,163 @@ public static class TrackingDataManager
         }
         DataManager.SaveRecapList();
         DataManager.SaveDisplayedItems();
+    }
+
+    static async Task setAliasAndGameStatusAsync()
+    {
+        if (!File.Exists(Declare.aliasChoicesFile))
+        {
+            var clientHttp = new HttpClient();
+            var trackerUrl = Declare.urlSphereTracker;
+            Declare.urlTracker = trackerUrl.Replace("sphere_", "");
+
+            var html = await clientHttp.GetStringAsync(Declare.urlTracker);
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+
+            var tables = doc.DocumentNode.SelectNodes("//table");
+
+            if (tables != null && tables.Any())
+            {
+                var firstTable = tables.FirstOrDefault();
+
+                if (firstTable != null)
+                {
+                    var rows = firstTable.SelectNodes(".//tr");
+
+                    if (rows != null)
+                    {
+                        bool isFirstRow = true;
+                        foreach (var row in rows)
+                        {
+                            var cells = row.SelectNodes("td");
+
+                            if (cells == null)
+                            {
+                                cells = row.SelectNodes("th");
+                            }
+
+                            if (cells != null && cells.Count == 7)
+                            {
+                                var hachtag = WebUtility.HtmlDecode(cells[0].InnerText.Trim());
+                                var Name = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
+                                var Game = WebUtility.HtmlDecode(cells[2].InnerText.Trim());
+                                var GameStatus = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
+                                var checks = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
+                                var pourcent = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
+                                var lastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim());
+
+                                if (isFirstRow)
+                                {
+                                    isFirstRow = false;
+                                    continue;
+                                }
+
+                                if (!Declare.aliasChoices.ContainsKey(Name))
+                                {
+                                    Declare.aliasChoices.Add(Name, Name);
+                                }
+
+                                if (!Declare.gameStatus.Any(x => x.name == Name))
+                                {
+                                    Declare.gameStatus.Add(new trackerElement
+                                    {
+                                        hachtag = hachtag,
+                                        name = Name,
+                                        game = Game,
+                                        status = GameStatus,
+                                        checks = checks,
+                                        pourcent = pourcent,
+                                        lastActivity = lastActivity
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                Declare.gameStatus.Sort((x, y) => x.name.CompareTo(y.name));
+                DataManager.SaveAliasChoices();
+                DataManager.SaveGameStatus();
+                await BotCommands.RegisterCommandsAsync();
+                await BotCommands.SendMessageAsync("Bot ready ! GLHF !");
+            }
+        }
+    }
+
+    static async Task checkGameStatus()
+    {
+        if (File.Exists(Declare.aliasChoicesFile))
+        {
+            DataManager.LoadGameStatus();
+            bool changeFound = false;
+            var clientHttp = new HttpClient();
+            var trackerUrl = Declare.urlSphereTracker;
+            Declare.urlTracker = trackerUrl.Replace("sphere_", "");
+
+            var html = await clientHttp.GetStringAsync(Declare.urlTracker);
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+
+            var tables = doc.DocumentNode.SelectNodes("//table");
+
+            if (tables != null && tables.Any())
+            {
+                var firstTable = tables.FirstOrDefault();
+
+                if (firstTable != null)
+                {
+                    var rows = firstTable.SelectNodes(".//tr");
+
+                    if (rows != null)
+                    {
+                        bool isFirstRow = true;
+                        foreach (var row in rows)
+                        {
+                            var cells = row.SelectNodes("td");
+
+                            if (cells == null)
+                            {
+                                cells = row.SelectNodes("th");
+                            }
+
+                            if (cells != null && cells.Count == 7)
+                            {
+                                var Name = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
+                                var GameStatus = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
+
+                                if (isFirstRow)
+                                {
+                                    isFirstRow = false;
+                                    continue;
+                                }
+
+                                if (Declare.gameStatus.Any(x => x.name == Name && x.status == "Goal Completed"))
+                                {
+                                    continue;
+                                }
+
+                                if (Declare.gameStatus.Any(x => x.name == Name && (x.status != "Goal Complete")))
+                                {
+                                    if (GameStatus == "Goal Completed")
+                                    {
+                                        await BotCommands.SendMessageAsync($"{Name} has completed their goal !");
+                                        var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
+                                        if(editStatus != null)
+                                        {
+                                            editStatus.status = "Goal Completed";
+                                            changeFound = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if(changeFound)
+                {
+                    DataManager.SaveGameStatus();
+                }
+            }
+        }
     }
 }

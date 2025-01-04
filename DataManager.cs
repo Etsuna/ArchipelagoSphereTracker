@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Discord.Rest;
+using Newtonsoft.Json;
 
 public static class DataManager
 {
@@ -38,12 +39,12 @@ public static class DataManager
 
     public static void LoadUrlAndChannel()
     {
-        Declare.url = string.Empty;
+        Declare.urlSphereTracker = string.Empty;
         if (File.Exists(Declare.urlChannelFile))
         {
             var json = File.ReadAllText(Declare.urlChannelFile);
             var data = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-            Declare.url = data.GetValueOrDefault("url", string.Empty);
+            Declare.urlSphereTracker = data.GetValueOrDefault("url", string.Empty);
             Declare.channelId = ulong.TryParse(data.GetValueOrDefault("channelId", "0"), out var id) ? id : 0;
         }
     }
@@ -52,7 +53,7 @@ public static class DataManager
     {
         var data = new Dictionary<string, string>
         {
-            { "url", Declare.url },
+            { "url", Declare.urlSphereTracker },
             { "channelId", Declare.channelId.ToString() }
         };
         var json = JsonConvert.SerializeObject(data);
@@ -100,6 +101,44 @@ public static class DataManager
                 });
             }
             SaveRecapList();
+        }
+    }
+
+    public static void SaveAliasChoices()
+    {
+        var json = JsonConvert.SerializeObject(Declare.aliasChoices);
+        File.WriteAllText(Declare.aliasChoicesFile, json);
+    }
+
+    public static void LoadAliasChoices()
+    {
+        if (Declare.aliasChoices != null)
+        {
+            Declare.aliasChoices.Clear();
+        }
+        if (File.Exists(Declare.aliasChoicesFile))
+        {
+            var json = File.ReadAllText(Declare.aliasChoicesFile);
+            Declare.aliasChoices = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+        }
+    }
+
+    public static void SaveGameStatus()
+    {
+        var json = JsonConvert.SerializeObject(Declare.gameStatus);
+        File.WriteAllText(Declare.gameStatusFile, json);
+    }
+
+    public static void LoadGameStatus()
+    {
+        if (Declare.gameStatus != null)
+        {
+            Declare.gameStatus.Clear();
+        }
+        if (File.Exists(Declare.gameStatusFile))
+        {
+            var json = File.ReadAllText(Declare.gameStatusFile);
+            Declare.gameStatus = JsonConvert.DeserializeObject<List<trackerElement>>(json);
         }
     }
 }
