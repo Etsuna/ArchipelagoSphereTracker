@@ -16,8 +16,6 @@ public static class TrackingDataManager
         Task.Run(async () =>
         {
             DataManager.LoadDisplayedItems();
-
-
             try
             {
                 while (!token.IsCancellationRequested)
@@ -44,6 +42,7 @@ public static class TrackingDataManager
 
     static async Task GetTableDataAsync()
     {
+        bool isUpdated = false;
         var clientHttp = new HttpClient();
         DataManager.LoadReceiverAliases();
         var html = await clientHttp.GetStringAsync(Declare.urlSphereTracker);
@@ -86,6 +85,7 @@ public static class TrackingDataManager
 
                 if (!exists)
                 {
+                    isUpdated = true;
                     Declare.displayedItems.Add(newItem);
 
                     string value;
@@ -142,8 +142,11 @@ public static class TrackingDataManager
                 }
             }
         }
-        DataManager.SaveRecapList();
-        DataManager.SaveDisplayedItems();
+        if(!File.Exists(Declare.displayedItemsFile) || isUpdated)
+        {
+            DataManager.SaveRecapList();
+            DataManager.SaveDisplayedItems();
+        }
     }
 
     static async Task setAliasAndGameStatusAsync()
@@ -218,12 +221,12 @@ public static class TrackingDataManager
                         }
                     }
                 }
-                Declare.gameStatus.Sort((x, y) => x.name.CompareTo(y.name));
-                DataManager.SaveAliasChoices();
-                DataManager.SaveGameStatus();
-                await BotCommands.RegisterCommandsAsync();
-                await BotCommands.SendMessageAsync("Bot ready ! GLHF !");
             }
+            Declare.gameStatus.Sort((x, y) => x.name.CompareTo(y.name));
+            DataManager.SaveAliasChoices();
+            DataManager.SaveGameStatus();
+            await BotCommands.RegisterCommandsAsync();
+            await BotCommands.SendMessageAsync("Bot ready ! GLHF !");
         }
     }
 
