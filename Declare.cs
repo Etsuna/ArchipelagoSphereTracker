@@ -1,6 +1,5 @@
 ﻿using Discord.WebSocket;
 using Discord.Commands;
-using System.Net.NetworkInformation;
 
 public static class Declare
 {

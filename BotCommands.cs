@@ -97,11 +97,18 @@ public static class BotCommands
 
         new SlashCommandBuilder()
         .WithName("recap")
-        .WithDescription("Recap List of items"),
+        .WithDescription("Recap List of items")
+        .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
         new SlashCommandBuilder()
         .WithName("recap-and-clean")
-        .WithDescription("Recap and clean List of items"),
+        .WithDescription("Recap and clean List of items")
+        .AddOption(BuildAliasOption(Declare.aliasChoices)),
+
+         new SlashCommandBuilder()
+        .WithName("clean")
+        .WithDescription("Recap and clean List of items")
+        .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
         new SlashCommandBuilder()
         .WithName("list-items")
@@ -123,7 +130,7 @@ public static class BotCommands
     {
         var optionBuilder = new SlashCommandOptionBuilder()
             .WithName("alias")
-            .WithDescription("Choose an alias to add")
+            .WithDescription("Choose an alias")
             .WithType(ApplicationCommandOptionType.String)
             .WithRequired(true);
 
@@ -149,11 +156,12 @@ public static class BotCommands
     public static async Task HandleSlashCommandAsync(SocketSlashCommand command)
     {
         await command.DeferAsync();
-       
+
         var guildUser = command.User as IGuildUser;
         var receiverId = "";
         string message = "";
         const int maxMessageLength = 1999;
+        var alias = command.Data.Options.FirstOrDefault()?.Value as string;
 
         switch (command.CommandName)
         {
@@ -182,22 +190,21 @@ public static class BotCommands
                 }
                 else
                 {
-                    var aliasToDelete = command.Data.Options.FirstOrDefault()?.Value as string;
-                    if (aliasToDelete != null)
+                    if (alias != null)
                     {
-                        if (Declare.receiverAliases.TryGetValue(aliasToDelete, out var value))
+                        if (Declare.receiverAliases.TryGetValue(alias, out var value))
                         {
                             if (value == command.User.Id.ToString())
                             {
-                                Declare.receiverAliases.Remove(aliasToDelete);
+                                Declare.receiverAliases.Remove(alias);
                                 DataManager.SaveReceiverAliases();
-                                message = $"Alias '{aliasToDelete}' supprimé.";
+                                message = $"Alias '{alias}' supprimé.";
 
                                 if (Declare.recapList.ContainsKey(value))
                                 {
                                     DataManager.LoadRecapList();
                                     var subElements = Declare.recapList[value];
-                                    subElements.RemoveAll(e => e.SubKey == aliasToDelete);
+                                    subElements.RemoveAll(e => e.SubKey == alias);
 
                                     if (subElements.Count == 0)
                                     {
@@ -210,15 +217,15 @@ public static class BotCommands
                             }
                             else if (guildUser != null && guildUser.GuildPermissions.Administrator)
                             {
-                                Declare.receiverAliases.Remove(aliasToDelete);
+                                Declare.receiverAliases.Remove(alias);
                                 DataManager.SaveReceiverAliases();
-                                message = $"ADMIN : Alias '{aliasToDelete}' supprimé.";
+                                message = $"ADMIN : Alias '{alias}' supprimé.";
 
                                 if (Declare.recapList.ContainsKey(value))
                                 {
                                     DataManager.LoadRecapList();
                                     var subElements = Declare.recapList[value];
-                                    subElements.RemoveAll(e => e.SubKey == aliasToDelete);
+                                    subElements.RemoveAll(e => e.SubKey == alias);
 
                                     if (subElements.Count == 0)
                                     {
@@ -230,12 +237,12 @@ public static class BotCommands
                             }
                             else
                             {
-                                message = $"Vous n'êtes pas le détenteur de cet alias : '{aliasToDelete}'. Suppression non effectuée..";
+                                message = $"Vous n'êtes pas le détenteur de cet alias : '{alias}'. Suppression non effectuée..";
                             }
                         }
                         else
                         {
-                            message = $"Aucun alias trouvé pour '{aliasToDelete}'.";
+                            message = $"Aucun alias trouvé pour '{alias}'.";
                         }
                     }
                 }
@@ -243,16 +250,16 @@ public static class BotCommands
 
             case "add-alias":
                 DataManager.LoadReceiverAliases();
-                var aliasToAdd = command.Data.Options.FirstOrDefault()?.Value as string;
-                if (aliasToAdd != null)
+
+                if (alias != null)
                 {
                     receiverId = command.User.Id.ToString();
 
-                    if (!Declare.receiverAliases.ContainsKey(aliasToAdd))
+                    if (!Declare.receiverAliases.ContainsKey(alias))
                     {
-                        Declare.receiverAliases[aliasToAdd] = receiverId;
+                        Declare.receiverAliases[alias] = receiverId;
                         DataManager.SaveReceiverAliases();
-                        message = $"Alias ajouté : {aliasToAdd} est maintenant associé à <@{receiverId}>.";
+                        message = $"Alias ajouté : {alias} est maintenant associé à <@{receiverId}>.";
 
                         DataManager.LoadRecapList();
                         if (!Declare.recapList.ContainsKey(receiverId))
@@ -260,12 +267,12 @@ public static class BotCommands
                             Declare.recapList[receiverId] = new List<SubElement>();
                         }
 
-                        var recapUser = Declare.recapList[receiverId].Find(e => e.SubKey == aliasToAdd);
+                        var recapUser = Declare.recapList[receiverId].Find(e => e.SubKey == alias);
                         if (recapUser == null)
                         {
                             Declare.recapList[receiverId].Add(new SubElement
                             {
-                                SubKey = aliasToAdd,
+                                SubKey = alias,
                                 Values = new List<string> { "Aucun élément" }
                             });
                         }
@@ -273,7 +280,7 @@ public static class BotCommands
                     }
                     else
                     {
-                        message = $"L'alias '{aliasToAdd}' est déjà utilisé par <@{Declare.receiverAliases[aliasToAdd]}>.";
+                        message = $"L'alias '{alias}' est déjà utilisé par <@{Declare.receiverAliases[alias]}>.";
                     }
                 }
                 break;
@@ -432,25 +439,34 @@ public static class BotCommands
                     }
                     else if (Declare.recapList.TryGetValue(receiverId, out var subElements))
                     {
-                        message = $"Détails pour <@{receiverId}> :\n";
+                        var getUser = subElements.Any(x => x.SubKey == alias);
 
-                        foreach (var subElement in subElements)
+                        if (getUser)
                         {
-                            if (subElement.Values != null && subElement.Values.Any())
-                            {
-                                var groupedValues = subElement.Values
-                                    .GroupBy(value => value)
-                                    .Select(group => new { Value = group.Key, Count = group.Count() });
+                            message = $"Détails pour <@{receiverId}> :\n";
 
-                                string groupedMessage = string.Join(", ", groupedValues.Select(g =>
-                                    g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
-
-                                message += $"**{subElement.SubKey}** : {groupedMessage} \n";
-                            }
-                            else
+                            foreach (var subElement in subElements.Where(x => x.SubKey == alias))
                             {
-                                message += $"**{subElement.SubKey}** : Aucun élément \n";
+                                if (subElement.Values != null && subElement.Values.Any())
+                                {
+                                    var groupedValues = subElement.Values
+                                        .GroupBy(value => value)
+                                        .Select(group => new { Value = group.Key, Count = group.Count() });
+
+                                    string groupedMessage = string.Join(", ", groupedValues.Select(g =>
+                                        g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
+
+                                    message += $"**{subElement.SubKey}** : {groupedMessage} \n";
+                                }
+                                else
+                                {
+                                    message += $"**{subElement.SubKey}** : Aucun élément \n";
+                                }
                             }
+                        }
+                        else
+                        {
+                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
                         }
                     }
                     else
@@ -487,29 +503,44 @@ public static class BotCommands
                     {
                         message = $"Détails pour <@{receiverId}> :\n";
 
-                        foreach (var subElement in subElements)
+                        var getUser = subElements.Any(x => x.SubKey == alias);
+
+                        if (getUser)
                         {
-                            if (subElement.Values != null && subElement.Values.Any())
+                            foreach (var subElement in subElements.Where(x => x.SubKey == alias))
                             {
-                                var groupedValues = subElement.Values
-                                    .GroupBy(value => value)
-                                    .Select(group => new { Value = group.Key, Count = group.Count() });
 
-                                string groupedMessage = string.Join(", ", groupedValues.Select(g =>
-                                    g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
 
-                                message += $"**{subElement.SubKey}** : {groupedMessage} \n";
-                            }
-                            else
-                            {
-                                message += $"**{subElement.SubKey}** : Aucun élément \n";
+                                if (subElement.Values != null && subElement.Values.Any())
+                                {
+                                    var groupedValues = subElement.Values
+                                        .GroupBy(value => value)
+                                        .Select(group => new { Value = group.Key, Count = group.Count() });
+
+                                    string groupedMessage = string.Join(", ", groupedValues.Select(g =>
+                                        g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
+
+                                    message += $"**{subElement.SubKey}** : {groupedMessage} \n";
+                                }
+                                else
+                                {
+                                    message += $"**{subElement.SubKey}** : Aucun élément \n";
+                                }
                             }
                         }
-
-                        foreach (var subElement in subElements)
+                        else
                         {
-                            subElement.Values.Clear();
-                            subElement.Values.Add("Aucun élément");
+                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+
+                        }
+
+                        foreach (var subElement in subElements.Where(x => x.SubKey == alias))
+                        {
+                            if (getUser)
+                            {
+                                subElement.Values.Clear();
+                                subElement.Values.Add("Aucun élément");
+                            }
                         }
 
                         DataManager.SaveRecapList();
@@ -533,6 +564,71 @@ public static class BotCommands
                     await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                 }
                 break;
+
+            case "clean":
+                DataManager.LoadReceiverAliases();
+                receiverId = command.User.Id.ToString();
+
+
+                if (!Declare.receiverAliases.ContainsValue(receiverId))
+                {
+                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                }
+                else
+                {
+                    DataManager.LoadRecapList();
+                    if (Declare.recapList.TryGetValue(receiverId, out var subElements))
+                    {
+                        var getUser = subElements.Any(x => x.SubKey == alias);
+
+                        if(getUser)
+                        {
+
+                            foreach (var subElement in subElements.Where(x => x.SubKey == alias))
+                            {
+                                if (subElement.Values != null && subElement.Values.Any())
+                                {
+                                    var groupedValues = subElement.Values
+                                        .GroupBy(value => value)
+                                        .Select(group => new { Value = group.Key, Count = group.Count() });
+
+                                    string groupedMessage = string.Join(", ", groupedValues.Select(g =>
+                                        g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
+
+                                }
+                            }
+
+                            foreach (var subElement in subElements.Where(x => x.SubKey == alias))
+                            {
+                                subElement.Values.Clear();
+                                subElement.Values.Add("Aucun élément");
+                            }
+
+                            DataManager.SaveRecapList();
+                            DataManager.LoadRecapList();
+                        }
+                        else
+                        {
+                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+                        }
+                    }
+                    else
+                    {
+                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(message))
+                {
+                    await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+                }
+                else
+                {
+                    await command.FollowupAsync($"Clean pour Alias {alias} effectué", options: new RequestOptions { Timeout = 10000 });
+                }
+                break;
+
+
             case "list-items":
                 DataManager.LoadDisplayedItems();
 
@@ -587,7 +683,7 @@ public static class BotCommands
                 }
                 break;
             default:
-                message= "Commande inconnue.";
+                message = "Commande inconnue.";
                 break;
 
         }
