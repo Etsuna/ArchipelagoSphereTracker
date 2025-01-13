@@ -285,7 +285,7 @@ public static class TrackingDataManager
                                 {
                                     if (GameStatus == "Goal Completed")
                                     {
-                                        await BotCommands.SendMessageAsync($"<@everyone> {Name} has completed their goal !");
+                                        await BotCommands.SendMessageAsync($"@everyone {Name} has completed their goal !");
                                         var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
                                         if(editStatus != null)
                                         {
