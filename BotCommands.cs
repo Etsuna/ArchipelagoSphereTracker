@@ -71,51 +71,61 @@ public static class BotCommands
     public static async Task RegisterCommandsAsync()
     {
         var commands = new List<SlashCommandBuilder>
-    {
-        new SlashCommandBuilder()
-            .WithName("get-aliases")
-            .WithDescription("Get Aliases"),
+        {
+            new SlashCommandBuilder()
+                .WithName("get-aliases")
+                .WithDescription("Get Aliases"),
 
-        new SlashCommandBuilder()
-            .WithName("delete-alias")
-            .WithDescription("Delete Alias")
-            .AddOption(BuildAliasOption(Declare.aliasChoices)),
+            new SlashCommandBuilder()
+                .WithName("delete-alias")
+                .WithDescription("Delete Alias")
+                .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
-         new SlashCommandBuilder()
-            .WithName("add-alias")
-            .WithDescription("Add Alias")
-            .AddOption(BuildAliasOption(Declare.aliasChoices)),
+             new SlashCommandBuilder()
+                .WithName("add-alias")
+                .WithDescription("Add Alias")
+                .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
-        new SlashCommandBuilder()
-            .WithName("add-url")
-            .WithDescription("Add Url")
-            .AddOption("url", ApplicationCommandOptionType.String, "The URL to track", isRequired: true),
+            new SlashCommandBuilder()
+                .WithName("add-url")
+                .WithDescription("Add Url")
+                .AddOption("url", ApplicationCommandOptionType.String, "The URL to track", isRequired: true),
 
-        new SlashCommandBuilder()
-            .WithName("delete-url")
-            .WithDescription("Delete Url, clean Alias and Recap"),
+            new SlashCommandBuilder()
+                .WithName("delete-url")
+                .WithDescription("Delete Url, clean Alias and Recap"),
 
-        new SlashCommandBuilder()
-        .WithName("recap")
-        .WithDescription("Recap List of items")
-        .AddOption(BuildAliasOption(Declare.aliasChoices)),
+            new SlashCommandBuilder()
+                .WithName("recap")
+                .WithDescription("Recap List of items")
+                .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
-        new SlashCommandBuilder()
-        .WithName("recap-and-clean")
-        .WithDescription("Recap and clean List of items")
-        .AddOption(BuildAliasOption(Declare.aliasChoices)),
+            new SlashCommandBuilder()
+                .WithName("recap-and-clean")
+                .WithDescription("Recap and clean List of items")
+                .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
-         new SlashCommandBuilder()
-        .WithName("clean")
-        .WithDescription("Recap and clean List of items")
-        .AddOption(BuildAliasOption(Declare.aliasChoices)),
+            new SlashCommandBuilder()
+                .WithName("clean")
+                .WithDescription("Recap and clean List of items")
+                .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
-        new SlashCommandBuilder()
-        .WithName("list-items")
-        .WithDescription("List all items for alias")
-        .AddOption(BuildAliasOption(Declare.aliasChoices))
-        .AddOption(BuildListItemsOption())
-    };
+            new SlashCommandBuilder()
+                 .WithName("hint-by-finder")
+                 .WithDescription("Get a hint by finder")
+                 .AddOption(BuildAliasOption(Declare.aliasChoices)),
+
+            new SlashCommandBuilder()
+                 .WithName("hint-by-receiver")
+                 .WithDescription("Get a hint by receiver")
+                 .AddOption(BuildAliasOption(Declare.aliasChoices)),
+
+            new SlashCommandBuilder()
+                .WithName("list-items")
+                .WithDescription("List all items for alias")
+                .AddOption(BuildAliasOption(Declare.aliasChoices))
+                .AddOption(BuildListItemsOption()),
+        };
 
         foreach (var guild in Declare.client.Guilds)
         {
@@ -400,6 +410,18 @@ public static class BotCommands
                         Console.WriteLine(message);
                     }
 
+                    try
+                    {
+                        if (File.Exists(Declare.hintStatusFile))
+                        {
+                            File.Delete(Declare.hintStatusFile);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        message += $"\nErreur lors de la suppression du fichier aliasFile : {ex.Message}";
+                        Console.WriteLine(message);
+                    }
 
                     if (string.IsNullOrEmpty(Declare.urlSphereTracker))
                     {
@@ -415,6 +437,7 @@ public static class BotCommands
                         Declare.displayedItems.Clear();
                         Declare.aliasChoices.Clear();
                         Declare.gameStatus.Clear();
+                        Declare.hintStatuses.Clear();
 
                         message = "URL Supprimée.";
                         await RegisterCommandsAsync();
@@ -581,7 +604,7 @@ public static class BotCommands
                     {
                         var getUser = subElements.Any(x => x.SubKey == alias);
 
-                        if(getUser)
+                        if (getUser)
                         {
 
                             foreach (var subElement in subElements.Where(x => x.SubKey == alias))
@@ -646,7 +669,7 @@ public static class BotCommands
                 .OrderBy(group => group.ItemName)
                 .ToList();
 
-                if (filteredItems.Any())
+                if (filteredItems.Count != 0)
                 {
                     message = $"Items pour {receiverId} :\n";
 
@@ -680,6 +703,36 @@ public static class BotCommands
                     {
                         await command.FollowupAsync(message);
                     }
+                }
+                break;
+            case "hint-by-finder":
+                var hintByFinder = Declare.hintStatuses.Where(h => h.finder == alias).ToList();
+
+                if (hintByFinder.Count != 0)
+                {
+                    foreach (var item in hintByFinder)
+                    {
+                        message = $"Item: {item.item}, Found By: {item.finder} For: {item.receiver}, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n!";
+                    }
+                }
+                else
+                {
+                    message = "No hint found for this finder";
+                }
+                break;
+            case "hint-by-receiver":
+                var hintByReceiver = Declare.hintStatuses.Where(h => h.receiver == alias).ToList();
+
+                if (hintByReceiver.Count != 0)
+                {
+                    foreach (var item in hintByReceiver)
+                    {
+                        message = $"Item: {item.item}, Found By: {item.finder} For: {item.receiver}, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n!";
+                    }
+                }
+                else
+                {
+                    message = "No hint found for this receiver";
                 }
                 break;
             default:

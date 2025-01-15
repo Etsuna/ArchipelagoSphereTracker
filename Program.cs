@@ -30,6 +30,7 @@ class Program
         DataManager.LoadGameStatus();
         DataManager.LoadUrlAndChannel();
         DataManager.LoadRecapList();
+        DataManager.LoadHintStatus();
         DataManager.AddMissingRecapUser();
 
         await Declare.client.LoginAsync(TokenType.Bot, Declare.discordToken);

@@ -137,7 +137,26 @@ public static class DataManager
         if (File.Exists(Declare.gameStatusFile))
         {
             var json = File.ReadAllText(Declare.gameStatusFile);
-            Declare.gameStatus = JsonConvert.DeserializeObject<List<trackerElement>>(json);
+            Declare.gameStatus = JsonConvert.DeserializeObject<List<gameStatus>>(json);
         }
+    }
+
+    public static void LoadHintStatus()
+    {
+        if (Declare.hintStatuses != null)
+        {
+            Declare.hintStatuses.Clear();
+        }
+        if (File.Exists(Declare.hintStatusFile))
+        {
+            var json = File.ReadAllText(Declare.hintStatusFile);
+            Declare.hintStatuses = JsonConvert.DeserializeObject<List<hintStatus>>(json);
+        }
+    }
+
+    public static void SaveHintStatus()
+    {
+        var json = JsonConvert.SerializeObject(Declare.hintStatuses);
+        File.WriteAllText(Declare.hintStatusFile, json);
     }
 }

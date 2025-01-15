@@ -141,7 +141,7 @@ public static class TrackingDataManager
                 }
             }
         }
-        if(!File.Exists(Declare.displayedItemsFile) || isUpdated)
+        if (!File.Exists(Declare.displayedItemsFile) || isUpdated)
         {
             DataManager.SaveRecapList();
             DataManager.SaveDisplayedItems();
@@ -205,7 +205,7 @@ public static class TrackingDataManager
 
                                 if (!Declare.gameStatus.Any(x => x.name == Name))
                                 {
-                                    Declare.gameStatus.Add(new trackerElement
+                                    Declare.gameStatus.Add(new gameStatus
                                     {
                                         hachtag = hachtag,
                                         name = Name,
@@ -247,11 +247,11 @@ public static class TrackingDataManager
 
             if (tables != null && tables.Any())
             {
-                var firstTable = tables.FirstOrDefault();
+                var gameStatusTable = tables[0];
 
-                if (firstTable != null)
+                if (gameStatusTable != null)
                 {
-                    var rows = firstTable.SelectNodes(".//tr");
+                    var rows = gameStatusTable.SelectNodes(".//tr");
 
                     if (rows != null)
                     {
@@ -287,7 +287,7 @@ public static class TrackingDataManager
                                     {
                                         await BotCommands.SendMessageAsync($"@everyone {Name} has completed their goal !");
                                         var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
-                                        if(editStatus != null)
+                                        if (editStatus != null)
                                         {
                                             editStatus.status = "Goal Completed";
                                             changeFound = true;
@@ -298,9 +298,81 @@ public static class TrackingDataManager
                         }
                     }
                 }
-                if(changeFound)
+                if (changeFound)
                 {
                     DataManager.SaveGameStatus();
+                }
+
+                changeFound = false;
+
+                var hintTable = tables[1];
+                if (hintTable != null)
+                {
+                    var rows = hintTable.SelectNodes(".//tr");
+
+                    if (rows != null)
+                    {
+                        bool isFirstRow = true;
+                        foreach (var row in rows)
+                        {
+                            var cells = row.SelectNodes("td");
+
+                            if (cells == null)
+                            {
+                                cells = row.SelectNodes("th");
+                            }
+
+                            if (cells != null && cells.Count == 7)
+                            {
+                                var finder = WebUtility.HtmlDecode(cells[0].InnerText.Trim());
+                                var receiver = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
+                                var item = WebUtility.HtmlDecode(cells[2].InnerText.Trim());
+                                var location = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
+                                var game = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
+                                var entrance = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
+                                var found = WebUtility.HtmlDecode(cells[6].InnerText.Trim()); //null if not found, Vanilla is found
+
+                                if (isFirstRow)
+                                {
+                                    isFirstRow = false;
+                                    continue;
+                                }
+
+                                bool exists = Declare.hintStatuses.Any(x => x.finder == finder && x.receiver == receiver && x.item == item && x.location == location && x.game == game && x.entrance == entrance);
+
+                                if (!exists)
+                                {
+                                    if (string.IsNullOrEmpty(found))
+                                    {
+                                        Declare.hintStatuses.Add(new hintStatus
+                                        {
+                                            finder = finder,
+                                            receiver = receiver,
+                                            item = item,
+                                            location = location,
+                                            game = game,
+                                            entrance = entrance,
+                                            found = ""
+                                        });
+                                        changeFound = true;
+                                    }
+                                }
+                                else
+                                {
+                                    if (!string.IsNullOrEmpty(found))
+                                    {
+                                        var needToRemove = Declare.hintStatuses.FirstOrDefault(x => x.finder == finder && x.receiver == receiver && x.item == item && x.location == location && x.game == game && x.entrance == entrance);
+                                        Declare.hintStatuses.Remove(needToRemove);
+                                        changeFound = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (changeFound)
+                    {
+                        DataManager.SaveHintStatus();
+                    }
                 }
             }
         }

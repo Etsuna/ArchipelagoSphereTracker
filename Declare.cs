@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using Discord.Commands;
+using System.Net.NetworkInformation;
 
 public static class Declare
 {
@@ -9,6 +10,7 @@ public static class Declare
     public static readonly string gameStatusFile = "gameStatus.json";
     public static readonly string urlChannelFile = "url_channel.json";
     public static readonly string recapListFile = "recap.json";
+    public static readonly string hintStatusFile = "hintStatus.json";
     public static readonly string discordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
 
     public static string urlSphereTracker = string.Empty;
@@ -17,8 +19,10 @@ public static class Declare
     public static Dictionary<string, string> receiverAliases = new Dictionary<string, string>();
     public static Dictionary<string, List<SubElement>> recapList = new Dictionary<string, List<SubElement>>();
     public static IDictionary<string, string> aliasChoices = new Dictionary<string, string>();
-    public static List<trackerElement> gameStatus = new List<trackerElement>();
+    public static List<gameStatus> gameStatus = new List<gameStatus>();
     public static List<displayedItemsElement> displayedItems = new List<displayedItemsElement>();
+    public static List<hintStatus> hintStatuses = new List<hintStatus>();
+
     public static CancellationTokenSource cts;
     public static DiscordSocketClient client;
     public static CommandService commandService;
