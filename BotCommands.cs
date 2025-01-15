@@ -710,9 +710,10 @@ public static class BotCommands
 
                 if (hintByFinder.Count != 0)
                 {
+                    message = $"finder by {alias} :\n";
                     foreach (var item in hintByFinder)
                     {
-                        message += $"Item: {item.item}, Found By: {item.finder} For: {item.receiver}, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n!";
+                        message += $"Item: **{item.item}**, Receiver For: **{item.receiver}**, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n";
                     }
                 }
                 else
@@ -725,9 +726,10 @@ public static class BotCommands
 
                 if (hintByReceiver.Count != 0)
                 {
+                    message = $"receiver by {alias} :\n";
                     foreach (var item in hintByReceiver)
                     {
-                        message += $"Item: {item.item}, Found By: {item.finder} For: {item.receiver}, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n!";
+                        message += $"Item: **{item.item}**, Found By: **{item.finder}**, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n";
                     }
                 }
                 else
