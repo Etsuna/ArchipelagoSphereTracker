@@ -712,7 +712,7 @@ public static class BotCommands
                 {
                     foreach (var item in hintByFinder)
                     {
-                        message = $"Item: {item.item}, Found By: {item.finder} For: {item.receiver}, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n!";
+                        message += $"Item: {item.item}, Found By: {item.finder} For: {item.receiver}, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n!";
                     }
                 }
                 else
@@ -727,7 +727,7 @@ public static class BotCommands
                 {
                     foreach (var item in hintByReceiver)
                     {
-                        message = $"Item: {item.item}, Found By: {item.finder} For: {item.receiver}, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n!";
+                        message += $"Item: {item.item}, Found By: {item.finder} For: {item.receiver}, Game: {item.game}, Location: {item.location}, Entrance: {item.entrance}\n!";
                     }
                 }
                 else
