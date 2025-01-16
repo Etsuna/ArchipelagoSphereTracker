@@ -48,8 +48,9 @@ public static class TrackingDataManager
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        var data = new Dictionary<string, string>();
         var rows = doc.DocumentNode.SelectNodes("//table//tr");
+
+        var messagesToSend = new List<string>();
 
         foreach (var row in rows)
         {
@@ -75,12 +76,12 @@ public static class TrackingDataManager
                 };
 
                 bool exists = Declare.displayedItems.Any(x =>
-                x.sphere == newItem.sphere &&
-                x.finder == newItem.finder &&
-                x.receiver == newItem.receiver &&
-                x.item == newItem.item &&
-                x.location == newItem.location &&
-                x.game == newItem.game);
+                    x.sphere == newItem.sphere &&
+                    x.finder == newItem.finder &&
+                    x.receiver == newItem.receiver &&
+                    x.item == newItem.item &&
+                    x.location == newItem.location &&
+                    x.game == newItem.game);
 
                 if (!exists)
                 {
@@ -103,49 +104,71 @@ public static class TrackingDataManager
                         value = $"{finder} sent {item} to {receiver} ({location})";
                     }
 
-                    if (File.Exists(Declare.displayedItemsFile))
-                    {
-                        if (!string.IsNullOrEmpty(userId))
-                        {
-                            if (!Declare.recapList.ContainsKey(userId))
-                            {
-                                Declare.recapList[userId] = new List<SubElement>();
-                            }
-
-                            var itemToAdd = Declare.recapList[userId].Find(e => e.SubKey == receiver);
-                            if (itemToAdd != null)
-                            {
-                                itemToAdd.Values.Add(item);
-                                itemToAdd.Values.Remove("Aucun élément");
-                            }
-                            else
-                            {
-                                Declare.recapList[userId].Add(new SubElement
-                                {
-                                    SubKey = receiver,
-                                    Values = new List<string> { item }
-                                });
-
-                                if (itemToAdd != null)
-                                {
-                                    itemToAdd.Values.Remove("Aucun élément");
-                                };
-                            }
-                        }
-                    }
-
-                    if (File.Exists(Declare.displayedItemsFile))
-                    {
-                        await BotCommands.SendMessageAsync(value);
-                    }
+                    messagesToSend.Add(value);
                 }
             }
         }
+
+        if (messagesToSend.Any())
+        {
+            var messageBatch = new List<string>();
+            int currentBatchLength = 0;
+
+            foreach (var message in messagesToSend)
+            {
+                if (currentBatchLength + message.Length + 1 > 2000)
+                {
+                    await SendMessagesInBatchesAsync(messageBatch);
+                    messageBatch.Clear();
+                    currentBatchLength = 0;
+                }
+
+                messageBatch.Add(message);
+                currentBatchLength += message.Length + 1; 
+            }
+
+           
+            if (messageBatch.Any())
+            {
+                await SendMessagesInBatchesAsync(messageBatch);
+            }
+        }
+
         if (!File.Exists(Declare.displayedItemsFile) || isUpdated)
         {
             DataManager.SaveRecapList();
             DataManager.SaveDisplayedItems();
         }
+    }
+
+    static async Task SendMessagesInBatchesAsync(List<string> messages)
+    {
+        string combinedMessage = string.Join("\n", messages);
+
+        if (combinedMessage.Length > 2000)
+        {
+            var chunks = SplitMessageIntoChunks(combinedMessage, 2000);
+            foreach (var chunk in chunks)
+            {
+                await BotCommands.SendMessageAsync(chunk);
+                await Task.Delay(1000); 
+            }
+        }
+        else
+        {
+            await BotCommands.SendMessageAsync(combinedMessage);
+            await Task.Delay(1000);
+        }
+    }
+
+    static List<string> SplitMessageIntoChunks(string message, int maxLength)
+    {
+        var chunks = new List<string>();
+        for (int i = 0; i < message.Length; i += maxLength)
+        {
+            chunks.Add(message.Substring(i, Math.Min(maxLength, message.Length - i)));
+        }
+        return chunks;
     }
 
     static async Task setAliasAndGameStatusAsync()
