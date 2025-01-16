@@ -325,6 +325,7 @@ public static class TrackingDataManager
                             if (cells != null && cells.Count == 7)
                             {
                                 var Name = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
+                                var Game = WebUtility.HtmlDecode(cells[2].InnerText.Trim());
                                 var GameStatus = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
 
                                 if (isFirstRow)
@@ -342,7 +343,7 @@ public static class TrackingDataManager
                                 {
                                     if (GameStatus == "Goal Completed")
                                     {
-                                        await BotCommands.SendMessageAsync($"@everyone {Name} has completed their goal !");
+                                        await BotCommands.SendMessageAsync($"@everyone {Name} has completed their goal for this game: {Game}!");
                                         var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
                                         if (editStatus != null)
                                         {
@@ -387,7 +388,7 @@ public static class TrackingDataManager
                                 var location = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
                                 var game = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
                                 var entrance = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
-                                var found = WebUtility.HtmlDecode(cells[6].InnerText.Trim()); //null if not found, Vanilla is found
+                                var found = WebUtility.HtmlDecode(cells[6].InnerText.Trim()); 
 
                                 if (isFirstRow)
                                 {
