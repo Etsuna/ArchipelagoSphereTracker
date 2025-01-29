@@ -268,9 +268,13 @@ public static class TrackingDataManager
 
                             if (cells != null && cells.Count == 7)
                             {
+                                var hachtag = WebUtility.HtmlDecode(cells[0].InnerText.Trim());
                                 var Name = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
                                 var Game = WebUtility.HtmlDecode(cells[2].InnerText.Trim());
                                 var GameStatus = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
+                                var checks = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
+                                var pourcent = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
+                                var lastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim());
 
                                 if (isFirstRow)
                                 {
@@ -283,15 +287,28 @@ public static class TrackingDataManager
                                     continue;
                                 }
 
-                                if (Declare.gameStatus.Any(x => x.name == Name && (x.status != "Goal Complete")))
+                                if(Declare.gameStatus.Any(x => x.name == Name && x.pourcent != pourcent))
                                 {
-                                    if (GameStatus == "Goal Completed")
+                                    var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
+                                    if (editStatus != null)
+                                    {
+                                        editStatus.checks = checks;
+                                        editStatus.pourcent = pourcent;
+                                        changeFound = true;
+                                    }
+                                }
+
+                                if (Declare.gameStatus.Any(x => x.name == Name && ((x.status != "Goal Complete") || x.pourcent != "100.00")))
+                                {
+                                    if (pourcent == "100.00" || GameStatus == "Goal Complete")
                                     {
                                         await BotCommands.SendMessageAsync($"@everyone {Name} has completed their goal for this game: {Game}!");
                                         var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
                                         if (editStatus != null)
                                         {
+                                            editStatus.checks = checks;
                                             editStatus.status = "Goal Completed";
+                                            editStatus.pourcent = "100.00";
                                             changeFound = true;
                                         }
                                     }
