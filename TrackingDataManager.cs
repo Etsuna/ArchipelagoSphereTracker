@@ -282,6 +282,22 @@ public static class TrackingDataManager
                                     continue;
                                 }
 
+                                if (!Declare.gameStatus.Any(name => name.name == Name))
+                                {
+                                    gameStatus newEntry = new gameStatus
+                                    {
+                                        hachtag = hachtag,
+                                        name = Name,
+                                        game = Game,
+                                        status = GameStatus,
+                                        checks = checks,
+                                        pourcent = pourcent,
+                                        lastActivity = lastActivity
+                                    };
+
+                                    Declare.gameStatus.Add(newEntry);
+                                }
+
                                 if (Declare.gameStatus.Any(x => x.name == Name && x.status == "Goal Completed"))
                                 {
                                     continue;
