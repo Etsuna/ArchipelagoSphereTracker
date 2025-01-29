@@ -814,7 +814,14 @@ public static class BotCommands
                 message = "Status for all games :\n";
                 foreach (var game in Declare.gameStatus)
                 {
-                    message += $"{game.name} - {game.game} - {game.pourcent}%\n";
+                    if(game.pourcent != "100.00")
+                    {
+                        message += $"**{game.name} - {game.game} - {game.pourcent}%**\n";
+                    }
+                    else 
+                    {
+                        message += $"~~{game.name} - {game.game} - {game.pourcent}%~~\n";
+                    }
                 }
                 break;
 
