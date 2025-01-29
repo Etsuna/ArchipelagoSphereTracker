@@ -96,18 +96,26 @@ public static class BotCommands
                 .WithDescription("Delete Url, clean Alias and Recap"),
 
             new SlashCommandBuilder()
+                .WithName("status-games-list")
+                .WithDescription("status for all games"),
+
+            new SlashCommandBuilder()
+                .WithName("recap-all")
+                .WithDescription("His own recap list of items for all the games"),
+
+            new SlashCommandBuilder()
                 .WithName("recap")
-                .WithDescription("Recap List of items")
+                .WithDescription("Recap List of items for a specific game")
                 .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
             new SlashCommandBuilder()
                 .WithName("recap-and-clean")
-                .WithDescription("Recap and clean List of items")
+                .WithDescription("Recap and clean List of items for a specific game")
                 .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
             new SlashCommandBuilder()
                 .WithName("clean")
-                .WithDescription("Recap and clean List of items")
+                .WithDescription("Recap and clean List of items for a specific game")
                 .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
             new SlashCommandBuilder()
@@ -445,6 +453,70 @@ public static class BotCommands
                 }
                 break;
 
+            case "recap-all":
+                DataManager.LoadReceiverAliases();
+                receiverId = command.User.Id.ToString();
+
+                if (!Declare.receiverAliases.ContainsValue(receiverId))
+                {
+                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                }
+                else
+                {
+                    DataManager.LoadRecapList();
+                    if (Declare.recapList == null)
+                    {
+                        message = "Il existe aucune liste.";
+                    }
+                    else if (Declare.recapList.TryGetValue(receiverId, out var subElements))
+                    {
+                        if (subElements.Any())
+                        {
+                            message = $"Détails pour <@{receiverId}> :\n";
+
+                            foreach (var subElement in subElements)
+                            {
+                                if (subElement.Values != null && subElement.Values.Any())
+                                {
+                                    var groupedValues = subElement.Values
+                                        .GroupBy(value => value)
+                                        .Select(group => new { Value = group.Key, Count = group.Count() });
+
+                                    string groupedMessage = string.Join(", ", groupedValues.Select(g =>
+                                        g.Count > 1 ? $"{g.Value} x {g.Count}" : g.Value));
+
+                                    message += $"**{subElement.SubKey}** : {groupedMessage} \n";
+                                }
+                                else
+                                {
+                                    message += $"**{subElement.SubKey}** : Aucun élément \n";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+                        }
+                    }
+                    else
+                    {
+                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    }
+                }
+
+                while (message.Length > maxMessageLength)
+                {
+                    string messagePart = message.Substring(0, maxMessageLength);
+                    await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
+                    message = message.Substring(maxMessageLength);
+                }
+
+                if (!string.IsNullOrEmpty(message))
+                {
+                    await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+                }
+                break;
+
             case "recap":
                 DataManager.LoadReceiverAliases();
                 receiverId = command.User.Id.ToString();
@@ -477,7 +549,7 @@ public static class BotCommands
                                         .Select(group => new { Value = group.Key, Count = group.Count() });
 
                                     string groupedMessage = string.Join(", ", groupedValues.Select(g =>
-                                        g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
+                                        g.Count > 1 ? $"{g.Value} x {g.Count}" : g.Value));
 
                                     message += $"**{subElement.SubKey}** : {groupedMessage} \n";
                                 }
@@ -541,7 +613,7 @@ public static class BotCommands
                                         .Select(group => new { Value = group.Key, Count = group.Count() });
 
                                     string groupedMessage = string.Join(", ", groupedValues.Select(g =>
-                                        g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
+                                        g.Count > 1 ? $"{g.Value} x {g.Count} " : g.Value));
 
                                     message += $"**{subElement.SubKey}** : {groupedMessage} \n";
                                 }
@@ -592,7 +664,6 @@ public static class BotCommands
                 DataManager.LoadReceiverAliases();
                 receiverId = command.User.Id.ToString();
 
-
                 if (!Declare.receiverAliases.ContainsValue(receiverId))
                 {
                     message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
@@ -616,7 +687,7 @@ public static class BotCommands
                                         .Select(group => new { Value = group.Key, Count = group.Count() });
 
                                     string groupedMessage = string.Join(", ", groupedValues.Select(g =>
-                                        g.Count > 1 ? $"{g.Count} x {g.Value}" : g.Value));
+                                        g.Count > 1 ? $"{g.Value} x {g.Count} " : g.Value));
 
                                 }
                             }
@@ -651,7 +722,6 @@ public static class BotCommands
                 }
                 break;
 
-
             case "list-items":
                 DataManager.LoadDisplayedItems();
 
@@ -679,7 +749,7 @@ public static class BotCommands
 
                         if (groupedItem.Count > 1)
                         {
-                            message += $"{groupedItem.Count} x {groupedItem.ItemName}";
+                            message += $" {groupedItem.ItemName} x {groupedItem.Count}";
                         }
                         else
                         {
@@ -705,6 +775,7 @@ public static class BotCommands
                     }
                 }
                 break;
+
             case "hint-by-finder":
                 var hintByFinder = Declare.hintStatuses.Where(h => h.finder == alias).ToList();
 
@@ -713,7 +784,7 @@ public static class BotCommands
                     message = $"finder by {alias} :\n";
                     foreach (var item in hintByFinder)
                     {
-                        message += $"Item: **{item.item}**, For: **{item.receiver}**, Game: **{item.location}**, **{item.game}**" + (item.entrance != "Vanilla" ? $", Entrance: **{item.entrance}**" : "") + "\n";
+                        message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World";
                     }
                 }
                 else
@@ -721,6 +792,7 @@ public static class BotCommands
                     message = "No hint found for this finder";
                 }
                 break;
+
             case "hint-by-receiver":
                 var hintByReceiver = Declare.hintStatuses.Where(h => h.receiver == alias).ToList();
 
@@ -729,7 +801,7 @@ public static class BotCommands
                     message = $"receiver by {alias} :\n";
                     foreach (var item in hintByReceiver)
                     {
-                        message += $"Item: **{item.item}**, To: **{item.finder}**, Game: **{item.location}**, **{item.game}**" + (item.entrance != "Vanilla" ? $", Entrance: **{item.entrance}**" : "") + "\n";
+                        message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World";
                     }
                 }
                 else
@@ -737,12 +809,21 @@ public static class BotCommands
                     message = "No hint found for this receiver";
                 }
                 break;
+
+            case "status-games-list":
+                message = "Status for all games :\n";
+                foreach (var game in Declare.gameStatus)
+                {
+                    message += $"{game.name} - {game.game} - {game.pourcent}%\n";
+                }
+                break;
+
             default:
                 message = "Commande inconnue.";
                 break;
 
         }
-        if (!(command.CommandName.Contains("recap") || command.CommandName.Contains("list")))
+        if (!(command.CommandName.Contains("recap") || command.CommandName.Contains("list-items")))
         {
             await command.FollowupAsync(message);
         }
