@@ -232,102 +232,172 @@ public static class TrackingDataManager
 
     static async Task checkGameStatus()
     {
-        if (File.Exists(Declare.aliasChoicesFile))
+        DataManager.LoadGameStatus();
+        bool changeFound = false;
+        var clientHttp = new HttpClient();
+        var trackerUrl = Declare.urlSphereTracker;
+        Declare.urlTracker = trackerUrl.Replace("sphere_", "");
+
+        var html = await clientHttp.GetStringAsync(Declare.urlTracker);
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+
+        var tables = doc.DocumentNode.SelectNodes("//table");
+
+        if (tables != null && tables.Any())
         {
-            DataManager.LoadGameStatus();
-            bool changeFound = false;
-            var clientHttp = new HttpClient();
-            var trackerUrl = Declare.urlSphereTracker;
-            Declare.urlTracker = trackerUrl.Replace("sphere_", "");
+            var gameStatusTable = tables[0];
 
-            var html = await clientHttp.GetStringAsync(Declare.urlTracker);
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
-
-            var tables = doc.DocumentNode.SelectNodes("//table");
-
-            if (tables != null && tables.Any())
+            if (gameStatusTable != null)
             {
-                var gameStatusTable = tables[0];
+                var rows = gameStatusTable.SelectNodes(".//tr");
 
-                if (gameStatusTable != null)
+                if (rows != null)
                 {
-                    var rows = gameStatusTable.SelectNodes(".//tr");
-
-                    if (rows != null)
+                    bool isFirstRow = true;
+                    foreach (var row in rows)
                     {
-                        bool isFirstRow = true;
-                        foreach (var row in rows)
-                        {
-                            var cells = row.SelectNodes("td");
+                        var cells = row.SelectNodes("td");
 
-                            if (cells == null)
+                        if (cells == null)
+                        {
+                            cells = row.SelectNodes("th");
+                        }
+
+                        if (cells != null && cells.Count == 7)
+                        {
+                            var hachtag = WebUtility.HtmlDecode(cells[0].InnerText.Trim());
+                            var Name = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
+                            var Game = WebUtility.HtmlDecode(cells[2].InnerText.Trim());
+                            var GameStatus = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
+                            var checks = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
+                            var pourcent = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
+                            var lastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim());
+
+                            if (isFirstRow)
                             {
-                                cells = row.SelectNodes("th");
+                                isFirstRow = false;
+                                continue;
                             }
 
-                            if (cells != null && cells.Count == 7)
+                            if (!Declare.gameStatus.Any(name => name.name == Name))
                             {
-                                var hachtag = WebUtility.HtmlDecode(cells[0].InnerText.Trim());
-                                var Name = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
-                                var Game = WebUtility.HtmlDecode(cells[2].InnerText.Trim());
-                                var GameStatus = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
-                                var checks = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
-                                var pourcent = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
-                                var lastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim());
-
-                                if (isFirstRow)
+                                gameStatus newEntry = new gameStatus
                                 {
-                                    isFirstRow = false;
-                                    continue;
+                                    hachtag = hachtag,
+                                    name = Name,
+                                    game = Game,
+                                    status = GameStatus,
+                                    checks = checks,
+                                    pourcent = pourcent,
+                                    lastActivity = lastActivity
+                                };
+
+                                Declare.gameStatus.Add(newEntry);
+                                changeFound = true;
+                            }
+
+                            if (Declare.gameStatus.Any(x => x.name == Name && x.status == "Goal Completed"))
+                            {
+                                continue;
+                            }
+
+                            if (Declare.gameStatus.Any(x => x.name == Name && x.pourcent != pourcent))
+                            {
+                                var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
+                                if (editStatus != null)
+                                {
+                                    editStatus.checks = checks;
+                                    editStatus.pourcent = pourcent;
+                                    changeFound = true;
                                 }
+                            }
 
-                                if (!Declare.gameStatus.Any(name => name.name == Name))
+                            if (Declare.gameStatus.Any(x => x.name == Name && ((x.status != "Goal Complete") || x.pourcent != "100.00")))
+                            {
+                                if (pourcent == "100.00" || GameStatus == "Goal Complete")
                                 {
-                                    gameStatus newEntry = new gameStatus
-                                    {
-                                        hachtag = hachtag,
-                                        name = Name,
-                                        game = Game,
-                                        status = GameStatus,
-                                        checks = checks,
-                                        pourcent = pourcent,
-                                        lastActivity = lastActivity
-                                    };
-
-                                    Declare.gameStatus.Add(newEntry);
-                                }
-
-                                if (Declare.gameStatus.Any(x => x.name == Name && x.status == "Goal Completed"))
-                                {
-                                    continue;
-                                }
-
-                                if(Declare.gameStatus.Any(x => x.name == Name && x.pourcent != pourcent))
-                                {
+                                    await BotCommands.SendMessageAsync($"@everyone {Name} has completed their goal for this game: {Game}!");
                                     var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
                                     if (editStatus != null)
                                     {
                                         editStatus.checks = checks;
-                                        editStatus.pourcent = pourcent;
+                                        editStatus.status = "Goal Completed";
+                                        editStatus.pourcent = "100.00";
                                         changeFound = true;
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+            if (changeFound)
+            {
+                DataManager.SaveGameStatus();
+            }
 
-                                if (Declare.gameStatus.Any(x => x.name == Name && ((x.status != "Goal Complete") || x.pourcent != "100.00")))
+            changeFound = false;
+
+            var hintTable = tables[1];
+            if (hintTable != null)
+            {
+                var rows = hintTable.SelectNodes(".//tr");
+
+                if (rows != null)
+                {
+                    bool isFirstRow = true;
+                    foreach (var row in rows)
+                    {
+                        var cells = row.SelectNodes("td");
+
+                        if (cells == null)
+                        {
+                            cells = row.SelectNodes("th");
+                        }
+
+                        if (cells != null && cells.Count == 7)
+                        {
+                            var finder = WebUtility.HtmlDecode(cells[0].InnerText.Trim());
+                            var receiver = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
+                            var item = WebUtility.HtmlDecode(cells[2].InnerText.Trim());
+                            var location = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
+                            var game = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
+                            var entrance = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
+                            var found = WebUtility.HtmlDecode(cells[6].InnerText.Trim());
+
+                            if (isFirstRow)
+                            {
+                                isFirstRow = false;
+                                continue;
+                            }
+
+                            bool exists = Declare.hintStatuses.Any(x => x.finder == finder && x.receiver == receiver && x.item == item && x.location == location && x.game == game && x.entrance == entrance);
+
+                            if (!exists)
+                            {
+                                if (string.IsNullOrEmpty(found))
                                 {
-                                    if (pourcent == "100.00" || GameStatus == "Goal Complete")
+                                    Declare.hintStatuses.Add(new hintStatus
                                     {
-                                        await BotCommands.SendMessageAsync($"@everyone {Name} has completed their goal for this game: {Game}!");
-                                        var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
-                                        if (editStatus != null)
-                                        {
-                                            editStatus.checks = checks;
-                                            editStatus.status = "Goal Completed";
-                                            editStatus.pourcent = "100.00";
-                                            changeFound = true;
-                                        }
-                                    }
+                                        finder = finder,
+                                        receiver = receiver,
+                                        item = item,
+                                        location = location,
+                                        game = game,
+                                        entrance = entrance,
+                                        found = ""
+                                    });
+                                    changeFound = true;
+                                }
+                            }
+                            else
+                            {
+                                if (!string.IsNullOrEmpty(found))
+                                {
+                                    var needToRemove = Declare.hintStatuses.FirstOrDefault(x => x.finder == finder && x.receiver == receiver && x.item == item && x.location == location && x.game == game && x.entrance == entrance);
+                                    Declare.hintStatuses.Remove(needToRemove);
+                                    changeFound = true;
                                 }
                             }
                         }
@@ -335,79 +405,7 @@ public static class TrackingDataManager
                 }
                 if (changeFound)
                 {
-                    DataManager.SaveGameStatus();
-                }
-
-                changeFound = false;
-
-                var hintTable = tables[1];
-                if (hintTable != null)
-                {
-                    var rows = hintTable.SelectNodes(".//tr");
-
-                    if (rows != null)
-                    {
-                        bool isFirstRow = true;
-                        foreach (var row in rows)
-                        {
-                            var cells = row.SelectNodes("td");
-
-                            if (cells == null)
-                            {
-                                cells = row.SelectNodes("th");
-                            }
-
-                            if (cells != null && cells.Count == 7)
-                            {
-                                var finder = WebUtility.HtmlDecode(cells[0].InnerText.Trim());
-                                var receiver = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
-                                var item = WebUtility.HtmlDecode(cells[2].InnerText.Trim());
-                                var location = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
-                                var game = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
-                                var entrance = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
-                                var found = WebUtility.HtmlDecode(cells[6].InnerText.Trim()); 
-
-                                if (isFirstRow)
-                                {
-                                    isFirstRow = false;
-                                    continue;
-                                }
-
-                                bool exists = Declare.hintStatuses.Any(x => x.finder == finder && x.receiver == receiver && x.item == item && x.location == location && x.game == game && x.entrance == entrance);
-
-                                if (!exists)
-                                {
-                                    if (string.IsNullOrEmpty(found))
-                                    {
-                                        Declare.hintStatuses.Add(new hintStatus
-                                        {
-                                            finder = finder,
-                                            receiver = receiver,
-                                            item = item,
-                                            location = location,
-                                            game = game,
-                                            entrance = entrance,
-                                            found = ""
-                                        });
-                                        changeFound = true;
-                                    }
-                                }
-                                else
-                                {
-                                    if (!string.IsNullOrEmpty(found))
-                                    {
-                                        var needToRemove = Declare.hintStatuses.FirstOrDefault(x => x.finder == finder && x.receiver == receiver && x.item == item && x.location == location && x.game == game && x.entrance == entrance);
-                                        Declare.hintStatuses.Remove(needToRemove);
-                                        changeFound = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (changeFound)
-                    {
-                        DataManager.SaveHintStatus();
-                    }
+                    DataManager.SaveHintStatus();
                 }
             }
         }
