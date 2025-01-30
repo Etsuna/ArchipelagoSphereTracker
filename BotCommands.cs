@@ -784,7 +784,7 @@ public static class BotCommands
                     message = $"finder by {alias} :\n";
                     foreach (var item in hintByFinder)
                     {
-                        message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World";
+                        message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World\n";
                     }
                 }
                 else
@@ -801,7 +801,7 @@ public static class BotCommands
                     message = $"receiver by {alias} :\n";
                     foreach (var item in hintByReceiver)
                     {
-                        message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World";
+                        message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World\n";
                     }
                 }
                 else
