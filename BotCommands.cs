@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 
 public static class BotCommands
 {
@@ -117,6 +118,10 @@ public static class BotCommands
                 .WithName("clean")
                 .WithDescription("Recap and clean List of items for a specific game")
                 .AddOption(BuildAliasOption(Declare.aliasChoices)),
+
+            new SlashCommandBuilder()
+                .WithName("clean-all")
+                .WithDescription("Recap and clean his own recap list of items for all the games"),
 
             new SlashCommandBuilder()
                  .WithName("hint-by-finder")
@@ -680,20 +685,6 @@ public static class BotCommands
 
                             foreach (var subElement in subElements.Where(x => x.SubKey == alias))
                             {
-                                if (subElement.Values != null && subElement.Values.Any())
-                                {
-                                    var groupedValues = subElement.Values
-                                        .GroupBy(value => value)
-                                        .Select(group => new { Value = group.Key, Count = group.Count() });
-
-                                    string groupedMessage = string.Join(", ", groupedValues.Select(g =>
-                                        g.Count > 1 ? $"{g.Value} x {g.Count} " : g.Value));
-
-                                }
-                            }
-
-                            foreach (var subElement in subElements.Where(x => x.SubKey == alias))
-                            {
                                 subElement.Values.Clear();
                                 subElement.Values.Add("Aucun élément");
                             }
@@ -719,6 +710,51 @@ public static class BotCommands
                 else
                 {
                     await command.FollowupAsync($"Clean pour Alias {alias} effectué", options: new RequestOptions { Timeout = 10000 });
+                }
+                break;
+
+            case "clean-all":
+                DataManager.LoadReceiverAliases();
+                receiverId = command.User.Id.ToString();
+
+                if (!Declare.receiverAliases.ContainsValue(receiverId))
+                {
+                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                }
+                else
+                {
+                    DataManager.LoadRecapList();
+                    if (Declare.recapList.TryGetValue(receiverId, out var subElements))
+                    {
+                        if(subElements.Any())
+                        {
+                            foreach (var subElement in subElements)
+                            {
+                                subElement.Values.Clear();
+                                subElement.Values.Add("Aucun élément");
+                            }
+
+                            DataManager.SaveRecapList();
+                            DataManager.LoadRecapList();
+                        }
+                        else
+                        {
+                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+                        }
+                    }
+                    else
+                    {
+                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(message))
+                {
+                    await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+                }
+                else
+                {
+                    await command.FollowupAsync($"Clean All pour <@{receiverId}> effectué", options: new RequestOptions { Timeout = 10000 });
                 }
                 break;
 
