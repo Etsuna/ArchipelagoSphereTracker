@@ -124,13 +124,13 @@ public static class BotCommands
                 .WithDescription("Recap and clean his own recap list of items for all the games"),
 
             new SlashCommandBuilder()
-                 .WithName("hint-by-finder")
-                 .WithDescription("Get a hint by finder")
+                 .WithName("hint-from-finder")
+                 .WithDescription("Get a hint from finder")
                  .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
             new SlashCommandBuilder()
-                 .WithName("hint-by-receiver")
-                 .WithDescription("Get a hint by receiver")
+                 .WithName("hint-for-receiver")
+                 .WithDescription("Get a hint for receiver")
                  .AddOption(BuildAliasOption(Declare.aliasChoices)),
 
             new SlashCommandBuilder()
@@ -189,7 +189,6 @@ public static class BotCommands
         switch (command.CommandName)
         {
             case "get-aliases":
-                DataManager.LoadReceiverAliases();
                 if (Declare.receiverAliases.Count == 0)
                 {
                     message = "Aucun Alias est enregistré.";
@@ -206,7 +205,6 @@ public static class BotCommands
                 break;
 
             case "delete-alias":
-                DataManager.LoadReceiverAliases();
                 if (Declare.receiverAliases.Count == 0)
                 {
                     message = "Aucun Alias est enregistré.";
@@ -225,7 +223,6 @@ public static class BotCommands
 
                                 if (Declare.recapList.ContainsKey(value))
                                 {
-                                    DataManager.LoadRecapList();
                                     var subElements = Declare.recapList[value];
                                     subElements.RemoveAll(e => e.SubKey == alias);
 
@@ -233,10 +230,8 @@ public static class BotCommands
                                     {
                                         Declare.recapList.Remove(value);
                                     }
-
                                     DataManager.SaveRecapList();
                                 }
-
                             }
                             else if (guildUser != null && guildUser.GuildPermissions.Administrator)
                             {
@@ -246,7 +241,6 @@ public static class BotCommands
 
                                 if (Declare.recapList.ContainsKey(value))
                                 {
-                                    DataManager.LoadRecapList();
                                     var subElements = Declare.recapList[value];
                                     subElements.RemoveAll(e => e.SubKey == alias);
 
@@ -254,7 +248,6 @@ public static class BotCommands
                                     {
                                         Declare.recapList.Remove(value);
                                     }
-
                                     DataManager.SaveRecapList();
                                 }
                             }
@@ -272,8 +265,6 @@ public static class BotCommands
                 break;
 
             case "add-alias":
-                DataManager.LoadReceiverAliases();
-
                 if (alias != null)
                 {
                     receiverId = command.User.Id.ToString();
@@ -284,7 +275,6 @@ public static class BotCommands
                         DataManager.SaveReceiverAliases();
                         message = $"Alias ajouté : {alias} est maintenant associé à <@{receiverId}>.";
 
-                        DataManager.LoadRecapList();
                         if (!Declare.recapList.ContainsKey(receiverId))
                         {
                             Declare.recapList[receiverId] = new List<SubElement>();
@@ -459,7 +449,6 @@ public static class BotCommands
                 break;
 
             case "recap-all":
-                DataManager.LoadReceiverAliases();
                 receiverId = command.User.Id.ToString();
 
                 if (!Declare.receiverAliases.ContainsValue(receiverId))
@@ -468,7 +457,6 @@ public static class BotCommands
                 }
                 else
                 {
-                    DataManager.LoadRecapList();
                     if (Declare.recapList == null)
                     {
                         message = "Il existe aucune liste.";
@@ -523,7 +511,6 @@ public static class BotCommands
                 break;
 
             case "recap":
-                DataManager.LoadReceiverAliases();
                 receiverId = command.User.Id.ToString();
 
                 if (!Declare.receiverAliases.ContainsValue(receiverId))
@@ -532,7 +519,6 @@ public static class BotCommands
                 }
                 else
                 {
-                    DataManager.LoadRecapList();
                     if (Declare.recapList == null)
                     {
                         message = "Il existe aucune liste.";
@@ -589,7 +575,6 @@ public static class BotCommands
                 break;
 
             case "recap-and-clean":
-                DataManager.LoadReceiverAliases();
                 receiverId = command.User.Id.ToString();
 
                 if (!Declare.receiverAliases.ContainsValue(receiverId))
@@ -598,7 +583,6 @@ public static class BotCommands
                 }
                 else
                 {
-                    DataManager.LoadRecapList();
                     if (Declare.recapList.TryGetValue(receiverId, out var subElements))
                     {
                         message = $"Détails pour <@{receiverId}> :\n";
@@ -644,7 +628,6 @@ public static class BotCommands
                         }
 
                         DataManager.SaveRecapList();
-                        DataManager.LoadRecapList();
                     }
                     else
                     {
@@ -666,7 +649,6 @@ public static class BotCommands
                 break;
 
             case "clean":
-                DataManager.LoadReceiverAliases();
                 receiverId = command.User.Id.ToString();
 
                 if (!Declare.receiverAliases.ContainsValue(receiverId))
@@ -675,7 +657,6 @@ public static class BotCommands
                 }
                 else
                 {
-                    DataManager.LoadRecapList();
                     if (Declare.recapList.TryGetValue(receiverId, out var subElements))
                     {
                         var getUser = subElements.Any(x => x.SubKey == alias);
@@ -690,7 +671,6 @@ public static class BotCommands
                             }
 
                             DataManager.SaveRecapList();
-                            DataManager.LoadRecapList();
                         }
                         else
                         {
@@ -714,7 +694,6 @@ public static class BotCommands
                 break;
 
             case "clean-all":
-                DataManager.LoadReceiverAliases();
                 receiverId = command.User.Id.ToString();
 
                 if (!Declare.receiverAliases.ContainsValue(receiverId))
@@ -723,7 +702,6 @@ public static class BotCommands
                 }
                 else
                 {
-                    DataManager.LoadRecapList();
                     if (Declare.recapList.TryGetValue(receiverId, out var subElements))
                     {
                         if(subElements.Any())
@@ -733,9 +711,7 @@ public static class BotCommands
                                 subElement.Values.Clear();
                                 subElement.Values.Add("Aucun élément");
                             }
-
                             DataManager.SaveRecapList();
-                            DataManager.LoadRecapList();
                         }
                         else
                         {
@@ -759,8 +735,6 @@ public static class BotCommands
                 break;
 
             case "list-items":
-                DataManager.LoadDisplayedItems();
-
                 receiverId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
                 bool listByLine = (bool)command.Data.Options.FirstOrDefault(o => o.Name == "list-by-line")?.Value;
 
@@ -812,12 +786,12 @@ public static class BotCommands
                 }
                 break;
 
-            case "hint-by-finder":
+            case "hint-from-finder":
                 var hintByFinder = Declare.hintStatuses.Where(h => h.finder == alias).ToList();
 
                 if (hintByFinder.Count != 0)
                 {
-                    message = $"finder by {alias} :\n";
+                    message = $"Item from {alias} :\n";
                     foreach (var item in hintByFinder)
                     {
                         message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World\n";
@@ -829,12 +803,12 @@ public static class BotCommands
                 }
                 break;
 
-            case "hint-by-receiver":
+            case "hint-for-receiver":
                 var hintByReceiver = Declare.hintStatuses.Where(h => h.receiver == alias).ToList();
 
                 if (hintByReceiver.Count != 0)
                 {
-                    message = $"receiver by {alias} :\n";
+                    message = $"Item for {alias} :\n";
                     foreach (var item in hintByReceiver)
                     {
                         message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World\n";
