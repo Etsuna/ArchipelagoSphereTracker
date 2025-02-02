@@ -265,37 +265,36 @@ public static class BotCommands
                 break;
 
             case "add-alias":
-                if (alias != null)
+                receiverId = command.User.Id.ToString();
+
+                if (Declare.receiverAliases.TryGetValue(alias, out var existingReceiverId))
                 {
-                    receiverId = command.User.Id.ToString();
-
-                    if (!Declare.receiverAliases.ContainsKey(alias))
-                    {
-                        Declare.receiverAliases[alias] = receiverId;
-                        DataManager.SaveReceiverAliases();
-                        message = $"Alias ajouté : {alias} est maintenant associé à <@{receiverId}>.";
-
-                        if (!Declare.recapList.ContainsKey(receiverId))
-                        {
-                            Declare.recapList[receiverId] = new List<SubElement>();
-                        }
-
-                        var recapUser = Declare.recapList[receiverId].Find(e => e.SubKey == alias);
-                        if (recapUser == null)
-                        {
-                            Declare.recapList[receiverId].Add(new SubElement
-                            {
-                                SubKey = alias,
-                                Values = new List<string> { "Aucun élément" }
-                            });
-                        }
-                        DataManager.SaveRecapList();
-                    }
-                    else
-                    {
-                        message = $"L'alias '{alias}' est déjà utilisé par <@{Declare.receiverAliases[alias]}>.";
-                    }
+                    message = $"L'alias '{alias}' est déjà utilisé par <@{existingReceiverId}>.";
+                    break;
                 }
+
+                Declare.receiverAliases[alias] = receiverId;
+
+                if (!Declare.recapList.TryGetValue(receiverId, out var recapUserList))
+                {
+                    recapUserList = new List<SubElement>();
+                    Declare.recapList[receiverId] = recapUserList;
+                }
+
+                var recapUser = recapUserList.FirstOrDefault(e => e.SubKey == alias);
+                if (recapUser == null)
+                {
+                    recapUser = new SubElement { SubKey = alias, Values = new List<string>() };
+                    recapUserList.Add(recapUser);
+                }
+
+                var items = Declare.displayedItems.Where(item => item.receiver == alias).Select(item => item.item).ToList();
+                recapUser.Values.AddRange(items.Any() ? items : new List<string> { "Aucun élément" });
+                
+                message = $"Alias ajouté : {alias} est maintenant associé à <@{receiverId}> et son récap généré.";
+
+                DataManager.SaveRecapList();
+                DataManager.SaveReceiverAliases();
                 break;
 
             case "add-url":
@@ -704,7 +703,7 @@ public static class BotCommands
                 {
                     if (Declare.recapList.TryGetValue(receiverId, out var subElements))
                     {
-                        if(subElements.Any())
+                        if (subElements.Any())
                         {
                             foreach (var subElement in subElements)
                             {
@@ -824,11 +823,11 @@ public static class BotCommands
                 message = "Status for all games :\n";
                 foreach (var game in Declare.gameStatus)
                 {
-                    if(game.pourcent != "100.00")
+                    if (game.pourcent != "100.00")
                     {
                         message += $"**{game.name} - {game.game} - {game.pourcent}%**\n";
                     }
-                    else 
+                    else
                     {
                         message += $"~~{game.name} - {game.game} - {game.pourcent}%~~\n";
                     }
