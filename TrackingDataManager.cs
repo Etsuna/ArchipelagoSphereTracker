@@ -57,9 +57,9 @@ public static class TrackingDataManager
 
             if (cells?.Count == 6)
             {
-                var sphere = cells[0].InnerText.Trim();
-                var finder = cells[1].InnerText.Trim();
-                var receiver = cells[2].InnerText.Trim();
+                var sphere = WebUtility.HtmlDecode(cells[0].InnerText.Trim());
+                var finder = WebUtility.HtmlDecode(cells[1].InnerText.Trim());
+                var receiver = WebUtility.HtmlDecode(cells[2].InnerText.Trim());
                 var item = WebUtility.HtmlDecode(cells[3].InnerText.Trim());
                 var location = WebUtility.HtmlDecode(cells[4].InnerText.Trim());
                 var game = WebUtility.HtmlDecode(cells[5].InnerText.Trim());
