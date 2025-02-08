@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using System.Net;
+using System.Text;
 
 public static class TrackingDataManager
 {
@@ -48,7 +49,7 @@ public static class TrackingDataManager
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        var data = new Dictionary<string, string>();
+        var messagesByReceiver = new Dictionary<string, List<string>>();
         var rows = doc.DocumentNode.SelectNodes("//table//tr");
 
         foreach (var row in rows)
@@ -75,12 +76,12 @@ public static class TrackingDataManager
                 };
 
                 bool exists = Declare.displayedItems.Any(x =>
-                x.sphere == newItem.sphere &&
-                x.finder == newItem.finder &&
-                x.receiver == newItem.receiver &&
-                x.item == newItem.item &&
-                x.location == newItem.location &&
-                x.game == newItem.game);
+                    x.sphere == newItem.sphere &&
+                    x.finder == newItem.finder &&
+                    x.receiver == newItem.receiver &&
+                    x.item == newItem.item &&
+                    x.location == newItem.location &&
+                    x.game == newItem.game);
 
                 if (!exists)
                 {
@@ -94,14 +95,16 @@ public static class TrackingDataManager
                     {
                         value = $"{finder} found their {item} ({location})";
                     }
-                    else if (Declare.receiverAliases.TryGetValue(receiver, out userId))
-                    {
-                        value = $"{finder} sent {item} to <@{userId}> {receiver} ({location})";
-                    }
                     else
                     {
                         value = $"{finder} sent {item} to {receiver} ({location})";
                     }
+
+                    if (!messagesByReceiver.ContainsKey(receiver))
+                    {
+                        messagesByReceiver[receiver] = new List<string>();
+                    }
+                    messagesByReceiver[receiver].Add(value);
 
                     if (File.Exists(Declare.displayedItemsFile))
                     {
@@ -129,16 +132,44 @@ public static class TrackingDataManager
                                 if (itemToAdd != null)
                                 {
                                     itemToAdd.Values.Remove("Aucun élément");
-                                };
+                                }
                             }
                         }
                     }
-
-                    if (File.Exists(Declare.displayedItemsFile))
-                    {
-                        await BotCommands.SendMessageAsync(value);
-                    }
                 }
+            }
+        }
+        if (File.Exists(Declare.displayedItemsFile))
+        {
+            foreach (var receiver in messagesByReceiver.Keys)
+            {
+                Declare.receiverAliases.TryGetValue(receiver, out var userId);
+                var checkReceiver = string.IsNullOrEmpty(userId) ? receiver : $"<@{userId}>";
+                var messages = messagesByReceiver[receiver];
+
+                await SendMessageInChunks(checkReceiver, messages);
+            }
+        }
+
+        static async Task SendMessageInChunks(string receiver, List<string> messages)
+        {
+            const int maxMessageLength = 2000;
+            var messageBuilder = new StringBuilder($"Items pour {receiver} :\n");
+
+            foreach (var message in messages)
+            {
+                if (messageBuilder.Length + message.Length + 2 > maxMessageLength)
+                {
+                    await BotCommands.SendMessageAsync(messageBuilder.ToString());
+                    messageBuilder.Clear().Append($"Suite des items pour {receiver} :\n");
+                }
+
+                messageBuilder.Append("\n").Append(message);
+            }
+
+            if (messageBuilder.Length > $"Items pour {receiver} :\n".Length)
+            {
+                await BotCommands.SendMessageAsync(messageBuilder.ToString());
             }
         }
 
@@ -148,6 +179,7 @@ public static class TrackingDataManager
             DataManager.SaveDisplayedItems();
         }
     }
+
 
     static async Task setAliasAndGameStatusAsync()
     {
