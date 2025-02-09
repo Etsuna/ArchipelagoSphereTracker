@@ -783,6 +783,10 @@ public static class BotCommands
                         await command.FollowupAsync(message);
                     }
                 }
+                else
+                {
+                    await command.FollowupAsync("Pas d'items");
+                }
                 break;
 
             case "hint-from-finder":
