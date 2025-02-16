@@ -758,7 +758,7 @@ public static class BotCommands
 
                         if (groupedItem.Count > 1)
                         {
-                            message += $" {groupedItem.ItemName} x {groupedItem.Count}";
+                            message += $"{groupedItem.ItemName} x {groupedItem.Count}";
                         }
                         else
                         {
