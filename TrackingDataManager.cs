@@ -317,7 +317,7 @@ public static class TrackingDataManager
                             {
                                 if (pourcent == "100.00" || GameStatus == "Goal Complete")
                                 {
-                                    string allAliases = string.Join(", ", Declare.receiverAliases.Values.Select(alias => $"<@{alias}>"));
+                                    string allAliases = string.Join(", ", Declare.receiverAliases.Values.Distinct().Select(alias => $"<@{alias}>"));
 
                                     await BotCommands.SendMessageAsync($"{allAliases}\n{Name} has completed their goal for this game: {Game}!");
                                     var editStatus = Declare.gameStatus.FirstOrDefault(x => x.name == Name);
