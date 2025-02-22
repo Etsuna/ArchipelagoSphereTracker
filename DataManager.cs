@@ -7,7 +7,7 @@ public static class DataManager
         if (File.Exists(Declare.displayedItemsFile))
         {
             var json = File.ReadAllText(Declare.displayedItemsFile);
-            Declare.displayedItems = JsonConvert.DeserializeObject<List<displayedItemsElement>>(json);
+            Declare.displayedItems = JsonConvert.DeserializeObject< Dictionary<string, Dictionary<string, List<displayedItemsElement>>>>(json);
         }
     }
 
@@ -26,7 +26,7 @@ public static class DataManager
         if (File.Exists(Declare.aliasFile))
         {
             var json = File.ReadAllText(Declare.aliasFile);
-            Declare.receiverAliases = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+            Declare.receiverAliases = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(json);
         }
     }
 
@@ -38,24 +38,20 @@ public static class DataManager
 
     public static void LoadUrlAndChannel()
     {
-        Declare.urlSphereTracker = string.Empty;
+        if (Declare.urlChannelFile != null)
+        {
+            Declare.ChannelAndUrl.Clear();
+        }
         if (File.Exists(Declare.urlChannelFile))
         {
             var json = File.ReadAllText(Declare.urlChannelFile);
-            var data = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-            Declare.urlSphereTracker = data.GetValueOrDefault("url", string.Empty);
-            Declare.channelId = ulong.TryParse(data.GetValueOrDefault("channelId", "0"), out var id) ? id : 0;
+            Declare.ChannelAndUrl = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(json);
         }
     }
 
-    public static void SaveUrlAndChannel()
+    public static void SaveChannelAndUrl()
     {
-        var data = new Dictionary<string, string>
-        {
-            { "url", Declare.urlSphereTracker },
-            { "channelId", Declare.channelId.ToString() }
-        };
-        var json = JsonConvert.SerializeObject(data);
+        var json = JsonConvert.SerializeObject(Declare.ChannelAndUrl, Formatting.Indented);
         File.WriteAllText(Declare.urlChannelFile, json);
     }
 
@@ -74,7 +70,7 @@ public static class DataManager
         if (File.Exists(Declare.recapListFile))
         {
             var json = File.ReadAllText(Declare.recapListFile);
-            Declare.recapList = JsonConvert.DeserializeObject<Dictionary<string, List<SubElement>>>(json);
+            Declare.recapList = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, List<SubElement>>>>>(json);
         }
     }
 
@@ -82,22 +78,33 @@ public static class DataManager
     {
         LoadRecapList();
 
-        foreach (var alias in Declare.receiverAliases)
+        foreach (var guild in Declare.receiverAliases.Keys)
         {
-            var receiverId = alias.Value;
-            if (!Declare.recapList.ContainsKey(receiverId))
+            foreach (var alias in Declare.receiverAliases[guild])
             {
-                Declare.recapList[receiverId] = new List<SubElement>();
-            }
+                var receiverId = alias.Key;
 
-            var recapUser = Declare.recapList[receiverId].Find(e => e.SubKey == alias.Key);
-            if (recapUser == null)
-            {
-                Declare.recapList[receiverId].Add(new SubElement
+                if (!Declare.recapList.ContainsKey(guild))
                 {
-                    SubKey = alias.Key,
-                    Values = new List<string> { "Aucun élément" }
-                });
+                    Declare.recapList[guild] = new Dictionary<string, Dictionary<string, List<SubElement>>>();
+                }
+
+                if (!Declare.recapList.ContainsKey(receiverId))
+                {
+                    Declare.recapList[guild][receiverId] = new Dictionary<string, List<SubElement>>();
+                }
+
+                if (!Declare.recapList[guild][receiverId].ContainsKey(alias.Key))
+                {
+                    Declare.recapList[guild][receiverId][alias.Key] = new List<SubElement>
+                    {
+                        new SubElement
+                        {
+                            SubKey = alias.Key,
+                            Values = new List<string> { "Aucun élément" }
+                        }
+                    };
+                }
             }
             SaveRecapList();
         }
@@ -118,7 +125,7 @@ public static class DataManager
         if (File.Exists(Declare.aliasChoicesFile))
         {
             var json = File.ReadAllText(Declare.aliasChoicesFile);
-            Declare.aliasChoices = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+            Declare.aliasChoices = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(json);
         }
     }
 
@@ -137,7 +144,7 @@ public static class DataManager
         if (File.Exists(Declare.gameStatusFile))
         {
             var json = File.ReadAllText(Declare.gameStatusFile);
-            Declare.gameStatus = JsonConvert.DeserializeObject<List<gameStatus>>(json);
+            Declare.gameStatus = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<gameStatus>>>>(json);
         }
     }
 
@@ -150,7 +157,7 @@ public static class DataManager
         if (File.Exists(Declare.hintStatusFile))
         {
             var json = File.ReadAllText(Declare.hintStatusFile);
-            Declare.hintStatuses = JsonConvert.DeserializeObject<List<hintStatus>>(json);
+            Declare.hintStatuses = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<hintStatus>>>>(json);
         }
     }
 

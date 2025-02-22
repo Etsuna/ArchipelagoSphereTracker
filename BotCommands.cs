@@ -2,7 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
+using System.Text;
 
 public static class BotCommands
 {
@@ -33,21 +33,16 @@ public static class BotCommands
         }
     }
 
-    public static async Task SendMessageAsync(string message)
+    public static async Task SendMessageAsync(string message, string channel)
     {
-        if (Declare.channelId == 0)
-        {
-            Console.WriteLine("Aucun canal configuré pour l'envoi des messages.");
-            return;
-        }
-
         try
         {
-            var channel = Declare.client.GetChannel(Declare.channelId) as IMessageChannel;
+            var getChannel = ulong.Parse(channel);
+            var channelId = Declare.client.GetChannel(getChannel) as IMessageChannel;
 
-            if (channel == null)
+            if (channelId == null)
             {
-                Console.WriteLine($"Le canal avec l'ID {Declare.channelId} est introuvable ou inaccessible.");
+                Console.WriteLine($"Le canal avec l'ID {channel} est introuvable ou inaccessible.");
                 Console.WriteLine("Voici les canaux accessibles par le bot :");
 
                 foreach (var guild in Declare.client.Guilds)
@@ -61,7 +56,7 @@ public static class BotCommands
                 return;
             }
 
-            await channel.SendMessageAsync(message);
+            await channelId.SendMessageAsync(message);
         }
         catch (Exception ex)
         {
@@ -71,7 +66,9 @@ public static class BotCommands
 
     public static async Task RegisterCommandsAsync()
     {
-        var commands = new List<SlashCommandBuilder>
+        foreach (var guild in Declare.client.Guilds)
+        {
+            var commands = new List<SlashCommandBuilder>
         {
             new SlashCommandBuilder()
                 .WithName("get-aliases")
@@ -80,12 +77,12 @@ public static class BotCommands
             new SlashCommandBuilder()
                 .WithName("delete-alias")
                 .WithDescription("Delete Alias")
-                .AddOption(BuildAliasOption(Declare.aliasChoices)),
+                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
 
              new SlashCommandBuilder()
                 .WithName("add-alias")
                 .WithDescription("Add Alias")
-                .AddOption(BuildAliasOption(Declare.aliasChoices)),
+                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
 
             new SlashCommandBuilder()
                 .WithName("add-url")
@@ -107,41 +104,40 @@ public static class BotCommands
             new SlashCommandBuilder()
                 .WithName("recap")
                 .WithDescription("Recap List of items for a specific game")
-                .AddOption(BuildAliasOption(Declare.aliasChoices)),
+                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
 
             new SlashCommandBuilder()
                 .WithName("recap-and-clean")
                 .WithDescription("Recap and clean List of items for a specific game")
-                .AddOption(BuildAliasOption(Declare.aliasChoices)),
+                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
 
             new SlashCommandBuilder()
                 .WithName("clean")
                 .WithDescription("Recap and clean List of items for a specific game")
-                .AddOption(BuildAliasOption(Declare.aliasChoices)),
+                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
 
             new SlashCommandBuilder()
                 .WithName("clean-all")
                 .WithDescription("Recap and clean his own recap list of items for all the games"),
 
+
             new SlashCommandBuilder()
                  .WithName("hint-from-finder")
                  .WithDescription("Get a hint from finder")
-                 .AddOption(BuildAliasOption(Declare.aliasChoices)),
+                 .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
 
             new SlashCommandBuilder()
                  .WithName("hint-for-receiver")
                  .WithDescription("Get a hint for receiver")
-                 .AddOption(BuildAliasOption(Declare.aliasChoices)),
+                 .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
 
             new SlashCommandBuilder()
                 .WithName("list-items")
                 .WithDescription("List all items for alias")
-                .AddOption(BuildAliasOption(Declare.aliasChoices))
+                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices))
                 .AddOption(BuildListItemsOption()),
         };
 
-        foreach (var guild in Declare.client.Guilds)
-        {
             var builtCommands = commands.Select(cmd => cmd.Build()).ToArray();
             await Declare.client.Rest.BulkOverwriteGuildCommands(builtCommands, guild.Id);
         }
@@ -149,7 +145,7 @@ public static class BotCommands
         Declare.client.SlashCommandExecuted += HandleSlashCommandAsync;
     }
 
-    public static SlashCommandOptionBuilder BuildAliasOption(IDictionary<string, string> aliasChoices)
+    public static SlashCommandOptionBuilder BuildAliasOption(string guild, Dictionary<string, Dictionary<string, Dictionary<string, string>>> aliasChoices)
     {
         var optionBuilder = new SlashCommandOptionBuilder()
             .WithName("alias")
@@ -157,13 +153,28 @@ public static class BotCommands
             .WithType(ApplicationCommandOptionType.String)
             .WithRequired(true);
 
-        foreach (var alias in aliasChoices)
+        if (!aliasChoices.ContainsKey(guild))
+            return optionBuilder;
+
+        Dictionary<string, Dictionary<string, string>> filtered = aliasChoices[guild];
+
+        Dictionary<string, string> merged = filtered
+            .SelectMany(pair => pair.Value)
+            .ToLookup(pair => pair.Key, pair => pair.Value)
+            .ToDictionary(group => group.Key, group => group.First());
+
+        var sorted = merged.OrderBy(pair => pair.Key)
+                           .ToDictionary(pair => pair.Key, pair => pair.Value);
+
+        foreach (var alias in sorted)
         {
             optionBuilder.AddChoice(alias.Key, alias.Value);
         }
 
         return optionBuilder;
     }
+
+
 
     public static SlashCommandOptionBuilder BuildListItemsOption()
     {
@@ -185,75 +196,87 @@ public static class BotCommands
         string message = "";
         const int maxMessageLength = 1999;
         var alias = command.Data.Options.FirstOrDefault()?.Value as string;
+        var channelId = command.ChannelId.ToString();
+        var guildId = command.GuildId.ToString();
 
         switch (command.CommandName)
         {
             case "get-aliases":
-                if (Declare.receiverAliases.Count == 0)
+
+                if (!Declare.receiverAliases.ContainsKey(guildId) || !Declare.receiverAliases[guildId].ContainsKey(channelId))
                 {
-                    message = "Aucun Alias est enregistré.";
+                    message = "Pas d'URL Enregistrée pour ce channel.";
                 }
                 else
                 {
-                    message = "Voici le tableau des utilisateurs :\n";
-                    foreach (var kvp in Declare.receiverAliases)
+                    var channelAliases = Declare.receiverAliases[guildId][channelId];
+
+                    if (channelAliases.Count == 0)
                     {
-                        var user = await Declare.client.GetUserAsync(ulong.Parse(kvp.Value));
-                        message += $"| {user.Username} | {kvp.Key} |\n";
+                        message = "Aucun Alias est enregistré.";
+                    }
+                    else
+                    {
+                        message = "Voici le tableau des utilisateurs :\n";
+                        foreach (var kvp in channelAliases)
+                        {
+                            var user = await Declare.client.GetUserAsync(ulong.Parse(kvp.Value));
+                            message += $"| {user.Username} | {kvp.Key} |\n";
+                        }
                     }
                 }
                 break;
 
             case "delete-alias":
-                if (Declare.receiverAliases.Count == 0)
+                bool HasValidChannelData(string guildId, string channelId)
                 {
-                    message = "Aucun Alias est enregistré.";
+                    return Declare.receiverAliases.ContainsKey(guildId) && Declare.receiverAliases[guildId].ContainsKey(channelId);
+                }
+
+                if (!HasValidChannelData(guildId, channelId))
+                {
+                    message = "Pas d'URL Enregistrée pour ce channel ou aucun Alias enregistré.";
                 }
                 else
                 {
-                    if (alias != null)
+                    var channelAliases = Declare.receiverAliases[guildId][channelId];
+
+                    if (channelAliases.Count == 0)
                     {
-                        if (Declare.receiverAliases.TryGetValue(alias, out var value))
+                        message = "Aucun Alias est enregistré.";
+                    }
+                    else if (alias != null)
+                    {
+                        if (channelAliases.TryGetValue(alias, out var value))
                         {
-                            if (value == command.User.Id.ToString())
+                            if (value == command.User.Id.ToString() || (guildUser != null && guildUser.GuildPermissions.Administrator))
                             {
-                                Declare.receiverAliases.Remove(alias);
+                                Declare.receiverAliases[guildId].Remove(alias);
                                 DataManager.SaveReceiverAliases();
-                                message = $"Alias '{alias}' supprimé.";
 
-                                if (Declare.recapList.ContainsKey(value))
+                                message = value == command.User.Id.ToString()
+                                    ? $"Alias '{alias}' supprimé."
+                                    : $"ADMIN : Alias '{alias}' supprimé.";
+
+                                // Check and remove alias from recapList
+                                if (Declare.recapList.ContainsKey(guildId) && Declare.recapList[guildId].ContainsKey(channelId))
                                 {
-                                    var subElements = Declare.recapList[value];
-                                    subElements.RemoveAll(e => e.SubKey == alias);
-
-                                    if (subElements.Count == 0)
+                                    if (Declare.recapList[guildId][channelId].ContainsKey(value))
                                     {
-                                        Declare.recapList.Remove(value);
-                                    }
-                                    DataManager.SaveRecapList();
-                                }
-                            }
-                            else if (guildUser != null && guildUser.GuildPermissions.Administrator)
-                            {
-                                Declare.receiverAliases.Remove(alias);
-                                DataManager.SaveReceiverAliases();
-                                message = $"ADMIN : Alias '{alias}' supprimé.";
+                                        var subElements = Declare.recapList[guildId][channelId][value];
+                                        subElements.RemoveAll(e => e.SubKey == alias);
 
-                                if (Declare.recapList.ContainsKey(value))
-                                {
-                                    var subElements = Declare.recapList[value];
-                                    subElements.RemoveAll(e => e.SubKey == alias);
-
-                                    if (subElements.Count == 0)
-                                    {
-                                        Declare.recapList.Remove(value);
+                                        if (subElements.Count == 0)
+                                        {
+                                            Declare.recapList[guildId][channelId].Remove(value);
+                                        }
+                                        DataManager.SaveRecapList();
                                     }
-                                    DataManager.SaveRecapList();
                                 }
                             }
                             else
                             {
-                                message = $"Vous n'êtes pas le détenteur de cet alias : '{alias}'. Suppression non effectuée..";
+                                message = $"Vous n'êtes pas le détenteur de cet alias : '{alias}'. Suppression non effectuée.";
                             }
                         }
                         else
@@ -265,64 +288,125 @@ public static class BotCommands
                 break;
 
             case "add-alias":
+                void EnsureReceiverAliasesExist(string guildId, string channelId)
+                {
+                    if (!Declare.receiverAliases.ContainsKey(guildId))
+                        Declare.receiverAliases[guildId] = new Dictionary<string, Dictionary<string, string>>();
+
+                    if (!Declare.receiverAliases[guildId].ContainsKey(channelId))
+                        Declare.receiverAliases[guildId][channelId] = new Dictionary<string, string>();
+                }
+
+                void EnsureRecapListExist(string guildId, string channelId, string receiverId)
+                {
+                    if (!Declare.recapList.ContainsKey(guildId))
+                        Declare.recapList[guildId] = new Dictionary<string, Dictionary<string, List<SubElement>>>();
+
+                    if (!Declare.recapList[guildId].ContainsKey(channelId))
+                        Declare.recapList[guildId][channelId] = new Dictionary<string, List<SubElement>>();
+
+                    if (!Declare.recapList[guildId][channelId].TryGetValue(receiverId, out var recapUserList))
+                    {
+                        recapUserList = new List<SubElement>();
+                        Declare.recapList[guildId][channelId][receiverId] = recapUserList;
+                    }
+                }
+
+                void AddItemsToRecapUserList(string guildId, string channelId, string alias, List<SubElement> recapUserList)
+                {
+                    if (Declare.displayedItems.ContainsKey(guildId) && Declare.displayedItems[guildId].ContainsKey(channelId))
+                    {
+                        var items = Declare.displayedItems[guildId][channelId]
+                            .Where(item => item.receiver == alias)
+                            .Select(item => item.item)
+                            .ToList();
+
+                        recapUserList.FirstOrDefault()?.Values.AddRange(items.Any() ? items : new List<string> { "Aucun élément" });
+                    }
+                }
+
                 receiverId = command.User.Id.ToString();
 
-                if (Declare.receiverAliases.TryGetValue(alias, out var existingReceiverId))
+                EnsureReceiverAliasesExist(guildId, channelId);
+
+                if (Declare.receiverAliases[guildId][channelId].ContainsKey(alias))
                 {
-                    message = $"L'alias '{alias}' est déjà utilisé par <@{existingReceiverId}>.";
-                    break;
+                    message = $"L'alias '{alias}' est déjà utilisé par <@{Declare.receiverAliases[guildId][channelId][alias]}>.";
                 }
-
-                Declare.receiverAliases[alias] = receiverId;
-
-                if (!Declare.recapList.TryGetValue(receiverId, out var recapUserList))
+                else
                 {
-                    recapUserList = new List<SubElement>();
-                    Declare.recapList[receiverId] = recapUserList;
-                }
+                    Declare.receiverAliases[guildId][channelId][alias] = receiverId;
 
-                var recapUser = recapUserList.FirstOrDefault(e => e.SubKey == alias);
-                if (recapUser == null)
-                {
-                    recapUser = new SubElement { SubKey = alias, Values = new List<string>() };
+                    EnsureRecapListExist(guildId, channelId, receiverId);
+
+                    var recapUserList = Declare.recapList[guildId][channelId][receiverId];
+                    var recapUser = recapUserList.FirstOrDefault(e => e.SubKey == alias) ?? new SubElement { SubKey = alias, Values = new List<string>() };
                     recapUserList.Add(recapUser);
+
+                    AddItemsToRecapUserList(guildId, channelId, alias, recapUserList);
+
+                    message = $"Alias ajouté : {alias} est maintenant associé à <@{receiverId}> et son récap généré.";
+
+                    DataManager.SaveRecapList();
+                    DataManager.SaveReceiverAliases();
                 }
-
-                var items = Declare.displayedItems.Where(item => item.receiver == alias).Select(item => item.item).ToList();
-                recapUser.Values.AddRange(items.Any() ? items : new List<string> { "Aucun élément" });
-                
-                message = $"Alias ajouté : {alias} est maintenant associé à <@{receiverId}> et son récap généré.";
-
-                DataManager.SaveRecapList();
-                DataManager.SaveReceiverAliases();
                 break;
 
             case "add-url":
+                bool IsValidUrl(string url) => url.Contains("sphere_tracker");
+
+                bool CanAddUrl(string guildId, string channelId, out string existingUrlMessage)
+                {
+                    existingUrlMessage = string.Empty;
+
+                    if (Declare.ChannelAndUrl.ContainsKey(guildId) && Declare.ChannelAndUrl[guildId].ContainsKey(channelId))
+                    {
+                        existingUrlMessage = $"URL déjà définie sur {Declare.ChannelAndUrl[guildId][channelId]}. Supprimez l'url avant d'ajouter une nouvelle url.";
+                        return false;
+                    }
+
+                    return true;
+                }
+
                 if (guildUser != null && !guildUser.GuildPermissions.Administrator)
                 {
                     message = "Seuls les administrateurs sont autorisés à ajouter une URL.";
                 }
-                else if (!string.IsNullOrEmpty(Declare.urlSphereTracker))
-                {
-                    message = $"URL déjà définie sur {Declare.urlSphereTracker}. Supprimez l'url avant d'ajouter une nouvelle url.";
-                }
                 else
                 {
-                    var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
-                    if (!string.IsNullOrEmpty(newUrl))
+                    if (CanAddUrl(guildId, channelId, out string existingUrlMessage))
                     {
-                        if (!newUrl.Contains("sphere_tracker"))
+                        var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
+
+                        if (string.IsNullOrEmpty(newUrl))
+                        {
+                            message = "URL vide non autorisée.";
+                        }
+                        else if (!IsValidUrl(newUrl))
                         {
                             message = $"Le lien n'est pas bon, utilisez l'url sphere_tracker.";
                         }
                         else
                         {
-                            Declare.urlSphereTracker = newUrl;
-                            Declare.channelId = command.Channel.Id;
-                            DataManager.SaveUrlAndChannel();
-                            message = $"URL définie sur {Declare.urlSphereTracker}. Messages configurés pour ce canal.";
-                            TrackingDataManager.StartTracking();
+                            if (!Declare.ChannelAndUrl.ContainsKey(guildId))
+                            {
+                                Declare.ChannelAndUrl[guildId] = new Dictionary<string, string>();
+                            }
+
+                            Declare.ChannelAndUrl[guildId][channelId] = newUrl;
+                            DataManager.SaveChannelAndUrl();
+                            message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
+
+                            await TrackingDataManager.GetTableDataAsync(guildId, channelId, newUrl, false);
+                            if (!Declare.serviceRunning)
+                            {
+                                TrackingDataManager.StartTracking();
+                            }
                         }
+                    }
+                    else
+                    {
+                        message = existingUrlMessage;
                     }
                 }
                 break;
@@ -334,237 +418,238 @@ public static class BotCommands
                 }
                 else
                 {
-                    try
+                    if (Declare.ChannelAndUrl.TryGetValue(guildId, out var urlSphereTracker) && urlSphereTracker.Remove(channelId))
                     {
-                        if (File.Exists(Declare.urlChannelFile))
+                        if (urlSphereTracker.Count == 0)
                         {
-                            File.Delete(Declare.urlChannelFile);
+                            Declare.ChannelAndUrl.Remove(guildId);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        message = $"Erreur lors de la suppression du fichier urlChannelFile : {ex.Message}";
-                        Console.WriteLine(ex.Message);
+                        DataManager.SaveChannelAndUrl();
                     }
 
-                    try
+                    if (Declare.recapList.TryGetValue(guildId, out var recapList) && recapList.Remove(channelId))
                     {
-                        if (File.Exists(Declare.displayedItemsFile))
+                        if (recapList.Count == 0)
                         {
-                            File.Delete(Declare.displayedItemsFile);
+                            Declare.recapList.Remove(guildId);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        message += $"\nErreur lors de la suppression du fichier displayedItemsFile : {ex.Message}";
-                        Console.WriteLine(ex.Message);
+                        DataManager.SaveRecapList();
                     }
 
-                    try
+                    if (Declare.receiverAliases.TryGetValue(guildId, out var receiverAliases) && receiverAliases.Remove(channelId))
                     {
-                        if (File.Exists(Declare.recapListFile))
+                        if (receiverAliases.Count == 0)
                         {
-                            File.Delete(Declare.recapListFile);
+                            Declare.receiverAliases.Remove(guildId);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        message += $"\nErreur lors de la suppression du fichier recapListFile : {ex.Message}";
-                        Console.WriteLine(ex.Message);
+                        DataManager.SaveReceiverAliases();
                     }
 
-                    try
+                    if (Declare.displayedItems.TryGetValue(guildId, out var displayedItems) && displayedItems.Remove(channelId))
                     {
-                        if (File.Exists(Declare.aliasFile))
+                        if (displayedItems.Count == 0)
                         {
-                            File.Delete(Declare.aliasFile);
+                            Declare.displayedItems.Remove(guildId);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        message += $"\nErreur lors de la suppression du fichier aliasFile : {ex.Message}";
-                        Console.WriteLine(message);
+                        DataManager.SaveDisplayedItems();
                     }
 
-                    try
+                    if (Declare.aliasChoices.TryGetValue(guildId, out var aliasChoices) && aliasChoices.Remove(channelId))
                     {
-                        if (File.Exists(Declare.aliasChoicesFile))
+                        if (aliasChoices.Count == 0)
                         {
-                            File.Delete(Declare.aliasChoicesFile);
+                            Declare.aliasChoices.Remove(guildId);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        message += $"\nErreur lors de la suppression du fichier aliasFile : {ex.Message}";
-                        Console.WriteLine(message);
+                        DataManager.SaveAliasChoices();
                     }
 
-                    try
+                    if (Declare.gameStatus.TryGetValue(guildId, out var gameStatus) && gameStatus.Remove(channelId))
                     {
-                        if (File.Exists(Declare.gameStatusFile))
+                        if (gameStatus.Count == 0)
                         {
-                            File.Delete(Declare.gameStatusFile);
+                            Declare.gameStatus.Remove(guildId);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        message += $"\nErreur lors de la suppression du fichier aliasFile : {ex.Message}";
-                        Console.WriteLine(message);
+                        DataManager.SaveGameStatus();
                     }
 
-                    try
+                    if (Declare.hintStatuses.TryGetValue(guildId, out var hintStatuses) && hintStatuses.Remove(channelId))
                     {
-                        if (File.Exists(Declare.hintStatusFile))
+                        if (hintStatuses.Count == 0)
                         {
-                            File.Delete(Declare.hintStatusFile);
+                            Declare.hintStatuses.Remove(guildId);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        message += $"\nErreur lors de la suppression du fichier aliasFile : {ex.Message}";
-                        Console.WriteLine(message);
+                        DataManager.SaveHintStatus();
                     }
 
-                    if (string.IsNullOrEmpty(Declare.urlSphereTracker))
-                    {
-                        message = "Aucune URL définie.";
-                    }
-                    else
-                    {
-                        Declare.urlSphereTracker = string.Empty;
-                        Declare.urlTracker = string.Empty;
-
-                        Declare.recapList.Clear();
-                        Declare.receiverAliases.Clear();
-                        Declare.displayedItems.Clear();
-                        Declare.aliasChoices.Clear();
-                        Declare.gameStatus.Clear();
-                        Declare.hintStatuses.Clear();
-
-                        message = "URL Supprimée.";
-                        await RegisterCommandsAsync();
-                    }
+                    message = "URL Supprimée.";
+                    await RegisterCommandsAsync();
                 }
                 break;
 
             case "recap-all":
                 receiverId = command.User.Id.ToString();
 
-                if (!Declare.receiverAliases.ContainsValue(receiverId))
+                bool TryGetReceiverData(string guildId, string channelId, out string errorMessage)
                 {
-                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
-                }
-                else
-                {
-                    if (Declare.recapList == null)
+                    if (!Declare.receiverAliases.ContainsKey(guildId) || !Declare.receiverAliases[guildId].ContainsKey(channelId))
                     {
-                        message = "Il existe aucune liste.";
+                        errorMessage = "Pas d'URL Enregistrée pour ce channel ou aucun Alias enregistré.";
+                        return false;
                     }
-                    else if (Declare.recapList.TryGetValue(receiverId, out var subElements))
+
+                    if (!Declare.receiverAliases[guildId][channelId].ContainsValue(receiverId))
+                    {
+                        errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                        return false;
+                    }
+
+                    errorMessage = null;
+                    return true;
+                }
+
+                bool TryGetRecapData(string guildId, string channelId, string receiverId, out string recapMessage)
+                {
+                    if (!Declare.recapList.ContainsKey(guildId) || !Declare.recapList[guildId].ContainsKey(channelId))
+                    {
+                        recapMessage = "Il existe aucune liste.";
+                        return false;
+                    }
+
+                    if (Declare.recapList[guildId][channelId].TryGetValue(receiverId, out var subElements))
                     {
                         if (subElements.Any())
                         {
-                            message = $"Détails pour <@{receiverId}> :\n";
-
+                            recapMessage = $"Détails pour <@{receiverId}> :\n";
                             foreach (var subElement in subElements)
                             {
-                                if (subElement.Values != null && subElement.Values.Any())
-                                {
-                                    var groupedValues = subElement.Values
+                                string groupedMessage = subElement.Values != null && subElement.Values.Any()
+                                    ? string.Join(", ", subElement.Values
                                         .GroupBy(value => value)
-                                        .Select(group => new { Value = group.Key, Count = group.Count() });
+                                        .Select(group => group.Count() > 1 ? $"{group.Key} x {group.Count()}" : group.Key))
+                                    : "Aucun élément";
 
-                                    string groupedMessage = string.Join(", ", groupedValues.Select(g =>
-                                        g.Count > 1 ? $"{g.Value} x {g.Count}" : g.Value));
-
-                                    message += $"**{subElement.SubKey}** : {groupedMessage} \n";
-                                }
-                                else
-                                {
-                                    message += $"**{subElement.SubKey}** : Aucun élément \n";
-                                }
+                                recapMessage += $"**{subElement.SubKey}** : {groupedMessage} \n";
                             }
+                            return true;
                         }
-                        else
+
+                        recapMessage = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias.";
+                        return false;
+                    }
+
+                    recapMessage = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    return false;
+                }
+
+                if (TryGetReceiverData(guildId, channelId, out string errorMessage))
+                {
+                    if (TryGetRecapData(guildId, channelId, receiverId, out string recapMessage))
+                    {
+                        message = recapMessage;
+
+                        while (message.Length > maxMessageLength)
                         {
-                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+                            string messagePart = message.Substring(0, maxMessageLength);
+                            await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
+                            message = message.Substring(maxMessageLength);
                         }
                     }
                     else
                     {
-                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                        message = recapMessage;
                     }
                 }
-
-                while (message.Length > maxMessageLength)
+                else
                 {
-                    string messagePart = message.Substring(0, maxMessageLength);
-                    await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
-                    message = message.Substring(maxMessageLength);
+                    message = errorMessage;
                 }
 
                 if (!string.IsNullOrEmpty(message))
                 {
                     await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                 }
+
                 break;
 
             case "recap":
                 receiverId = command.User.Id.ToString();
 
-                if (!Declare.receiverAliases.ContainsValue(receiverId))
+                bool TryGetReceiverAliasData(string guildId, string channelId, string receiverId, out string errorMessage)
                 {
-                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
-                }
-                else
-                {
-                    if (Declare.recapList == null)
+                    if (!Declare.receiverAliases.ContainsKey(guildId) || !Declare.receiverAliases[guildId].ContainsKey(channelId))
                     {
-                        message = "Il existe aucune liste.";
+                        errorMessage = "Pas d'URL Enregistrée pour ce channel ou aucun alias enregistré.";
+                        return false;
                     }
-                    else if (Declare.recapList.TryGetValue(receiverId, out var subElements))
+
+                    if (!Declare.receiverAliases[guildId][channelId].ContainsValue(receiverId))
+                    {
+                        errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                        return false;
+                    }
+
+                    errorMessage = null;
+                    return true;
+                }
+
+                bool TryGetRecapDataRecap(string guildId, string channelId, string receiverId, out string recapMessage)
+                {
+                    if (!Declare.recapList.ContainsKey(guildId) || !Declare.recapList[guildId].ContainsKey(channelId))
+                    {
+                        recapMessage = "Il existe aucune liste.";
+                        return false;
+                    }
+
+                    if (Declare.recapList[guildId][channelId].TryGetValue(receiverId, out var subElements))
                     {
                         var getUser = subElements.Any(x => x.SubKey == alias);
 
                         if (getUser)
                         {
-                            message = $"Détails pour <@{receiverId}> :\n";
+                            recapMessage = $"Détails pour <@{receiverId}> :\n";
 
                             foreach (var subElement in subElements.Where(x => x.SubKey == alias))
                             {
-                                if (subElement.Values != null && subElement.Values.Any())
-                                {
-                                    var groupedValues = subElement.Values
+                                string groupedMessage = subElement.Values != null && subElement.Values.Any()
+                                    ? string.Join(", ", subElement.Values
                                         .GroupBy(value => value)
-                                        .Select(group => new { Value = group.Key, Count = group.Count() });
+                                        .Select(group => group.Count() > 1 ? $"{group.Key} x {group.Count()}" : group.Key))
+                                    : "Aucun élément";
 
-                                    string groupedMessage = string.Join(", ", groupedValues.Select(g =>
-                                        g.Count > 1 ? $"{g.Value} x {g.Count}" : g.Value));
-
-                                    message += $"**{subElement.SubKey}** : {groupedMessage} \n";
-                                }
-                                else
-                                {
-                                    message += $"**{subElement.SubKey}** : Aucun élément \n";
-                                }
+                                recapMessage += $"**{subElement.SubKey}** : {groupedMessage} \n";
                             }
+                            return true;
                         }
-                        else
+
+                        recapMessage = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+                        return false;
+                    }
+
+                    recapMessage = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    return false;
+                }
+
+                if (TryGetReceiverAliasData(guildId, channelId, receiverId, out string errorMessageRecap))
+                {
+                    if (TryGetRecapDataRecap(guildId, channelId, receiverId, out string recapMessage))
+                    {
+                        message = recapMessage;
+
+                        while (message.Length > maxMessageLength)
                         {
-                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+                            string messagePart = message.Substring(0, maxMessageLength);
+                            await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
+                            message = message.Substring(maxMessageLength);
                         }
                     }
                     else
                     {
-                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                        message = recapMessage;
                     }
                 }
-
-                while (message.Length > maxMessageLength)
+                else
                 {
-                    string messagePart = message.Substring(0, maxMessageLength);
-                    await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
-                    message = message.Substring(maxMessageLength);
+                    message = errorMessageRecap;
                 }
 
                 if (!string.IsNullOrEmpty(message))
@@ -572,96 +657,54 @@ public static class BotCommands
                     await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                 }
                 break;
+
 
             case "recap-and-clean":
                 receiverId = command.User.Id.ToString();
 
-                if (!Declare.receiverAliases.ContainsValue(receiverId))
+                bool TryGetReceiverAliasDataRecapAndClean(string guildId, string channelId, string receiverId, out string errorMessage)
                 {
-                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
-                }
-                else
-                {
-                    if (Declare.recapList.TryGetValue(receiverId, out var subElements))
+                    if (!Declare.receiverAliases.ContainsKey(guildId) || !Declare.receiverAliases[guildId].ContainsKey(channelId))
                     {
-                        message = $"Détails pour <@{receiverId}> :\n";
+                        errorMessage = "Pas d'URL Enregistrée pour ce channel ou aucun alias enregistré.";
+                        return false;
+                    }
 
+                    if (!Declare.receiverAliases[guildId][channelId].ContainsValue(receiverId))
+                    {
+                        errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                        return false;
+                    }
+
+                    errorMessage = null;
+                    return true;
+                }
+
+                bool TryGetRecapDataRecapAndClean(string guildId, string channelId, string receiverId, out string recapMessage)
+                {
+                    if (!Declare.recapList.ContainsKey(guildId) || !Declare.recapList[guildId].ContainsKey(channelId))
+                    {
+                        recapMessage = "Il existe aucune liste.";
+                        return false;
+                    }
+
+                    if (Declare.recapList[guildId][channelId].TryGetValue(receiverId, out var subElements))
+                    {
                         var getUser = subElements.Any(x => x.SubKey == alias);
 
                         if (getUser)
                         {
+                            recapMessage = $"Détails pour <@{receiverId}> :\n";
                             foreach (var subElement in subElements.Where(x => x.SubKey == alias))
                             {
-
-
-                                if (subElement.Values != null && subElement.Values.Any())
-                                {
-                                    var groupedValues = subElement.Values
+                                string groupedMessage = subElement.Values != null && subElement.Values.Any()
+                                    ? string.Join(", ", subElement.Values
                                         .GroupBy(value => value)
-                                        .Select(group => new { Value = group.Key, Count = group.Count() });
+                                        .Select(group => group.Count() > 1 ? $"{group.Key} x {group.Count()} " : group.Key))
+                                    : "Aucun élément";
 
-                                    string groupedMessage = string.Join(", ", groupedValues.Select(g =>
-                                        g.Count > 1 ? $"{g.Value} x {g.Count} " : g.Value));
-
-                                    message += $"**{subElement.SubKey}** : {groupedMessage} \n";
-                                }
-                                else
-                                {
-                                    message += $"**{subElement.SubKey}** : Aucun élément \n";
-                                }
+                                recapMessage += $"**{subElement.SubKey}** : {groupedMessage} \n";
                             }
-                        }
-                        else
-                        {
-                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
-
-                        }
-
-                        foreach (var subElement in subElements.Where(x => x.SubKey == alias))
-                        {
-                            if (getUser)
-                            {
-                                subElement.Values.Clear();
-                                subElement.Values.Add("Aucun élément");
-                            }
-                        }
-
-                        DataManager.SaveRecapList();
-                    }
-                    else
-                    {
-                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
-                    }
-                }
-
-                while (message.Length > maxMessageLength)
-                {
-                    string messagePart = message.Substring(0, maxMessageLength);
-                    await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
-                    message = message.Substring(maxMessageLength);
-                }
-
-                if (!string.IsNullOrEmpty(message))
-                {
-                    await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
-                }
-                break;
-
-            case "clean":
-                receiverId = command.User.Id.ToString();
-
-                if (!Declare.receiverAliases.ContainsValue(receiverId))
-                {
-                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
-                }
-                else
-                {
-                    if (Declare.recapList.TryGetValue(receiverId, out var subElements))
-                    {
-                        var getUser = subElements.Any(x => x.SubKey == alias);
-
-                        if (getUser)
-                        {
 
                             foreach (var subElement in subElements.Where(x => x.SubKey == alias))
                             {
@@ -670,38 +713,140 @@ public static class BotCommands
                             }
 
                             DataManager.SaveRecapList();
+                            return true;
                         }
-                        else
-                        {
-                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
-                        }
+
+                        recapMessage = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+                        return false;
+                    }
+
+                    recapMessage = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    return false;
+                }
+
+                if (TryGetReceiverAliasDataRecapAndClean(guildId, channelId, receiverId, out string errorMessageRecapAndClean))
+                {
+                    if (TryGetRecapDataRecapAndClean(guildId, channelId, receiverId, out string recapMessage))
+                    {
+                        message = recapMessage;
                     }
                     else
                     {
-                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                        message = recapMessage;
                     }
+                }
+                else
+                {
+                    message = errorMessageRecapAndClean;
+                }
+
+                while (message.Length > maxMessageLength)
+                {
+                    string messagePart = message.Substring(0, maxMessageLength);
+                    await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
+                    message = message.Substring(maxMessageLength);
                 }
 
                 if (!string.IsNullOrEmpty(message))
                 {
                     await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                 }
-                else
+                break;
+
+
+            case "clean":
+                receiverId = command.User.Id.ToString();
+
+                bool TryGetReceiverAliasDataClean(string guildId, string channelId, string receiverId, out string errorMessage)
                 {
-                    await command.FollowupAsync($"Clean pour Alias {alias} effectué", options: new RequestOptions { Timeout = 10000 });
+                    if (!Declare.receiverAliases.ContainsKey(guildId) || !Declare.receiverAliases[guildId].ContainsKey(channelId))
+                    {
+                        errorMessage = "Pas d'URL Enregistrée pour ce channel ou aucun alias enregistré.";
+                        return false;
+                    }
+
+                    if (!Declare.receiverAliases[guildId][channelId].ContainsValue(receiverId))
+                    {
+                        errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                        return false;
+                    }
+
+                    errorMessage = null;
+                    return true;
+                }
+
+                bool TryClearAliasDataClean(string guildId, string channelId, string receiverId, out string resultMessage)
+                {
+                    if (!Declare.recapList.ContainsKey(guildId) || !Declare.recapList[guildId].ContainsKey(channelId))
+                    {
+                        resultMessage = "Il existe aucune liste.";
+                        return false;
+                    }
+
+                    if (Declare.recapList[guildId][channelId].TryGetValue(receiverId, out var subElements))
+                    {
+                        var aliasElement = subElements.FirstOrDefault(x => x.SubKey == alias);
+
+                        if (aliasElement != null)
+                        {
+                            aliasElement.Values.Clear();
+                            aliasElement.Values.Add("Aucun élément");
+                            DataManager.SaveRecapList();
+                            resultMessage = null;
+                            return true;
+                        }
+
+                        resultMessage = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+                        return false;
+                    }
+
+                    resultMessage = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    return false;
+                }
+
+                if (TryGetReceiverAliasDataClean(guildId, channelId, receiverId, out message))
+                {
+                    if (!TryClearAliasDataClean(guildId, channelId, receiverId, out string clearMessage))
+                    {
+                        message = clearMessage;
+                    }
+                    else
+                    {
+                        message = $"Clean pour Alias {alias} effectué";
+                    }
                 }
                 break;
 
             case "clean-all":
                 receiverId = command.User.Id.ToString();
 
-                if (!Declare.receiverAliases.ContainsValue(receiverId))
+                bool TryGetReceiverAliasDataCleanAll(string guildId, string channelId, string receiverId, out string errorMessage)
                 {
-                    message = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                    if (!Declare.receiverAliases.ContainsKey(guildId) || !Declare.receiverAliases[guildId].ContainsKey(channelId))
+                    {
+                        errorMessage = "Pas d'URL Enregistrée pour ce channel ou aucun alias enregistré.";
+                        return false;
+                    }
+
+                    if (!Declare.receiverAliases[guildId][channelId].ContainsValue(receiverId))
+                    {
+                        errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+                        return false;
+                    }
+
+                    errorMessage = null;
+                    return true;
                 }
-                else
+
+                bool TryClearSubElementsCleanAll(string guildId, string channelId, string receiverId, out string resultMessage)
                 {
-                    if (Declare.recapList.TryGetValue(receiverId, out var subElements))
+                    if (!Declare.recapList.ContainsKey(guildId) || !Declare.recapList[guildId].ContainsKey(channelId))
+                    {
+                        resultMessage = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                        return false;
+                    }
+
+                    if (Declare.recapList[guildId][channelId].TryGetValue(receiverId, out var subElements))
                     {
                         if (subElements.Any())
                         {
@@ -711,25 +856,27 @@ public static class BotCommands
                                 subElement.Values.Add("Aucun élément");
                             }
                             DataManager.SaveRecapList();
+                            resultMessage = null;
+                            return true;
                         }
-                        else
-                        {
-                            message = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
-                        }
+                        resultMessage = $"L'utilisateur <@{receiverId}> n'est pas enregistré avec l'alias: {alias}.";
+                        return false;
+                    }
+
+                    resultMessage = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                    return false;
+                }
+
+                if (TryGetReceiverAliasDataCleanAll(guildId, channelId, receiverId, out message))
+                {
+                    if (!TryClearSubElementsCleanAll(guildId, channelId, receiverId, out string cleanMessage))
+                    {
+                        message = cleanMessage;
                     }
                     else
                     {
-                        message = $"L'utilisateur <@{receiverId}> n'existe pas.";
+                        message = $"Clean All pour <@{receiverId}> effectué";
                     }
-                }
-
-                if (!string.IsNullOrEmpty(message))
-                {
-                    await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
-                }
-                else
-                {
-                    await command.FollowupAsync($"Clean All pour <@{receiverId}> effectué", options: new RequestOptions { Timeout = 10000 });
                 }
                 break;
 
@@ -737,43 +884,31 @@ public static class BotCommands
                 receiverId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
                 bool listByLine = (bool)command.Data.Options.FirstOrDefault(o => o.Name == "list-by-line")?.Value;
 
-                var filteredItems = Declare.displayedItems
-                .Where(item => item.receiver == receiverId)
-                .GroupBy(item => item.item)
-                .Select(group => new
+                string BuildItemMessage(IEnumerable<IGrouping<string, displayedItemsElement>> filteredItems, bool listByLine)
                 {
-                    ItemName = group.Key,
-                    Count = group.Count()
-                })
-                .OrderBy(group => group.ItemName)
-                .ToList();
+                    var messageBuilder = new StringBuilder();
 
-                if (filteredItems.Count != 0)
-                {
-                    message = $"Items pour {receiverId} :\n";
-
-                    for (int i = 0; i < filteredItems.Count; i++)
+                    for (int i = 0; i < filteredItems.Count(); i++)
                     {
-                        var groupedItem = filteredItems[i];
+                        var groupedItem = filteredItems.ElementAt(i);
+                        messageBuilder.Append(groupedItem.Count() > 1
+                            ? $"{groupedItem.Key} x {groupedItem.Count()}"
+                            : groupedItem.Key);
 
-                        if (groupedItem.Count > 1)
+                        if (i < filteredItems.Count() - 1)
                         {
-                            message += $"{groupedItem.ItemName} x {groupedItem.Count}";
-                        }
-                        else
-                        {
-                            message += $"{groupedItem.ItemName}";
-                        }
-
-                        if (i < filteredItems.Count - 1)
-                        {
-                            message += listByLine ? "\n" : ", ";
+                            messageBuilder.Append(listByLine ? "\n" : ", ");
                         }
                     }
 
+                    return messageBuilder.ToString();
+                }
+
+                async Task SendMessage(string message)
+                {
                     while (message.Length > maxMessageLength)
                     {
-                        string messagePart = message.Substring(0, maxMessageLength);
+                        var messagePart = message.Substring(0, maxMessageLength);
                         await command.FollowupAsync(messagePart);
                         message = message.Substring(maxMessageLength);
                     }
@@ -783,59 +918,108 @@ public static class BotCommands
                         await command.FollowupAsync(message);
                     }
                 }
+
+                if (Declare.displayedItems.ContainsKey(guildId) && Declare.displayedItems[guildId].ContainsKey(channelId))
+                {
+                    var filteredItems = Declare.displayedItems[guildId][channelId]
+                        .Where(item => item.receiver == receiverId)
+                        .GroupBy(item => item.item)
+                        .OrderBy(group => group.Key)
+                        .ToList();
+
+                    if (filteredItems.Any())
+                    {
+                        message = $"Items pour {receiverId} :\n{BuildItemMessage(filteredItems, listByLine)}";
+                        await SendMessage(message);
+                    }
+                    else
+                    {
+                        await command.FollowupAsync("Pas d'items");
+                    }
+                }
                 else
                 {
-                    await command.FollowupAsync("Pas d'items");
+                    await command.FollowupAsync("Pas d'URL Enregistrée pour ce channel");
                 }
                 break;
 
             case "hint-from-finder":
-                var hintByFinder = Declare.hintStatuses.Where(h => h.finder == alias).ToList();
-
-                if (hintByFinder.Count != 0)
+                string BuildHintMessage(IEnumerable<hintStatus> hints, string alias)
                 {
-                    message = $"Item from {alias} :\n";
-                    foreach (var item in hintByFinder)
+                    var messageBuilder = new StringBuilder();
+                    messageBuilder.AppendLine($"Item from {alias} :");
+
+                    foreach (var item in hints)
                     {
-                        message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World\n";
+                        messageBuilder.AppendLine($"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World");
                     }
+
+                    return messageBuilder.ToString();
+                }
+
+                if (Declare.hintStatuses.ContainsKey(guildId) && Declare.hintStatuses[guildId].ContainsKey(channelId))
+                {
+                    var hintByFinder = Declare.hintStatuses[guildId][channelId].Where(h => h.finder == alias).ToList();
+
+                    message = hintByFinder.Any()
+                        ? BuildHintMessage(hintByFinder, alias)
+                        : "No hint found for this finder";
                 }
                 else
                 {
-                    message = "No hint found for this finder";
+                    message = "Pas d'URL Enregistrée pour ce channel ou Aucun hint.";
                 }
                 break;
 
             case "hint-for-receiver":
-                var hintByReceiver = Declare.hintStatuses.Where(h => h.receiver == alias).ToList();
-
-                if (hintByReceiver.Count != 0)
+                string BuildHintMessageReceiver(IEnumerable<hintStatus> hints, string alias)
                 {
-                    message = $"Item for {alias} :\n";
-                    foreach (var item in hintByReceiver)
+                    var messageBuilder = new StringBuilder();
+                    messageBuilder.AppendLine($"Item for {alias} :");
+
+                    foreach (var item in hints)
                     {
-                        message += $"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World\n";
+                        messageBuilder.AppendLine($"{item.receiver}'s {item.item} is at {item.location} in {item.finder}'s World");
                     }
+
+                    return messageBuilder.ToString();
+                }
+
+                if (Declare.hintStatuses.TryGetValue(guildId, out var guildHints) &&
+                    guildHints.TryGetValue(channelId, out var channelHints))
+                {
+                    var hintByReceiver = channelHints.Where(h => h.receiver == alias).ToList();
+
+                    message = hintByReceiver.Any()
+                        ? BuildHintMessageReceiver(hintByReceiver, alias)
+                        : "No hint found for this receiver";
                 }
                 else
                 {
-                    message = "No hint found for this receiver";
+                    message = "Pas d'URL Enregistrée pour ce channel ou Aucun hint.";
                 }
                 break;
 
             case "status-games-list":
-                message = "Status for all games :\n";
-                foreach (var game in Declare.gameStatus)
+                var messageBuilder = new StringBuilder("Status for all games :\n");
+
+                if (Declare.gameStatus.TryGetValue(guildId, out var guildGames) &&
+                    guildGames.TryGetValue(channelId, out var channelGames))
                 {
-                    if (game.pourcent != "100.00")
+                    foreach (var game in channelGames)
                     {
-                        message += $"**{game.name} - {game.game} - {game.pourcent}%**\n";
-                    }
-                    else
-                    {
-                        message += $"~~{game.name} - {game.game} - {game.pourcent}%~~\n";
+                        string gameStatus = (game.pourcent != "100.00")
+                            ? $"**{game.name} - {game.game} - {game.pourcent}%**\n"
+                            : $"~~{game.name} - {game.game} - {game.pourcent}%~~\n";
+
+                        messageBuilder.Append(gameStatus);
                     }
                 }
+                else
+                {
+                    messageBuilder.Clear().Append("Pas d'URL Enregistrée pour ce channel.");
+                }
+
                 break;
 
             default:

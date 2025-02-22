@@ -2,6 +2,7 @@
 Un bot Discord conçu pour être lié au sphere_tracker pour Archipelago (Exemple : https://archipelago.gg/sphere_tracker/trackerID).
 
 ## Fonctionnalités Actuelles
+* Multi Discord et Multi Channel
 * Ajouter une URL (Droits d'admin requis)
 * Supprimer une URL (Droits d'admin requis)
 * Récupérer tous les noms depuis le tracker
