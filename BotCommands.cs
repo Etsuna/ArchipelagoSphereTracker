@@ -251,7 +251,7 @@ public static class BotCommands
                         {
                             if (value == command.User.Id.ToString() || (guildUser != null && guildUser.GuildPermissions.Administrator))
                             {
-                                Declare.receiverAliases[guildId].Remove(alias);
+                                Declare.receiverAliases[guildId][channelId].Remove(alias);
                                 DataManager.SaveReceiverAliases();
 
                                 message = value == command.User.Id.ToString()
@@ -288,68 +288,46 @@ public static class BotCommands
                 break;
 
             case "add-alias":
-                void EnsureReceiverAliasesExist(string guildId, string channelId)
-                {
-                    if (!Declare.receiverAliases.ContainsKey(guildId))
-                        Declare.receiverAliases[guildId] = new Dictionary<string, Dictionary<string, string>>();
-
-                    if (!Declare.receiverAliases[guildId].ContainsKey(channelId))
-                        Declare.receiverAliases[guildId][channelId] = new Dictionary<string, string>();
-                }
-
-                void EnsureRecapListExist(string guildId, string channelId, string receiverId)
-                {
-                    if (!Declare.recapList.ContainsKey(guildId))
-                        Declare.recapList[guildId] = new Dictionary<string, Dictionary<string, List<SubElement>>>();
-
-                    if (!Declare.recapList[guildId].ContainsKey(channelId))
-                        Declare.recapList[guildId][channelId] = new Dictionary<string, List<SubElement>>();
-
-                    if (!Declare.recapList[guildId][channelId].TryGetValue(receiverId, out var recapUserList))
-                    {
-                        recapUserList = new List<SubElement>();
-                        Declare.recapList[guildId][channelId][receiverId] = recapUserList;
-                    }
-                }
-
-                void AddItemsToRecapUserList(string guildId, string channelId, string alias, List<SubElement> recapUserList)
-                {
-                    if (Declare.displayedItems.ContainsKey(guildId) && Declare.displayedItems[guildId].ContainsKey(channelId))
-                    {
-                        var items = Declare.displayedItems[guildId][channelId]
-                            .Where(item => item.receiver == alias)
-                            .Select(item => item.item)
-                            .ToList();
-
-                        recapUserList.FirstOrDefault()?.Values.AddRange(items.Any() ? items : new List<string> { "Aucun élément" });
-                    }
-                }
-
                 receiverId = command.User.Id.ToString();
 
-                EnsureReceiverAliasesExist(guildId, channelId);
-
-                if (Declare.receiverAliases[guildId][channelId].ContainsKey(alias))
+                if(!Declare.receiverAliases.ContainsKey(guildId))
                 {
-                    message = $"L'alias '{alias}' est déjà utilisé par <@{Declare.receiverAliases[guildId][channelId][alias]}>.";
+                    message = $"Aucune Alias trouvé.";
+                    Declare.receiverAliases[guildId] = new Dictionary<string, Dictionary<string, string>>();
                 }
-                else
+                else if(!Declare.receiverAliases[guildId].ContainsKey(channelId))
                 {
-                    Declare.receiverAliases[guildId][channelId][alias] = receiverId;
+                    message = $"Aucune Alias trouvé.";
+                    Declare.receiverAliases[guildId][channelId] = new Dictionary<string, string>();
+                }
+                else if (Declare.receiverAliases[guildId][channelId].TryGetValue(alias, out var existingReceiverId))
+                {
+                    message = $"L'alias '{alias}' est déjà utilisé par <@{existingReceiverId}>.";
+                    break;
+                }
 
-                    EnsureRecapListExist(guildId, channelId, receiverId);
+                Declare.receiverAliases[guildId][channelId][alias] = receiverId;
 
-                    var recapUserList = Declare.recapList[guildId][channelId][receiverId];
-                    var recapUser = recapUserList.FirstOrDefault(e => e.SubKey == alias) ?? new SubElement { SubKey = alias, Values = new List<string>() };
+                if (!Declare.recapList[guildId][channelId].TryGetValue(receiverId, out var recapUserList))
+                {
+                    recapUserList = new List<SubElement>();
+                    Declare.recapList[guildId][channelId][receiverId] = recapUserList;
+                }
+
+                var recapUser = recapUserList.FirstOrDefault(e => e.SubKey == alias);
+                if (recapUser == null)
+                {
+                    recapUser = new SubElement { SubKey = alias, Values = new List<string>() };
                     recapUserList.Add(recapUser);
-
-                    AddItemsToRecapUserList(guildId, channelId, alias, recapUserList);
-
-                    message = $"Alias ajouté : {alias} est maintenant associé à <@{receiverId}> et son récap généré.";
-
-                    DataManager.SaveRecapList();
-                    DataManager.SaveReceiverAliases();
                 }
+
+                var items = Declare.displayedItems[guildId][channelId].Where(item => item.receiver == alias).Select(item => item.item).ToList();
+                recapUser.Values.AddRange(items.Any() ? items : new List<string> { "Aucun élément" });
+
+                message = $"Alias ajouté : {alias} est maintenant associé à <@{receiverId}> et son récap généré.";
+
+                DataManager.SaveRecapList();
+                DataManager.SaveReceiverAliases();
                 break;
 
             case "add-url":
