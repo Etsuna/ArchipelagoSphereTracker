@@ -418,71 +418,7 @@ public static class BotCommands
                 }
                 else
                 {
-                    if (Declare.ChannelAndUrl.TryGetValue(guildId, out var urlSphereTracker) && urlSphereTracker.Remove(channelId))
-                    {
-                        if (urlSphereTracker.Count == 0)
-                        {
-                            Declare.ChannelAndUrl.Remove(guildId);
-                        }
-                        DataManager.SaveChannelAndUrl();
-                    }
-
-                    if (Declare.recapList.TryGetValue(guildId, out var recapList) && recapList.Remove(channelId))
-                    {
-                        if (recapList.Count == 0)
-                        {
-                            Declare.recapList.Remove(guildId);
-                        }
-                        DataManager.SaveRecapList();
-                    }
-
-                    if (Declare.receiverAliases.TryGetValue(guildId, out var receiverAliases) && receiverAliases.Remove(channelId))
-                    {
-                        if (receiverAliases.Count == 0)
-                        {
-                            Declare.receiverAliases.Remove(guildId);
-                        }
-                        DataManager.SaveReceiverAliases();
-                    }
-
-                    if (Declare.displayedItems.TryGetValue(guildId, out var displayedItems) && displayedItems.Remove(channelId))
-                    {
-                        if (displayedItems.Count == 0)
-                        {
-                            Declare.displayedItems.Remove(guildId);
-                        }
-                        DataManager.SaveDisplayedItems();
-                    }
-
-                    if (Declare.aliasChoices.TryGetValue(guildId, out var aliasChoices) && aliasChoices.Remove(channelId))
-                    {
-                        if (aliasChoices.Count == 0)
-                        {
-                            Declare.aliasChoices.Remove(guildId);
-                        }
-                        DataManager.SaveAliasChoices();
-                    }
-
-                    if (Declare.gameStatus.TryGetValue(guildId, out var gameStatus) && gameStatus.Remove(channelId))
-                    {
-                        if (gameStatus.Count == 0)
-                        {
-                            Declare.gameStatus.Remove(guildId);
-                        }
-                        DataManager.SaveGameStatus();
-                    }
-
-                    if (Declare.hintStatuses.TryGetValue(guildId, out var hintStatuses) && hintStatuses.Remove(channelId))
-                    {
-                        if (hintStatuses.Count == 0)
-                        {
-                            Declare.hintStatuses.Remove(guildId);
-                        }
-                        DataManager.SaveHintStatus();
-                    }
-
-                    message = "URL Supprimée.";
-                    await RegisterCommandsAsync();
+                    message = await DeleteChannelAndUrl(channelId, guildId);
                 }
                 break;
 
@@ -1031,5 +967,104 @@ public static class BotCommands
         {
             await command.FollowupAsync(message);
         }
+    }
+
+    public static async Task<string> DeleteChannelAndUrl(string? channelId, string? guildId)
+    {
+        string message;
+        if (channelId == null)
+        {
+            Declare.ChannelAndUrl.Remove(guildId);
+        }
+        else if (Declare.ChannelAndUrl.TryGetValue(guildId, out var urlSphereTracker) && urlSphereTracker.Remove(channelId))
+        {
+            if (urlSphereTracker.Count == 0)
+            {
+                Declare.ChannelAndUrl.Remove(guildId);
+            }
+        }
+        DataManager.SaveChannelAndUrl();
+
+        if (channelId == null)
+        {
+            Declare.recapList.Remove(guildId);
+        }
+        else if (Declare.recapList.TryGetValue(guildId, out var recapList) && recapList.Remove(channelId))
+        {
+            if (recapList.Count == 0)
+            {
+                Declare.recapList.Remove(guildId);
+            }
+        }
+        DataManager.SaveRecapList();
+
+        if (channelId == null)
+        {
+            Declare.receiverAliases.Remove(guildId);
+        }
+        else if (Declare.receiverAliases.TryGetValue(guildId, out var receiverAliases) && receiverAliases.Remove(channelId))
+        {
+            if (receiverAliases.Count == 0)
+            {
+                Declare.receiverAliases.Remove(guildId);
+            }
+        }
+        DataManager.SaveReceiverAliases();
+
+        if (channelId == null)
+        {
+            Declare.displayedItems.Remove(guildId);
+        }
+        else if (Declare.displayedItems.TryGetValue(guildId, out var displayedItems) && displayedItems.Remove(channelId))
+        {
+            if (displayedItems.Count == 0)
+            {
+                Declare.displayedItems.Remove(guildId);
+            }
+        }
+        DataManager.SaveDisplayedItems();
+
+        if (channelId == null)
+        {
+            Declare.aliasChoices.Remove(guildId);
+        }
+        else if (Declare.aliasChoices.TryGetValue(guildId, out var aliasChoices) && aliasChoices.Remove(channelId))
+        {
+            if (aliasChoices.Count == 0)
+            {
+                Declare.aliasChoices.Remove(guildId);
+            }
+        }
+        DataManager.SaveAliasChoices();
+
+        if (channelId == null)
+        {
+            Declare.gameStatus.Remove(guildId);
+        }
+        else if (Declare.gameStatus.TryGetValue(guildId, out var gameStatus) && gameStatus.Remove(channelId))
+        {
+            if (gameStatus.Count == 0)
+            {
+                Declare.gameStatus.Remove(guildId);
+            }
+        }
+        DataManager.SaveGameStatus();
+
+        if (channelId == null)
+        {
+            Declare.hintStatuses.Remove(guildId);
+        }
+        else if (Declare.hintStatuses.TryGetValue(guildId, out var hintStatuses) && hintStatuses.Remove(channelId))
+        {
+            if (hintStatuses.Count == 0)
+            {
+                Declare.hintStatuses.Remove(guildId);
+            }
+        }
+        DataManager.SaveHintStatus();
+
+        message = "URL Supprimée.";
+        await RegisterCommandsAsync();
+        return message;
     }
 }

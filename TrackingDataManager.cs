@@ -1,5 +1,7 @@
 ﻿using HtmlAgilityPack;
+using System;
 using System.Net;
+using System.Threading.Channels;
 
 public static class TrackingDataManager
 {
@@ -30,11 +32,33 @@ public static class TrackingDataManager
 
                     foreach (var guild in Declare.ChannelAndUrl.Keys)
                     {
-                        foreach (var url in Declare.ChannelAndUrl[guild])
+                        var guildCheck = Declare.client.GetGuild(ulong.Parse(guild));
+                        if (guildCheck != null)
                         {
-                            await setAliasAndGameStatusAsync(guild, url.Key, url.Value);
-                            await checkGameStatus(guild, url.Key, url.Value);
-                            await GetTableDataAsync(guild, url.Key, url.Value);
+                            foreach (var urls in Declare.ChannelAndUrl[guild])
+                            {
+                                var channel = urls.Key;
+                                var url = urls.Value;
+                                var channelCheck = guildCheck.GetChannel(ulong.Parse(channel));
+                                if (channelCheck != null)
+                                {
+                                    Console.WriteLine($"Le salon existe toujours : {channelCheck.Name}");
+                                    
+                                    await setAliasAndGameStatusAsync(guild, channel, url);
+                                    await checkGameStatus(guild, channel, url);
+                                    await GetTableDataAsync(guild, channel, url);
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Le salon n'existe plus, Suppression des informations.");
+                                    await BotCommands.DeleteChannelAndUrl(channel, guild);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Serveur introuvable, Suppression des informations.");
+                            await BotCommands.DeleteChannelAndUrl(null, guild);
                         }
                     }
                     
