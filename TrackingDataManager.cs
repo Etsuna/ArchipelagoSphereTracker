@@ -336,13 +336,7 @@ public static class TrackingDataManager
 
                 if (newEntry.pourcent == "100.00" || newEntry.status == "Goal Complete")
                 {
-                    string allAliases = string.Empty;
-                    if (Declare.receiverAliases.TryGetValue(guild, out var channelAlias) && channelAlias.TryGetValue(channel, out var alias))
-                    {
-                         allAliases = string.Join(", ", Declare.receiverAliases[guild][channel].Values.Distinct().Select(alias => $"<@{alias}>"));
-                    }
-                    BotCommands.SendMessageAsync($"{allAliases}\n{newEntry.name} has completed their goal for this game: {newEntry.game}!", channel).Wait();
-
+                    BotCommands.SendMessageAsync($"@everyone\n{newEntry.name} has completed their goal for this game: {newEntry.game}!", channel).Wait();
                     existingStatus.status = "Goal Completed";
                     existingStatus.pourcent = "100.00";
                     changeFound = true;
