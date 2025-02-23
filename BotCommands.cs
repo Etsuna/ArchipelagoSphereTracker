@@ -63,7 +63,6 @@ public static class BotCommands
             Console.WriteLine($"Erreur lors de l'envoi du message : {ex.Message}");
         }
     }
-
     public static async Task RegisterCommandsAsync()
     {
         foreach (var guild in Declare.client.Guilds)
@@ -77,12 +76,22 @@ public static class BotCommands
             new SlashCommandBuilder()
                 .WithName("delete-alias")
                 .WithDescription("Delete Alias")
-                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("alias")
+                    .WithDescription("Choose an alias")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
             new SlashCommandBuilder()
                 .WithName("add-alias")
                 .WithDescription("Add Alias")
-                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("alias")
+                    .WithDescription("Choose an alias")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
             new SlashCommandBuilder()
                 .WithName("add-url")
@@ -98,8 +107,7 @@ public static class BotCommands
                     {
                         new ApplicationCommandOptionChoiceProperties { Name = "Public", Value = "Public" },
                         new ApplicationCommandOptionChoiceProperties { Name = "Private", Value = "Private" }
-                    }
-                ),
+                    }),
 
             new SlashCommandBuilder()
                 .WithName("delete-url")
@@ -107,7 +115,7 @@ public static class BotCommands
 
             new SlashCommandBuilder()
                 .WithName("status-games-list")
-                .WithDescription("status for all games"),
+                .WithDescription("Status for all games"),
 
             new SlashCommandBuilder()
                 .WithName("recap-all")
@@ -116,37 +124,66 @@ public static class BotCommands
             new SlashCommandBuilder()
                 .WithName("recap")
                 .WithDescription("Recap List of items for a specific game")
-                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("alias")
+                    .WithDescription("Choose an alias")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
             new SlashCommandBuilder()
                 .WithName("recap-and-clean")
                 .WithDescription("Recap and clean List of items for a specific game")
-                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("alias")
+                    .WithDescription("Choose an alias")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
             new SlashCommandBuilder()
                 .WithName("clean")
                 .WithDescription("Recap and clean List of items for a specific game")
-                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("alias")
+                    .WithDescription("Choose an alias")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
             new SlashCommandBuilder()
                 .WithName("clean-all")
                 .WithDescription("Recap and clean his own recap list of items for all the games"),
 
+            new SlashCommandBuilder()
+                .WithName("hint-from-finder")
+                .WithDescription("Get a hint from finder")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("alias")
+                    .WithDescription("Choose an alias")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
             new SlashCommandBuilder()
-                 .WithName("hint-from-finder")
-                 .WithDescription("Get a hint from finder")
-                 .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
-
-            new SlashCommandBuilder()
-                 .WithName("hint-for-receiver")
-                 .WithDescription("Get a hint for receiver")
-                 .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices)),
+                .WithName("hint-for-receiver")
+                .WithDescription("Get a hint for receiver")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("alias")
+                    .WithDescription("Choose an alias")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
             new SlashCommandBuilder()
                 .WithName("list-items")
                 .WithDescription("List all items for alias")
-                .AddOption(BuildAliasOption(guild.Id.ToString(), Declare.aliasChoices))
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("alias")
+                    .WithDescription("Choose an alias")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true))
                 .AddOption(BuildListItemsOption()),
         };
 
@@ -155,37 +192,61 @@ public static class BotCommands
         }
 
         Declare.client.SlashCommandExecuted += HandleSlashCommandAsync;
+        Declare.client.AutocompleteExecuted += HandleAutocompleteAsync; 
     }
 
-    public static SlashCommandOptionBuilder BuildAliasOption(string guild, Dictionary<string, Dictionary<string, Dictionary<string, string>>> aliasChoices)
+    private static async Task HandleAutocompleteAsync(SocketAutocompleteInteraction interaction)
     {
-        var optionBuilder = new SlashCommandOptionBuilder()
-            .WithName("alias")
-            .WithDescription("Choose an alias")
-            .WithType(ApplicationCommandOptionType.String)
-            .WithRequired(true);
-
-        if (!aliasChoices.ContainsKey(guild))
-            return optionBuilder;
-
-        Dictionary<string, Dictionary<string, string>> filtered = aliasChoices[guild];
-
-        Dictionary<string, string> merged = filtered
-            .SelectMany(pair => pair.Value)
-            .ToLookup(pair => pair.Key, pair => pair.Value)
-            .ToDictionary(group => group.Key, group => group.First());
-
-        var sorted = merged.OrderBy(pair => pair.Key)
-                           .ToDictionary(pair => pair.Key, pair => pair.Value);
-
-        foreach (var alias in sorted)
+        if (interaction.Data.Current.Name == "alias")
         {
-            optionBuilder.AddChoice(alias.Key, alias.Value);
+            string guildId = interaction.GuildId?.ToString();
+            if (guildId == null || !Declare.aliasChoices.ContainsKey(guildId))
+            {
+                await interaction.RespondAsync(new AutocompleteResult[0]);
+                return;
+            }
+
+            var aliases = Declare.aliasChoices[guildId]
+                .SelectMany(pair => pair.Value)
+                .GroupBy(pair => pair.Key) 
+                .ToDictionary(group => group.Key, group => group.First().Value); 
+
+            string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
+
+            int pageSize = 25;
+            int pageNumber = 1;
+
+            if (userInput.StartsWith(">"))
+            {
+                if (int.TryParse(userInput.TrimStart('>'), out int parsedPage) && parsedPage > 0)
+                {
+                    pageNumber = parsedPage;
+                    userInput = ""; 
+                }
+            }
+
+            var filteredAliases = aliases
+                .Where(a => a.Key.ToLower().Contains(userInput))
+                .OrderBy(a => a.Key) 
+                .Skip((pageNumber - 1) * pageSize) 
+                .Take(pageSize) 
+                .Select(a => new AutocompleteResult(a.Key, a.Value))
+                .ToArray();
+
+            if (filteredAliases.Length == 0 && pageNumber > 1)
+            {
+                pageNumber = (aliases.Count / pageSize) + 1;
+                filteredAliases = aliases
+                    .OrderBy(a => a.Key)
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(a => new AutocompleteResult(a.Key, a.Value))
+                    .ToArray();
+            }
+
+            await interaction.RespondAsync(filteredAliases);
         }
-
-        return optionBuilder;
     }
-
 
 
     public static SlashCommandOptionBuilder BuildListItemsOption()
