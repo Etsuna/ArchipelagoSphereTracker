@@ -1,7 +1,5 @@
 ﻿using HtmlAgilityPack;
-using System;
 using System.Net;
-using System.Threading.Channels;
 
 public static class TrackingDataManager
 {
