@@ -942,7 +942,17 @@ public static class BotCommands
                             type: type  
                         );
 
-                        channelId = thread.Id.ToString();
+                        List<IGuildUser> allMembers = new List<IGuildUser>();
+
+                        await foreach (var memberBatch in channel.GetUsersAsync()) 
+                        {
+                            allMembers.AddRange(memberBatch); 
+                        }
+
+                        foreach (var member in allMembers)
+                        {
+                            await thread.AddUserAsync(member);
+                        }
 
                         Console.WriteLine($"Le thread a été créé avec l'ID : {channelId}");
                     }
