@@ -942,6 +942,8 @@ public static class BotCommands
                             type: type  
                         );
 
+                        channelId = thread.Id.ToString();
+
                         List<IGuildUser> allMembers = new List<IGuildUser>();
 
                         await foreach (var memberBatch in channel.GetUsersAsync()) 
