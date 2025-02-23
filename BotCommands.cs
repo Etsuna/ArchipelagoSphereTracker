@@ -884,7 +884,7 @@ public static class BotCommands
                     break;
 
                 case "status-games-list":
-                    var messageBuilder = new StringBuilder("Status for all games :\n");
+                    message = "Status for all games :\n";
 
                     if (Declare.gameStatus.TryGetValue(guildId, out var guildGames) &&
                         guildGames.TryGetValue(channelId, out var channelGames))
@@ -895,14 +895,13 @@ public static class BotCommands
                                 ? $"**{game.name} - {game.game} - {game.pourcent}%**\n"
                                 : $"~~{game.name} - {game.game} - {game.pourcent}%~~\n";
 
-                            messageBuilder.Append(gameStatus);
+                            message += gameStatus;
                         }
                     }
                     else
                     {
-                        messageBuilder.Clear().Append("Pas d'URL Enregistrée pour ce channel.");
+                        message = "Pas d'URL Enregistrée pour ce channel.";
                     }
-
                     break;
 
                 default:
