@@ -1004,7 +1004,7 @@ public static class BotCommands
                                 DataManager.SaveChannelAndUrl();
                                 message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
 
-                                await TrackingDataManager.GetTableDataAsync(guildId, channelId, newUrl, false);
+                                await TrackingDataManager.GetTableDataAsync(guildId, channelId, newUrl);
                                 if (!Declare.serviceRunning)
                                 {
                                     TrackingDataManager.StartTracking();

@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using System.Net;
+using System.Threading.Channels;
 
 public static class TrackingDataManager
 {
@@ -41,7 +42,7 @@ public static class TrackingDataManager
                                 if (channelCheck != null)
                                 {
                                     Console.WriteLine($"Le salon existe toujours : {channelCheck.Name}");
-                                    
+
                                     await setAliasAndGameStatusAsync(guild, channel, url);
                                     await checkGameStatus(guild, channel, url);
                                     await GetTableDataAsync(guild, channel, url);
@@ -59,7 +60,7 @@ public static class TrackingDataManager
                             await BotCommands.DeleteChannelAndUrl(null, guild);
                         }
                     }
-                    
+
                     await Task.Delay(60000, token);
                 }
             }
@@ -70,9 +71,17 @@ public static class TrackingDataManager
         }, token);
     }
 
-    public static async Task GetTableDataAsync(string guild, string channel, string url, bool displayItem = true)
+    public static async Task GetTableDataAsync(string guild, string channel, string url)
     {
         bool isUpdated = false;
+        bool displayItem = false;
+
+        var haveDisplayStatus = Declare.displayedItems.TryGetValue(guild, out var guildItemSave) && guildItemSave.TryGetValue(channel, out var channelGamesSave);
+
+        if (!haveDisplayStatus)
+        {
+            displayItem = true;
+        }
 
         var clientHttp = new HttpClient();
         var html = await clientHttp.GetStringAsync(url);
@@ -105,19 +114,16 @@ public static class TrackingDataManager
                 Declare.displayedItems[guild][channel].Add(newItem);
                 string message = BuildMessage(guild, channel, newItem);
 
-                if (File.Exists(Declare.displayedItemsFile))
-                {
-                    UpdateRecapList(guild, channel, newItem.receiver, newItem.item);
-                }
+                UpdateRecapList(guild, channel, newItem.receiver, newItem.item);
 
-                if (displayItem)
+                if (haveDisplayStatus)
                 {
                     await BotCommands.SendMessageAsync(message, channel);
                 }
             }
         }
 
-        if (!File.Exists(Declare.displayedItemsFile) || isUpdated || displayItem)
+        if (isUpdated || displayItem)
         {
             DataManager.SaveRecapList();
             DataManager.SaveDisplayedItems();
@@ -213,7 +219,7 @@ public static class TrackingDataManager
         doc.LoadHtml(html);
 
         var table = doc.DocumentNode.SelectNodes("//table")?.FirstOrDefault();
-        var rows = table?.SelectNodes(".//tr")?.Skip(1); 
+        var rows = table?.SelectNodes(".//tr")?.Skip(1);
 
         if (rows == null) return;
 
@@ -268,7 +274,6 @@ public static class TrackingDataManager
 
     public static async Task checkGameStatus(string guild, string channel, string url)
     {
-        DataManager.LoadGameStatus();
         bool changeFound = false;
 
         var clientHttp = new HttpClient();
@@ -313,7 +318,7 @@ public static class TrackingDataManager
                 lastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim())
             };
 
-            var existingStatus = Declare.gameStatus[guild][channel].FirstOrDefault(x => x.name == newEntry.name);
+             var existingStatus = Declare.gameStatus[guild][channel].FirstOrDefault(x => x.name == newEntry.name);
 
             if (existingStatus == null)
             {
@@ -331,7 +336,11 @@ public static class TrackingDataManager
 
                 if (newEntry.pourcent == "100.00" || newEntry.status == "Goal Complete")
                 {
-                    string allAliases = string.Join(", ", Declare.receiverAliases[guild][channel].Values.Distinct().Select(alias => $"<@{alias}>"));
+                    string allAliases = string.Empty;
+                    if (Declare.receiverAliases.TryGetValue(guild, out var channelAlias) && channelAlias.TryGetValue(channel, out var alias))
+                    {
+                         allAliases = string.Join(", ", Declare.receiverAliases[guild][channel].Values.Distinct().Select(alias => $"<@{alias}>"));
+                    }
                     BotCommands.SendMessageAsync($"{allAliases}\n{newEntry.name} has completed their goal for this game: {newEntry.game}!", channel).Wait();
 
                     existingStatus.status = "Goal Completed";
