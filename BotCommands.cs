@@ -308,6 +308,18 @@ public static class BotCommands
 
                 Declare.receiverAliases[guildId][channelId][alias] = receiverId;
 
+                if(!Declare.recapList.ContainsKey(guildId))
+                {
+                    message = $"Aucune Alias trouvé.";
+                    Declare.recapList[guildId] = new Dictionary<string, Dictionary<string, List<SubElement>>>();
+                }
+               
+                if (!Declare.recapList[guildId].ContainsKey(channelId))
+                {
+                    message = $"Aucune Alias trouvé.";
+                    Declare.recapList[guildId][channelId] = new Dictionary<string, List<SubElement>>();
+                }
+
                 if (!Declare.recapList[guildId][channelId].TryGetValue(receiverId, out var recapUserList))
                 {
                     recapUserList = new List<SubElement>();
