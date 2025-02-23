@@ -295,12 +295,14 @@ public static class BotCommands
                     message = $"Aucune Alias trouvé.";
                     Declare.receiverAliases[guildId] = new Dictionary<string, Dictionary<string, string>>();
                 }
-                else if(!Declare.receiverAliases[guildId].ContainsKey(channelId))
+                
+                if(!Declare.receiverAliases[guildId].ContainsKey(channelId))
                 {
                     message = $"Aucune Alias trouvé.";
                     Declare.receiverAliases[guildId][channelId] = new Dictionary<string, string>();
                 }
-                else if (Declare.receiverAliases[guildId][channelId].TryGetValue(alias, out var existingReceiverId))
+                
+                if (Declare.receiverAliases[guildId][channelId].TryGetValue(alias, out var existingReceiverId))
                 {
                     message = $"L'alias '{alias}' est déjà utilisé par <@{existingReceiverId}>.";
                     break;
