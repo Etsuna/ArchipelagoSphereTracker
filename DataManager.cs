@@ -74,42 +74,6 @@ public static class DataManager
         }
     }
 
-    public static void AddMissingRecapUser()
-    {
-        LoadRecapList();
-
-        foreach (var guild in Declare.receiverAliases.Keys)
-        {
-            foreach (var alias in Declare.receiverAliases[guild])
-            {
-                var receiverId = alias.Key;
-
-                if (!Declare.recapList.ContainsKey(guild))
-                {
-                    Declare.recapList[guild] = new Dictionary<string, Dictionary<string, List<SubElement>>>();
-                }
-
-                if (!Declare.recapList.ContainsKey(receiverId))
-                {
-                    Declare.recapList[guild][receiverId] = new Dictionary<string, List<SubElement>>();
-                }
-
-                if (!Declare.recapList[guild][receiverId].ContainsKey(alias.Key))
-                {
-                    Declare.recapList[guild][receiverId][alias.Key] = new List<SubElement>
-                    {
-                        new SubElement
-                        {
-                            SubKey = alias.Key,
-                            Values = new List<string> { "Aucun élément" }
-                        }
-                    };
-                }
-            }
-            SaveRecapList();
-        }
-    }
-
     public static void SaveAliasChoices()
     {
         var json = JsonConvert.SerializeObject(Declare.aliasChoices);
