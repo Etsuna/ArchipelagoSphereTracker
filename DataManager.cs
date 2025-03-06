@@ -7,7 +7,7 @@ public static class DataManager
         if (File.Exists(Declare.displayedItemsFile))
         {
             var json = File.ReadAllText(Declare.displayedItemsFile);
-            Declare.displayedItems = JsonConvert.DeserializeObject< Dictionary<string, Dictionary<string, List<displayedItemsElement>>>>(json);
+            Declare.displayedItems = JsonConvert.DeserializeObject<GuildDisplayedItem>(json);
         }
     }
 
@@ -21,12 +21,12 @@ public static class DataManager
     {
         if (Declare.receiverAliases != null)
         {
-            Declare.receiverAliases.Clear();
+            Declare.receiverAliases.Guild.Clear();
         }
         if (File.Exists(Declare.aliasFile))
         {
             var json = File.ReadAllText(Declare.aliasFile);
-            Declare.receiverAliases = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(json);
+            Declare.receiverAliases = JsonConvert.DeserializeObject<GuildReceiverAliases>(json);
         }
     }
 
@@ -38,14 +38,14 @@ public static class DataManager
 
     public static void LoadUrlAndChannel()
     {
-        if (Declare.urlChannelFile != null)
+        if (Declare.ChannelAndUrl != null)
         {
-            Declare.ChannelAndUrl.Clear();
+            Declare.ChannelAndUrl.Guild.Clear();
         }
         if (File.Exists(Declare.urlChannelFile))
         {
             var json = File.ReadAllText(Declare.urlChannelFile);
-            Declare.ChannelAndUrl = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(json);
+            Declare.ChannelAndUrl = JsonConvert.DeserializeObject<GuildChannelsAndUrls>(json);
         }
     }
 
@@ -65,12 +65,12 @@ public static class DataManager
     {
         if (Declare.recapList != null)
         {
-            Declare.recapList.Clear();
+            Declare.recapList.Guild.Clear();
         }
         if (File.Exists(Declare.recapListFile))
         {
             var json = File.ReadAllText(Declare.recapListFile);
-            Declare.recapList = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, List<SubElement>>>>>(json);
+            Declare.recapList = JsonConvert.DeserializeObject<GuildRecapList>(json);
         }
     }
 
@@ -84,12 +84,12 @@ public static class DataManager
     {
         if (Declare.aliasChoices != null)
         {
-            Declare.aliasChoices.Clear();
+            Declare.aliasChoices.Guild.Clear();
         }
         if (File.Exists(Declare.aliasChoicesFile))
         {
             var json = File.ReadAllText(Declare.aliasChoicesFile);
-            Declare.aliasChoices = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(json);
+            Declare.aliasChoices = JsonConvert.DeserializeObject<GuildAliasChoices>(json);
         }
     }
 
@@ -103,12 +103,12 @@ public static class DataManager
     {
         if (Declare.gameStatus != null)
         {
-            Declare.gameStatus.Clear();
+            Declare.gameStatus.Guild.Clear();
         }
         if (File.Exists(Declare.gameStatusFile))
         {
             var json = File.ReadAllText(Declare.gameStatusFile);
-            Declare.gameStatus = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<gameStatus>>>>(json);
+            Declare.gameStatus = JsonConvert.DeserializeObject<GuildGameStatus>(json);
         }
     }
 
@@ -116,12 +116,12 @@ public static class DataManager
     {
         if (Declare.hintStatuses != null)
         {
-            Declare.hintStatuses.Clear();
+            Declare.hintStatuses.Guild.Clear();
         }
         if (File.Exists(Declare.hintStatusFile))
         {
             var json = File.ReadAllText(Declare.hintStatusFile);
-            Declare.hintStatuses = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<hintStatus>>>>(json);
+            Declare.hintStatuses = JsonConvert.DeserializeObject<GuildHintStatus>(json);
         }
     }
 

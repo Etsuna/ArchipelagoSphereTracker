@@ -10,16 +10,17 @@ public static class Declare
     public static readonly string urlChannelFile = "url_channel.json";
     public static readonly string recapListFile = "recap.json";
     public static readonly string hintStatusFile = "hintStatus.json";
+    public static readonly string rolesAliasesFile = "rolesAliases.json";
     public static readonly string discordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
     
     public static string urlTracker = string.Empty;
-    public static Dictionary<string, Dictionary<string, Dictionary<string, string>>> receiverAliases = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
-    public static Dictionary<string, Dictionary<string, Dictionary<string, List<SubElement>>>> recapList = new Dictionary<string, Dictionary<string, Dictionary<string, List<SubElement>>>>();
-    public static Dictionary<string, Dictionary<string, Dictionary<string, string>>> aliasChoices = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
-    public static Dictionary<string, Dictionary<string, List<gameStatus>>> gameStatus = new Dictionary<string, Dictionary<string, List<gameStatus>>>();
-    public static Dictionary<string, Dictionary<string, List<displayedItemsElement>>> displayedItems = new Dictionary<string, Dictionary<string, List<displayedItemsElement>>>();
-    public static Dictionary<string, Dictionary<string, List<hintStatus>>> hintStatuses = new Dictionary<string, Dictionary<string, List<hintStatus>>>();
-    public static Dictionary<string, Dictionary<string, string>> ChannelAndUrl = new Dictionary<string, Dictionary<string, string>>();
+    public static GuildReceiverAliases receiverAliases = new GuildReceiverAliases();
+    public static GuildRecapList recapList = new GuildRecapList();
+    public static GuildAliasChoices aliasChoices = new GuildAliasChoices();
+    public static GuildGameStatus gameStatus = new GuildGameStatus();
+    public static GuildDisplayedItem displayedItems = new GuildDisplayedItem();
+    public static GuildHintStatus hintStatuses = new GuildHintStatus();
+    public static GuildChannelsAndUrls ChannelAndUrl = new GuildChannelsAndUrls();
 
     public static CancellationTokenSource cts;
     public static DiscordSocketClient client;
