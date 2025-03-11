@@ -156,7 +156,7 @@ public static class TrackingDataManager
             return $"{item.Finder} found their {item.Item} ({item.Location})";
         }
 
-        if (Declare.receiverAliases.Guild[guild].Channel[channel].receiverAlias.TryGetValue(item.Item, out List<string> userIds))
+        if (Declare.receiverAliases.Guild[guild].Channel[channel].receiverAlias.TryGetValue(item.Receiver, out List<string> userIds))
         {
             string mentions = string.Join(" ", userIds.Select(id => $"<@{id}>"));
 
