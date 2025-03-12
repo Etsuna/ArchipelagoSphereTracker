@@ -374,7 +374,7 @@ public static class BotCommands
                             message = "Voici le tableau des utilisateurs :\n";
                             foreach (var kvp in channelAliases.receiverAlias)
                             {
-                                foreach(var value in kvp.Value)
+                                foreach (var value in kvp.Value)
                                 {
                                     var user = await Declare.client.GetUserAsync(ulong.Parse(value));
                                     message += $"| {user.Username} | {kvp.Key} |\n";
@@ -406,7 +406,7 @@ public static class BotCommands
                         {
                             if (channelAliases.receiverAlias.TryGetValue(alias, out var values))
                             {
-                                foreach(var value in values)
+                                foreach (var value in values)
                                 {
                                     if (value == command.User.Id.ToString() || (guildUser != null && guildUser.GuildPermissions.Administrator))
                                     {
@@ -462,7 +462,7 @@ public static class BotCommands
                         Declare.receiverAliases.Guild[guildId].Channel[channelId] = new ReceiverAlias();
                     }
 
-                    if(!Declare.receiverAliases.Guild[guildId].Channel[channelId].receiverAlias.ContainsKey(alias))
+                    if (!Declare.receiverAliases.Guild[guildId].Channel[channelId].receiverAlias.ContainsKey(alias))
                     {
                         message = $"Aucune Alias trouvé.";
                         Declare.receiverAliases.Guild[guildId].Channel[channelId].receiverAlias[alias] = new List<string>();
@@ -637,13 +637,6 @@ public static class BotCommands
                         if (TryGetRecapData(guildId, channelId, receiverId, out string recapMessage))
                         {
                             message = recapMessage;
-
-                            while (message.Length > maxMessageLength)
-                            {
-                                string messagePart = message.Substring(0, maxMessageLength);
-                                await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
-                                message = message.Substring(maxMessageLength);
-                            }
                         }
                         else
                         {
@@ -654,12 +647,6 @@ public static class BotCommands
                     {
                         message = errorMessage;
                     }
-
-                    if (!string.IsNullOrEmpty(message))
-                    {
-                        await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
-                    }
-
                     break;
 
                 case "recap":
@@ -725,13 +712,6 @@ public static class BotCommands
                         if (TryGetRecapDataRecap(guildId, channelId, receiverId, out string recapMessage))
                         {
                             message = recapMessage;
-
-                            while (message.Length > maxMessageLength)
-                            {
-                                string messagePart = message.Substring(0, maxMessageLength);
-                                await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
-                                message = message.Substring(maxMessageLength);
-                            }
                         }
                         else
                         {
@@ -741,11 +721,6 @@ public static class BotCommands
                     else
                     {
                         message = errorMessageRecap;
-                    }
-
-                    if (!string.IsNullOrEmpty(message))
-                    {
-                        await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                     }
                     break;
 
@@ -828,18 +803,6 @@ public static class BotCommands
                     else
                     {
                         message = errorMessageRecapAndClean;
-                    }
-
-                    while (message.Length > maxMessageLength)
-                    {
-                        string messagePart = message.Substring(0, maxMessageLength);
-                        await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
-                        message = message.Substring(maxMessageLength);
-                    }
-
-                    if (!string.IsNullOrEmpty(message))
-                    {
-                        await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
                     }
                     break;
 
@@ -993,21 +956,6 @@ public static class BotCommands
                         return messageBuilder.ToString();
                     }
 
-                    async Task SendMessage(string message)
-                    {
-                        while (message.Length > maxMessageLength)
-                        {
-                            var messagePart = message.Substring(0, maxMessageLength);
-                            await command.FollowupAsync(messagePart);
-                            message = message.Substring(maxMessageLength);
-                        }
-
-                        if (!string.IsNullOrEmpty(message))
-                        {
-                            await command.FollowupAsync(message);
-                        }
-                    }
-
                     if (Declare.displayedItems.Guild.ContainsKey(guildId) && Declare.displayedItems.Guild[guildId].Channel.ContainsKey(channelId))
                     {
                         var filteredItems = Declare.displayedItems.Guild[guildId].Channel[channelId]
@@ -1019,7 +967,6 @@ public static class BotCommands
                         if (filteredItems.Any())
                         {
                             message = $"Items pour {receiverId} :\n{BuildItemMessage(filteredItems, listByLine)}";
-                            await SendMessage(message);
                         }
                         else
                         {
@@ -1115,9 +1062,22 @@ public static class BotCommands
                     break;
 
             }
-            if (!(command.CommandName.Contains("recap") || command.CommandName.Contains("list-items")))
+
+            while (message.Length > maxMessageLength)
             {
-                await command.FollowupAsync(message);
+                int splitIndex = message.LastIndexOf(", ", maxMessageLength, StringComparison.Ordinal);
+
+                if (splitIndex == -1) splitIndex = maxMessageLength;
+
+                string messagePart = message.Substring(0, splitIndex);
+                await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
+
+                message = message.Substring(splitIndex + 2).Trim();
+            }
+
+            if (!string.IsNullOrEmpty(message))
+            {
+                await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
             }
         }
         else
