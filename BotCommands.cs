@@ -1066,13 +1066,19 @@ public static class BotCommands
             while (message.Length > maxMessageLength)
             {
                 int splitIndex = message.LastIndexOf(", ", maxMessageLength, StringComparison.Ordinal);
-
-                if (splitIndex == -1) splitIndex = maxMessageLength;
+                if (splitIndex == -1)
+                {
+                    splitIndex = message.LastIndexOf("\n", maxMessageLength, StringComparison.Ordinal);
+                }
+                if (splitIndex == -1)
+                {
+                    splitIndex = maxMessageLength;
+                }
 
                 string messagePart = message.Substring(0, splitIndex);
                 await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
 
-                message = message.Substring(splitIndex + 2).Trim();
+                message = message.Substring(splitIndex + 1).Trim();
             }
 
             if (!string.IsNullOrEmpty(message))
