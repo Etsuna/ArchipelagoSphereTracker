@@ -33,13 +33,16 @@ DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
 APP_ID=YOUR_DISCORD_BOT_APP_ID
 ```
 
-Si vous souhaitez créer votre propre bot Discord en utilisant le code de ce dépôt, votre bot aura besoin des permissions définies par l'entier `274878032960`.
+Si vous souhaitez créer votre propre bot Discord en utilisant le code de ce dépôt, votre bot aura besoin des permissions définies par l'entier `395137117248`.
 
 Les permissions suivantes seront accordées à ArchipelagoSphereTracker :
 * Voir les salons  
-* Envoyer des messages  
+* Envoyer des messages
+* Creer des fils publics
+* Creer des fils privés  
 * Envoyer des messages dans les threads  
-* Gérer les messages  
+* Gérer les messages
+* Gérer les fils  
 * Intégrer des liens  
 * Joindre des fichiers  
 * Ajouter des réactions  
