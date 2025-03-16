@@ -1,6 +1,7 @@
-﻿using HtmlAgilityPack;
+﻿using Discord;
+using Discord.WebSocket;
+using HtmlAgilityPack;
 using System.Net;
-using System.Threading.Channels;
 
 public static class TrackingDataManager
 {
@@ -30,15 +31,66 @@ public static class TrackingDataManager
                             foreach (var urls in Declare.ChannelAndUrl.Guild[guild].Channel)
                             {
                                 var channel = urls.Key;
-                                var url = urls.Value;
+                                var urlSphereTracker = Declare.ChannelAndUrl.Guild[guild].Channel[channel].SphereTracker;
+                                var urlTracker = Declare.ChannelAndUrl.Guild[guild].Channel[channel].Tracker;
+
                                 var channelCheck = guildCheck.GetChannel(ulong.Parse(channel));
+                                
                                 if (channelCheck != null)
                                 {
                                     Console.WriteLine($"Le salon existe toujours : {channelCheck.Name}");
 
-                                    await setAliasAndGameStatusAsync(guild, channel, url);
-                                    await checkGameStatus(guild, channel, url);
-                                    await GetTableDataAsync(guild, channel, url);
+                                    var thread = guildCheck.GetChannel(ulong.Parse(channel)) as SocketThreadChannel;
+
+                                    if (thread != null)
+                                    {
+                                        var messages = await thread.GetMessagesAsync(1).FlattenAsync();
+                                        var lastMessage = messages.FirstOrDefault();
+
+                                        DateTimeOffset lastActivity;
+
+                                        if (lastMessage != null)
+                                        {
+                                            lastActivity = lastMessage.Timestamp;
+                                        }
+                                        else
+                                        {
+                                            lastActivity = SnowflakeUtils.FromSnowflake(thread.Id);
+                                            Console.WriteLine($"Aucun message trouvé, on utilise la date de création du fil : {lastActivity}");
+                                        }
+
+                                        double daysInactive = (DateTimeOffset.UtcNow - lastActivity).TotalDays;
+
+                                        if (daysInactive > 6 && daysInactive < 7)
+                                        {
+                                            var parentChannel = thread.ParentChannel.Id;
+
+                                            if (!Declare.warnedThreads.Contains(thread.Id.ToString()))
+                                            {
+                                                await BotCommands.SendMessageAsync(
+                                                    $"Aucun message depuis 6 jours. Si aucun message n'est posté sur le thread {thread.Name}, il sera supprimé demain.\nPensez a supprimer le thread quand vous en avez plus besoin !",
+                                                    parentChannel.ToString()
+                                                );
+                                                Declare.warnedThreads.Add(thread.Id.ToString());
+                                            }
+                                        }
+
+                                        if (daysInactive >= 7)
+                                        {
+                                            Console.WriteLine($"Dernière activité : {lastActivity}");
+                                            Console.WriteLine("Aucune activité depuis 7 jours, suppression du thread...");
+                                            await BotCommands.DeleteChannelAndUrl(channel, guild);
+                                            await thread.DeleteAsync();
+                                            Console.WriteLine("Thread supprimé.");
+
+                                            Declare.warnedThreads.Remove(thread.Id.ToString());
+                                            continue;
+                                        }
+                                    }
+
+                                    await setAliasAndGameStatusAsync(guild, channel, urlTracker);
+                                    await checkGameStatus(guild, channel, urlTracker);
+                                    await GetTableDataAsync(guild, channel, urlSphereTracker);
                                 }
                                 else
                                 {
@@ -202,18 +254,16 @@ public static class TrackingDataManager
         }
     }
 
-    public static async Task setAliasAndGameStatusAsync(string guild, string channel, string url)
+    public static async Task setAliasAndGameStatusAsync(string guild, string channel, string urlTracker)
     {
         if (Declare.aliasChoices.Guild.TryGetValue(guild, out var guildAliases) &&
             guildAliases.Channel.ContainsKey(channel))
         {
             return;
         }
-
         var clientHttp = new HttpClient();
-        Declare.urlTracker = url.Replace("sphere_", "");
 
-        var html = await clientHttp.GetStringAsync(Declare.urlTracker);
+        var html = await clientHttp.GetStringAsync(urlTracker);
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
@@ -254,6 +304,17 @@ public static class TrackingDataManager
         DataManager.SaveGameStatus();
         await BotCommands.RegisterCommandsAsync();
         await BotCommands.SendMessageAsync("Aliases Updated!", channel);
+
+        if (Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases.Any())
+        {
+            foreach (var alias in Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases.Keys)
+            {
+                var gameName = Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases[alias].GameName;
+                var patch = Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases[alias].Patch;
+
+                await BotCommands.SendMessageAsync($"Patch Pour {alias}, {gameName} : {patch}", channel);
+            }
+        }
     }
 
     private static void EnsureDictionaryStructureAliasAndGameStatus(string guild, string channel)
@@ -271,14 +332,13 @@ public static class TrackingDataManager
             Declare.gameStatus.Guild[guild].Channel[channel] = new List<GameStatus>();
     }
 
-    public static async Task checkGameStatus(string guild, string channel, string url)
+    public static async Task checkGameStatus(string guild, string channel, string urlTracker)
     {
         bool changeFound = false;
 
         var clientHttp = new HttpClient();
-        Declare.urlTracker = url.Replace("sphere_", "");
 
-        var html = await clientHttp.GetStringAsync(Declare.urlTracker);
+        var html = await clientHttp.GetStringAsync(urlTracker);
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
@@ -403,5 +463,4 @@ public static class TrackingDataManager
         if (!Declare.hintStatuses.Guild[guild].Channel.ContainsKey(channel))
             Declare.hintStatuses.Guild[guild].Channel[channel] = new List<HintStatus>();
     }
-
 }

@@ -1,5 +1,5 @@
 # ArchipelagoSphereTracker 
-Un bot Discord conçu pour être lié au sphere_tracker pour Archipelago (Exemple : https://archipelago.gg/sphere_tracker/trackerID).
+Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : https://archipelago.gg/room/trackerID).
 
 ## Fonctionnalités Actuelles
 * Multi Discord et Multi Channel
@@ -14,6 +14,9 @@ Un bot Discord conçu pour être lié au sphere_tracker pour Archipelago (Exempl
 * Envoyer automatiquement un message quand un joueur complète son objectif.
 * Lister les items reçus par le nom du joueur (avec l'option d'affichage en retour à la ligne pour chaque item ou séparés par une virgule).
 * Lister les hints par receivers ou par finders.
+* Lister le lien des Patchs.
+* Récupérer le port de connexion.
+* Suppression automatique du fil après 1 semaine d'inactivité.
 
 ## Jeux Pris en Charge
 Tous les jeux pris en charge par le Randomizer Multi-Monde [Archipelago](https://github.com/ArchipelagoMW/Archipelago) sont compatibles et ont une compatibilité MultiWorld complète entre eux.

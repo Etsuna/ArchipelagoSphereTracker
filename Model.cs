@@ -25,6 +25,7 @@ public class AliasUsers
 // ==========================
 // 🎯 Channel et URL
 // ==========================
+
 public class GuildChannelsAndUrls
 {
     public Dictionary<string, ChannelAndUrl> Guild { get; set; } = new Dictionary<string, ChannelAndUrl>();
@@ -32,7 +33,22 @@ public class GuildChannelsAndUrls
 
 public class ChannelAndUrl
 {
-    public Dictionary<string, string> Channel { get; set; } = new Dictionary<string, string>();
+    public Dictionary<string, UrlAndChannel> Channel { get; set; } = new Dictionary<string, UrlAndChannel>();
+}
+
+public class UrlAndChannel
+{
+    public string Room { get; set; }
+    public string Tracker { get; set; }
+    public string SphereTracker { get; set; }
+    public string Port { get; set; }
+    public Dictionary<string, UrlAndChannelPatch> Aliases { get; set; } = new Dictionary<string, UrlAndChannelPatch>();
+}
+
+public class UrlAndChannelPatch
+{
+    public string GameName { get; set; }
+    public string Patch { get; set; }
 }
 
 

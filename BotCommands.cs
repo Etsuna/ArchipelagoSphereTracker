@@ -1,11 +1,11 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Data;
 using System.Text;
-using System.Threading.Channels;
+using System.Text.RegularExpressions;
 
 public static class BotCommands
 {
@@ -139,6 +139,20 @@ public static class BotCommands
             new SlashCommandBuilder()
                 .WithName("recap-all")
                 .WithDescription("His own recap list of items for all the games"),
+
+            new SlashCommandBuilder()
+                .WithName("check-port-connexion")
+                .WithDescription("Check port usage in Archipelago."),
+
+            new SlashCommandBuilder()
+                .WithName("get-patch")
+                .WithDescription("patch for alias.")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("alias")
+                    .WithDescription("Choose an alias")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
             new SlashCommandBuilder()
                 .WithName("recap")
@@ -341,8 +355,6 @@ public static class BotCommands
 
     public static async Task HandleSlashCommandAsync(SocketSlashCommand command)
     {
-        await command.DeferAsync();
-
         var guildUser = command.User as IGuildUser;
         var receiverId = "";
         string message = "";
@@ -353,6 +365,8 @@ public static class BotCommands
 
         if (command.Channel is IThreadChannel threadChannel)
         {
+            await command.DeferAsync(ephemeral: true);
+
             switch (command.CommandName)
             {
                 case "get-aliases":
@@ -1057,6 +1071,53 @@ public static class BotCommands
                     }
                     break;
 
+                case "check-port-connexion":
+                    if (Declare.ChannelAndUrl.Guild.TryGetValue(guildId, out var guildUrl) &&
+                        guildUrl.Channel.TryGetValue(channelId, out var channelUrl) && !string.IsNullOrEmpty(channelUrl.Room))
+                    {
+                        using HttpClient client = new();
+                        HtmlDocument doc = new();
+                        string pageContent = await client.GetStringAsync(channelUrl.Room);
+
+                        doc.LoadHtml(pageContent);
+
+                        string checkPort = doc.DocumentNode.InnerText;
+
+                        Match match = Regex.Match(checkPort, @"/connect archipelago\.gg:(\d+)");
+
+                        if (match.Success)
+                        {
+                            var port = match.Groups[1].Value;
+
+                            message = $"Port : {port}";
+                            if (channelUrl.Port != port)
+                            {
+                                channelUrl.Port = port;
+                                DataManager.SaveChannelAndUrl();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        message = "Pas d'URL Enregistrée pour ce channel.";
+                    }
+                    break;
+
+                case "get-patch":
+                    receiverId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
+                    if (Declare.ChannelAndUrl.Guild.TryGetValue(guildId, out var guildPatches) &&
+                        guildPatches.Channel.TryGetValue(channelId, out var channelPatches) && channelPatches.Aliases.TryGetValue(receiverId, out var channelAlias))
+                    {
+
+                        message += $"Patch Pour {receiverId}, {channelAlias.GameName} : {channelAlias.Patch}\n\n";
+                    }
+                    else
+                    {
+                        message = "Pas de patch pour ce user.";
+                    }
+                    break;
+
+
                 default:
                     message = "Commande inconnue.";
                     break;
@@ -1076,24 +1137,32 @@ public static class BotCommands
                 }
 
                 string messagePart = message.Substring(0, splitIndex);
-                await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 });
+                await command.FollowupAsync(messagePart, options: new RequestOptions { Timeout = 10000 }, ephemeral: true);
 
                 message = message.Substring(splitIndex + 1).Trim();
             }
 
             if (!string.IsNullOrEmpty(message))
             {
-                await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 });
+                await command.FollowupAsync(message, options: new RequestOptions { Timeout = 10000 }, ephemeral: true);
             }
         }
         else
         {
+            await command.DeferAsync(ephemeral: false);
+
             var channel = command.Channel as ITextChannel;
             if (channel != null)
             {
                 if (command.CommandName.Equals("add-url"))
                 {
-                    bool IsValidUrl(string url) => url.Contains("sphere_tracker");
+                    string baseUrl = "https://archipelago.gg";
+                    string? trackerUrl = null;
+                    string? sphereTrackerUrl = null;
+                    string port = string.Empty;
+                    bool IsValidUrl(string url) => url.Contains(baseUrl + "/room");
+                    using HttpClient client = new();
+                    HtmlDocument doc = new();
 
                     bool CanAddUrl(string guildId, string channelId, out string existingUrlMessage)
                     {
@@ -1103,6 +1172,44 @@ public static class BotCommands
                         {
                             existingUrlMessage = $"URL déjà définie sur {Declare.ChannelAndUrl.Guild[guildId].Channel[channelId]}. Supprimez l'url avant d'ajouter une nouvelle url.";
                             return false;
+                        }
+
+                        return true;
+                    }
+
+                    async Task<bool> IsAllUrlIsValidAsync(string newUrl)
+                    {
+                        string pageContent = await client.GetStringAsync(newUrl);
+
+                        doc.LoadHtml(pageContent);
+
+                        string checkPort = doc.DocumentNode.InnerText;
+
+                        Match match = Regex.Match(checkPort, @"/connect archipelago\.gg:(\d+)");
+
+                        if (match.Success)
+                        {
+                            port = match.Groups[1].Value;
+                            Console.WriteLine($"Port trouvé : {port}");
+                        }
+
+                        trackerUrl = doc.DocumentNode.SelectSingleNode("//a[contains(text(),'Multiworld Tracker')]")?.GetAttributeValue("href", "Non trouvé");
+
+                        sphereTrackerUrl = doc.DocumentNode.SelectSingleNode("//a[contains(text(),'Sphere Tracker')]")?.GetAttributeValue("href", "Non trouvé");
+
+                        if (trackerUrl == null || sphereTrackerUrl == null || string.IsNullOrEmpty(port))
+                        {
+                            return false;
+                        }
+
+                        if (!string.IsNullOrEmpty(trackerUrl) && trackerUrl != "Non trouvé" && !trackerUrl.StartsWith("http"))
+                        {
+                            trackerUrl = baseUrl + trackerUrl;
+                        }
+
+                        if (!string.IsNullOrEmpty(sphereTrackerUrl) && sphereTrackerUrl != "Non trouvé" && !sphereTrackerUrl.StartsWith("http"))
+                        {
+                            sphereTrackerUrl = baseUrl + sphereTrackerUrl;
                         }
 
                         return true;
@@ -1124,7 +1231,11 @@ public static class BotCommands
                             }
                             else if (!IsValidUrl(newUrl))
                             {
-                                message = $"Le lien est incorrect, utilisez l'url sphere_tracker.";
+                                message = $"Le lien est incorrect, utilisez l'url de la room.";
+                            }
+                            else if (!await IsAllUrlIsValidAsync(newUrl))
+                            {
+                                message = $"Sphere_Tracker, Tracker ou le port ne sont pas trouvé. Ajout annulé.";
                             }
                             else
                             {
@@ -1165,7 +1276,45 @@ public static class BotCommands
                                     Declare.ChannelAndUrl.Guild[guildId] = new ChannelAndUrl();
                                 }
 
-                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId] = newUrl;
+                                if (!Declare.ChannelAndUrl.Guild[guildId].Channel.ContainsKey(channelId))
+                                {
+                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId] = new UrlAndChannel();
+                                }
+
+                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Room = newUrl;
+                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Tracker = trackerUrl;
+                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].SphereTracker = sphereTrackerUrl;
+                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Port = port;
+
+                                var rows = doc.DocumentNode.SelectNodes("//table//tr");
+
+                                if (rows != null)
+                                {
+                                    foreach (var row in rows)
+                                    {
+                                        var columns = row.SelectNodes("td");
+                                        if (columns != null && columns.Count >= 4)
+                                        {
+                                            string gameAlias = columns[1].InnerText.Trim();
+                                            string gameName = columns[2].InnerText.Trim();
+                                            var downloadLinkNode = columns[3].SelectSingleNode(".//a");
+                                            string downloadLink = downloadLinkNode != null ? downloadLinkNode.GetAttributeValue("href", "Aucun fichier") : "Aucun fichier";
+
+                                            Console.WriteLine($"Nom: {gameAlias} | Téléchargement: {downloadLink}");
+
+                                            if (downloadLinkNode != null)
+                                            {
+                                                if (!Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases.ContainsKey(gameAlias))
+                                                {
+                                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases[gameAlias] = new UrlAndChannelPatch();
+                                                }
+                                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases[gameAlias].GameName = gameName;
+                                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases[gameAlias].Patch = baseUrl + downloadLink;
+                                            }
+                                        }
+                                    }
+                                }
+
                                 DataManager.SaveChannelAndUrl();
                                 message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
                             }
