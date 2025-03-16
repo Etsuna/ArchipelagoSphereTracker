@@ -61,16 +61,26 @@ public static class TrackingDataManager
 
                                         double daysInactive = (DateTimeOffset.UtcNow - lastActivity).TotalDays;
 
+                                        if(daysInactive < 6)
+                                        {
+                                            if (Declare.warnedThreads.Contains(thread.Id.ToString()))
+                                            {
+                                                var parentChannel = thread.ParentChannel.Id;
+
+                                                await BotCommands.SendMessageAsync($"Nouveau message sur le thread {thread.Name}, suppression automatique annulée.", thread.Id.ToString());
+                                                Declare.warnedThreads.Remove(thread.Id.ToString());
+                                            }
+                                        }
+
                                         if (daysInactive > 6 && daysInactive < 7)
                                         {
-                                            var parentChannel = thread.ParentChannel.Id;
-
                                             if (!Declare.warnedThreads.Contains(thread.Id.ToString()))
                                             {
+                                                var parentChannel = thread.ParentChannel.Id;
+
                                                 await BotCommands.SendMessageAsync(
                                                     $"Aucun message depuis 6 jours. Si aucun message n'est posté sur le thread {thread.Name}, il sera supprimé demain.\nPensez a supprimer le thread quand vous en avez plus besoin !",
-                                                    parentChannel.ToString()
-                                                );
+                                                    parentChannel.ToString());
                                                 Declare.warnedThreads.Add(thread.Id.ToString());
                                             }
                                         }
