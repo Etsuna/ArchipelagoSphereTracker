@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using HtmlAgilityPack;
+using System.Globalization;
 using System.Net;
 
 public static class TrackingDataManager
@@ -61,7 +62,7 @@ public static class TrackingDataManager
 
                                         double daysInactive = (DateTimeOffset.UtcNow - lastActivity).TotalDays;
 
-                                        if(daysInactive < 6)
+                                        if (daysInactive < 6)
                                         {
                                             if (Declare.warnedThreads.Contains(thread.Id.ToString()))
                                             {
@@ -78,9 +79,17 @@ public static class TrackingDataManager
                                             {
                                                 var parentChannel = thread.ParentChannel.Id;
 
+                                                DateTimeOffset deletionDate = lastActivity.AddTicks(TimeSpan.TicksPerDay * 7);
+
+                                                TimeZoneInfo frenchTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Paris");
+                                                DateTimeOffset localDeletionDate = TimeZoneInfo.ConvertTime(deletionDate, frenchTimeZone);
+
+                                                string formattedDeletionDate = localDeletionDate.ToString("dddd d MMMM yyyy à HH'h'mm", CultureInfo.GetCultureInfo("fr-FR"));
+
                                                 await BotCommands.SendMessageAsync(
-                                                    $"Aucun message depuis 6 jours. Si aucun message n'est posté sur le thread {thread.Name}, il sera supprimé demain.\nPensez a supprimer le thread quand vous en avez plus besoin !",
+                                                    $"Aucun message depuis 6 jours. Si aucun message n'est posté avant le {formattedDeletionDate} sur le thread {thread.Name}, il sera supprimé.\nPensez à supprimer le thread quand vous n'en avez plus besoin !",
                                                     parentChannel.ToString());
+
                                                 Declare.warnedThreads.Add(thread.Id.ToString());
                                             }
                                         }
