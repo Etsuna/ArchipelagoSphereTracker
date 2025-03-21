@@ -141,8 +141,8 @@ public static class BotCommands
                 .WithDescription("His own recap list of items for all the games"),
 
             new SlashCommandBuilder()
-                .WithName("check-port-connexion")
-                .WithDescription("Check port usage in Archipelago."),
+                .WithName("info")
+                .WithDescription("get all infos for your Archipelago."),
 
             new SlashCommandBuilder()
                 .WithName("get-patch")
@@ -1071,7 +1071,7 @@ public static class BotCommands
                     }
                     break;
 
-                case "check-port-connexion":
+                case "info":
                     if (Declare.ChannelAndUrl.Guild.TryGetValue(guildId, out var guildUrl) &&
                         guildUrl.Channel.TryGetValue(channelId, out var channelUrl) && !string.IsNullOrEmpty(channelUrl.Room))
                     {
@@ -1084,18 +1084,23 @@ public static class BotCommands
                         string checkPort = doc.DocumentNode.InnerText;
 
                         Match match = Regex.Match(checkPort, @"/connect archipelago\.gg:(\d+)");
-
+                        message += "Info:\n";
+                        message += $"Room : {Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Room}\n";
+                        message += $"Tracker : {Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Tracker}\n";
+                        message += $"SphereTracker : {Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].SphereTracker}\n";
                         if (match.Success)
                         {
                             var port = match.Groups[1].Value;
 
-                            message = $"Port : {port}";
+                            message += $"Port : {port}";
                             if (channelUrl.Port != port)
                             {
                                 channelUrl.Port = port;
                                 DataManager.SaveChannelAndUrl();
                             }
                         }
+
+                        
                     }
                     else
                     {
