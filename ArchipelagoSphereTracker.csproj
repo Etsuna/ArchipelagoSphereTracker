@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <None Include="extern\**\*">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
