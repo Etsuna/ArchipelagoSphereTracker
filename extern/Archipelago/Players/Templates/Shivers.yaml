@@ -1,0 +1,179 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Shivers Template
+
+game: Shivers
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Shivers:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  ixupi_captures_needed:
+    # Number of Ixupi Captures needed for goal condition.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 10
+    10: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  lobby_access:
+    # Chooses how keys needed to reach the lobby are placed.
+    # - Normal: Keys are placed anywhere
+    # - Early: Keys are placed early 
+    # - Local: Keys are placed locally
+    normal: 0
+    early: 50
+    local: 0
+
+  puzzle_hints_required:
+    # If turned on puzzle hints/solutions will be available before the corresponding puzzle is required.
+    # 
+    # For example: The Red Door puzzle will be logically required only after access to the Beth's Address Book which gives you the solution.
+    # 
+    # Turning this off allows for greater randomization.
+    'false': 0
+    'true': 50
+
+  include_information_plaques:
+    # Adds Information Plaques as checks.
+    # (40 Locations)
+    'false': 50
+    'true': 0
+
+  front_door_usable:
+    # Adds a key to unlock the front door of the museum.
+    'false': 50
+    'true': 0
+
+  elevators_stay_solved:
+    # Adds elevators as checks and will remain open upon solving them.
+    # (3 Locations)
+    'false': 0
+    'true': 50
+
+  early_beth:
+    # Beth's body is open at the start of the game. This allows any pot piece to be placed in the slide and early checks on the second half of the final riddle.
+    'false': 0
+    'true': 50
+
+  early_lightning:
+    # Allows lightning to be captured at any point in the game. You will still need to capture all ten Ixupi for victory.
+    # (1 Location)
+    'false': 50
+    'true': 0
+
+  location_pot_pieces:
+    # Chooses where pot pieces will be located within the multiworld.
+    # - Own World: Pot pieces will be located within your own world
+    # - Different World: Pot pieces will be located in another world
+    # - Any World: Pot pieces will be located in any world
+    own_world: 50
+    different_world: 0
+    any_world: 0
+
+  full_pots:
+    # Chooses if pots will be in pieces or already completed
+    # - Pieces: Only pot pieces will be added to the item pool
+    # - Complete: Only completed pots will be added to the item pool
+    # - Mixed: Each pot will be randomly chosen to be pieces or already completed.
+    pieces: 50
+    complete: 0
+    mixed: 0
+
+  puzzle_collect_behavior:
+    # Defines what happens to puzzles on collect.
+    # - Solve None: No puzzles will be solved when collected.
+    # - Prevent Out Of Logic Access: All puzzles, except Red Door and Skull Door, will be solved when collected.
+    # This prevents out of logic access to Gods Room and Slide.
+    # - Solve All: All puzzles will be solved when collected. (original behavior)
+    solve_none: 0
+    prevent_out_of_logic_access: 50
+    solve_all: 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []

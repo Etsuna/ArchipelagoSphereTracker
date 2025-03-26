@@ -1,0 +1,499 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Castlevania 64 Template
+
+game: Castlevania 64
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Castlevania 64:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    # 
+    # **Items:** ensure all logically relevant items can be acquired. Some items, such as keys, may be self-locking, and
+    # some locations may be inaccessible.
+    full: 0
+    minimal: 0
+    items: 50
+
+  character_stages:
+    # Whether to include Reinhardt-only stages, Carrie-only stages, or both with or without branching paths at the end of Villa and Castle Center.
+    both: 50
+    branchless_both: 0
+    reinhardt_only: 0
+    carrie_only: 0
+
+  stage_shuffle:
+    # Shuffles which stages appear in which stage slots.
+    # Villa and Castle Center will never appear in any character stage slots if Character Stages is set to Both; they can only be somewhere on the main path.
+    # Castle Keep will always be at the end of the line.
+    'false': 50
+    'true': 0
+
+  starting_stage:
+    # Which stage to start at if Stage Shuffle is turned on.
+    forest_of_silence: 0
+    castle_wall: 0
+    villa: 0
+    tunnel: 0
+    underground_waterway: 0
+    castle_center: 0
+    duel_tower: 0
+    tower_of_execution: 0
+    tower_of_science: 0
+    tower_of_sorcery: 0
+    room_of_clocks: 0
+    clock_tower: 0
+    random: 50
+
+  warp_order:
+    # Arranges the warps in the warp menu in whichever stage order chosen, thereby changing the order they are unlocked in.
+    seed_stage_order: 50
+    vanilla_stage_order: 0
+    randomized_order: 0
+
+  sub_weapon_shuffle:
+    # Shuffles all sub-weapons in the game within each other in their own pool or in the main item pool.
+    'off': 50
+    own_pool: 0
+    anywhere: 0
+
+  spare_keys:
+    # Puts an additional copy of every non-Special key item in the pool for every key item that there is.
+    # Chance gives each key item a 50% chance of having a duplicate instead of guaranteeing one for all of them.
+    'off': 50
+    'on': 0
+    chance: 0
+
+  special1s_per_warp:
+    # Sets how many Special1 jewels are needed per warp menu option unlock.
+    # This will decrease until the number x 7 is less than or equal to the Total Specail1s if it isn't already.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 10
+    1: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  total_special1s:
+    # Sets how many Speical1 jewels are in the pool in total.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 7
+    # Maximum value is 70
+    7: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  draculas_condition:
+    # Sets the requirement for unlocking and opening the door to Dracula's chamber.
+    # None: No requirement. Door is unlocked from the start.
+    # Crystal: Activate the big crystal in Castle Center's basement. Neither boss afterwards has to be defeated.
+    # Bosses: Kill a specified number of bosses with health bars and claim their Trophies.
+    # Specials: Find a specified number of Special2 jewels shuffled in the main item pool.
+    none: 0
+    crystal: 50
+    bosses: 0
+    specials: 0
+
+  percent_special2s_required:
+    # Percentage of Special2s required to enter Dracula's chamber when Dracula's Condition is Special2s.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 100
+    80: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  total_special2s:
+    # How many Speical2 jewels are in the pool in total when Dracula's Condition is Special2s.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 70
+    25: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  bosses_required:
+    # How many bosses need to be defeated to enter Dracula's chamber when Dracula's Condition is set to Bosses.
+    # This will automatically adjust if there are fewer available bosses than the chosen number.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 16
+    12: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  carrie_logic:
+    # Adds the 2 checks inside Underground Waterway's crawlspace to the pool.
+    # If you (and everyone else if racing the same seed) are planning to only ever play Reinhardt, don't enable this.
+    # Can be combined with Hard Logic to include Carrie-only tricks.
+    'false': 50
+    'true': 0
+
+  hard_logic:
+    # Properly considers sequence break tricks in logic (i.e. maze skip). Can be combined with Carrie Logic to include Carrie-only tricks.
+    # See the Game Page for a full list of tricks and glitches that may be logically required.
+    'false': 50
+    'true': 0
+
+  multi_hit_breakables:
+    # Adds the items that drop from the objects that break in three hits to the pool.
+    # There are 18 of these throughout the game, adding up to 79 or 80 checks (depending on sub-weapons being shuffled anywhere or not) in total with all stages.
+    # The game will be modified to remember exactly which of their items you've picked up instead of simply whether they were broken or not.
+    'false': 50
+    'true': 0
+
+  empty_breakables:
+    # Adds 9 check locations in the form of breakables that normally have nothing (all empty Forest coffins, etc.) and some additional Red Jewels and/or moneybags into the item pool to compensate.
+    'false': 50
+    'true': 0
+
+  lizard_locker_items:
+    # Adds the 6 items inside Castle Center 2F's Lizard-man generators to the pool.
+    # Picking up all of these can be a very tedious luck-based process, so they are off by default.
+    'false': 50
+    'true': 0
+
+  shopsanity:
+    # Adds 7 one-time purchases from Renon's shop into the location pool.
+    # After buying an item from a slot, it will revert to whatever it is in the vanilla game.
+    'false': 50
+    'true': 0
+
+  # gameplay tweaks
+  hard_item_pool:
+    # Replaces some items in the item pool with less valuable ones, to make the item pool sort of resemble Hard Mode in the PAL version.
+    'false': 50
+    'true': 0
+
+  shop_prices:
+    # Randomizes the amount of gold each item costs in Renon's shop.
+    # Use the Minimum and Maximum Gold Price options to control how much or how little an item can cost.
+    vanilla: 50
+    randomized: 0
+
+  minimum_gold_price:
+    # The lowest amount of gold an item can cost in Renon's shop, divided by 100.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 50
+    2: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  maximum_gold_price:
+    # The highest amount of gold an item can cost in Renon's shop, divided by 100.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 50
+    30: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  post_behemoth_boss:
+    # Sets which boss is fought in the vampire triplets' room in Castle Center by which characters after defeating Behemoth.
+    vanilla: 50
+    inverted: 0
+    always_rosa: 0
+    always_camilla: 0
+
+  room_of_clocks_boss:
+    # Sets which boss is fought at Room of Clocks by which characters.
+    vanilla: 50
+    inverted: 0
+    always_death: 0
+    always_actrise: 0
+
+  renon_fight_condition:
+    # Sets the condition on which the Renon fight will trigger.
+    never: 0
+    spend_30k: 50
+    always: 0
+
+  vincent_fight_condition:
+    # Sets the condition on which the vampire Vincent fight will trigger.
+    never: 0
+    wait_16_days: 50
+    always: 0
+
+  bad_ending_condition:
+    # Sets the condition on which the currently-controlled character's Bad Ending will trigger.
+    never: 0
+    kill_vincent: 50
+    always: 0
+
+  increase_item_limit:
+    # Increases the holding limit of usable items from 10 to 99 of each item.
+    'false': 0
+    'true': 50
+
+  nerf_healing_items:
+    # Decreases the amount of health healed by Roast Chickens to 25%, Roast Beefs to 50%, and Healing Kits to 80%.
+    'false': 50
+    'true': 0
+
+  loading_zone_heals:
+    # Whether end-of-level loading zones restore health and cure status aliments or not.
+    # Recommended off for those looking for more of a survival horror experience!
+    'false': 0
+    'true': 50
+
+  invisible_items:
+    # Sets which items are visible in their locations and which are invisible until picked up.
+    # 'Chance' gives each item a 50/50 chance of being visible or invisible.
+    vanilla: 50
+    reveal_all: 0
+    hide_all: 0
+    chance: 0
+
+  drop_previous_sub_weapon:
+    # When receiving a sub-weapon, the one you had before will drop behind you, so it can be taken back if desired.
+    'false': 50
+    'true': 0
+
+  permanent_powerups:
+    # Replaces PowerUps with PermaUps, which upgrade your B weapon level permanently and will stay even after dying and/or continuing.
+    # To compensate, only two will be in the pool overall, and they will not drop from any enemy or projectile.
+    'false': 50
+    'true': 0
+
+  ice_trap_percentage:
+    # Replaces a percentage of junk items with Ice Traps.
+    # These will be visibly disguised as other items, and receiving one will freeze you as if you were hit by Camilla's ice cloud attack.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  ice_trap_appearance:
+    # What items Ice Traps can possibly be disguised as.
+    major_only: 50
+    junk_only: 0
+    anything: 0
+
+  disable_time_restrictions:
+    # Disables the restriction on every event and door that requires the current time to be within a specific range, so they can be triggered at any time.
+    # This includes all sun/moon doors and, in the Villa, the meeting with Rosa and the fountain pillar.
+    # The Villa coffin is not affected by this.
+    'false': 50
+    'true': 0
+
+  skip_gondolas:
+    # Makes jumping on and activating a gondola in Tunnel instantly teleport you to the other station, thereby skipping the entire three-minute ride.
+    # The item normally at the gondola transfer point is moved to instead be near the red gondola at its station.
+    'false': 50
+    'true': 0
+
+  skip_waterway_blocks:
+    # Opens the door to the third switch in Underground Waterway from the start so that the jumping across floating brick platforms won't have to be done.
+    # Shopping at the Contract on the other side of them may still be logically required if Shopsanity is on.
+    'false': 50
+    'true': 0
+
+  countdown:
+    # Displays, near the HUD clock and below the health bar, the number of unobtained progression-marked items or the total check locations remaining in the stage you are currently in.
+    none: 50
+    majors: 0
+    all_locations: 0
+
+  big_toss:
+    # Makes every non-immobilizing damage source launch you as if you got hit by Behemoth's charge.
+    # Press A while tossed to cancel the launch momentum and avoid being thrown off ledges.
+    # Hold Z to have all incoming damage be treated as it normally would.
+    # Any tricks that might be possible with it are not in logic.
+    'false': 50
+    'true': 0
+
+  panther_dash:
+    # Hold C-right at any time to sprint way faster.
+    # Any tricks that are possible with it are not in logic and any boss fights with boss health meters, if started, are expected to be finished before leaving their arenas if Dracula's Condition is bosses.
+    # Jumpless will prevent jumping while moving at the increased speed to make logic harder to break with it.
+    'off': 50
+    'on': 0
+    jumpless: 0
+
+  increase_shimmy_speed:
+    # Increases the speed at which characters shimmy left and right while hanging on ledges.
+    'false': 50
+    'true': 0
+
+  fall_guard:
+    # Removes fall damage from landing too hard. Note that falling for too long will still result in instant death.
+    'false': 50
+    'true': 0
+
+  death_link:
+    # When you die, everyone dies. Of course the reverse is true too.
+    # Explosive: Makes received DeathLinks kill you via the Magical Nitro explosion instead of the normal death animation.
+    'off': 50
+    'on': 0
+    explosive: 0
+
+  # cosmetics
+  window_color_r:
+    # The red value for the background color of the text windows during gameplay.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 15
+    1: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  window_color_g:
+    # The green value for the background color of the text windows during gameplay.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 15
+    5: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  window_color_b:
+    # The blue value for the background color of the text windows during gameplay.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 15
+    15: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  window_color_a:
+    # The alpha value for the background color of the text windows during gameplay.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 15
+    8: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  background_music:
+    # Randomizes or disables the music heard throughout the game.
+    # Randomized music is split into two pools: songs that loop and songs that don't.
+    # The "lead-in" versions of some songs will be paired accordingly.
+    normal: 50
+    disabled: 0
+    randomized: 0
+
+  map_lighting:
+    # Randomizes the lighting color RGB values on every map during every time of day to be literally anything.
+    # The colors and/or shading of the following things are affected: fog, maps, player, enemies, and some objects.
+    normal: 50
+    randomized: 0
+
+  cinematic_experience:
+    # Enables an unused film reel effect on every cutscene in the game. Purely cosmetic.
+    'false': 50
+    'true': 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}

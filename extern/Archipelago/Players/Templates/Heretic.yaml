@@ -1,0 +1,223 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Heretic Template
+
+game: Heretic
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Heretic:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  goal:
+    # Choose the main goal.
+    # complete_all_levels: All levels of the selected episodes
+    # complete_boss_levels: Boss levels (E#M8) of selected episodes
+    complete_all_levels: 50
+    complete_boss_levels: 0
+
+  difficulty:
+    # Choose the difficulty option. Those match DOOM's difficulty options.
+    # baby (I'm too young to die.) double ammos, half damage, less monsters or strength.
+    # easy (Hey, not too rough.) less monsters or strength.
+    # medium (Hurt me plenty.) Default.
+    # hard (Ultra-Violence.) More monsters or strength.
+    # nightmare (Nightmare!) Monsters attack more rapidly and respawn.
+    # 
+    # wet nurse (hou needeth a wet-nurse) - Fewer monsters and more items than medium. Damage taken is halved, and ammo pickups carry twice as much ammo. Any Quartz Flasks and Mystic Urns are automatically used when the player nears death.
+    # easy (Yellowbellies-r-us) - Fewer monsters and more items than medium.
+    # medium (Bringest them oneth) - Completely balanced, this is the standard difficulty level.
+    # hard (Thou art a smite-meister) - More monsters and fewer items than medium.
+    # black plague (Black plague possesses thee) - Same as hard, but monsters and their projectiles move much faster. Cheating is also disabled.
+    wet_nurse: 0
+    easy: 0
+    medium: 50
+    hard: 0
+    black_plague: 0
+
+  random_monsters:
+    # Choose how monsters are randomized.
+    # vanilla: No randomization
+    # shuffle: Monsters are shuffled within the level
+    # random_balanced: Monsters are completely randomized, but balanced based on existing ratio in the level. (Small monsters vs medium vs big)
+    # random_chaotic: Monsters are completely randomized, but balanced based on existing ratio in the entire game.
+    vanilla: 0
+    shuffle: 50
+    random_balanced: 0
+    random_chaotic: 0
+
+  random_pickups:
+    # Choose how pickups are randomized.
+    # vanilla: No randomization
+    # shuffle: Pickups are shuffled within the level
+    # random_balanced: Pickups are completely randomized, but balanced based on existing ratio in the level. (Small pickups vs Big)
+    vanilla: 0
+    shuffle: 50
+    random_balanced: 0
+
+  random_music:
+    # Level musics will be randomized.
+    # vanilla: No randomization
+    # shuffle_selected: Selected episodes' levels will be shuffled
+    # shuffle_game: All the music will be shuffled
+    vanilla: 50
+    shuffle_selected: 0
+    shuffle_game: 0
+
+  allow_death_logic:
+    # Some locations require a timed puzzle that can only be tried once.
+    # After which, if the player failed to get it, the location cannot be checked anymore.
+    # By default, no progression items are placed here. There is a way, hovewer, to still get them:
+    # Get killed in the current map. The map will reset, you can now attempt the puzzle again.
+    'false': 50
+    'true': 0
+
+  pro:
+    # Include difficult tricks into rules. Mostly employed by speed runners.
+    # i.e.: Leaps across to a locked area, trigger a switch behind a window at the right angle, etc.
+    'false': 50
+    'true': 0
+
+  check_sanity:
+    # Include redundant checks. This increase total check count for the game.
+    # i.e.: In a room, there might be 3 checks close to each other. By default, two of them will be remove.
+    # This was done to lower the total count check for Heretic, as it is quite high compared to other games.
+    # Check Sanity restores original checks.
+    'false': 50
+    'true': 0
+
+  start_with_map_scrolls:
+    # Give the player all Map Scroll items from the start.
+    'false': 50
+    'true': 0
+
+  reset_level_on_death:
+    # When dying, levels are reset and monsters respawned. But inventory and checks are kept.
+    # Turning this setting off is considered easy mode. Good for new players that don't know the levels well.
+    'false': 0
+    'true': 50
+
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
+  episode1:
+    # City of the Damned.
+    # If none of the episodes are chosen, Episode 1 will be chosen by default.
+    'false': 0
+    'true': 50
+
+  episode2:
+    # Hell's Maw.
+    # If none of the episodes are chosen, Episode 1 will be chosen by default.
+    'false': 0
+    'true': 50
+
+  episode3:
+    # The Dome of D'Sparil.
+    # If none of the episodes are chosen, Episode 1 will be chosen by default.
+    'false': 0
+    'true': 50
+
+  episode4:
+    # The Ossuary.
+    # If none of the episodes are chosen, Episode 1 will be chosen by default.
+    'false': 50
+    'true': 0
+
+  episode5:
+    # The Stagnant Demesne.
+    # If none of the episodes are chosen, Episode 1 will be chosen by default.
+    'false': 50
+    'true': 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}

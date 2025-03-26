@@ -1,0 +1,462 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Kingdom Hearts Template
+
+game: Kingdom Hearts
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Kingdom Hearts:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  # Goal
+  goal:
+    # Determines when victory is achieved in your playthrough.
+    # 
+    # Sephiroth: Defeat Sephiroth
+    # Unknown: Defeat Unknown
+    # Postcards: Turn in all 10 postcards in Traverse Town
+    # Final Ansem: Enter End of the World and defeat Ansem as normal
+    # Puppies: Rescue and return all 99 puppies in Traverse Town
+    # Final Rest: Open the chest in End of the World Final Rest
+    sephiroth: 0
+    unknown: 0
+    postcards: 0
+    final_ansem: 50
+    puppies: 0
+    final_rest: 0
+
+  end_of_the_world_unlock:
+    # Determines how End of the World is unlocked.
+    # 
+    # Item: You can receive an item called "End of the World" which unlocks the world
+    # Reports: A certain amount of reports are required to unlock End of the World, which is defined in your options
+    item: 0
+    reports: 50
+
+  final_rest_door:
+    # Determines what conditions need to be met to manifest the door in Final Rest, allowing the player to challenge Ansem.
+    # 
+    # Reports: A certain number of Ansem's Reports are required, determined by the "Reports to Open Final Rest Door" option
+    # Puppies: Having all 99 puppies is required
+    # Postcards: Turning in all 10 postcards is required
+    # Superbosses: Defeating Sephiroth, Unknown, Kurt Zisa, and Phantom are required
+    reports: 50
+    puppies: 0
+    postcards: 0
+    superbosses: 0
+
+  required_reports_eotw:
+    # If End of the World Unlock is set to "Reports", determines the number of Ansem's Reports required to open End of the World.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 13
+    4: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  required_reports_door:
+    # If Final Rest Door is set to "Reports", determines the number of Ansem's Reports required to manifest the door in Final Rest to challenge Ansem.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 13
+    4: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  reports_in_pool:
+    # Determines the number of Ansem's Reports in the item pool.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 13
+    4: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  # Locations
+  super_bosses:
+    # Toggle whether to include checks behind Super Bosses.
+    'false': 50
+    'true': 0
+
+  atlantica:
+    # Toggle whether to include checks in Atlantica.
+    'false': 50
+    'true': 0
+
+  hundred_acre_wood:
+    # Toggle whether to include checks in the 100 Acre Wood.
+    'false': 50
+    'true': 0
+
+  cups:
+    # Toggle whether to include checks behind completing Phil, Pegasus, Hercules, or Hades cups.
+    # Please note that the cup items will still appear in the multiworld even if toggled off, as they are required to challenge Sephiroth.
+    'false': 50
+    'true': 0
+
+  vanilla_emblem_pieces:
+    # If on, the Hollow Bastion emblem pieces are in their vanilla locations.
+    'false': 0
+    'true': 50
+
+  # Levels
+  exp_multiplier:
+    # Determines the multiplier to apply to EXP gained.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 4
+    # Maximum value is 128
+    random: 0
+    random-low: 0
+    random-high: 0
+    0.25x: 0 # equivalent to 4
+    0.5x: 0 # equivalent to 8
+    1x: 50 # equivalent to 16
+    2x: 0 # equivalent to 32
+    3x: 0 # equivalent to 48
+    4x: 0 # equivalent to 64
+    8x: 0 # equivalent to 128
+
+  level_checks:
+    # Determines the maximum level for which checks can be obtained.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    100: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  force_stats_on_levels:
+    # If this value is less than the value for Level Checks, this determines the minimum level from which only stat ups are obtained at level up locations.
+    # For example, if you want to be able to find any multiworld item from levels 1-50, then just stat ups for levels 51-100, set this value to 51.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 101
+    random: 0
+    random-low: 0
+    random-high: 0
+    none: 0 # equivalent to 101
+    multiworld-to-level-50: 0 # equivalent to 51
+    all: 50 # equivalent to 1
+
+  strength_increase:
+    # Determines the number of Strength Increases to add to the multiworld.
+    # 
+    # The randomizer will add all stat ups defined here into a pool and choose up to 100 to add to the multiworld.
+    # Accessory Slot Increases and Item Slot Increases are prioritized first, then the remaining items (up to 100 total) are chosen at random.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    24: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  defense_increase:
+    # Determines the number of Defense Increases to add to the multiworld.
+    # 
+    # The randomizer will add all stat ups defined here into a pool and choose up to 100 to add to the multiworld.
+    # Accessory Slot Increases and Item Slot Increases are prioritized first, then the remaining items (up to 100 total) are chosen at random.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    24: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  hp_increase:
+    # Determines the number of HP Increases to add to the multiworld.
+    # 
+    # The randomizer will add all stat ups defined here into a pool and choose up to 100 to add to the multiworld.
+    # Accessory Slot Increases and Item Slot Increases are prioritized first, then the remaining items (up to 100 total) are chosen at random.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    23: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  ap_increase:
+    # Determines the number of AP Increases to add to the multiworld.
+    # 
+    # The randomizer will add all stat ups defined here into a pool and choose up to 100 to add to the multiworld.
+    # Accessory Slot Increases and Item Slot Increases are prioritized first, then the remaining items (up to 100 total) are chosen at random.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    18: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  mp_increase:
+    # Determines the number of MP Increases to add to the multiworld.
+    # 
+    # The randomizer will add all stat ups defined here into a pool and choose up to 100 to add to the multiworld.
+    # Accessory Slot Increases and Item Slot Increases are prioritized first, then the remaining items (up to 100 total) are chosen at random.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 20
+    7: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  accessory_slot_increase:
+    # Determines the number of Accessory Slot Increases to add to the multiworld.
+    # 
+    # The randomizer will add all stat ups defined here into a pool and choose up to 100 to add to the multiworld.
+    # Accessory Slot Increases and Item Slot Increases are prioritized first, then the remaining items (up to 100 total) are chosen at random.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 6
+    1: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  item_slot_increase:
+    # Determines the number of Item Slot Increases to add to the multiworld.
+    # 
+    # The randomizer will add all stat ups defined here into a pool and choose up to 100 to add to the multiworld.
+    # Accessory Slot Increases and Item Slot Increases are prioritized first, then the remaining items (up to 100 total) are chosen at random.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 5
+    3: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  # Keyblades
+  keyblades_unlock_chests:
+    # If toggled on, the player is required to have a certain keyblade to open chests in certain worlds.
+    # TT   - Lionheart
+    # WL   - Lady Luck
+    # OC   - Olympia
+    # DJ   - Jungle King
+    # AG   - Three Wishes
+    # MS   - Wishing Star
+    # HT   - Pumpkinhead
+    # NL   - Fairy Harp
+    # HB   - Divine Rose
+    # EotW - Oblivion
+    # HAW  - Oathkeeper
+    # 
+    # Note: Does not apply to Atlantica, the emblem and carousel chests in Hollow Bastion, or the Aero chest in Neverland currently.
+    'false': 50
+    'true': 0
+
+  randomize_keyblade_stats:
+    # Determines whether Keyblade stats should be randomized.
+    'false': 0
+    'true': 50
+
+  bad_starting_weapons:
+    # Forces Kingdom Key, Dream Sword, Dream Shield, and Dream Staff to have bad stats.
+    'false': 50
+    'true': 0
+
+  keyblade_min_str:
+    # Determines the minimum STR bonus a keyblade can have.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 20
+    3: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  keyblade_max_str:
+    # Determines the maximum STR bonus a keyblade can have.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 20
+    14: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  keyblade_min_mp:
+    # Determines the minimum MP bonus a keyblade can have.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is -2
+    # Maximum value is 5
+    -2: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  keyblade_max_mp:
+    # Determines the maximum MP bonus a keyblade can have.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is -2
+    # Maximum value is 5
+    3: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  # Misc
+  puppies:
+    # Determines how dalmatian puppies are shuffled into the pool.
+    # Full: All puppies are in one location
+    # Triplets: Puppies are found in triplets just as they are in the base game
+    # Individual: One puppy can be found per location
+    full: 0
+    triplets: 50
+    individual: 0
+
+  starting_worlds:
+    # Number of random worlds to start with in addition to Traverse Town, which is always available.  Will only consider Atlantica if toggled, and will only consider End of the World if its unlock is set to "Item".
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 10
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  interact_in_battle:
+    # Allow Sora to talk to people, examine objects, and open chests in battle.
+    'false': 50
+    'true': 0
+
+  advanced_logic:
+    # If on, logic may expect you to do advanced skips like using Combo Master, Dumbo, and other unusual methods to reach locations.
+    'false': 50
+    'true': 0
+
+  extra_shared_abilities:
+    # If on, adds extra shared abilities to the pool.  These can stack, so multiple high jumps make you jump higher and multiple glides make you superglide faster.
+    'false': 50
+    'true': 0
+
+  exp_zero_in_pool:
+    # If on, adds EXP Zero ability to the item pool.  This is redundant if you are planning on playing on Proud.
+    'false': 50
+    'true': 0
+
+  donald_death_link:
+    # If Donald is KO'ed, so is Sora.  If Death Link is toggled on in your client, this will send a death to everyone.
+    'false': 50
+    'true': 0
+
+  goofy_death_link:
+    # If Goofy is KO'ed, so is Sora.  If Death Link is toggled on in your client, this will send a death to everyone.
+    'false': 50
+    'true': 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}

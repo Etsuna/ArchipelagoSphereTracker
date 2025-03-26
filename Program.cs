@@ -7,6 +7,9 @@ class Program
 {
     static async Task Main(string[] args)
     {
+        Console.WriteLine("Starting bot... Achipelago Version: Archipelago_0.5.1.Hotfix1_linux-x86_64");
+        Console.WriteLine("For Windows, Setup WSL with Ubuntu to use the following commands: /list-yamls, /delete-yaml, /clean-yamls, /send-yaml, /generate-with-zip, /send-apworld, and /generate.");
+
         Env.Load();
 
         var config = new DiscordSocketConfig

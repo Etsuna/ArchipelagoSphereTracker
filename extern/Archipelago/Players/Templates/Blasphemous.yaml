@@ -1,0 +1,234 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Blasphemous Template
+
+game: Blasphemous
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Blasphemous:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  difficulty:
+    # Adjusts the overall difficulty of the randomizer, including upgrades required to defeat bosses and advanced movement tricks or glitches.
+    easy: 0
+    normal: 50
+    hard: 0
+
+  penitence:
+    # Allows one of the three Penitences to be chosen at the beginning of the game.
+    'false': 50
+    'true': 0
+
+  starting_location:
+    # Choose where to start the randomizer. Note that some starting locations cannot be chosen with certain other options.
+    # 
+    # Specifically, Brotherhood and Mourning And Havoc cannot be chosen if Shuffle Dash is enabled, and Grievance Ascends cannot be chosen if Shuffle Wall Climb is enabled.
+    brotherhood: 50
+    albero: 0
+    convent: 0
+    grievance: 0
+    knot_of_words: 0
+    rooftops: 0
+    mourning_havoc: 0
+
+  ending:
+    # Choose which ending is required to complete the game.
+    # 
+    # Talking to Tirso in Albero will tell you the selected ending for the current game.
+    # 
+    # Ending A: Collect all thorn upgrades.
+    # 
+    # Ending C: Collect all thorn upgrades and the Holy Wound of Abnegation.
+    any_ending: 50
+    ending_a: 0
+    ending_c: 0
+
+  thorn_shuffle:
+    # Shuffles the Thorn given by Deogracias and all Thorn upgrades into the item pool.
+    anywhere: 50
+    local_only: 0
+    vanilla: 0
+
+  reliquary_shuffle:
+    # Adds the True Torment exclusive Reliquary rosary beads into the item pool.
+    'false': 0
+    'true': 50
+
+  death_link:
+    # When you die, everyone dies. The reverse is also true.
+    # 
+    # Note that Guilt Fragments will not appear when killed by Death Link.
+    'false': 50
+    'true': 0
+
+  # Quality of Life
+  prie_dieu_warp:
+    # Automatically unlocks the ability to warp between Prie Dieu shrines.
+    'false': 0
+    'true': 50
+
+  skip_cutscenes:
+    # Automatically skips most cutscenes.
+    'false': 0
+    'true': 50
+
+  corpse_hints:
+    # Changes the 34 corpses in game to give various hints about item locations.
+    'false': 0
+    'true': 50
+
+  skip_long_quests:
+    # Ensures that the rewards for long quests will be filler items.
+    # 
+    # Affected locations: "Albero: Donate 50000 Tears", "Ossuary: 11th reward", "AtTotS: Miriam's gift", "TSC: Jocinero's final reward"
+    'false': 50
+    'true': 0
+
+  start_wheel:
+    # Changes the beginning gift to The Young Mason's Wheel.
+    'false': 50
+    'true': 0
+
+  # Moveset
+  dash_shuffle:
+    # Turns the ability to dash into an item that must be found in the multiworld.
+    'false': 50
+    'true': 0
+
+  wall_climb_shuffle:
+    # Turns the ability to climb walls with your sword into an item that must be found in the multiworld.
+    'false': 50
+    'true': 0
+
+  boots_of_pleading:
+    # Adds the custom relic Boots of Pleading into the item pool, which grants the ability to fall onto spikes and survive.
+    # 
+    # Must have the "Boots of Pleading" mod installed to connect to a multiworld.
+    'false': 50
+    'true': 0
+
+  purified_hand:
+    # Adds the custom relic Purified Hand of the Nun into the item pool, which grants the ability to jump a second time in mid-air.
+    # 
+    # Must have the "Double Jump" mod installed to connect to a multiworld.
+    'false': 50
+    'true': 0
+
+  skill_randomizer:
+    # Randomizes the abilities from the skill tree into the item pool.
+    'false': 50
+    'true': 0
+
+  # Enemy Randomizer
+  enemy_randomizer:
+    # Randomizes the enemies that appear in each room.
+    # 
+    # Shuffled: Enemies will be shuffled amongst each other, but can only appear as many times as they do in a standard game.
+    # 
+    # Randomized: Every enemy is completely random, and can appear any number of times.
+    # 
+    # Some enemies will never be randomized.
+    disabled: 50
+    shuffled: 0
+    randomized: 0
+
+  enemy_groups:
+    # Randomized enemies will be chosen from sets of specific groups. 
+    # 
+    # (Weak, normal, large, flying)
+    # 
+    # Has no effect if Enemy Randomizer is disabled.
+    'false': 0
+    'true': 50
+
+  enemy_scaling:
+    # Randomized enemies will have their stats increased or decreased depending on the area they appear in.
+    # 
+    # Has no effect if Enemy Randomizer is disabled.
+    'false': 0
+    'true': 50
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []

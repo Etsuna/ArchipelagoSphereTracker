@@ -4,6 +4,9 @@ using Discord.WebSocket;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
 using System.Data;
+using System.Diagnostics;
+using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -218,6 +221,55 @@ public static class BotCommands
                     .WithRequired(true)
                     .WithAutocomplete(true))
                 .AddOption(BuildListItemsOption()),
+
+            new SlashCommandBuilder()
+                .WithName("list-yamls")
+                .WithDescription("Liste tous les yamls du channel"),
+
+            new SlashCommandBuilder()
+                .WithName("delete-yaml")
+                .WithDescription("Supprime un fichier YAML spécifique du channel")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("file")
+                    .WithDescription("Choisissez un fichier YAML à supprimer")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
+
+             new SlashCommandBuilder()
+                .WithName("clean-yamls")
+                .WithDescription("Clean tous les yamls du channel"),
+
+            new SlashCommandBuilder()
+                .WithName("send-yaml")
+                .WithDescription("Envoyer ou remplacer le yaml sur le server pour la génération")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("fichier")
+                    .WithDescription("Téléchargez un fichier YAML")
+                    .WithType(ApplicationCommandOptionType.Attachment)
+                    .WithRequired(true)),
+
+            new SlashCommandBuilder()
+                .WithName("generate-with-zip")
+                .WithDescription("Génère un multiworld à partir d'un fichier ZIP")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("fichier")
+                    .WithDescription("Téléchargez un fichier ZIP contenant les fichiers YML")
+                    .WithType(ApplicationCommandOptionType.Attachment)
+                    .WithRequired(true)),
+
+            new SlashCommandBuilder()
+                .WithName("send-apworld")
+                .WithDescription("Ajouter ou remplacer un apworld au server")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("fichier")
+                    .WithDescription("Téléchargez un fichier apworld")
+                    .WithType(ApplicationCommandOptionType.Attachment)
+                    .WithRequired(true)),
+
+             new SlashCommandBuilder()
+                .WithName("generate")
+                .WithDescription("Génère un multiworld à partir des yamls déjà présent sur le server"),
         };
 
             var builtCommands = commands.Select(cmd => cmd.Build()).ToArray();
@@ -285,6 +337,56 @@ public static class BotCommands
             }
 
             await interaction.RespondAsync(filteredAliases);
+        }
+
+        if (interaction.Data.Current.Name == "file")
+        {
+            string guildId = interaction.GuildId?.ToString();
+            var channelId = interaction.ChannelId.ToString();
+            string directoryPath = $"extern/Archipelago/Players/{channelId}/yaml";
+
+            if (guildId == null || !Directory.Exists(directoryPath))
+            {
+                await interaction.RespondAsync(new AutocompleteResult[0]);
+                return;
+            }
+
+            var yamlFiles = Directory.GetFiles(directoryPath, "*.yaml")
+                .Select(Path.GetFileName)
+                .ToList();
+
+            string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
+
+            int pageSize = 25;
+            int pageNumber = 1;
+
+            // Gestion de la pagination avec ">N"
+            if (userInput.StartsWith(">"))
+            {
+                if (int.TryParse(userInput.TrimStart('>'), out int parsedPage) && parsedPage > 0)
+                {
+                    pageNumber = parsedPage;
+                    userInput = "";
+                }
+            }
+
+            var filteredYamlFiles = yamlFiles
+                .Where(f => f.ToLower().Contains(userInput))
+                .OrderBy(f => f)
+                .ToList();
+
+            int totalFiles = filteredYamlFiles.Count;
+            int totalPages = (int)Math.Ceiling((double)totalFiles / pageSize);
+
+            if (pageNumber > totalPages) pageNumber = totalPages > 0 ? totalPages : 1;
+
+            var paginatedFiles = filteredYamlFiles
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(f => new AutocompleteResult(f, f))
+                .ToArray();
+
+            await interaction.RespondAsync(paginatedFiles);
         }
 
         /*if (interaction.Data.Current.Name == "roles")
@@ -1100,7 +1202,7 @@ public static class BotCommands
                             }
                         }
 
-                        
+
                     }
                     else
                     {
@@ -1121,7 +1223,6 @@ public static class BotCommands
                         message = "Pas de patch pour ce user.";
                     }
                     break;
-
 
                 default:
                     message = "Commande inconnue.";
@@ -1159,181 +1260,611 @@ public static class BotCommands
             var channel = command.Channel as ITextChannel;
             if (channel != null)
             {
-                if (command.CommandName.Equals("add-url"))
+                switch (command.CommandName)
                 {
-                    string baseUrl = "https://archipelago.gg";
-                    string? trackerUrl = null;
-                    string? sphereTrackerUrl = null;
-                    string port = string.Empty;
-                    bool IsValidUrl(string url) => url.Contains(baseUrl + "/room");
-                    using HttpClient client = new();
-                    HtmlDocument doc = new();
+                    case "add-url":
+                        string baseUrl = "https://archipelago.gg";
+                        string? trackerUrl = null;
+                        string? sphereTrackerUrl = null;
+                        string port = string.Empty;
+                        bool IsValidUrl(string url) => url.Contains(baseUrl + "/room");
 
-                    bool CanAddUrl(string guildId, string channelId, out string existingUrlMessage)
-                    {
-                        existingUrlMessage = string.Empty;
+                        HtmlDocument doc = new();
 
-                        if (Declare.ChannelAndUrl.Guild.ContainsKey(guildId) && Declare.ChannelAndUrl.Guild[guildId].Channel.ContainsKey(channelId))
+                        bool CanAddUrl(string guildId, string channelId, out string existingUrlMessage)
                         {
-                            existingUrlMessage = $"URL déjà définie sur {Declare.ChannelAndUrl.Guild[guildId].Channel[channelId]}. Supprimez l'url avant d'ajouter une nouvelle url.";
-                            return false;
-                        }
+                            existingUrlMessage = string.Empty;
 
-                        return true;
-                    }
-
-                    async Task<bool> IsAllUrlIsValidAsync(string newUrl)
-                    {
-                        string pageContent = await client.GetStringAsync(newUrl);
-
-                        doc.LoadHtml(pageContent);
-
-                        string checkPort = doc.DocumentNode.InnerText;
-
-                        Match match = Regex.Match(checkPort, @"/connect archipelago\.gg:(\d+)");
-
-                        if (match.Success)
-                        {
-                            port = match.Groups[1].Value;
-                            Console.WriteLine($"Port trouvé : {port}");
-                        }
-
-                        trackerUrl = doc.DocumentNode.SelectSingleNode("//a[contains(text(),'Multiworld Tracker')]")?.GetAttributeValue("href", "Non trouvé");
-
-                        sphereTrackerUrl = doc.DocumentNode.SelectSingleNode("//a[contains(text(),'Sphere Tracker')]")?.GetAttributeValue("href", "Non trouvé");
-
-                        if (trackerUrl == null || sphereTrackerUrl == null || string.IsNullOrEmpty(port))
-                        {
-                            return false;
-                        }
-
-                        if (!string.IsNullOrEmpty(trackerUrl) && trackerUrl != "Non trouvé" && !trackerUrl.StartsWith("http"))
-                        {
-                            trackerUrl = baseUrl + trackerUrl;
-                        }
-
-                        if (!string.IsNullOrEmpty(sphereTrackerUrl) && sphereTrackerUrl != "Non trouvé" && !sphereTrackerUrl.StartsWith("http"))
-                        {
-                            sphereTrackerUrl = baseUrl + sphereTrackerUrl;
-                        }
-
-                        return true;
-                    }
-
-                    if (guildUser != null && !guildUser.GuildPermissions.Administrator)
-                    {
-                        message = "Seuls les administrateurs sont autorisés à ajouter une URL.";
-                    }
-                    else
-                    {
-                        if (CanAddUrl(guildId, channelId, out string existingUrlMessage))
-                        {
-                            var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
-
-                            if (string.IsNullOrEmpty(newUrl))
+                            if (Declare.ChannelAndUrl.Guild.ContainsKey(guildId) && Declare.ChannelAndUrl.Guild[guildId].Channel.ContainsKey(channelId))
                             {
-                                message = "URL vide non autorisée.";
+                                existingUrlMessage = $"URL déjà définie sur {Declare.ChannelAndUrl.Guild[guildId].Channel[channelId]}. Supprimez l'url avant d'ajouter une nouvelle url.";
+                                return false;
                             }
-                            else if (!IsValidUrl(newUrl))
+
+                            return true;
+                        }
+
+                        async Task<bool> IsAllUrlIsValidAsync(string newUrl)
+                        {
+                            using HttpClient client = new();
+                            string pageContent = await client.GetStringAsync(newUrl);
+
+                            doc.LoadHtml(pageContent);
+
+                            string checkPort = doc.DocumentNode.InnerText;
+
+                            Match match = Regex.Match(checkPort, @"/connect archipelago\.gg:(\d+)");
+
+                            if (match.Success)
                             {
-                                message = $"Le lien est incorrect, utilisez l'url de la room.";
+                                port = match.Groups[1].Value;
+                                Console.WriteLine($"Port trouvé : {port}");
                             }
-                            else if (!await IsAllUrlIsValidAsync(newUrl))
+
+                            trackerUrl = doc.DocumentNode.SelectSingleNode("//a[contains(text(),'Multiworld Tracker')]")?.GetAttributeValue("href", "Non trouvé");
+
+                            sphereTrackerUrl = doc.DocumentNode.SelectSingleNode("//a[contains(text(),'Sphere Tracker')]")?.GetAttributeValue("href", "Non trouvé");
+
+                            if (trackerUrl == null || sphereTrackerUrl == null || string.IsNullOrEmpty(port))
                             {
-                                message = $"Sphere_Tracker, Tracker ou le port ne sont pas trouvé. Ajout annulé.";
+                                return false;
                             }
-                            else
+
+                            if (!string.IsNullOrEmpty(trackerUrl) && trackerUrl != "Non trouvé" && !trackerUrl.StartsWith("http"))
                             {
-                                string threadTitle = command.Data.Options.ElementAt(1).Value.ToString();
-                                string threadType = command.Data.Options.ElementAt(2).Value.ToString();
+                                trackerUrl = baseUrl + trackerUrl;
+                            }
 
-                                ThreadType type = threadType switch
+                            if (!string.IsNullOrEmpty(sphereTrackerUrl) && sphereTrackerUrl != "Non trouvé" && !sphereTrackerUrl.StartsWith("http"))
+                            {
+                                sphereTrackerUrl = baseUrl + sphereTrackerUrl;
+                            }
+
+                            return true;
+                        }
+
+                        if (guildUser != null && !guildUser.GuildPermissions.Administrator)
+                        {
+                            message = "Seuls les administrateurs sont autorisés à ajouter une URL.";
+                        }
+                        else
+                        {
+                            if (CanAddUrl(guildId, channelId, out string existingUrlMessage))
+                            {
+                                var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
+
+                                if (string.IsNullOrEmpty(newUrl))
                                 {
-                                    "Private" => ThreadType.PrivateThread,
-                                    "Public" => ThreadType.PublicThread,
-                                    _ => ThreadType.PublicThread
-                                };
-
-                                var thread = await channel.CreateThreadAsync(
-                                    threadTitle,
-                                    autoArchiveDuration: ThreadArchiveDuration.OneWeek,
-                                    type: type
-                                );
-
-                                await thread.SendMessageAsync($"Le thread a été créé: {thread.Name}, Attendez que le bot soit Ready.");
-
-                                channelId = thread.Id.ToString();
-
-                                List<IGuildUser> allMembers = new List<IGuildUser>();
-
-                                await foreach (var memberBatch in channel.GetUsersAsync())
-                                {
-                                    allMembers.AddRange(memberBatch);
+                                    message = "URL vide non autorisée.";
                                 }
-
-                                foreach (var member in allMembers)
+                                else if (!IsValidUrl(newUrl))
                                 {
-                                    await thread.AddUserAsync(member);
+                                    message = $"Le lien est incorrect, utilisez l'url de la room.";
                                 }
-
-                                if (!Declare.ChannelAndUrl.Guild.ContainsKey(guildId))
+                                else if (!await IsAllUrlIsValidAsync(newUrl))
                                 {
-                                    Declare.ChannelAndUrl.Guild[guildId] = new ChannelAndUrl();
+                                    message = $"Sphere_Tracker, Tracker ou le port ne sont pas trouvé. Ajout annulé.";
                                 }
-
-                                if (!Declare.ChannelAndUrl.Guild[guildId].Channel.ContainsKey(channelId))
+                                else
                                 {
-                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId] = new UrlAndChannel();
-                                }
+                                    string threadTitle = command.Data.Options.ElementAt(1).Value.ToString();
+                                    string threadType = command.Data.Options.ElementAt(2).Value.ToString();
 
-                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Room = newUrl;
-                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Tracker = trackerUrl;
-                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].SphereTracker = sphereTrackerUrl;
-                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Port = port;
-
-                                var rows = doc.DocumentNode.SelectNodes("//table//tr");
-
-                                if (rows != null)
-                                {
-                                    foreach (var row in rows)
+                                    ThreadType type = threadType switch
                                     {
-                                        var columns = row.SelectNodes("td");
-                                        if (columns != null && columns.Count >= 4)
+                                        "Private" => ThreadType.PrivateThread,
+                                        "Public" => ThreadType.PublicThread,
+                                        _ => ThreadType.PublicThread
+                                    };
+
+                                    var thread = await channel.CreateThreadAsync(
+                                        threadTitle,
+                                        autoArchiveDuration: ThreadArchiveDuration.OneWeek,
+                                        type: type
+                                    );
+
+                                    await thread.SendMessageAsync($"Le thread a été créé: {thread.Name}, Attendez que le bot soit Ready.");
+
+                                    channelId = thread.Id.ToString();
+
+                                    List<IGuildUser> allMembers = new List<IGuildUser>();
+
+                                    await foreach (var memberBatch in channel.GetUsersAsync())
+                                    {
+                                        allMembers.AddRange(memberBatch);
+                                    }
+
+                                    foreach (var member in allMembers)
+                                    {
+                                        await thread.AddUserAsync(member);
+                                    }
+
+                                    if (!Declare.ChannelAndUrl.Guild.ContainsKey(guildId))
+                                    {
+                                        Declare.ChannelAndUrl.Guild[guildId] = new ChannelAndUrl();
+                                    }
+
+                                    if (!Declare.ChannelAndUrl.Guild[guildId].Channel.ContainsKey(channelId))
+                                    {
+                                        Declare.ChannelAndUrl.Guild[guildId].Channel[channelId] = new UrlAndChannel();
+                                    }
+
+                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Room = newUrl;
+                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Tracker = trackerUrl;
+                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].SphereTracker = sphereTrackerUrl;
+                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Port = port;
+
+                                    var rows = doc.DocumentNode.SelectNodes("//table//tr");
+
+                                    if (rows != null)
+                                    {
+                                        foreach (var row in rows)
                                         {
-                                            string gameAlias = columns[1].InnerText.Trim();
-                                            string gameName = columns[2].InnerText.Trim();
-                                            var downloadLinkNode = columns[3].SelectSingleNode(".//a");
-                                            string downloadLink = downloadLinkNode != null ? downloadLinkNode.GetAttributeValue("href", "Aucun fichier") : "Aucun fichier";
-
-                                            Console.WriteLine($"Nom: {gameAlias} | Téléchargement: {downloadLink}");
-
-                                            if (downloadLinkNode != null)
+                                            var columns = row.SelectNodes("td");
+                                            if (columns != null && columns.Count >= 4)
                                             {
-                                                if (!Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases.ContainsKey(gameAlias))
+                                                string gameAlias = columns[1].InnerText.Trim();
+                                                string gameName = columns[2].InnerText.Trim();
+                                                var downloadLinkNode = columns[3].SelectSingleNode(".//a");
+                                                string downloadLink = downloadLinkNode != null ? downloadLinkNode.GetAttributeValue("href", "Aucun fichier") : "Aucun fichier";
+
+                                                Console.WriteLine($"Nom: {gameAlias} | Téléchargement: {downloadLink}");
+
+                                                if (downloadLinkNode != null)
                                                 {
-                                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases[gameAlias] = new UrlAndChannelPatch();
+                                                    if (!Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases.ContainsKey(gameAlias))
+                                                    {
+                                                        Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases[gameAlias] = new UrlAndChannelPatch();
+                                                    }
+                                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases[gameAlias].GameName = gameName;
+                                                    Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases[gameAlias].Patch = baseUrl + downloadLink;
                                                 }
-                                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases[gameAlias].GameName = gameName;
-                                                Declare.ChannelAndUrl.Guild[guildId].Channel[channelId].Aliases[gameAlias].Patch = baseUrl + downloadLink;
                                             }
                                         }
                                     }
-                                }
 
-                                DataManager.SaveChannelAndUrl();
-                                message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
+                                    DataManager.SaveChannelAndUrl();
+                                    message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
+                                }
+                            }
+                            else
+                            {
+                                message = existingUrlMessage;
+                            }
+                        }
+                        break;
+                    case "list-yamls":
+                        string playersFolderChannel = $"extern/Archipelago/Players/{channelId}/yaml";
+                        if (Directory.Exists(playersFolderChannel))
+                        {
+                            var listYamls = Directory.GetFiles(playersFolderChannel, "*.yaml");
+
+                            if (listYamls.Any())
+                            {
+                                message += "Liste de Yamls\n";
+                                foreach (var yams in listYamls)
+                                {
+                                    var yamsFileName = Path.GetFileName(yams);
+                                    message += $"{yamsFileName}\n";
+                                }
+                            }
+                            else
+                            {
+                                message += "❌ Aucun fichier YML trouvé !";
+                            }
+                        }
+                        break;
+                    case "delete-yaml":
+                        var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
+                        playersFolderChannel = $"extern/Archipelago/Players/{channelId}/yaml";
+
+                        if (!string.IsNullOrEmpty(fileSelected))
+                        {
+                            var deletedfilePath = Path.Combine(playersFolderChannel, fileSelected);
+
+                            if (File.Exists(deletedfilePath))
+                            {
+                                File.Delete(deletedfilePath);
+                                message += $"Le fichier `{fileSelected}` a été supprimé avec succès. ✅";
+                            }
+                            else
+                            {
+                                message += $"Le fichier `{fileSelected}` n'existe pas. ❌";
                             }
                         }
                         else
                         {
-                            message = existingUrlMessage;
+                            message += "Aucun fichier sélectionné. ❌";
                         }
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"La commande a été exécutée dans le canal : {channel.Name}");
-                    message = "Cette commande doit être exécutée dans un channel.";
+                        break;
+                    case "clean-yamls":
+                        playersFolderChannel = $"extern/Archipelago/Players/{channelId}";
+                        if (Directory.Exists(playersFolderChannel))
+                        {
+                            Directory.Delete(playersFolderChannel, true);
+                            message = "Tous les fichiers YAML ont été supprimés.";
+                        }
+                        else
+                        {
+                            message = "Aucun fichier YAML trouvé.";
+                        }
+                        break;
+                    case "send-yaml":
+                        var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
+                        if (attachment == null || !attachment.Filename.EndsWith(".yaml"))
+                        {
+                            message = "❌ Vous devez envoyer un fichier YAML !";
+                            break;
+                        }
+
+                        playersFolderChannel = $"extern/Archipelago/Players/{channelId}/yaml";
+
+                        if (!Directory.Exists(playersFolderChannel))
+                        {
+                            Directory.CreateDirectory(playersFolderChannel);
+                        }
+
+                        string filePath = Path.Combine(playersFolderChannel, attachment.Filename);
+
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+
+                        using (HttpClient httpClient = new HttpClient())
+                        using (var response = await httpClient.GetAsync(attachment.Url))
+                        using (var fs = new FileStream(filePath, FileMode.Create))
+                        {
+                            await response.Content.CopyToAsync(fs);
+                        }
+
+                        message = $"Fichier `{attachment.Filename}` envoyé.";
+                        break;
+                    case "list-apworld":
+                        string apworldPath = $"extern/Archipelago/custom_worlds";
+                        if (Directory.Exists(apworldPath))
+                        {
+                            var listAppworld = Directory.GetFiles(apworldPath, "*.apworld");
+
+                            if (listAppworld.Any())
+                            {
+                                message += "Liste de apworld\n";
+                                foreach (var apworld in listAppworld)
+                                {
+                                    var apworldFileName = Path.GetFileName(apworld);
+                                    message += $"`{apworldFileName}`\n";
+                                }
+                            }
+                            else
+                            {
+                                message += "❌ Aucun fichier apworld trouvé !";
+                            }
+                        }
+                        break;
+                    case "send-apworld":
+                        attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
+                        if (attachment == null || !attachment.Filename.EndsWith(".apworld"))
+                        {
+                            message = "❌ Vous devez envoyer un fichier APWORLD !";
+                            break;
+                        }
+
+                        var customWorldPath = $"extern/Archipelago/custom_worlds";
+
+                        if (!Directory.Exists(customWorldPath))
+                        {
+                            Directory.CreateDirectory(customWorldPath);
+                        }
+
+                        filePath = Path.Combine(customWorldPath, attachment.Filename);
+
+                        Directory.CreateDirectory(customWorldPath);
+
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+
+                        using (HttpClient httpClient = new HttpClient())
+                        using (var response = await httpClient.GetAsync(attachment.Url))
+                        using (var fs = new FileStream(filePath, FileMode.Create))
+                        {
+                            await response.Content.CopyToAsync(fs);
+                        }
+                        message = $"Fichier `{attachment.Filename}`envoyé.";
+                        break;
+                    case "generate":
+                        playersFolderChannel = Path.Combine("extern/Archipelago/Players/", channelId, "yaml");
+                        var outputFolder = Path.Combine($"extern/Archipelago/output/", channelId, "yaml");
+
+                        if (Directory.Exists(outputFolder))
+                        {
+                            Directory.Delete(outputFolder, true);
+                        }
+
+                        Directory.CreateDirectory(playersFolderChannel);
+
+                        var ymlFiles = Directory.GetFiles(playersFolderChannel, "*.yaml");
+
+                        if (!ymlFiles.Any())
+                        {
+                            message = "❌ Aucun fichier YAML trouvé !";
+                            break;
+                        }
+
+                        var players = $"./Players/{channelId}/yaml";
+                        var outputGeneration = $"./output/{channelId}/yaml";
+
+                        var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+                        var fileName = string.Empty;
+                        var arguments = string.Empty;
+                        var workingDir = Path.Combine("extern", "Archipelago");
+
+                        if (isWindows)
+                        {
+                            fileName = "wsl";
+                            arguments = $"./ArchipelagoGenerate --player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
+                        }
+                        else
+                        {
+                            fileName = "./ArchipelagoGenerate";
+                            arguments = $"--player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
+                        }
+
+                        ProcessStartInfo startInfo = new ProcessStartInfo
+                        {
+                            FileName = fileName,
+                            Arguments = arguments,
+                            WorkingDirectory = workingDir,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                bool errorDetected = false;
+                                string errorMessage = string.Empty;
+
+                                using (Process process = new Process { StartInfo = startInfo })
+                                {
+                                    process.OutputDataReceived += (sender, e) =>
+                                    {
+                                        if (!string.IsNullOrEmpty(e.Data))
+                                        {
+                                            Console.WriteLine($"🟢 **Log** : {e.Data}\n");
+                                            if (e.Data.Contains("Opening file input dialog"))
+                                            {
+                                                errorMessage += $"❌ **Erreur** : {e.Data}\n";
+                                                errorDetected = true;
+                                                if (!process.HasExited) process.Kill();
+                                            }
+                                        }
+                                    };
+
+                                    process.ErrorDataReceived += (sender, e) =>
+                                    {
+                                        if (!string.IsNullOrEmpty(e.Data))
+                                        {
+                                            errorMessage += $"❌ **Erreur** : {e.Data}\n";
+                                            if (e.Data.Contains("ValueError") || e.Data.Contains("Exception"))
+                                            {
+                                                errorDetected = true;
+                                                if (!process.HasExited) process.Kill();
+                                            }
+                                        }
+                                    };
+
+                                    process.Start();
+                                    process.BeginOutputReadLine();
+                                    process.BeginErrorReadLine();
+
+                                    if (!process.WaitForExit(600000) && !errorDetected)
+                                    {
+                                        if (!process.HasExited) process.Kill();
+                                        errorMessage += "⏳ **Timeout** : Processus arrêté après 10min.";
+                                        errorDetected = true;
+                                    }
+                                }
+
+                                if (errorDetected)
+                                {
+                                    await command.FollowupAsync(errorMessage);
+                                    return;
+                                }
+
+                                if (!Directory.Exists(outputFolder))
+                                {
+                                    await command.FollowupAsync($"❌ Le dossier de sortie {outputFolder} n'existe pas.");
+                                    return;
+                                }
+
+                                var zipFile = Directory.GetFiles(outputFolder, "*.zip", SearchOption.TopDirectoryOnly).FirstOrDefault();
+                                if (zipFile != null)
+                                {
+                                    var zipFileName = Path.GetFileName(zipFile);
+                                    await command.FollowupWithFileAsync(zipFile, zipFileName);
+                                    Directory.Delete(playersFolderChannel, true);
+                                    Directory.Delete(outputFolder, true);
+                                }
+                                else
+                                {
+                                    await command.FollowupAsync("❌ Aucun fichier ZIP trouvé.");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                await command.FollowupAsync($"🚨 **Erreur Critique** : {ex.Message}");
+                            }
+                        });
+                        break;
+                    case "generate-with-zip":
+                        attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
+                        var tempmessage = string.Empty;
+                        if (attachment == null || !attachment.Filename.EndsWith(".zip"))
+                        {
+                            await command.FollowupAsync("❌ Vous devez envoyer un fichier ZIP contenant les fichiers YAML !");
+                            break;
+                        }
+
+                        playersFolderChannel = Path.Combine("extern/Archipelago/Players/", channelId, "zip");
+                        outputFolder = Path.Combine($"extern/Archipelago/output/", channelId, "zip");
+                        filePath = Path.Combine(playersFolderChannel, attachment.Filename);
+
+                        if (Directory.Exists(playersFolderChannel))
+                        {
+                            Directory.Delete(playersFolderChannel, true);
+                        }
+                        if (Directory.Exists(outputFolder))
+                        {
+                            Directory.Delete(outputFolder, true);
+                        }
+
+                        Directory.CreateDirectory(playersFolderChannel);
+
+                        using (HttpClient httpClient = new HttpClient())
+                        using (var response = await httpClient.GetAsync(attachment.Url))
+                        using (var fs = new FileStream(filePath, FileMode.Create))
+                        {
+                            await response.Content.CopyToAsync(fs);
+                        }
+
+                        ZipFile.ExtractToDirectory(filePath, playersFolderChannel);
+
+                        var removeNoYaml = Directory.GetFiles(playersFolderChannel);
+                        foreach (var file in removeNoYaml)
+                        {
+                            if (!file.EndsWith(".yaml"))
+                            {
+                                fileName = Path.GetFileName(file);
+                                tempmessage = $"ℹ️ **Info** : `{fileName}` n'est pas un fichier YAML. Il a été supprimé avant la génération\n";
+                                File.Delete(file);
+                            }
+                        }
+
+                        ymlFiles = Directory.GetFiles(playersFolderChannel, "*.yaml");
+
+                        File.Delete(filePath);
+
+                        if (!ymlFiles.Any())
+                        {
+                            await command.FollowupAsync("❌ Aucun fichier YML trouvé dans l'archive !");
+                            break;
+                        }
+
+                        players = $"./Players/{channelId}/zip";
+                        outputGeneration = $"./output/{channelId}/zip";
+
+                        isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+                        fileName = isWindows ? "wsl" : "./ArchipelagoGenerate";
+                        arguments = isWindows
+                            ? $"./ArchipelagoGenerate --player_files_path \"{players}\" --outputpath \"{outputGeneration}\""
+                            : $"--player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
+
+                        ProcessStartInfo startInfoWithZip = new ProcessStartInfo
+                        {
+                            FileName = fileName,
+                            Arguments = arguments,
+                            WorkingDirectory = Path.Combine("extern", "Archipelago"),
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                bool errorDetected = false;
+
+                                using (Process process = new Process { StartInfo = startInfoWithZip })
+                                {
+                                    if (!string.IsNullOrEmpty(tempmessage))
+                                    {
+                                        message += tempmessage;
+                                    }
+
+                                    process.OutputDataReceived += (sender, e) =>
+                                    {
+                                        if (!string.IsNullOrEmpty(e.Data))
+                                        {
+                                            Console.WriteLine($"🟢 **Log** : {e.Data}\n");
+                                            if (e.Data.Contains("Opening file input dialog"))
+                                            {
+                                                message += $"❌ **Erreur** : {e.Data}\n";
+                                                errorDetected = true;
+                                                if (!process.HasExited) process.Kill();
+                                            }
+                                        }
+                                    };
+
+                                    process.ErrorDataReceived += (sender, e) =>
+                                    {
+                                        if (!string.IsNullOrEmpty(e.Data))
+                                        {
+                                            message += $"❌ **Erreur** : {e.Data}\n";
+                                            if (e.Data.Contains("ValueError") || e.Data.Contains("Exception"))
+                                            {
+                                                errorDetected = true;
+                                                if (!process.HasExited) process.Kill();
+                                            }
+                                        }
+                                    };
+
+                                    process.Start();
+                                    process.BeginOutputReadLine();
+                                    process.BeginErrorReadLine();
+
+                                    if (!process.WaitForExit(600000) && !errorDetected)
+                                    {
+                                        if (!process.HasExited) process.Kill();
+                                        message += "⏳ **Timeout** : Processus arrêté après 10min.";
+                                        errorDetected = true;
+                                    }
+                                }
+
+                                if (errorDetected)
+                                {
+                                    await command.FollowupAsync(message);
+                                    return;
+                                }
+
+                                if (!Directory.Exists(outputFolder))
+                                {
+                                    await command.FollowupAsync($"❌ Le dossier de sortie {outputFolder} n'existe pas.");
+                                    return;
+                                }
+
+                                var zipFile = Directory.GetFiles(outputFolder, "*.zip", SearchOption.TopDirectoryOnly).FirstOrDefault();
+                                if (zipFile != null)
+                                {
+                                    var zipFileName = Path.GetFileName(zipFile);
+                                    await command.FollowupWithFileAsync(zipFile, zipFileName);
+                                    Directory.Delete(playersFolderChannel, true);
+                                    Directory.Delete(outputFolder, true);
+                                }
+                                else
+                                {
+                                    await command.FollowupAsync("❌ Aucun fichier ZIP trouvé.");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                await command.FollowupAsync($"🚨 **Erreur Critique** : {ex.Message}");
+                            }
+                        });
+                        break;
+
+                    default:
+                        Console.WriteLine($"La commande a été exécutée dans le canal : {channel.Name}");
+                        message = "Cette commande doit être exécutée dans un channel.";
+                        break;
                 }
             }
             await command.FollowupAsync(message);
