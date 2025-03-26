@@ -1,0 +1,284 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Mario & Luigi Superstar Saga Template
+
+game: Mario & Luigi Superstar Saga
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Mario & Luigi Superstar Saga:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  coins:
+    # Add all coin blocks in the game to the location pool.
+    'false': 50
+    'true': 0
+
+  difficult_logic:
+    # This adjusts the logic to be more difficult in a few areas,
+    # allowing for the logic to account for players getting to certain areas in unintended ways.
+    # Enable at your own risk, this is not an option made for beginners.
+    'false': 50
+    'true': 0
+
+  castle_skip:
+    # Skip straight from the entrance hall to Bowletta in Bowser's Castle.
+    # All Bowser's Castle locations will be removed from the location pool.
+    'false': 50
+    'true': 0
+
+  extra_pipes:
+    # Gives the player access to pipes 1, 3, 4, and 6 from the start.
+    'false': 50
+    'true': 0
+
+  skip_minecart:
+    # Skip the minecart minigame that leads you through Hoohoo Mountain Base.
+    # This will remove the 1 location in the minecart cave from the location pool.
+    'false': 50
+    'true': 0
+
+  disable_surf:
+    # Remove the surf minigame location from the location pool.
+    'false': 50
+    'true': 0
+
+  disable_harhalls_pants:
+    # This will remove the Harhall's Pants check from the pool.
+    'false': 50
+    'true': 0
+
+  block_visibility:
+    # This makes any hidden blocks in the game into regular item blocks and vice versa.
+    # Disabled: Hidden blocks will remain invisible.
+    # Hidden Visible: Hidden blocks will turn visible to the player.
+    # Blocks Invisible: All item blocks will turn invisible. Hidden blocks will also remain invisible.
+    disabled: 50
+    hidden_visible: 0
+    blocks_invisible: 0
+
+  chuckle_beans:
+    # Choose how you want chuckle bean digspots to be randomized.
+    # An amount of chuckle beans will be removed from the item pool,
+    # equal to the amount of locations removed by the setting that you choose.
+    # None: No chuckle bean digspots will be added into the location pool.
+    # Only Visible: Only chuckle bean digspots clearly marked with an X will be added into the location pool.
+    # All: All chuckle bean digspots will be added into the location pool.
+    none: 0
+    only_visible: 0
+    all: 50
+
+  music_options:
+    # Choose if you want to randomize or disable music.
+    # default: Music will be untouched.
+    # randomize: Music will be randomized.
+    # disable: All music will be disabled. No music will play throughout the entire game.
+    default: 50
+    randomize: 0
+    disable: 0
+
+  randomize_sounds:
+    # Randomizes every sound in the game, minus a select few that can softlock the game.
+    'false': 50
+    'true': 0
+
+  randomize_enemies:
+    # Randomize all normal enemy encounters in the game.
+    # If Bowser's castle skip is enabled, then enemies from Bowser's Castle will not be included.
+    # Disabled: Enemies will not be randomized.
+    # Vanilla Groups: Vanilla enemy groups will be shuffled with each other. Custom enemy groups will not be made.
+    # Custom Groups: Custom enemy groups will be made and shuffled. Some enemy groups will only be semi-random,
+    # including groups with flying enemies or pestnuts in them.
+    disabled: 50
+    vanilla_groups: 0
+    custom_groups: 0
+
+  randomize_bosses:
+    # Randomize all boss encounters in the game.
+    # If Bowser's castle skip is enabled then bosses from Bowser's Castle will not be included.
+    # Some bosses are not randomized due to flags, and story (such as the final boss).
+    # Boss Only: Bosses will only be swapped with another boss.
+    # Boss Normal: Bosses can be swapped with normal enemy encounters.
+    disabled: 50
+    boss_only: 0
+    boss_normal: 0
+
+  randomize_backgrounds:
+    # This randomizes the background image in battles.
+    'false': 50
+    'true': 0
+
+  scale_stats:
+    # This scales enemy HP, POW, DEF, and XP to vanilla values.
+    # This setting is intended for use with the Enemy Randomizer and is Recommended to turn on.
+    # If you are not using the Enemy Randomizer the effects will be minimal.
+    'false': 50
+    'true': 0
+
+  xp_multiplier:
+    # This will multiply any XP you receive in battle by the chosen multiplier.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 4
+    1: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  tattle_hp:
+    # This will display the enemies' current and max health while in battle.
+    'false': 50
+    'true': 0
+
+  mario_color:
+    # This changes the color of Mario's hat, as well as some key colors that are red including UI etc.
+    red: 50
+    green: 0
+    blue: 0
+    cyan: 0
+    yellow: 0
+    orange: 0
+    purple: 0
+    pink: 0
+    black: 0
+    white: 0
+    silhouette: 0
+    chaos: 0
+    true_chaos: 0
+
+  luigi_color:
+    # This changes the color of Luigi's hat, as well as some key colors that are green including UI etc.
+    red: 0
+    green: 50
+    blue: 0
+    cyan: 0
+    yellow: 0
+    orange: 0
+    purple: 0
+    pink: 0
+    black: 0
+    white: 0
+    silhouette: 0
+    chaos: 0
+    true_chaos: 0
+
+  mario_pants:
+    # This changes the color of Mario's trousers.
+    vanilla: 50
+    red: 0
+    green: 0
+    blue: 0
+    cyan: 0
+    yellow: 0
+    orange: 0
+    purple: 0
+    pink: 0
+    black: 0
+    white: 0
+    chaos: 0
+
+  luigi_pants:
+    # This changes the color of Luigi's trousers.
+    vanilla: 50
+    red: 0
+    green: 0
+    blue: 0
+    cyan: 0
+    yellow: 0
+    orange: 0
+    purple: 0
+    pink: 0
+    black: 0
+    white: 0
+    chaos: 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}

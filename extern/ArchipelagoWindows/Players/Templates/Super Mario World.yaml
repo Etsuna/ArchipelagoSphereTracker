@@ -1,0 +1,419 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Super Mario World Template
+
+game: Super Mario World
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Super Mario World:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
+  early_climb:
+    # Force Climb to appear early in the seed as a local item.
+    # 
+    # This is particularly useful to prevent BK when Level Shuffle is disabled
+    'false': 50
+    'true': 0
+
+  # Goal Options
+  goal:
+    # Determines the goal of the seed
+    # 
+    # Bowser: Defeat Koopalings, reach Bowser's Castle and defeat Bowser
+    # 
+    # Yoshi Egg Hunt: Find a certain number of Yoshi Eggs
+    bowser: 50
+    yoshi_egg_hunt: 0
+
+  bosses_required:
+    # How many Bosses (Koopalings or Reznor) must be defeated in order to defeat Bowser
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 11
+    7: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_yoshi_egg_cap:
+    # Maximum possible number of Yoshi Eggs that will be in the item pool
+    # 
+    # If fewer available locations exist in the pool than this number, the number of available locations will be used instead.
+    # 
+    # Required Percentage of Yoshi Eggs will be calculated based off of that number.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 255
+    50: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  percentage_of_yoshi_eggs:
+    # What Percentage of Yoshi Eggs are required to finish Yoshi Egg Hunt
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 100
+    100: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  # Sanity Options
+  dragon_coin_checks:
+    # Whether collecting 5 Dragon Coins in each level will grant a check
+    'false': 50
+    'true': 0
+
+  moon_checks:
+    # Whether collecting a 3-Up Moon in a level will grant a check
+    'false': 50
+    'true': 0
+
+  hidden_1up_checks:
+    # Whether collecting a hidden 1-Up mushroom in a level will grant a check
+    # 
+    # These checks are considered cryptic as there's no actual indicator that they're in their respective places
+    # 
+    # Enable this option at your own risk
+    'false': 50
+    'true': 0
+
+  bonus_block_checks:
+    # Whether collecting a 1-Up mushroom from a Bonus Block in a level will grant a check
+    'false': 50
+    'true': 0
+
+  blocksanity:
+    # Whether hitting a block with an item or coin inside will grant a check
+    # 
+    # Note that some blocks are excluded due to how the option and the game works!
+    # 
+    # Exclusion list:
+    #   * Blocks in Top Secret Area & Front Door/Bowser Castle
+    #   * Blocks that are unreachable unless you glitch your way in
+    'false': 50
+    'true': 0
+
+  # Level Shuffling
+  bowser_castle_doors:
+    # How the doors of Bowser's Castle behave
+    # 
+    # Vanilla: Front and Back Doors behave as vanilla
+    # 
+    # Fast: Both doors behave as the Back Door
+    # 
+    # Slow: Both doors behave as the Front Door
+    # 
+    # "Front Door" rooms depend on the `bowser_castle_rooms` option
+    # 
+    # "Back Door" only requires going through the dark hallway to Bowser
+    vanilla: 50
+    fast: 0
+    slow: 0
+
+  bowser_castle_rooms:
+    # How the rooms of Bowser's Castle Front Door behave
+    # 
+    # Vanilla: You can choose which rooms to enter, as in vanilla
+    # 
+    # Random Two Room: Two random rooms are chosen
+    # 
+    # Random Five Room: Five random rooms are chosen
+    # 
+    # Gauntlet: All eight rooms must be cleared
+    # 
+    # Labyrinth: Which room leads to Bowser?
+    vanilla: 0
+    random_two_room: 50
+    random_five_room: 0
+    gauntlet: 0
+    labyrinth: 0
+
+  level_shuffle:
+    # Whether levels are shuffled
+    'false': 50
+    'true': 0
+
+  exclude_special_zone:
+    # If active, this option will prevent any progression items from being placed in Special Zone levels.
+    # 
+    # Additionally, if Level Shuffle is active, Special Zone levels will not be shuffled away from their vanilla tiles.
+    'false': 50
+    'true': 0
+
+  boss_shuffle:
+    # How bosses are shuffled
+    # 
+    # None: Bosses are not shuffled
+    # 
+    # Simple: Four Reznors and the seven Koopalings are shuffled around
+    # 
+    # Full: Each boss location gets a fully random boss
+    # 
+    # Singularity: One or two bosses are chosen and placed at every boss location
+    none: 50
+    simple: 0
+    full: 0
+    singularity: 0
+
+  swap_donut_gh_exits:
+    # If enabled, this option will swap which overworld direction the two exits of the level at the Donut Ghost House overworld tile go:
+    # 
+    # False: Normal Exit goes up, Secret Exit goes right.
+    # 
+    # True: Normal Exit goes right, Secret Exit goes up.
+    'false': 50
+    'true': 0
+
+  # Junk and Traps
+  junk_fill_percentage:
+    # Replace a percentage of non-required Yoshi Eggs in the item pool with random junk items (only applicable on Yoshi Egg Hunt goal)
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  trap_fill_percentage:
+    # Replace a percentage of junk items in the item pool with random traps
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  ice_trap_weight:
+    # Likelihood of a receiving a trap which causes the level to become slippery
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  stun_trap_weight:
+    # Likelihood of a receiving a trap which briefly stuns Mario
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  literature_trap_weight:
+    # Likelihood of a receiving a trap which causes the player to read literature
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  timer_trap_weight:
+    # Likelihood of a receiving a trap which causes the timer to run low
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  reverse_trap_weight:
+    # Likelihood of a receiving a trap which causes the controls to be reversed in the current level
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  thwimp_trap_weight:
+    # Likelihood of a receiving a trap which causes a Thwimp to spawn above the player
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  # Aesthetics
+  display_received_item_popups:
+    # What messages to display in-game for items received
+    none: 0
+    all: 0
+    progression: 0
+    progression_minus_yoshi_eggs: 50
+
+  autosave:
+    # Whether a save prompt will appear after every level
+    'false': 0
+    'true': 50
+
+  overworld_speed:
+    # How fast Mario moves on the overworld
+    slow: 0
+    vanilla: 50
+    fast: 0
+
+  music_shuffle:
+    # Music shuffle type
+    # 
+    # None: No Music is shuffled
+    # 
+    # Consistent: Each music track is consistently shuffled throughout the game
+    # 
+    # Full: Each individual level has a random music track
+    # 
+    # Singularity: The entire game uses one song for overworld and one song for levels
+    none: 50
+    consistent: 0
+    full: 0
+    singularity: 0
+
+  sfx_shuffle:
+    # Shuffles almost every instance of sound effect playback
+    # 
+    # Archipelago elements that play sound effects aren't randomized
+    # 
+    # None: No SFX are shuffled
+    # 
+    # Full: Each individual SFX call has a random SFX
+    # 
+    # Singularity: The entire game uses one SFX for every SFX call
+    none: 50
+    full: 0
+    singularity: 0
+
+  mario_palette:
+    # Mario palette color
+    mario: 50
+    luigi: 0
+    wario: 0
+    waluigi: 0
+    geno: 0
+    princess: 0
+    dark: 0
+    sponge: 0
+
+  level_palette_shuffle:
+    # Whether to shuffle level palettes
+    # 
+    # Off: Do not shuffle palettes
+    # 
+    # On Legacy: Uses only the palette sets from the original game
+    # 
+    # On Curated: Uses custom, hand-crafted palette sets
+    'off': 50
+    on_legacy: 0
+    on_curated: 0
+
+  overworld_palette_shuffle:
+    # Whether to shuffle overworld palettes
+    # 
+    # Off: Do not shuffle palettes
+    # 
+    # On Legacy: Uses only the palette sets from the original game
+    # 
+    # On Curated: Uses custom, hand-crafted palette sets
+    'off': 50
+    on_legacy: 0
+    on_curated: 0
+
+  starting_life_count:
+    # How many extra lives to start the game with
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 99
+    5: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []

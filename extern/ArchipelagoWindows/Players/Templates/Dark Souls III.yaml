@@ -1,0 +1,413 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Dark Souls III Template
+
+game: Dark Souls III
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Dark Souls III:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  early_banner:
+    # Force Small Lothric Banner into an early sphere in your world or across all worlds.
+    'off': 50
+    early_global: 0
+    early_local: 0
+
+  late_basin_of_vows:
+    # Guarantee that you don't need to enter Lothric Castle until later in the run.
+    # 
+    # - **Off:** You may have to enter Lothric Castle and the areas beyond it immediately after High
+    #   Wall of Lothric.
+    # - **After Small Lothric Banner:** You may have to enter Lothric Castle after Catacombs of
+    #   Carthus.
+    # - **After Small Doll:** You won't have to enter Lothric Castle until after Irithyll of the
+    #   Boreal Valley.
+    'off': 50
+    after_small_lothric_banner: 0
+    after_small_doll: 0
+
+  late_dlc:
+    # Guarantee that you don't need to enter the DLC until later in the run.
+    # 
+    # - **Off:** You may have to enter the DLC after Catacombs of Carthus.
+    # - **After Small Doll:** You may have to enter the DLC after Irithyll of the Boreal Valley.
+    # - **After Basin:** You won't have to enter the DLC until after Lothric Castle.
+    'off': 50
+    after_small_doll: 0
+    after_basin: 0
+
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
+  enable_dlc:
+    # Include DLC locations, items, and enemies in the randomized pools.
+    # 
+    # To use this option, you must own both the "Ashes of Ariandel" and the "Ringed City" DLCs.
+    'false': 50
+    'true': 0
+
+  enable_ngp:
+    # Include items and locations exclusive to NG+ cycles.
+    'false': 50
+    'true': 0
+
+  # Equipment
+  random_starting_loadout:
+    # Randomizes the equipment characters begin with.
+    'false': 0
+    'true': 50
+
+  require_one_handed_starting_weapons:
+    # Require starting equipment to be usable one-handed.
+    'false': 0
+    'true': 50
+
+  auto_equip:
+    # Automatically equips any received armor or left/right weapons.
+    'false': 50
+    'true': 0
+
+  lock_equip:
+    # Lock the equipment slots so you cannot change your armor or your left/right weapons.
+    # 
+    # Works great with the Auto-equip option.
+    'false': 50
+    'true': 0
+
+  no_equip_load:
+    # Disable the equip load constraint from the game.
+    'false': 50
+    'true': 0
+
+  no_weapon_requirements:
+    # Disable the weapon requirements by removing any movement or damage penalties, permitting you
+    # to use any weapon early.
+    'false': 50
+    'true': 0
+
+  no_spell_requirements:
+    # Disable the spell requirements permitting you to use any spell.
+    'false': 50
+    'true': 0
+
+  # Weapons
+  randomize_infusion:
+    # Enable this option to infuse a percentage of the pool of weapons and shields.
+    'false': 50
+    'true': 0
+
+  randomize_infusion_percentage:
+    # The percentage of weapons/shields in the pool to be infused if Randomize Infusion is toggled.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    33: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+    similar to base game: 0 # equivalent to 2
+
+  randomize_weapon_level:
+    # Enable this option to upgrade a percentage of the pool of weapons to a random value between
+    # the minimum and maximum levels defined.
+    # 
+    # - **All:** All weapons are eligible, both basic and epic
+    # - **Basic:** Only weapons that can be upgraded to +10
+    # - **Epic:** Only weapons that can be upgraded to +5
+    none: 50
+    all: 0
+    basic: 0
+    epic: 0
+
+  randomize_weapon_level_percentage:
+    # The percentage of weapons in the pool to be upgraded if randomize weapons level is toggled.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    33: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  min_levels_in_5:
+    # The minimum upgraded value of a weapon in the pool of weapons that can only reach +5.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 5
+    1: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_levels_in_5:
+    # The maximum upgraded value of a weapon in the pool of weapons that can only reach +5.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 5
+    5: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  min_levels_in_10:
+    # The minimum upgraded value of a weapon in the pool of weapons that can reach +10.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 10
+    1: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_levels_in_10:
+    # The maximum upgraded value of a weapon in the pool of weapons that can reach +10.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 10
+    10: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  # Item Smoothing
+  smooth_soul_items:
+    # Distribute soul items in a similar order as the base game.
+    # 
+    # By default, soul items will be distributed totally randomly. If this is set, less valuable soul
+    # items will generally appear in earlier spheres and more valuable ones will generally appear
+    # later.
+    'false': 0
+    'true': 50
+
+  smooth_upgrade_items:
+    # Distribute upgrade items in a similar order as the base game.
+    # 
+    # By default, upgrade items will be distributed totally randomly. If this is set, lower-level
+    # upgrade items will generally appear in earlier spheres and higher-level ones will generally
+    # appear later.
+    'false': 0
+    'true': 50
+
+  smooth_upgraded_weapons:
+    # Distribute upgraded weapons in a similar order as the base game.
+    # 
+    # By default, upgraded weapons will be distributed totally randomly. If this is set, lower-level
+    # weapons will generally appear in earlier spheres and higher-level ones will generally appear
+    # later.
+    'false': 0
+    'true': 50
+
+  # Enemies
+  randomize_enemies:
+    # Randomize enemy and boss placements.
+    'false': 0
+    'true': 50
+
+  simple_early_bosses:
+    # Avoid replacing Iudex Gundyr and Vordt with late bosses.
+    # 
+    # This excludes all bosses after Dancer of the Boreal Valley from these two boss fights. Disable
+    # it for a chance at a much harder early game.
+    # 
+    # This is ignored unless enemies are randomized.
+    'false': 0
+    'true': 50
+
+  scale_enemies:
+    # Scale randomized enemy stats to match the areas in which they appear.
+    # 
+    # Disabling this will tend to make the early game much more difficult and the late game much
+    # easier.
+    # 
+    # This is ignored unless enemies are randomized.
+    'false': 0
+    'true': 50
+
+  randomize_mimics_with_enemies:
+    # Mix Mimics into the main enemy pool.
+    # 
+    # If this is enabled, Mimics will be replaced by normal enemies who drop the Mimic rewards on
+    # death, and Mimics will be placed randomly in place of normal enemies. It's recommended to enable
+    # Impatient Mimics as well if you enable this.
+    # 
+    # This is ignored unless enemies are randomized.
+    'false': 50
+    'true': 0
+
+  randomize_small_crystal_lizards_with_enemies:
+    # Mix small Crystal Lizards into the main enemy pool.
+    # 
+    # If this is enabled, Crystal Lizards will be replaced by normal enemies who drop the Crystal
+    # Lizard rewards on death, and Crystal Lizards will be placed randomly in place of normal enemies.
+    # 
+    # This is ignored unless enemies are randomized.
+    'false': 50
+    'true': 0
+
+  reduce_harmless_enemies:
+    # Reduce the frequency that "harmless" enemies appear.
+    # 
+    # Enable this to add a bit of extra challenge. This severely limits the number of enemies that are
+    # slow to aggro, slow to attack, and do very little damage that appear in the enemy pool.
+    # 
+    # This is ignored unless enemies are randomized.
+    'false': 50
+    'true': 0
+
+  all_chests_are_mimics:
+    # Replace all chests with mimics that drop the same items.
+    # 
+    # If "Randomize Mimics With Enemies" is set, these chests will instead be replaced with random
+    # enemies that drop the same items.
+    # 
+    # This is ignored unless enemies are randomized.
+    'false': 50
+    'true': 0
+
+  impatient_mimics:
+    # Mimics attack as soon as you get close instead of waiting for you to open them.
+    # 
+    # This is ignored unless enemies are randomized.
+    'false': 50
+    'true': 0
+
+  random_enemy_preset:
+    # The YAML preset for the static enemy randomizer.
+    # 
+    # See the static randomizer documentation in `randomizer\presets\README.txt` for details.
+    # Include this as nested YAML. For example:
+    # 
+    # .. code-block:: YAML
+    # 
+    #   random_enemy_preset:
+    #     RemoveSource: Ancient Wyvern; Darkeater Midir
+    #     DontRandomize: Iudex Gundyr
+    {}
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    ['Small Souls', 'Small Crystal Lizards', 'Miscellaneous', 'Hidden', 'Upgrade']
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  excluded_location_behavior:
+    # How to choose items for excluded locations in DS3.
+    # 
+    # - **Allow Useful:** Excluded locations can't have progression items, but they can have useful
+    #   items.
+    # - **Forbid Useful:** Neither progression items nor useful items can be placed in excluded
+    #   locations.
+    # - **Do Not Randomize:** Excluded locations always contain the same item as in vanilla Dark Souls
+    #   III.
+    # 
+    # A "progression item" is anything that's required to unlock another location in some game. A
+    # "useful item" is something each game defines individually, usually items that are quite
+    # desirable but not strictly necessary.
+    allow_useful: 0
+    forbid_useful: 50
+    do_not_randomize: 0
+
+  missable_location_behavior:
+    # Which items can be placed in locations that can be permanently missed.
+    # 
+    # - **Allow Useful:** Missable locations can't have progression items, but they can have useful
+    #   items.
+    # - **Forbid Useful:** Neither progression items nor useful items can be placed in missable
+    #   locations.
+    # - **Do Not Randomize:** Missable locations always contain the same item as in vanilla Dark Souls
+    #   III.
+    # 
+    # A "progression item" is anything that's required to unlock another location in some game. A
+    # "useful item" is something each game defines individually, usually items that are quite
+    # desirable but not strictly necessary.
+    allow_useful: 0
+    forbid_useful: 50
+    do_not_randomize: 0

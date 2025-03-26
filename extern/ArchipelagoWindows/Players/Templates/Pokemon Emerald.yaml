@@ -1,0 +1,706 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Pokemon Emerald Template
+
+game: Pokemon Emerald
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Pokemon Emerald:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  goal:
+    # Determines what your goal is to consider the game beaten.
+    # 
+    # - Champion: Become the champion and enter the hall of fame
+    # - Steven: Defeat Steven in Meteor Falls
+    # - Norman: Defeat Norman in Petalburg Gym
+    # - Legendary Hunt: Defeat or catch legendary pokemon (or whatever was randomized into their encounters)
+    champion: 50
+    steven: 0
+    norman: 0
+    legendary_hunt: 0
+
+  badges:
+    # Adds Badges to the pool.
+    # 
+    # - Vanilla: Gym leaders give their own badge
+    # - Shuffle: Gym leaders give a random badge
+    # - Completely Random: Badges can be found anywhere
+    vanilla: 0
+    shuffle: 0
+    completely_random: 50
+
+  hms:
+    # Adds HMs to the pool.
+    # 
+    # - Vanilla: HMs are at their vanilla locations
+    # - Shuffle: HMs are shuffled among vanilla HM locations
+    # - Completely Random: HMs can be found anywhere
+    vanilla: 0
+    shuffle: 0
+    completely_random: 50
+
+  key_items:
+    # Adds most key items to the pool.
+    # 
+    # These are usually required to unlock a location or region (e.g. Devon Scope, Letter, Basement Key).
+    'false': 0
+    'true': 50
+
+  bikes:
+    # Adds the Mach Bike and Acro Bike to the pool.
+    'false': 50
+    'true': 0
+
+  event_tickets:
+    # Adds the event tickets to the pool, which let you access legendaries by sailing from Lilycove.
+    'false': 50
+    'true': 0
+
+  rods:
+    # Adds fishing rods to the pool.
+    'false': 50
+    'true': 0
+
+  overworld_items:
+    # Adds items on the ground with a Pokeball sprite to the pool.
+    'false': 0
+    'true': 50
+
+  hidden_items:
+    # Adds hidden items to the pool.
+    'false': 50
+    'true': 0
+
+  npc_gifts:
+    # Adds most gifts received from NPCs to the pool (not including key items or HMs).
+    'false': 50
+    'true': 0
+
+  berry_trees:
+    # Adds berry trees to the pool. Empty soil patches are converted to locations and contribute Sitrus Berries to the pool.
+    'false': 50
+    'true': 0
+
+  dexsanity:
+    # Adding a "caught" pokedex entry gives you an item (catching, evolving, trading, etc.). Only wild encounters are considered logical access to a species.
+    # 
+    # Blacklisting wild encounters removes the dexsanity location.
+    # 
+    # Defeating gym leaders provides dex info, allowing you to see where on the map you can catch species you need.
+    # 
+    # Each pokedex entry adds a Poke Ball, Great Ball, or Ultra Ball to the pool.
+    # 
+    # Warning: This adds a lot of locations and will slow you down significantly.
+    'false': 50
+    'true': 0
+
+  trainersanity:
+    # Defeating a trainer gives you an item.
+    # 
+    # Trainers are no longer missable. Trainers no longer give you money for winning. Each trainer adds a valuable item (Nugget, Stardust, etc.) to the pool.
+    # 
+    # Warning: This adds a lot of locations and will slow you down significantly.
+    'false': 50
+    'true': 0
+
+  item_pool_type:
+    # Determines which non-progression items get put into the item pool.
+    # 
+    # - Shuffled: Item pool consists of shuffled vanilla items
+    # - Diverse Balanced: Item pool consists of random items approximately proportioned according to what they're replacing
+    # - Diverse: Item pool consists of uniformly random (non-unique) items
+    shuffled: 50
+    diverse_balanced: 0
+    diverse: 0
+
+  require_itemfinder:
+    # The Itemfinder is logically required to pick up hidden items.
+    'false': 0
+    'true': 50
+
+  require_flash:
+    # Determines whether HM05 Flash is logically required to navigate a dark cave.
+    neither: 0
+    only_granite_cave: 0
+    only_victory_road: 0
+    both: 50
+
+  elite_four_requirement:
+    # Sets the requirements to challenge the elite four.
+    # 
+    # - Badges: Obtain some number of badges
+    # - Gyms: Defeat some number of gyms
+    badges: 50
+    gyms: 0
+
+  elite_four_count:
+    # Sets the number of badges/gyms required to challenge the elite four.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 8
+    8: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  norman_requirement:
+    # Sets the requirements to challenge the Petalburg Gym.
+    # 
+    # - Badges: Obtain some number of badges
+    # - Gyms: Defeat some number of gym leaders
+    badges: 50
+    gyms: 0
+
+  norman_count:
+    # Sets the number of badges/gyms required to challenge the Petalburg Gym.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 7
+    4: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  legendary_hunt_catch:
+    # Sets whether legendaries need to be caught to satisfy the Legendary Hunt win condition.
+    # 
+    # Defeated legendaries can be respawned by defeating the Elite 4.
+    'false': 50
+    'true': 0
+
+  legendary_hunt_count:
+    # Sets the number of legendaries that must be caught/defeated for the Legendary Hunt goal.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 12
+    3: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  allowed_legendary_hunt_encounters:
+    # Sets which legendary encounters can contribute to the Legendary Hunt goal.
+    # 
+    # Latias will always be at Southern Island. Latios will always be the roamer. The TV broadcast describing the roamer gives you "seen" info for Latios.
+    # 
+    # The braille puzzle in Sealed Chamber gives you "seen" info for Wailord and Relicanth. The move tutor in Fortree City always teaches Dig.
+    ['Groudon', 'Kyogre', 'Rayquaza', 'Latios', 'Latias', 'Regirock', 'Registeel', 'Regice', 'Ho-Oh', 'Lugia', 'Deoxys', 'Mew']
+
+  wild_pokemon:
+    # Randomizes wild pokemon encounters (grass, caves, water, fishing).
+    # 
+    # Warning: Matching both base stats and type may severely limit the variety for certain pokemon.
+    # 
+    # - Vanilla: Wild encounters are unchanged
+    # - Match Base Stats: Wild pokemon are replaced with species with approximately the same bst
+    # - Match Type: Wild pokemon are replaced with species that share a type with the original
+    # - Match Base Stats and Type: Apply both Match Base Stats and Match Type
+    # - Completely Random: There are no restrictions
+    vanilla: 50
+    match_base_stats: 0
+    match_type: 0
+    match_base_stats_and_type: 0
+    completely_random: 0
+
+  wild_encounter_blacklist:
+    # Prevents listed species from appearing in the wild when wild encounters are randomized.
+    # 
+    # May be overridden if enforcing other restrictions in combination with this blacklist is impossible.
+    # 
+    # Use "_Legendaries" as a shortcut for all legendary pokemon.
+    []
+
+  starters:
+    # Randomizes the starter pokemon in Professor Birch's bag.
+    # 
+    # - Vanilla: Starters are unchanged
+    # - Match Base Stats: Starters are replaced with species with approximately the same bst
+    # - Match Type: Starters are replaced with species that share a type with the original
+    # - Match Base Stats and Type: Apply both Match Base Stats and Match Type
+    # - Completely Random: There are no restrictions
+    vanilla: 50
+    match_base_stats: 0
+    match_type: 0
+    match_base_stats_and_type: 0
+    completely_random: 0
+
+  starter_blacklist:
+    # Prevents listed species from appearing as starters when starters are randomized.
+    # 
+    # May be overridden if enforcing other restrictions in combination with this blacklist is impossible.
+    # 
+    # Use "_Legendaries" as a shortcut for all legendary pokemon.
+    []
+
+  trainer_parties:
+    # Randomizes the parties of all trainers.
+    # 
+    # Warning: Matching both base stats and type may severely limit the variety for certain pokemon.
+    # 
+    # - Vanilla: Parties are unchanged
+    # - Match Base Stats: Trainer pokemon are replaced with species with approximately the same bst
+    # - Match Type: Trainer pokemon are replaced with species that share a type with the original
+    # - Match Base Stats and Type: Apply both Match Base Stats and Match Type
+    # - Completely Random: There are no restrictions
+    vanilla: 50
+    match_base_stats: 0
+    match_type: 0
+    match_base_stats_and_type: 0
+    completely_random: 0
+
+  trainer_party_blacklist:
+    # Prevents listed species from appearing in opponent trainers' parties if opponent parties are randomized.
+    # 
+    # May be overridden if enforcing other restrictions in combination with this blacklist is impossible.
+    # 
+    # Use "_Legendaries" as a shortcut for all legendary pokemon.
+    []
+
+  force_fully_evolved:
+    # When an opponent uses a pokemon of the specified level or higher, restricts the species to only fully evolved pokemon.
+    # 
+    # Only applies when trainer parties are randomized.
+    # 
+    # Warning: Combining a low value with matched base stats may severely limit the variety for certain pokemon.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 100
+    100: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  legendary_encounters:
+    # Randomizes legendary encounters (Rayquaza, Regice, Latias, etc.). The roamer will always be Latios during legendary hunts.
+    # 
+    # - Vanilla: Legendary encounters are unchanged
+    # - Shuffle: Legendary encounters are shuffled between each other
+    # - Match Base Stats: Legendary encounters are replaced with species with approximately the same bst
+    # - Match Type: Legendary encounters are replaced with species that share a type with the original
+    # - Match Base Stats and Type: Apply both Match Base Stats and Match Type
+    # - Completely Random: There are no restrictions
+    vanilla: 50
+    shuffle: 0
+    match_base_stats: 0
+    match_type: 0
+    match_base_stats_and_type: 0
+    completely_random: 0
+
+  misc_pokemon:
+    # Randomizes non-legendary static encounters. May grow to include other pokemon like trades or gifts.
+    # 
+    # - Vanilla: Species are unchanged
+    # - Shuffle: Species are shuffled between each other
+    # - Match Base Stats: Species are replaced with species with approximately the same bst
+    # - Match Type: Species are replaced with species that share a type with the original
+    # - Match Base Stats and Type: Apply both Match Base Stats and Match Type
+    # - Completely Random: There are no restrictions
+    vanilla: 50
+    shuffle: 0
+    match_base_stats: 0
+    match_type: 0
+    match_base_stats_and_type: 0
+    completely_random: 0
+
+  types:
+    # Randomizes the type(s) of every pokemon. Each species will have the same number of types.
+    # 
+    # - Vanilla: Types are unchanged
+    # - Shuffle: Types are shuffled globally for all species (e.g. every Water-type pokemon becomes Fire-type)
+    # - Completely Random: Each species has its type(s) randomized
+    # - Follow Evolutions: Types are randomized per evolution line instead of per species
+    vanilla: 50
+    shuffle: 0
+    completely_random: 0
+    follow_evolutions: 0
+
+  abilities:
+    # Randomizes abilities of every species. Each species will have the same number of abilities.
+    # 
+    # - Vanilla: Abilities are unchanged
+    # - Completely Random: Each species has its abilities randomized
+    # - Follow Evolutions: Abilities are randomized, but if a pokemon would normally retain its ability when evolving, the random ability will also be retained
+    vanilla: 50
+    completely_random: 0
+    follow_evolutions: 0
+
+  ability_blacklist:
+    # Prevent species from being given these abilities.
+    # 
+    # Has no effect if abilities are not randomized.
+    []
+
+  level_up_moves:
+    # Randomizes the moves a pokemon learns when they reach a level where they would learn a move. Your starter is guaranteed to have a usable damaging move.
+    # 
+    # - Vanilla: Learnset is unchanged
+    # - Randomized: Moves are randomized
+    # - Start with Four Moves: Moves are randomized and all Pokemon know 4 moves at level 1
+    vanilla: 50
+    randomized: 0
+    start_with_four_moves: 0
+
+  move_match_type_bias:
+    # Sets the probability that a learned move will be forced match one of the types of a pokemon.
+    # 
+    # If a move is not forced to match type, it will roll for Normal type bias.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  move_normal_type_bias:
+    # After it has been decided that a move will not be forced to match types, sets the probability that a learned move will be forced to be the Normal type.
+    # 
+    # If a move is not forced to be Normal, it will be completely random.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  tm_tutor_compatibility:
+    # Sets the percent chance that a given TM or move tutor is compatible with a species.
+    # 
+    # Some opponents like gym leaders are allowed to use TMs. This option can affect the moves they know.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    random: 0
+    random-low: 0
+    random-high: 0
+    vanilla: 50 # equivalent to -1
+    full: 0 # equivalent to 100
+
+  hm_compatibility:
+    # Sets the percent chance that a given HM is compatible with a species.
+    # 
+    # Some opponents like gym leaders are allowed to use HMs. This option can affect the moves they know.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 50
+    # Maximum value is 100
+    random: 0
+    random-low: 0
+    random-high: 0
+    vanilla: 50 # equivalent to -1
+    full: 0 # equivalent to 100
+
+  tm_tutor_moves:
+    # Randomizes the moves taught by TMs and move tutors.
+    # 
+    # Some opponents like gym leaders are allowed to use TMs. This option can affect the moves they know.
+    'false': 50
+    'true': 0
+
+  reusable_tms_tutors:
+    # Sets TMs to not break after use (they remain sellable). Sets move tutors to infinite use.
+    'false': 50
+    'true': 0
+
+  move_blacklist:
+    # Prevents species from learning these moves via learnsets, TMs, and move tutors.
+    # 
+    # HM moves are already banned.
+    []
+
+  min_catch_rate:
+    # Sets the minimum catch rate a pokemon can have. Any pokemon with a catch rate below this floor will have it raised to this value.
+    # 
+    # Legendaries are often in the single digits
+    # Fully evolved pokemon are often double digits
+    # Pidgey is 255
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 3
+    # Maximum value is 255
+    3: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  guaranteed_catch:
+    # Every throw is guaranteed to catch a wild pokemon.
+    'false': 50
+    'true': 0
+
+  normalize_encounter_rates:
+    # Make every slot on an encounter table approximately equally likely.
+    # 
+    # This does NOT mean each species is equally likely. In the vanilla game, each species may occupy more than one slot, and slots vary in probability.
+    # 
+    # Species will still occupy the same slots as vanilla, but the slots will be equally weighted. The minimum encounter rate will be 8% (higher in water).
+    'false': 50
+    'true': 0
+
+  exp_modifier:
+    # Multiplies gained experience by a percentage.
+    # 
+    # 100 is default
+    # 50 is half
+    # 200 is double
+    # etc.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 1000
+    100: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  blind_trainers:
+    # Trainers will not start a battle with you unless you talk to them.
+    'false': 50
+    'true': 0
+
+  purge_spinners:
+    # Trainers will rotate in predictable patterns on a set interval instead of randomly and don't turn toward you when you run.
+    'false': 50
+    'true': 0
+
+  match_trainer_levels:
+    # When you start a battle with a trainer, your party's levels will be automatically set to match that trainer's highest level pokemon.
+    # 
+    # The experience you receive will match your party's average actual level, and will only be awarded when you win the battle.
+    # 
+    # This is a pseudo-replacement for a level cap and makes every trainer battle a fair fight while still allowing you to level up.
+    # 
+    # - Off: The vanilla experience
+    # - Additive: The modifier you apply to your team is a flat bonus
+    # - Multiplicative: The modifier you apply to your team is a percent bonus
+    'off': 50
+    additive: 0
+    multiplicative: 0
+
+  match_trainer_levels_bonus:
+    # A level bonus (or penalty) to apply to your team when matching an opponent's levels.
+    # 
+    # When the match trainer levels option is "additive", this value is added to your team's levels during a battle.
+    #     For example, if this value is 5 (+5 levels), you'll have a level 25 team against a level 20 team, and a level 45 team against a level 40 team.
+    # 
+    # When the match trainer levels option is "multiplicative", this is a percent bonus.
+    #     For example, if this value is 5 (+5%), you'll have a level 21 team against a level 20 team, and a level 42 team against a level 40 team.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is -100
+    # Maximum value is 100
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  double_battle_chance:
+    # The percent chance that a trainer with more than 1 pokemon will be converted into a double battle.
+    # 
+    # If these trainers would normally approach you, they will only do so if you have 2 unfainted pokemon.
+    # 
+    # They can be battled by talking to them no matter what.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  better_shops:
+    # Pokemarts sell every item that can be obtained in a pokemart (except mail, which is still unique to the relevant city).
+    'false': 50
+    'true': 0
+
+  remove_roadblocks:
+    # Removes specific NPCs that normally stand in your way until certain events are completed.
+    # 
+    # This can open up the world a bit and make your playthrough less linear, but be careful how many you remove; it may make too much of your world accessible upon receiving Surf.
+    []
+
+  extra_boulders:
+    # Places strength boulders on Route 115 which block access to Meteor Falls from the beach.
+    # 
+    # This aims to take some power away from Surf by restricting how much it allows you to access.
+    'false': 50
+    'true': 0
+
+  extra_bumpy_slope:
+    # Adds a bumpy slope to Route 115 which allows access to Meteor Falls if you have the Acro Bike.
+    # 
+    # This aims to take some power away from Surf by adding a new way to exit the Rustboro area.
+    'false': 50
+    'true': 0
+
+  modify_118:
+    # Changes the layout of Route 118 so that it must be crossed with the Acro Bike instead of Surf.
+    # 
+    # This aims to take some power away from Surf by restricting how much it allows you to access.
+    'false': 50
+    'true': 0
+
+  free_fly_location:
+    # Enables flying to one random location (excluding cities reachable with no items).
+    'false': 50
+    'true': 0
+
+  hm_requirements:
+    # Sets the requirements to use HMs outside of battle.
+    vanilla: 50
+    fly_without_badge: 0
+
+  turbo_a:
+    # Holding A will advance most text automatically.
+    'false': 50
+    'true': 0
+
+  receive_item_messages:
+    # Determines whether you receive an in-game notification when receiving an item. Items can still only be received in the overworld.
+    # 
+    # - All: Every item shows a message
+    # - Progression: Only progression items show a message
+    # - None: All items are added to your bag silently (badges will still show).
+    all: 50
+    progression: 0
+    none: 0
+
+  remote_items:
+    # Instead of placing your own items directly into the ROM, all items are received from the server, including items you find for yourself.
+    # 
+    # This enables co-op of a single slot and recovering more items after a lost save file (if you're so unlucky).
+    # 
+    # But it changes pickup behavior slightly and requires connection to the server to receive any items.
+    'false': 50
+    'true': 0
+
+  music:
+    # Shuffles music played in any situation where it loops. Includes many FRLG tracks.
+    'false': 50
+    'true': 0
+
+  fanfares:
+    # Shuffles fanfares for item pickups, healing at the pokecenter, etc.
+    # 
+    # When this option is enabled, pressing B will interrupt most fanfares.
+    'false': 50
+    'true': 0
+
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
+  enable_wonder_trading:
+    # Allows participation in wonder trading with other players in your current multiworld. Speak with the center receptionist on the second floor of any pokecenter.
+    # 
+    # Wonder trading NEVER affects logic.
+    # 
+    # Certain aspects of a pokemon species are per-game, not per-pokemon. As a result, some things are not retained during a trade, including type, ability, level up learnset, and so on.
+    # 
+    # Receiving a pokemon this way does not mark it as found in your pokedex.
+    # 
+    # Trade evolutions do not evolve this way; they retain their modified methods (level ups and item use).
+    'false': 0
+    'true': 50
+
+  easter_egg:
+    # Enter certain phrases and something special might happen.
+    # 
+    # All secret phrases are something that could be a trendy phrase in Dewford Town. They are case insensitive.
+    EMERALD SECRET: 50
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []

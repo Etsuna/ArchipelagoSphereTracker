@@ -1,0 +1,197 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Aquaria Template
+
+game: Aquaria
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Aquaria:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  objective:
+    # The game objective can be to kill the creator or to kill the creator after obtaining all three secret memories.
+    kill_the_creator: 50
+    obtain_secrets_and_kill_the_creator: 0
+
+  mini_bosses_to_beat:
+    # The number of minibosses to beat before having access to the creator (the final boss). The minibosses are
+    # "Nautilus Prime", "Blaster Peg Prime", "Mergog", "Mithalan priests", "Octopus Prime", "Crabbius Maximus",
+    # "Mantis Shrimp Prime" and "King Jellyfish God Prime".
+    # Note that the Energy Statue and Simon Says are not minibosses.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 8
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  big_bosses_to_beat:
+    # The number of big bosses to beat before having access to the creator (the final boss). The big bosses are
+    # "Fallen God", "Mithalan God", "Drunian God", "Sun God" and "The Golem".
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 5
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  turtle_randomizer:
+    # Randomize the transportation turtle.
+    none: 0
+    all: 0
+    all_except_final: 50
+
+  early_energy_form:
+    # Force the Energy Form to be in a location early in the game
+    'false': 0
+    'true': 50
+
+  light_needed_to_get_to_dark_places:
+    # Make sure that the sun form or the dumbo pet can be acquired before getting to dark places.
+    # Be aware that navigating in dark places without light is extremely difficult.
+    'false': 0
+    'true': 50
+
+  bind_song_needed_to_get_under_rock_bulb:
+    # Make sure that the bind song can be acquired before having to obtain sing bulbs under rocks.
+    'false': 50
+    'true': 0
+
+  unconfine_home_water:
+    # Open the way out of the Home Water area so that Naija can go to open water and beyond without the bind song.
+    'off': 50
+    via_energy_door: 0
+    via_transturtle: 0
+    via_both: 0
+
+  no_progression_hard_or_hidden_locations:
+    # Make sure that there are no progression items at hard-to-reach or hard-to-find locations.
+    # Those locations are very High locations (that need beast form, soup and skill to get),
+    # every location in the bubble cave, locations where need you to cross a false wall without any indication,
+    # the Arnassi race, bosses and minibosses. Useful for those that want a more casual run.
+    'false': 50
+    'true': 0
+
+  ingredient_randomizer:
+    # Select if the simple ingredients (that do not have a recipe) should be randomized.
+    # If "Common Ingredients" is selected, the randomization will exclude the "Red Bulb", "Special Bulb" and "Rukh Egg".
+    'off': 50
+    common_ingredients: 0
+    all_ingredients: 0
+
+  dish_randomizer:
+    # Randomize the drop of Dishes (Ingredients with recipe).
+    'false': 50
+    'true': 0
+
+  aquarian_translation:
+    # Translate the Aquarian scripture in the game into English.
+    'false': 50
+    'true': 0
+
+  skip_first_vision:
+    # The first vision in the game, where Naija transforms into Energy Form and gets flooded by enemies, is quite cool but
+    # can be quite long when you already know what is going on. This option can be used to skip this vision.
+    'false': 50
+    'true': 0
+
+  blind_goal:
+    # Hide the goal's requirements from the help page so that you have to go to the last boss door to know
+    # what is needed to access the boss.
+    'false': 50
+    'true': 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}

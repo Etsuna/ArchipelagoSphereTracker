@@ -19,6 +19,7 @@ public static class BotCommands
             .BuildServiceProvider();
     }
 
+
     public static async Task MessageReceivedAsync(SocketMessage arg)
     {
         var message = arg as SocketUserMessage;
@@ -227,6 +228,10 @@ public static class BotCommands
                 .WithDescription("Liste tous les yamls du channel"),
 
             new SlashCommandBuilder()
+                .WithName("list-apworld")
+                .WithDescription("Liste tous les yamls du channel"),
+
+            new SlashCommandBuilder()
                 .WithName("delete-yaml")
                 .WithDescription("Supprime un fichier YAML spécifique du channel")
                 .AddOption(new SlashCommandOptionBuilder()
@@ -341,9 +346,20 @@ public static class BotCommands
 
         if (interaction.Data.Current.Name == "file")
         {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            var archipelagoBaseVersion = string.Empty;
+            if (isWindows)
+            {
+                archipelagoBaseVersion = "ArchipelagoWindows";
+            }
+            else
+            {
+                archipelagoBaseVersion = "ArchipelagoLinux";
+            }
+
             string guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
-            string directoryPath = $"extern/Archipelago/Players/{channelId}/yaml";
+            string directoryPath = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
 
             if (guildId == null || !Directory.Exists(directoryPath))
             {
@@ -1257,6 +1273,17 @@ public static class BotCommands
         {
             await command.DeferAsync(ephemeral: false);
 
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            var archipelagoBaseVersion = string.Empty;
+            if (isWindows)
+            {
+                archipelagoBaseVersion = "ArchipelagoWindows";
+            }
+            else
+            {
+                archipelagoBaseVersion = "ArchipelagoLinux";
+            }
+
             var channel = command.Channel as ITextChannel;
             if (channel != null)
             {
@@ -1434,7 +1461,7 @@ public static class BotCommands
                         }
                         break;
                     case "list-yamls":
-                        string playersFolderChannel = $"extern/Archipelago/Players/{channelId}/yaml";
+                        string playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
                         if (Directory.Exists(playersFolderChannel))
                         {
                             var listYamls = Directory.GetFiles(playersFolderChannel, "*.yaml");
@@ -1450,13 +1477,17 @@ public static class BotCommands
                             }
                             else
                             {
-                                message += "❌ Aucun fichier YML trouvé !";
+                                message += "❌ Aucun fichier YAML trouvé !";
                             }
+                        }
+                        else
+                        {
+                            message += "❌ Aucun fichier YAML trouvé !";
                         }
                         break;
                     case "delete-yaml":
                         var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
-                        playersFolderChannel = $"extern/Archipelago/Players/{channelId}/yaml";
+                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
 
                         if (!string.IsNullOrEmpty(fileSelected))
                         {
@@ -1478,7 +1509,7 @@ public static class BotCommands
                         }
                         break;
                     case "clean-yamls":
-                        playersFolderChannel = $"extern/Archipelago/Players/{channelId}";
+                        playersFolderChannel =  Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId);
                         if (Directory.Exists(playersFolderChannel))
                         {
                             Directory.Delete(playersFolderChannel, true);
@@ -1497,7 +1528,7 @@ public static class BotCommands
                             break;
                         }
 
-                        playersFolderChannel = $"extern/Archipelago/Players/{channelId}/yaml";
+                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
 
                         if (!Directory.Exists(playersFolderChannel))
                         {
@@ -1521,7 +1552,7 @@ public static class BotCommands
                         message = $"Fichier `{attachment.Filename}` envoyé.";
                         break;
                     case "list-apworld":
-                        string apworldPath = $"extern/Archipelago/custom_worlds";
+                        string apworldPath =  Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "custom_worlds");
                         if (Directory.Exists(apworldPath))
                         {
                             var listAppworld = Directory.GetFiles(apworldPath, "*.apworld");
@@ -1549,7 +1580,7 @@ public static class BotCommands
                             break;
                         }
 
-                        var customWorldPath = $"extern/Archipelago/custom_worlds";
+                        var customWorldPath =  Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "custom_worlds");
 
                         if (!Directory.Exists(customWorldPath))
                         {
@@ -1574,8 +1605,9 @@ public static class BotCommands
                         message = $"Fichier `{attachment.Filename}`envoyé.";
                         break;
                     case "generate":
-                        playersFolderChannel = Path.Combine("extern/Archipelago/Players/", channelId, "yaml");
-                        var outputFolder = Path.Combine($"extern/Archipelago/output/", channelId, "yaml");
+                        
+                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
+                        var outputFolder = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "output", channelId, "yaml");
 
                         if (Directory.Exists(outputFolder))
                         {
@@ -1592,19 +1624,17 @@ public static class BotCommands
                             break;
                         }
 
-                        var players = $"./Players/{channelId}/yaml";
-                        var outputGeneration = $"./output/{channelId}/yaml";
-
-                        var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+                        var players = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
+                        var outputGeneration =  Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "output", channelId, "yaml");
 
                         var fileName = string.Empty;
                         var arguments = string.Empty;
-                        var workingDir = Path.Combine("extern", "Archipelago");
+                        var workingDir = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion);
 
                         if (isWindows)
                         {
-                            fileName = "wsl";
-                            arguments = $"./ArchipelagoGenerate --player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
+                            fileName = "ArchipelagoGenerate.exe";
+                            arguments = $"--player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
                         }
                         else
                         {
@@ -1614,9 +1644,8 @@ public static class BotCommands
 
                         ProcessStartInfo startInfo = new ProcessStartInfo
                         {
-                            FileName = fileName,
+                            FileName = Path.Combine(workingDir, fileName),
                             Arguments = arguments,
-                            WorkingDirectory = workingDir,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
                             UseShellExecute = false,
@@ -1651,7 +1680,7 @@ public static class BotCommands
                                         if (!string.IsNullOrEmpty(e.Data))
                                         {
                                             errorMessage += $"❌ **Erreur** : {e.Data}\n";
-                                            if (e.Data.Contains("ValueError") || e.Data.Contains("Exception"))
+                                            if (e.Data.Contains("ValueError") || e.Data.Contains("Exception") || e.Data.Contains("FileNotFoundError"))
                                             {
                                                 errorDetected = true;
                                                 if (!process.HasExited) process.Kill();
@@ -1711,8 +1740,8 @@ public static class BotCommands
                             break;
                         }
 
-                        playersFolderChannel = Path.Combine("extern/Archipelago/Players/", channelId, "zip");
-                        outputFolder = Path.Combine($"extern/Archipelago/output/", channelId, "zip");
+                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "zip");
+                        outputFolder = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "output", channelId, "zip");
                         filePath = Path.Combine(playersFolderChannel, attachment.Filename);
 
                         if (Directory.Exists(playersFolderChannel))
@@ -1756,21 +1785,25 @@ public static class BotCommands
                             break;
                         }
 
-                        players = $"./Players/{channelId}/zip";
-                        outputGeneration = $"./output/{channelId}/zip";
+                        players = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "zip");
+                        outputGeneration = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "output", channelId, "zip");
+                        workingDir = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion);
 
-                        isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-
-                        fileName = isWindows ? "wsl" : "./ArchipelagoGenerate";
-                        arguments = isWindows
-                            ? $"./ArchipelagoGenerate --player_files_path \"{players}\" --outputpath \"{outputGeneration}\""
-                            : $"--player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
+                        if (isWindows)
+                        {
+                            fileName = "ArchipelagoGenerate.exe";
+                            arguments = $"--player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
+                        }
+                        else
+                        {
+                            fileName = "./ArchipelagoGenerate";
+                            arguments = $"--player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
+                        }
 
                         ProcessStartInfo startInfoWithZip = new ProcessStartInfo
                         {
-                            FileName = fileName,
+                            FileName = Path.Combine(workingDir, fileName),
                             Arguments = arguments,
-                            WorkingDirectory = Path.Combine("extern", "Archipelago"),
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
                             UseShellExecute = false,
@@ -1782,14 +1815,10 @@ public static class BotCommands
                             try
                             {
                                 bool errorDetected = false;
+                                string errorMessage = string.Empty;
 
                                 using (Process process = new Process { StartInfo = startInfoWithZip })
                                 {
-                                    if (!string.IsNullOrEmpty(tempmessage))
-                                    {
-                                        message += tempmessage;
-                                    }
-
                                     process.OutputDataReceived += (sender, e) =>
                                     {
                                         if (!string.IsNullOrEmpty(e.Data))
@@ -1797,7 +1826,7 @@ public static class BotCommands
                                             Console.WriteLine($"🟢 **Log** : {e.Data}\n");
                                             if (e.Data.Contains("Opening file input dialog"))
                                             {
-                                                message += $"❌ **Erreur** : {e.Data}\n";
+                                                errorMessage += $"❌ **Erreur** : {e.Data}\n";
                                                 errorDetected = true;
                                                 if (!process.HasExited) process.Kill();
                                             }
@@ -1808,8 +1837,8 @@ public static class BotCommands
                                     {
                                         if (!string.IsNullOrEmpty(e.Data))
                                         {
-                                            message += $"❌ **Erreur** : {e.Data}\n";
-                                            if (e.Data.Contains("ValueError") || e.Data.Contains("Exception"))
+                                            errorMessage += $"❌ **Erreur** : {e.Data}\n";
+                                            if (e.Data.Contains("ValueError") || e.Data.Contains("Exception") || e.Data.Contains("FileNotFoundError"))
                                             {
                                                 errorDetected = true;
                                                 if (!process.HasExited) process.Kill();
@@ -1824,14 +1853,14 @@ public static class BotCommands
                                     if (!process.WaitForExit(600000) && !errorDetected)
                                     {
                                         if (!process.HasExited) process.Kill();
-                                        message += "⏳ **Timeout** : Processus arrêté après 10min.";
+                                        errorMessage += "⏳ **Timeout** : Processus arrêté après 10min.";
                                         errorDetected = true;
                                     }
                                 }
 
                                 if (errorDetected)
                                 {
-                                    await command.FollowupAsync(message);
+                                    await command.FollowupAsync(errorMessage);
                                     return;
                                 }
 

@@ -1,0 +1,249 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default TUNIC Template
+
+game: TUNIC
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+TUNIC:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  sword_progression:
+    # Adds four sword upgrades to the item pool that will progressively grant stronger melee weapons, including two new swords with increased range and attack power.
+    'false': 0
+    'true': 50
+
+  start_with_sword:
+    # Start with a sword in the player's inventory. Does not count towards Sword Progression.
+    'false': 50
+    'true': 0
+
+  keys_behind_bosses:
+    # Places the three hexagon keys behind their respective boss fight in your world.
+    'false': 50
+    'true': 0
+
+  ability_shuffling:
+    # Locks the usage of Prayer, Holy Cross*, and the Icebolt combo until the relevant pages of the manual have been found.
+    # If playing Hexagon Quest, abilities are instead randomly unlocked after obtaining 25%, 50%, and 75% of the required Hexagon goal amount.
+    # * Certain Holy Cross usages are still allowed, such as the free bomb codes, the seeking spell, and other player-facing codes.
+    'false': 50
+    'true': 0
+
+  shuffle_ladders:
+    # Turns several ladders in the game into items that must be found before they can be climbed on.
+    # Adds more layers of progression to the game by blocking access to many areas early on.
+    # "Ladders were a mistake."
+    # —Andrew Shouldice
+    'false': 50
+    'true': 0
+
+  entrance_rando:
+    # Randomize the connections between scenes.
+    # A small, very lost fox on a big adventure.
+    # 
+    # If you set this option's value to a string, it will be used as a custom seed.
+    # Every player who uses the same custom seed will have the same entrances, choosing the most restrictive settings among these players for the purpose of pairing entrances.
+    'no': 50
+    'yes': 0
+
+  fixed_shop:
+    # Forces the Windmill entrance to lead to a shop, and removes the remaining shops from the pool.
+    # Adds another entrance in Rooted Ziggurat Lower to keep an even number of entrances.
+    # Has no effect if Entrance Rando is not enabled.
+    'false': 50
+    'true': 0
+
+  fool_traps:
+    # Replaces low-to-medium value money rewards in the item pool with fool traps, which cause random negative effects to the player.
+    'off': 0
+    normal: 50
+    double: 0
+    onslaught: 0
+
+  hexagon_quest:
+    # An alternate goal that shuffles Gold "Questagon" items into the item pool and allows the game to be completed after collecting the required number of them.
+    'false': 50
+    'true': 0
+
+  hexagon_goal:
+    # How many Gold Questagons are required to complete the game on Hexagon Quest.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 15
+    # Maximum value is 50
+    20: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  extra_hexagon_percentage:
+    # How many extra Gold Questagons are shuffled into the item pool, taken as a percentage of the goal amount.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    50: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  laurels_location:
+    # Force the Hero's Laurels to be placed at a location in your world.
+    # For if you want to avoid or specify early or late Laurels.
+    anywhere: 50
+    6_coins: 0
+    10_coins: 0
+    10_fairies: 0
+
+  plando_connections:
+    # Generic connection plando. Format is:
+    # - entrance: "Entrance Name"
+    #   exit: "Exit Name"
+    #   percentage: 100
+    # Percentage is an integer from 0 to 100 which determines whether that connection will be made. Defaults to 100 if omitted.
+    []
+
+  # Logic Options
+  lanternless:
+    # Choose whether you require the Lantern for dark areas.
+    # When enabled, the Lantern is marked as Useful instead of Progression.
+    'false': 50
+    'true': 0
+
+  maskless:
+    # Choose whether you require the Scavenger's Mask for Lower Quarry.
+    # When enabled, the Scavenger's Mask is marked as Useful instead of Progression.
+    'false': 50
+    'true': 0
+
+  laurels_zips:
+    # Choose whether to include using the Hero's Laurels to zip through gates, doors, and tricky spots.
+    # Notable inclusions are the Monastery gate, Ruined Passage door, Old House gate, Forest Grave Path gate, and getting from the Back of Swamp to the Middle of Swamp.
+    'false': 50
+    'true': 0
+
+  ice_grappling:
+    # Choose whether grappling frozen enemies is in logic.
+    # Easy includes ice grappling enemies that are in range without luring them. May include clips through terrain.
+    # Medium includes using ice grapples to push enemies through doors or off ledges without luring them. Also includes bringing an enemy over to the Temple Door to grapple through it.
+    # Hard includes luring or grappling enemies to get to where you want to go.
+    # Enabling any of these difficulty options will give the player the Torch to return to the Overworld checkpoint to avoid softlocks. Using the Torch is considered in logic.
+    # Note: You will still be expected to ice grapple to the slime in East Forest from below with this option off.
+    'off': 50
+    easy: 0
+    medium: 0
+    hard: 0
+
+  ladder_storage:
+    # Choose whether Ladder Storage is in logic.
+    # Easy includes uses of Ladder Storage to get to open doors over a long distance without too much difficulty. May include convenient elevation changes (going up Mountain stairs, stairs in front of Special Shop, etc.).
+    # Medium includes the above as well as changing your elevation using the environment and getting knocked down by melee enemies mid-LS.
+    # Hard includes the above as well as going behind the map to enter closed doors from behind, shooting a fuse with the magic wand to knock yourself down at close range, and getting into the Cathedral Secret Legend room mid-LS.
+    # Enabling any of these difficulty options will give the player the Torch to return to the Overworld checkpoint to avoid softlocks. Using the Torch is considered in logic.
+    # Opening individual chests while doing ladder storage is excluded due to tedium.
+    # Knocking yourself out of LS with a bomb is excluded due to the problematic nature of consumables in logic.
+    'off': 50
+    easy: 0
+    medium: 0
+    hard: 0
+
+  ladder_storage_without_items:
+    # If disabled, you logically require Stick, Sword, or Magic Orb to perform Ladder Storage.
+    # If enabled, you will be expected to perform Ladder Storage without progression items.
+    # This can be done with the plushie code, a Golden Coin, Prayer, and many other options.
+    # 
+    # This option has no effect if you do not have Ladder Storage Logic enabled.
+    'false': 50
+    'true': 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}

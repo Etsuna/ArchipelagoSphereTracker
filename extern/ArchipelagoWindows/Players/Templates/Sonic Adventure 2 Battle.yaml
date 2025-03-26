@@ -1,0 +1,755 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Sonic Adventure 2 Battle Template
+
+game: Sonic Adventure 2 Battle
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Sonic Adventure 2 Battle:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  ring_link:
+    # Whether your in-level ring gain/loss is linked to other players
+    'false': 50
+    'true': 0
+
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
+  # General Options
+  goal:
+    # Determines the goal of the seed
+    # 
+    # Biolizard: Finish Cannon's Core and defeat the Biolizard and Finalhazard
+    # 
+    # Chaos Emerald Hunt: Find the Seven Chaos Emeralds and reach Green Hill Zone
+    # 
+    # Finalhazard Chaos Emerald Hunt: Find the Seven Chaos Emeralds and reach Green Hill Zone, then defeat Finalhazard
+    # 
+    # Grand Prix: Win every race in Kart Race Mode (all standard levels are disabled)
+    # 
+    # Boss Rush: Beat all of the bosses in the Boss Rush, ending with Finalhazard
+    # 
+    # Cannon's Core Boss Rush: Beat Cannon's Core, then beat all of the bosses in the Boss Rush, ending with Finalhazard
+    # 
+    # Boss Rush Chaos Emerald Hunt: Find the Seven Chaos Emeralds, then beat all of the bosses in the Boss Rush, ending with Finalhazard
+    # 
+    # Chaos Chao: Raise a Chaos Chao to win
+    biolizard: 50
+    chaos_emerald_hunt: 0
+    finalhazard_chaos_emerald_hunt: 0
+    grand_prix: 0
+    boss_rush: 0
+    cannons_core_boss_rush: 0
+    boss_rush_chaos_emerald_hunt: 0
+    chaos_chao: 0
+
+  boss_rush_shuffle:
+    # Determines how bosses in Boss Rush Mode are shuffled
+    # 
+    # Vanilla: Bosses appear in the Vanilla ordering
+    # 
+    # Shuffled: The same bosses appear, but in a random order
+    # 
+    # Chaos: Each boss is randomly chosen separately (one will always be King Boom Boo)
+    # 
+    # Singularity: One boss is chosen and placed in every slot (one will always be replaced with King Boom Boo)
+    vanilla: 50
+    shuffled: 0
+    chaos: 0
+    singularity: 0
+
+  logic_difficulty:
+    # What set of Upgrade Requirement logic to use
+    # 
+    # Standard: The logic assumes the "intended" usage of Upgrades to progress through levels
+    # 
+    # Hard: Some simple skips or sequence breaks may be required
+    standard: 50
+    hard: 0
+
+  required_rank:
+    # Determines what minimum Rank is required to send a check for a mission
+    e: 50
+    d: 0
+    c: 0
+    b: 0
+    a: 0
+
+  max_emblem_cap:
+    # Determines the maximum number of emblems that can be in the item pool.
+    # 
+    # If fewer available locations exist in the pool than this number, the number of available locations will be used instead.
+    # 
+    # Gate and Cannon's Core costs will be calculated based off of that number.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 50
+    # Maximum value is 1000
+    180: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  ring_loss:
+    # How taking damage is handled
+    # 
+    # Classic: You lose all of your rings when hit
+    # 
+    # Modern: You lose 20 rings when hit
+    # 
+    # OHKO: You die immediately when hit (NOTE: Some Hard Logic tricks may require damage boosts!)
+    classic: 50
+    modern: 0
+    ohko: 0
+
+  # Stages
+  mission_shuffle:
+    # Determines whether missions order will be shuffled per level
+    'false': 50
+    'true': 0
+
+  required_cannons_core_missions:
+    # Determines how many Cannon's Core missions must be completed (for Biolizard or Cannon's Core goals)
+    # 
+    # First: Only the first mission must be completed
+    # 
+    # All Active: All active Cannon's Core missions must be completed
+    first: 50
+    all_active: 0
+
+  emblem_percentage_for_cannons_core:
+    # Allows logic to gate the final mission behind a number of Emblems
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 75
+    50: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  number_of_level_gates:
+    # The number emblem-locked gates which lock sets of levels
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 5
+    3: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  level_gate_distribution:
+    # Determines how levels are distributed between level gate regions
+    # 
+    # Early: Earlier regions will have more levels than later regions
+    # 
+    # Even: Levels will be evenly distributed between all regions
+    # 
+    # Late: Later regions will have more levels than earlier regions
+    early: 0
+    even: 50
+    late: 0
+
+  level_gate_costs:
+    # Determines how many emblems are required to unlock level gates
+    low: 0
+    medium: 0
+    high: 50
+
+  # Sanity Options
+  keysanity:
+    # Determines whether picking up Chao Keys grants checks
+    # (86 Locations)
+    'false': 50
+    'true': 0
+
+  whistlesanity:
+    # Determines whether whistling at various spots grants checks
+    # 
+    # None: No Whistle Spots grant checks
+    # 
+    # Pipes: Whistling at Pipes grants checks (97 Locations)
+    # 
+    # Hidden: Whistling at Hidden Whistle Spots grants checks (32 Locations)
+    # 
+    # Both: Whistling at both Pipes and Hidden Whistle Spots grants checks (129 Locations)
+    none: 50
+    pipes: 0
+    hidden: 0
+    both: 0
+
+  beetlesanity:
+    # Determines whether destroying Gold Beetles grants checks
+    # (27 Locations)
+    'false': 50
+    'true': 0
+
+  omosanity:
+    # Determines whether activating Omochao grants checks
+    # (192 Locations)
+    'false': 50
+    'true': 0
+
+  animalsanity:
+    # Determines whether unique counts of animals grant checks.
+    # (421 Locations)
+    # 
+    # ALL animals must be collected in a single run of a mission to get all checks.
+    'false': 50
+    'true': 0
+
+  kart_race_checks:
+    # Determines whether Kart Race Mode grants checks
+    # 
+    # None: No Kart Races grant checks
+    # 
+    # Mini: Each Kart Race difficulty must be beaten only once
+    # 
+    # Full: Every Character must separately beat each Kart Race difficulty
+    none: 50
+    mini: 0
+    full: 0
+
+  # Chao
+  black_market_slots:
+    # Determines how many multiworld items are available to purchase from the Black Market
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 64
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  black_market_unlock_costs:
+    # Determines how many Chao Coins are required to unlock sets of Black Market items
+    low: 0
+    medium: 50
+    high: 0
+
+  black_market_price_multiplier:
+    # Determines how many rings the Black Market items cost
+    # 
+    # The base ring costs of items in the Black Market range from 50-100, and are then multiplied by this value
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 40
+    1: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  chao_race_difficulty:
+    # Determines the number of Chao Race difficulty levels included. Easier difficulty settings means fewer Chao Race checks
+    # 
+    # None: No Chao Races have checks
+    # 
+    # Beginner: Beginner Races
+    # 
+    # Intermediate: Beginner, Challenge, Hero, and Dark Races
+    # 
+    # Expert: Beginner, Challenge, Hero, Dark and Jewel Races
+    none: 50
+    beginner: 0
+    intermediate: 0
+    expert: 0
+
+  chao_karate_difficulty:
+    # Determines the number of Chao Karate difficulty levels included. (Note: This setting requires purchase of the "Battle" DLC)
+    none: 50
+    beginner: 0
+    standard: 0
+    expert: 0
+    super: 0
+
+  chao_stadium_checks:
+    # Determines which Chao Stadium activities grant checks
+    # 
+    # All: Each individual race and karate fight grants a check
+    # 
+    # Prize: Only the races which grant Chao Toys grant checks (final race of each Beginner and Jewel cup, 4th, 8th, and 12th Challenge Races, 2nd and 4th Hero and Dark Races, final fight of each Karate difficulty)
+    all: 50
+    prize: 0
+
+  chao_animal_parts:
+    # Determines whether giving Chao various animal parts grants checks
+    # (73 Locations)
+    'false': 50
+    'true': 0
+
+  chao_stats:
+    # Determines the highest level in each Chao Stat that grants checks
+    # (Swim, Fly, Run, Power)
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  chao_stats_frequency:
+    # Determines how many levels in each Chao Stat grant checks (up to the maximum set in the `chao_stats` option)
+    # 
+    # `1` means every level is included, `2` means every other level is included, `3` means every third, and so on
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 20
+    5: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  chao_stats_stamina:
+    # Determines whether Stamina is included in the `chao_stats` option
+    'false': 50
+    'true': 0
+
+  chao_stats_hidden:
+    # Determines whether the hidden stats (Luck and Intelligence) are included in the `chao_stats` option
+    'false': 50
+    'true': 0
+
+  chao_kindergarten:
+    # Determines whether learning the lessons from the Kindergarten Classroom grants checks
+    # (WARNING: VERY SLOW)
+    # 
+    # None: No Kindergarten classes have checks
+    # 
+    # Basics: One class from each category (Drawing, Dance, Song, and Instrument) is a check (4 Locations)
+    # 
+    # Full: Every class is a check (23 Locations)
+    none: 50
+    basics: 0
+    full: 0
+
+  shuffle_starting_chao_eggs:
+    # Determines whether the starting Chao eggs in the gardens are random
+    'false': 0
+    'true': 50
+
+  chao_entrance_randomization:
+    # Determines whether entrances in Chao World are randomized
+    'false': 50
+    'true': 0
+
+  # Junk and Traps
+  junk_fill_percentage:
+    # Replace a percentage of non-required emblems in the item pool with random junk items
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    50: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  trap_fill_percentage:
+    # Replace a percentage of junk items in the item pool with random traps
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  omochao_trap_weight:
+    # Likelihood of receiving a trap which spawns several Omochao around the player
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  timestop_trap_weight:
+    # Likelihood of receiving a trap which briefly stops time
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  confusion_trap_weight:
+    # Likelihood of receiving a trap which causes the controls to be skewed for a period of time
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  tiny_trap_weight:
+    # Likelihood of receiving a trap which causes the player to become tiny
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  gravity_trap_weight:
+    # Likelihood of receiving a trap which increases gravity
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  exposition_trap_weight:
+    # Likelihood of receiving a trap which tells you the story
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  ice_trap_weight:
+    # Likelihood of receiving a trap which makes the world slippery
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  slow_trap_weight:
+    # Likelihood of receiving a trap which makes you gotta go slow
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  cutscene_trap_weight:
+    # Likelihood of receiving a trap which makes you watch an unskippable cutscene
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  reverse_trap_weight:
+    # Likelihood of receiving a trap which reverses your controls
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  pong_trap_weight:
+    # Likelihood of receiving a trap which forces you to play a Pong minigame
+    none: 0
+    low: 0
+    medium: 50
+    high: 0
+
+  minigame_trap_difficulty:
+    # How difficult any Minigame-style traps are
+    easy: 0
+    medium: 50
+    hard: 0
+
+  # Speed Missions
+  speed_mission_count:
+    # The number of active missions to include for Sonic and Shadow stages
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 5
+    2: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  speed_mission_2:
+    # Determines if the Sonic and Shadow 100 rings missions should be included
+    'false': 0
+    'true': 50
+
+  speed_mission_3:
+    # Determines if the Sonic and Shadow lost chao missions should be included
+    'false': 0
+    'true': 50
+
+  speed_mission_4:
+    # Determines if the Sonic and Shadow time trial missions should be included
+    'false': 0
+    'true': 50
+
+  speed_mission_5:
+    # Determines if the Sonic and Shadow hard missions should be included
+    'false': 0
+    'true': 50
+
+  # Mech Missions
+  mech_mission_count:
+    # The number of active missions to include for Tails and Eggman stages
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 5
+    2: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  mech_mission_2:
+    # Determines if the Tails and Eggman 100 rings missions should be included
+    'false': 0
+    'true': 50
+
+  mech_mission_3:
+    # Determines if the Tails and Eggman lost chao missions should be included
+    'false': 0
+    'true': 50
+
+  mech_mission_4:
+    # Determines if the Tails and Eggman time trial missions should be included
+    'false': 0
+    'true': 50
+
+  mech_mission_5:
+    # Determines if the Tails and Eggman hard missions should be included
+    'false': 0
+    'true': 50
+
+  # Hunt Missions
+  hunt_mission_count:
+    # The number of active missions to include for Knuckles and Rouge stages
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 5
+    2: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  hunt_mission_2:
+    # Determines if the Knuckles and Rouge 100 rings missions should be included
+    'false': 0
+    'true': 50
+
+  hunt_mission_3:
+    # Determines if the Knuckles and Rouge lost chao missions should be included
+    'false': 0
+    'true': 50
+
+  hunt_mission_4:
+    # Determines if the Knuckles and Rouge time trial missions should be included
+    'false': 0
+    'true': 50
+
+  hunt_mission_5:
+    # Determines if the Knuckles and Rouge hard missions should be included
+    'false': 0
+    'true': 50
+
+  # Kart Missions
+  kart_mission_count:
+    # The number of active missions to include for Route 101 and 280
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 5
+    2: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  kart_mission_2:
+    # Determines if the Route 101 and 280 100 rings missions should be included
+    'false': 0
+    'true': 50
+
+  kart_mission_3:
+    # Determines if the Route 101 and 280 avoid cars missions should be included
+    'false': 0
+    'true': 50
+
+  kart_mission_4:
+    # Determines if the Route 101 and 280 avoid walls missions should be included
+    'false': 0
+    'true': 50
+
+  kart_mission_5:
+    # Determines if the Route 101 and 280 hard missions should be included
+    'false': 0
+    'true': 50
+
+  # Cannon's Core Missions
+  cannons_core_mission_count:
+    # The number of active missions to include for Cannon's Core
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 5
+    2: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  cannons_core_mission_2:
+    # Determines if the Cannon's Core 100 rings mission should be included
+    'false': 0
+    'true': 50
+
+  cannons_core_mission_3:
+    # Determines if the Cannon's Core lost chao mission should be included
+    'false': 0
+    'true': 50
+
+  cannons_core_mission_4:
+    # Determines if the Cannon's Core time trial mission should be included
+    'false': 0
+    'true': 50
+
+  cannons_core_mission_5:
+    # Determines if the Cannon's Core hard mission should be included
+    'false': 0
+    'true': 50
+
+  # Aesthetics
+  sadx_music:
+    # Whether the randomizer will include Sonic Adventure DX Music in the music pool
+    # 
+    # SA2B: Only SA2B music will be played
+    # 
+    # SADX: Only SADX music will be played
+    # 
+    # Both: Both SA2B and SADX music will be played
+    # 
+    # NOTE: This option requires the player to own a PC copy of SADX and to follow the addition steps in the setup guide.
+    sa2b: 50
+    sadx: 0
+    both: 0
+
+  music_shuffle:
+    # What type of Music Shuffle is used
+    # 
+    # None: No music is shuffled.
+    # 
+    # Levels: Level music is shuffled.
+    # 
+    # Full: Level, Menu, and Additional music is shuffled.
+    # 
+    # Singularity: Level, Menu, and Additional music is all replaced with a single random song.
+    none: 50
+    levels: 0
+    full: 0
+    singularity: 0
+
+  voice_shuffle:
+    # What type of Voice Shuffle is used
+    # 
+    # None: No voices are shuffled.
+    # 
+    # Shuffled: Voices are shuffled.
+    # 
+    # Rude: Voices are shuffled, but some are replaced with rude words.
+    # 
+    # Chao: All voices are replaced with chao sounds.
+    # 
+    # Singularity: All voices are replaced with a single random voice.
+    none: 50
+    shuffled: 0
+    rude: 0
+    chao: 0
+    singularity: 0
+
+  narrator:
+    # Which menu narrator is used
+    default: 50
+    shadow: 0
+    rouge: 0
+    eggman: 0
+    maria: 0
+    secretary: 0
+    omochao: 0
+    amy: 0
+    tails: 0
+    knuckles: 0
+    sonic: 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []

@@ -1,0 +1,190 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Subnautica Template
+
+game: Subnautica
+requires:
+  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+
+Subnautica:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  swim_rule:
+    # What logic considers ok swimming distances.
+    # Easy: +200 depth from any max vehicle depth.
+    # Normal: +400 depth from any max vehicle depth.
+    # Warning: Normal can expect you to death run to a location (No viable return trip).
+    # Hard: +600 depth from any max vehicle depth.
+    # Warning: Hard may require bases, deaths, glitches, multi-tank inventory or other depth extending means.
+    # Items: Expected depth is extended by items like seaglide, ultra glide fins and capacity tanks.
+    easy: 50
+    normal: 0
+    hard: 0
+    items_easy: 0
+    items_normal: 0
+    items_hard: 0
+
+  early_seaglide:
+    # Make sure 2 of the Seaglide Fragments are available in or near the Safe Shallows (Sphere 1 Locations).
+    'false': 0
+    'true': 50
+
+  free_samples:
+    # Get free items with your blueprints.
+    # Items that can go into your inventory are awarded when you unlock their blueprint through Archipelago.
+    'false': 50
+    'true': 0
+
+  goal:
+    # Goal to complete.
+    # Launch: Leave the planet.
+    # Free: Disable quarantine.
+    # Infected: Reach maximum infection level.
+    # Drive: Repair the Aurora's Drive Core
+    launch: 50
+    free: 0
+    infected: 0
+    drive: 0
+
+  creature_scans:
+    # Place items on specific, randomly chosen, creature scans.
+    # Warning: Includes aggressive Leviathans.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 50
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  creature_scan_logic:
+    # By default (Stasis), aggressive Creature Scans are logically expected only with a Stasis Rifle.
+    # Containment: Removes Stasis Rifle as expected solution and expects Alien Containment instead.
+    # Either: Creatures may be expected to be scanned via Stasis Rifle or Containment, whichever is found first.
+    # None: Aggressive Creatures are assumed to not need any tools to scan.
+    # Removed: No Creatures needing Stasis or Containment will be in the pool at all.
+    # 
+    # Note: Containment, Either and None adds Cuddlefish as an option for scans.
+    # Note: Stasis, Either and None adds unhatchable aggressive species, such as Warper.
+    # Note: This is purely a logic expectation, and does not affect gameplay, only placement.
+    stasis: 50
+    containment: 0
+    either: 0
+    none: 0
+    removed: 0
+
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    # 
+    # Note: can be toggled via in-game console command "deathlink".
+    'false': 50
+    'true': 0
+
+  filler_items_distribution:
+    # Random chance weights of various filler resources that can be obtained.
+    # Available items: "Copper Ore", "Crystalline Sulfur", "Diamond", "Gold", "Kyanite", "Lead", "Lithium", "Magnetite", "Nickel Ore", "Reactor Rod", "Ruby", "Salt Deposit", "Silver Ore", "Titanium"
+    Copper Ore: 1
+    Crystalline Sulfur: 1
+    Diamond: 1
+    Gold: 1
+    Kyanite: 1
+    Lead: 1
+    Lithium: 1
+    Magnetite: 1
+    Nickel Ore: 1
+    Reactor Rod: 1
+    Ruby: 1
+    Salt Deposit: 1
+    Silver Ore: 1
+    Titanium: 1
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}
