@@ -1380,10 +1380,10 @@ public static class BotCommands
                                         allMembers.AddRange(memberBatch);
                                     }
 
-                                    /*foreach (var member in allMembers)
+                                    foreach (var member in allMembers)
                                     {
                                         await thread.AddUserAsync(member);
-                                    }*/
+                                    }
 
                                     if (!Declare.ChannelAndUrl.Guild.ContainsKey(guildId))
                                     {
