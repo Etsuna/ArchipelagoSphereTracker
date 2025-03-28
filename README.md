@@ -17,9 +17,16 @@ Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : http
 * Lister le lien des Patchs.
 * Récupérer le port de connexion.
 * Suppression automatique du fil après 1 semaine d'inactivité.
+* Envoyer des Yamls au server filtré par le channel.
+* Envoyer des Apworld au server.
+* Générer à partir du dossier du server un Multiworld.
+* Générer à partir du server une fichier Zip contenant tous les Yamls compris dans le Zip.
+* Lister les Yamls filtré par le channel.
+* Lister les Appworlds présent dans le server.
+* Gestion automatique de la compatibilité Windows et Linux pour la generation des Multiworld.
 
 ## Jeux Pris en Charge
-Tous les jeux pris en charge par le Randomizer Multi-Monde [Archipelago](https://github.com/ArchipelagoMW/Archipelago) sont compatibles et ont une compatibilité MultiWorld complète entre eux.
+Tous les jeux pris en charge par le Randomizer MultiWorld [Archipelago](https://github.com/ArchipelagoMW/Archipelago) sont compatibles et ont une compatibilité MultiWorld complète entre eux.
 
 ## Prérequis
 ```
