@@ -7,7 +7,7 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        Console.WriteLine("Starting bot... Achipelago Version: Archipelago_0.5.1.Hotfix1_linux-x86_64");
+        Console.WriteLine("Starting bot... Achipelago Version: Archipelago_0.5.1.Hotfix1");
 
         Env.Load();
 
@@ -18,12 +18,12 @@ class Program
             ResponseInternalTimeCheck = false
         };
 
-        Declare.client = new DiscordSocketClient(config);
-        Declare.commandService = new CommandService();
+        Declare.Client = new DiscordSocketClient(config);
+        Declare.CommandService = new CommandService();
 
-        Declare.client.Log += LogAsync;
-        Declare.client.Ready += ReadyAsync;
-        Declare.client.MessageReceived += BotCommands.MessageReceivedAsync;
+        Declare.Client.Log += LogAsync;
+        Declare.Client.Ready += ReadyAsync;
+        Declare.Client.MessageReceived += BotCommands.MessageReceivedAsync;
 
         await BotCommands.InstallCommandsAsync();
 
@@ -35,8 +35,8 @@ class Program
         DataManager.LoadHintStatus();
         DataManager.LoadDisplayedItems();
 
-        await Declare.client.LoginAsync(TokenType.Bot, Declare.discordToken);
-        await Declare.client.StartAsync();
+        await Declare.Client.LoginAsync(TokenType.Bot, Declare.DiscordToken);
+        await Declare.Client.StartAsync();
 
         await Task.Delay(-1);
     }

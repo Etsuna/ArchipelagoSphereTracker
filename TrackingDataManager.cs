@@ -8,13 +8,13 @@ public static class TrackingDataManager
 {
     public static void StartTracking()
     {
-        if (Declare.cts != null)
+        if (Declare.Cts != null)
         {
-            Declare.cts.Cancel();
+            Declare.Cts.Cancel();
         }
 
-        Declare.cts = new CancellationTokenSource();
-        var token = Declare.cts.Token;
+        Declare.Cts = new CancellationTokenSource();
+        var token = Declare.Cts.Token;
 
         Task.Run(async () =>
         {
@@ -22,41 +22,33 @@ public static class TrackingDataManager
             {
                 while (!token.IsCancellationRequested)
                 {
-                    Declare.serviceRunning = true;
+                    Declare.ServiceRunning = true;
 
-                    foreach (var guild in Declare.ChannelAndUrl.Guild.Keys)
+                    foreach (var guild in Declare.ChannelAndUrl.Guild)
                     {
-                        var guildCheck = Declare.client.GetGuild(ulong.Parse(guild));
+                        var guildCheck = Declare.Client.GetGuild(ulong.Parse(guild.Key));
                         if (guildCheck != null)
                         {
-                            foreach (var urls in Declare.ChannelAndUrl.Guild[guild].Channel)
+                            foreach (var urls in guild.Value.Channel)
                             {
                                 var channel = urls.Key;
-                                var urlSphereTracker = Declare.ChannelAndUrl.Guild[guild].Channel[channel].SphereTracker;
-                                var urlTracker = Declare.ChannelAndUrl.Guild[guild].Channel[channel].Tracker;
+                                var urlSphereTracker = urls.Value.SphereTracker;
+                                var urlTracker = urls.Value.Tracker;
 
                                 var channelCheck = guildCheck.GetChannel(ulong.Parse(channel));
-                                
+
                                 if (channelCheck != null)
                                 {
                                     Console.WriteLine($"Le salon existe toujours : {channelCheck.Name}");
 
-                                    var thread = guildCheck.GetChannel(ulong.Parse(channel)) as SocketThreadChannel;
-
-                                    if (thread != null)
+                                    if (guildCheck.GetChannel(ulong.Parse(channel)) is SocketThreadChannel thread)
                                     {
                                         var messages = await thread.GetMessagesAsync(1).FlattenAsync();
                                         var lastMessage = messages.FirstOrDefault();
 
-                                        DateTimeOffset lastActivity;
-
-                                        if (lastMessage != null)
+                                        DateTimeOffset lastActivity = lastMessage?.Timestamp ?? SnowflakeUtils.FromSnowflake(thread.Id);
+                                        if (lastMessage == null)
                                         {
-                                            lastActivity = lastMessage.Timestamp;
-                                        }
-                                        else
-                                        {
-                                            lastActivity = SnowflakeUtils.FromSnowflake(thread.Id);
                                             Console.WriteLine($"Aucun message trouvé, on utilise la date de création du fil : {lastActivity}");
                                         }
 
@@ -64,21 +56,16 @@ public static class TrackingDataManager
 
                                         if (daysInactive < 6)
                                         {
-                                            if (Declare.warnedThreads.Contains(thread.Id.ToString()))
+                                            if (Declare.WarnedThreads.Contains(thread.Id.ToString()))
                                             {
-                                                var parentChannel = thread.ParentChannel.Id;
-
                                                 await BotCommands.SendMessageAsync($"Nouveau message sur le thread {thread.Name}, suppression automatique annulée.", thread.Id.ToString());
-                                                Declare.warnedThreads.Remove(thread.Id.ToString());
+                                                Declare.WarnedThreads.Remove(thread.Id.ToString());
                                             }
                                         }
-
-                                        if (daysInactive > 6 && daysInactive < 7)
+                                        else if (daysInactive < 7)
                                         {
-                                            if (!Declare.warnedThreads.Contains(thread.Id.ToString()))
+                                            if (!Declare.WarnedThreads.Contains(thread.Id.ToString()))
                                             {
-                                                var parentChannel = thread.ParentChannel.Id;
-
                                                 DateTimeOffset deletionDate = lastActivity.AddTicks(TimeSpan.TicksPerDay * 7);
 
                                                 TimeZoneInfo frenchTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Paris");
@@ -88,41 +75,40 @@ public static class TrackingDataManager
 
                                                 await BotCommands.SendMessageAsync(
                                                     $"Aucun message depuis 6 jours. Si aucun message n'est posté avant le {formattedDeletionDate} sur le thread {thread.Name}, il sera supprimé.\nPensez à supprimer le thread quand vous n'en avez plus besoin !",
-                                                    parentChannel.ToString());
+                                                    thread.ParentChannel.Id.ToString());
 
-                                                Declare.warnedThreads.Add(thread.Id.ToString());
+                                                Declare.WarnedThreads.Add(thread.Id.ToString());
                                             }
                                         }
-
-                                        if (daysInactive >= 7)
+                                        else
                                         {
                                             Console.WriteLine($"Dernière activité : {lastActivity}");
                                             Console.WriteLine("Aucune activité depuis 7 jours, suppression du thread...");
-                                            await BotCommands.DeleteChannelAndUrl(channel, guild);
+                                            await BotCommands.DeleteChannelAndUrl(channel, guild.Key);
                                             await thread.DeleteAsync();
                                             Console.WriteLine("Thread supprimé.");
 
-                                            Declare.warnedThreads.Remove(thread.Id.ToString());
+                                            Declare.WarnedThreads.Remove(thread.Id.ToString());
                                             continue;
                                         }
                                     }
 
-                                    await setAliasAndGameStatusAsync(guild, channel, urlTracker);
-                                    await checkGameStatus(guild, channel, urlTracker);
-                                    await GetTableDataAsync(guild, channel, urlSphereTracker);
+                                    await setAliasAndGameStatusAsync(guild.Key, channel, urlTracker);
+                                    await checkGameStatus(guild.Key, channel, urlTracker);
+                                    await GetTableDataAsync(guild.Key, channel, urlSphereTracker);
                                 }
                                 else
                                 {
                                     Console.WriteLine($"Le salon n'existe plus, Suppression des informations Channel:{channel}.");
-                                    await BotCommands.DeleteChannelAndUrl(channel, guild);
+                                    await BotCommands.DeleteChannelAndUrl(channel, guild.Key);
                                     Console.WriteLine($"Suppression effectuée");
                                 }
                             }
                         }
                         else
                         {
-                            Console.WriteLine($"Serveur introuvable {guild}, Suppression des informations.");
-                            await BotCommands.DeleteChannelAndUrl(null, guild);
+                            Console.WriteLine($"Serveur introuvable {guild.Key}, Suppression des informations.");
+                            await BotCommands.DeleteChannelAndUrl(null, guild.Key);
                             Console.WriteLine($"Suppression effectuée");
                         }
                     }
@@ -135,14 +121,15 @@ public static class TrackingDataManager
                 Console.WriteLine("Suivi annulé.");
             }
         }, token);
+
     }
 
     public static async Task GetTableDataAsync(string guild, string channel, string url)
     {
         bool isUpdated = false;
-        var haveDisplayStatus = Declare.displayedItems.Guild.TryGetValue(guild, out var guildItemSave) && guildItemSave.Channel.TryGetValue(channel, out var channelGamesSave);
+        var haveDisplayStatus = Declare.DisplayedItems.Guild.TryGetValue(guild, out var guildItemSave) && guildItemSave.Channel.TryGetValue(channel, out var channelGamesSave);
 
-        var clientHttp = new HttpClient();
+        using var clientHttp = new HttpClient();
         var html = await clientHttp.GetStringAsync(url);
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
@@ -170,7 +157,7 @@ public static class TrackingDataManager
             if (!IsItemExists(guild, channel, newItem))
             {
                 isUpdated = true;
-                Declare.displayedItems.Guild[guild].Channel[channel].Add(newItem);
+                Declare.DisplayedItems.Guild[guild].Channel[channel].Add(newItem);
                 string message = BuildMessage(guild, channel, newItem);
 
                 UpdateRecapList(guild, channel, newItem.Receiver, newItem.Item);
@@ -188,74 +175,108 @@ public static class TrackingDataManager
             DataManager.SaveDisplayedItems();
         }
 
-        if(!haveDisplayStatus)
+        if (!haveDisplayStatus)
         {
             await BotCommands.SendMessageAsync("BOT Ready!", channel);
         }
     }
 
+
     private static void EnsureDictionaryStructureTableDataAsync(string guild, string channel)
     {
-        if (!Declare.displayedItems.Guild.ContainsKey(guild))
-            Declare.displayedItems.Guild[guild] = new ChannelDisplayedItem();
+        if (!Declare.DisplayedItems.Guild.TryGetValue(guild, out var channelDisplayedItem))
+        {
+            channelDisplayedItem = new ChannelDisplayedItem();
+            Declare.DisplayedItems.Guild[guild] = channelDisplayedItem;
+        }
 
-        if (!Declare.displayedItems.Guild[guild].Channel.ContainsKey(channel))
-            Declare.displayedItems.Guild[guild].Channel[channel] = new List<DisplayedItem>();
+        if (!channelDisplayedItem.Channel.ContainsKey(channel))
+        {
+            channelDisplayedItem.Channel[channel] = new List<DisplayedItem>();
+        }
 
-        if (!Declare.receiverAliases.Guild.ContainsKey(guild))
-            Declare.receiverAliases.Guild[guild] = new ChannelReceiverAliases();
+        if (!Declare.ReceiverAliases.Guild.TryGetValue(guild, out var channelReceiverAliases))
+        {
+            channelReceiverAliases = new ChannelReceiverAliases();
+            Declare.ReceiverAliases.Guild[guild] = channelReceiverAliases;
+        }
 
-        if (!Declare.receiverAliases.Guild[guild].Channel.ContainsKey(channel))
-            Declare.receiverAliases.Guild[guild].Channel[channel] = new ReceiverAlias();
+        if (!channelReceiverAliases.Channel.ContainsKey(channel))
+        {
+            channelReceiverAliases.Channel[channel] = new ReceiverAlias();
+        }
     }
+
 
     private static bool IsItemExists(string guild, string channel, DisplayedItem newItem)
     {
-        return Declare.displayedItems.Guild[guild].Channel[channel].Any(x =>
-            x.Sphere == newItem.Sphere &&
-            x.Finder == newItem.Finder &&
-            x.Receiver == newItem.Receiver &&
-            x.Item == newItem.Item &&
-            x.Location == newItem.Location &&
-            x.Game == newItem.Game);
+        if (!Declare.DisplayedItems.Guild.TryGetValue(guild, out var channelItems) ||
+            !channelItems.Channel.TryGetValue(channel, out var items))
+        {
+            return false;
+        }
+
+        foreach (var item in items)
+        {
+            if (item.Sphere == newItem.Sphere &&
+                item.Finder == newItem.Finder &&
+                item.Receiver == newItem.Receiver &&
+                item.Item == newItem.Item &&
+                item.Location == newItem.Location &&
+                item.Game == newItem.Game)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
+
 
     private static string BuildMessage(string guild, string channel, DisplayedItem item)
     {
-        if (item.Finder.Equals(item.Receiver))
+        if (item.Finder == item.Receiver)
         {
             return $"{item.Finder} found their {item.Item} ({item.Location})";
         }
 
-        if (Declare.receiverAliases.Guild[guild].Channel[channel].receiverAlias.TryGetValue(item.Receiver, out List<string> userIds))
+        if (Declare.ReceiverAliases.Guild[guild].Channel[channel].receiverAlias.TryGetValue(item.Receiver, out var userIds))
         {
-            string mentions = string.Join(" ", userIds.Select(id => $"<@{id}>"));
-
+            var mentions = string.Join(" ", userIds.Select(id => $"<@{id}>"));
             return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
         }
-
 
         return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
     }
 
+
     private static void UpdateRecapList(string guild, string channel, string receiver, string item)
     {
-        if (!Declare.recapList.Guild.ContainsKey(guild))
-            Declare.recapList.Guild[guild] = new ChannelRecapList();
+        if (!Declare.RecapList.Guild.TryGetValue(guild, out var channelRecapList))
+        {
+            channelRecapList = new ChannelRecapList();
+            Declare.RecapList.Guild[guild] = channelRecapList;
+        }
 
-        if (!Declare.recapList.Guild[guild].Channel.ContainsKey(channel))
-            Declare.recapList.Guild[guild].Channel[channel] = new UserRecapList();
+        if (!channelRecapList.Channel.TryGetValue(channel, out var userRecapList))
+        {
+            userRecapList = new UserRecapList();
+            channelRecapList.Channel[channel] = userRecapList;
+        }
 
-        if (!Declare.receiverAliases.Guild[guild].Channel[channel].receiverAlias.TryGetValue(receiver, out List<string> userIds))
+        if (!Declare.ReceiverAliases.Guild.TryGetValue(guild, out var channelReceiverAliases) ||
+            !channelReceiverAliases.Channel.TryGetValue(channel, out var receiverAlias) ||
+            !receiverAlias.receiverAlias.TryGetValue(receiver, out List<string> userIds))
+        {
             return;
+        }
 
         foreach (var userId in userIds)
         {
-            if (!Declare.recapList.Guild[guild].Channel[channel].Aliases.TryGetValue(userId, out var userItems))
+            if (!userRecapList.Aliases.TryGetValue(userId, out var userItems))
             {
-                Declare.recapList.Guild[guild].Channel[channel].Aliases[userId] = new List<RecapList> {
-            new RecapList { Alias = receiver, Items = new List<string> { item } }
-        };
+                userItems = new List<RecapList> { new RecapList { Alias = receiver, Items = new List<string> { item } } };
+                userRecapList.Aliases[userId] = userItems;
             }
             else
             {
@@ -275,24 +296,23 @@ public static class TrackingDataManager
 
     public static async Task setAliasAndGameStatusAsync(string guild, string channel, string urlTracker)
     {
-        if (Declare.aliasChoices.Guild.TryGetValue(guild, out var guildAliases) &&
+        if (Declare.AliasChoices.Guild.TryGetValue(guild, out var guildAliases) &&
             guildAliases.Channel.ContainsKey(channel))
         {
             return;
         }
-        var clientHttp = new HttpClient();
 
+        using var clientHttp = new HttpClient();
         var html = await clientHttp.GetStringAsync(urlTracker);
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        var table = doc.DocumentNode.SelectNodes("//table")?.FirstOrDefault();
-        var rows = table?.SelectNodes(".//tr")?.Skip(1);
-
+        var rows = doc.DocumentNode.SelectNodes("//table//tr")?.Skip(1);
         if (rows == null) return;
 
         EnsureDictionaryStructureAliasAndGameStatus(guild, channel);
 
+        var newGameStatuses = new List<GameStatus>();
         foreach (var row in rows)
         {
             var cells = row.SelectNodes("td") ?? row.SelectNodes("th");
@@ -309,20 +329,23 @@ public static class TrackingDataManager
                 LastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim())
             };
 
-            Declare.aliasChoices.Guild[guild].Channel[channel].aliasChoices.TryAdd(newGameStatus.Name, newGameStatus.Name);
+            Declare.AliasChoices.Guild[guild].Channel[channel].aliasChoices.TryAdd(newGameStatus.Name, newGameStatus.Name);
 
-            if (!Declare.gameStatus.Guild[guild].Channel[channel].Any(x => x.Name == newGameStatus.Name))
+            if (!Declare.GameStatus.Guild[guild].Channel[channel].Any(x => x.Name == newGameStatus.Name))
             {
-                Declare.gameStatus.Guild[guild].Channel[channel].Add(newGameStatus);
+                newGameStatuses.Add(newGameStatus);
             }
         }
 
-        Declare.gameStatus.Guild[guild].Channel[channel].Sort((x, y) => x.Name.CompareTo(y.Name));
-
-        DataManager.SaveAliasChoices();
-        DataManager.SaveGameStatus();
-        await BotCommands.RegisterCommandsAsync();
-        await BotCommands.SendMessageAsync("Aliases Updated!", channel);
+        if (newGameStatuses.Count > 0)
+        {
+            Declare.GameStatus.Guild[guild].Channel[channel].AddRange(newGameStatuses);
+            Declare.GameStatus.Guild[guild].Channel[channel].Sort((x, y) => x.Name.CompareTo(y.Name));
+            DataManager.SaveAliasChoices();
+            DataManager.SaveGameStatus();
+            await BotCommands.RegisterCommandsAsync();
+            await BotCommands.SendMessageAsync("Aliases Updated!", channel);
+        }
 
         if (Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases.Any())
         {
@@ -330,33 +353,39 @@ public static class TrackingDataManager
             {
                 var gameName = Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases[alias].GameName;
                 var patch = Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases[alias].Patch;
-
                 await BotCommands.SendMessageAsync($"Patch Pour {alias}, {gameName} : {patch}", channel);
             }
         }
     }
-
     private static void EnsureDictionaryStructureAliasAndGameStatus(string guild, string channel)
     {
-        if (!Declare.aliasChoices.Guild.ContainsKey(guild))
-            Declare.aliasChoices.Guild[guild] = new ChannelAliasChoices();
+        if (!Declare.AliasChoices.Guild.TryGetValue(guild, out var aliasChoices))
+        {
+            aliasChoices = new ChannelAliasChoices();
+            Declare.AliasChoices.Guild[guild] = aliasChoices;
+        }
 
-        if (!Declare.aliasChoices.Guild[guild].Channel.ContainsKey(channel))
-            Declare.aliasChoices.Guild[guild].Channel[channel] = new AliasChoice();
+        if (!aliasChoices.Channel.ContainsKey(channel))
+        {
+            aliasChoices.Channel[channel] = new AliasChoice();
+        }
 
-        if (!Declare.gameStatus.Guild.ContainsKey(guild))
-            Declare.gameStatus.Guild[guild] = new ChannelGameStatus();
+        if (!Declare.GameStatus.Guild.TryGetValue(guild, out var gameStatus))
+        {
+            gameStatus = new ChannelGameStatus();
+            Declare.GameStatus.Guild[guild] = gameStatus;
+        }
 
-        if (!Declare.gameStatus.Guild[guild].Channel.ContainsKey(channel))
-            Declare.gameStatus.Guild[guild].Channel[channel] = new List<GameStatus>();
+        if (!gameStatus.Channel.ContainsKey(channel))
+        {
+            gameStatus.Channel[channel] = new List<GameStatus>();
+        }
     }
+
 
     public static async Task checkGameStatus(string guild, string channel, string urlTracker)
     {
-        bool changeFound = false;
-
-        var clientHttp = new HttpClient();
-
+        using var clientHttp = new HttpClient();
         var html = await clientHttp.GetStringAsync(urlTracker);
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
@@ -366,7 +395,7 @@ public static class TrackingDataManager
 
         EnsureDictionaryStructureHintTable(guild, channel);
 
-        changeFound |= ProcessGameStatusTable(tables[0], guild, channel);
+        bool changeFound = ProcessGameStatusTable(tables[0], guild, channel);
         if (changeFound) DataManager.SaveGameStatus();
 
         changeFound = ProcessHintTable(tables[1], guild, channel);
@@ -379,6 +408,7 @@ public static class TrackingDataManager
         if (rows == null) return false;
 
         bool changeFound = false;
+        var gameStatusList = Declare.GameStatus.Guild[guild].Channel[channel];
 
         foreach (var row in rows)
         {
@@ -396,11 +426,11 @@ public static class TrackingDataManager
                 LastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim())
             };
 
-             var existingStatus = Declare.gameStatus.Guild[guild].Channel[channel].FirstOrDefault(x => x.Name == newEntry.Name);
+            var existingStatus = gameStatusList.FirstOrDefault(x => x.Name == newEntry.Name);
 
             if (existingStatus == null)
             {
-                Declare.gameStatus.Guild[guild].Channel[channel].Add(newEntry);
+                gameStatusList.Add(newEntry);
                 changeFound = true;
             }
             else if (existingStatus.Status != "Goal Completed")
@@ -425,12 +455,14 @@ public static class TrackingDataManager
         return changeFound;
     }
 
+
     private static bool ProcessHintTable(HtmlNode hintTable, string guild, string channel)
     {
         var rows = hintTable.SelectNodes(".//tr")?.Skip(1);
         if (rows == null) return false;
 
         bool changeFound = false;
+        var hintStatuses = Declare.HintStatuses.Guild[guild].Channel[channel];
 
         foreach (var row in rows)
         {
@@ -448,19 +480,18 @@ public static class TrackingDataManager
                 Found = WebUtility.HtmlDecode(cells[6].InnerText.Trim())
             };
 
-            var existingHint = Declare.hintStatuses.Guild[guild].Channel[channel]
-                .FirstOrDefault(x => x.Finder == newHint.Finder && x.Receiver == newHint.Receiver &&
-                                     x.Item == newHint.Item && x.Location == newHint.Location &&
-                                     x.Game == newHint.Game && x.Entrance == newHint.Entrance);
+            var existingHint = hintStatuses.FirstOrDefault(x => x.Finder == newHint.Finder && x.Receiver == newHint.Receiver &&
+                                                                x.Item == newHint.Item && x.Location == newHint.Location &&
+                                                                x.Game == newHint.Game && x.Entrance == newHint.Entrance);
 
             if (existingHint == null && string.IsNullOrEmpty(newHint.Found))
             {
-                Declare.hintStatuses.Guild[guild].Channel[channel].Add(newHint);
+                hintStatuses.Add(newHint);
                 changeFound = true;
             }
             else if (existingHint != null && !string.IsNullOrEmpty(newHint.Found))
             {
-                Declare.hintStatuses.Guild[guild].Channel[channel].Remove(existingHint);
+                hintStatuses.Remove(existingHint);
                 changeFound = true;
             }
         }
@@ -468,18 +499,30 @@ public static class TrackingDataManager
         return changeFound;
     }
 
+
     private static void EnsureDictionaryStructureHintTable(string guild, string channel)
     {
-        if (!Declare.gameStatus.Guild.ContainsKey(guild))
-            Declare.gameStatus.Guild[guild] = new ChannelGameStatus();
+        if (!Declare.GameStatus.Guild.TryGetValue(guild, out var gameStatus))
+        {
+            gameStatus = new ChannelGameStatus();
+            Declare.GameStatus.Guild[guild] = gameStatus;
+        }
 
-        if (!Declare.gameStatus.Guild[guild].Channel.ContainsKey(channel))
-            Declare.gameStatus.Guild[guild].Channel[channel] = new List<GameStatus>();
+        if (!gameStatus.Channel.ContainsKey(channel))
+        {
+            gameStatus.Channel[channel] = new List<GameStatus>();
+        }
 
-        if (!Declare.hintStatuses.Guild.ContainsKey(guild))
-            Declare.hintStatuses.Guild[guild] = new ChannelHintStatus();
+        if (!Declare.HintStatuses.Guild.TryGetValue(guild, out var hintStatus))
+        {
+            hintStatus = new ChannelHintStatus();
+            Declare.HintStatuses.Guild[guild] = hintStatus;
+        }
 
-        if (!Declare.hintStatuses.Guild[guild].Channel.ContainsKey(channel))
-            Declare.hintStatuses.Guild[guild].Channel[channel] = new List<HintStatus>();
+        if (!hintStatus.Channel.ContainsKey(channel))
+        {
+            hintStatus.Channel[channel] = new List<HintStatus>();
+        }
     }
+
 }
