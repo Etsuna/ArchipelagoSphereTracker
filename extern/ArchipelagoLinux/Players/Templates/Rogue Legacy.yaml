@@ -32,7 +32,7 @@ description: Default Rogue Legacy Template
 
 game: Rogue Legacy
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Rogue Legacy:
   # Game Options
@@ -80,7 +80,7 @@ Rogue Legacy:
   available_classes:
     # List of classes that will be in the item pool to find. The upgraded form of the class will be added with it.
     # The upgraded form of your starting class will be available regardless.
-    ['Barbarian', 'Knave', 'Traitor', 'Spellthief', 'Miner', 'Dragon', 'Lich', 'Knight', 'Shinobi', 'Mage']
+    ['Traitor', 'Knight', 'Spellthief', 'Dragon', 'Lich', 'Barbarian', 'Knave', 'Mage', 'Shinobi', 'Miner']
 
   new_game_plus:
     # Puts the castle in new game plus mode which vastly increases enemy level, but increases gold gain by 50%. Not

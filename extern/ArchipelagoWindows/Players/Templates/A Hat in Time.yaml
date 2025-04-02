@@ -32,7 +32,7 @@ description: Default A Hat in Time Template
 
 game: A Hat in Time
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 A Hat in Time:
   # Game Options
@@ -80,30 +80,16 @@ A Hat in Time:
     rush_hour: 0
     seal_the_deal: 0
 
-  ShuffleAlpineZiplines:
-    # If enabled, Alpine's zipline paths leading to the peaks will be locked behind items.
-    'false': 50
-    'true': 0
-
-  LogicDifficulty:
-    # Choose the difficulty setting for logic.
-    # For an exhaustive list of all logic tricks for each difficulty, see this Google Doc:
-    # https://docs.google.com/document/d/1x9VLSQ5davfx1KGamR9T0mD5h69_lDXJ6H7Gq7knJRI/edit?usp=sharing
-    normal: 50
-    moderate: 0
-    hard: 0
-    expert: 0
-
   ShuffleStorybookPages:
     # If enabled, each storybook page in the purple Time Rifts is an item check.
     # The Compass Badge can track these down for you.
     'false': 0
     'true': 50
 
-  ShuffleActContracts:
-    # If enabled, shuffle Snatcher's act contracts into the pool as items
-    'false': 0
-    'true': 50
+  ShuffleAlpineZiplines:
+    # If enabled, Alpine's zipline paths leading to the peaks will be locked behind items.
+    'false': 50
+    'true': 0
 
   ShuffleSubconPaintings:
     # If enabled, shuffle items into the pool that unlock Subcon Forest fire spirit paintings.
@@ -111,17 +97,10 @@ A Hat in Time:
     'false': 50
     'true': 0
 
-  NoPaintingSkips:
-    # If enabled, prevent Subcon fire wall skips from being in logic on higher difficulty settings.
-    'false': 50
-    'true': 0
-
-  CTRLogic:
-    # Choose how you want to logically clear Cheating the Race.
-    time_stop_only: 50
-    scooter: 0
-    sprint: 0
-    nothing: 0
+  ShuffleActContracts:
+    # If enabled, shuffle Snatcher's act contracts into the pool as items
+    'false': 0
+    'true': 50
 
   MinPonCost:
     # The minimum number of Pons that any item in the Badge Seller's shop can cost.
@@ -167,6 +146,27 @@ A Hat in Time:
     random-low: 0
     random-high: 0
 
+  LogicDifficulty:
+    # Choose the difficulty setting for logic.
+    # For an exhaustive list of all logic tricks for each difficulty, see this Google Doc:
+    # https://docs.google.com/document/d/1x9VLSQ5davfx1KGamR9T0mD5h69_lDXJ6H7Gq7knJRI/edit?usp=sharing
+    normal: 50
+    moderate: 0
+    hard: 0
+    expert: 0
+
+  NoPaintingSkips:
+    # If enabled, prevent Subcon fire wall skips from being in logic on higher difficulty settings.
+    'false': 50
+    'true': 0
+
+  CTRLogic:
+    # Choose how you want to logically clear Cheating the Race.
+    time_stop_only: 50
+    scooter: 0
+    sprint: 0
+    nothing: 0
+
   # Act Options
   ActRandomizer:
     # If enabled, shuffle the game's Acts between each other.
@@ -175,22 +175,6 @@ A Hat in Time:
     'false': 0
     light: 50
     insanity: 0
-
-  ActPlando:
-    # Plando acts onto other acts. For example, "Train Rush": "Alpine Free Roam" will place Alpine Free Roam
-    # at Train Rush.
-    {}
-
-  ActBlacklist:
-    # Blacklist acts from being shuffled onto other acts. Multiple can be listed per act.
-    # For example, "Barrel Battle": ["The Big Parade", "Dead Bird Studio"]
-    # will prevent The Big Parade and Dead Bird Studio from being shuffled onto Barrel Battle.
-    {}
-
-  FinaleShuffle:
-    # If enabled, chapter finales will only be shuffled amongst each other in act shuffle.
-    'false': 50
-    'true': 0
 
   StartingChapter:
     # Determines which chapter you will be guaranteed to be able to enter at the beginning of the game.
@@ -267,41 +251,23 @@ A Hat in Time:
     random-low: 0
     random-high: 0
 
-  # Item Options
-  YarnBalancePercent:
-    # How much (in percentage) of the yarn in the pool that will be progression balanced.
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 0
-    # Maximum value is 100
-    20: 50
-    random: 0
-    random-low: 0
-    random-high: 0
-
-  TimePieceBalancePercent:
-    # How much (in percentage) of time pieces in the pool that will be progression balanced.
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 0
-    # Maximum value is 100
-    35: 50
-    random: 0
-    random-low: 0
-    random-high: 0
-
-  RandomizeHatOrder:
-    # Randomize the order that hats are stitched in.
-    # Time Stop Last will force Time Stop to be the last hat in the sequence.
-    'false': 0
-    'true': 50
-    time_stop_last: 0
-
-  UmbrellaLogic:
-    # Makes Hat Kid's default punch attack do absolutely nothing, making the Umbrella much more relevant and useful
+  FinaleShuffle:
+    # If enabled, chapter finales will only be shuffled amongst each other in act shuffle.
     'false': 50
     'true': 0
 
+  ActPlando:
+    # Plando acts onto other acts. For example, "Train Rush": "Alpine Free Roam" will place Alpine Free Roam
+    # at Train Rush.
+    {}
+
+  ActBlacklist:
+    # Blacklist acts from being shuffled onto other acts. Multiple can be listed per act.
+    # For example, "Barrel Battle": ["The Big Parade", "Dead Bird Studio"]
+    # will prevent The Big Parade and Dead Bird Studio from being shuffled onto Barrel Battle.
+    {}
+
+  # Item Options
   StartWithCompassBadge:
     # If enabled, start with the Compass Badge. In Archipelago, the Compass Badge will track all items in the world
     # (instead of just Relics). Recommended if you're not familiar with where item locations are.
@@ -316,14 +282,20 @@ A Hat in Time:
     important_only: 0
     important_first: 0
 
-  MaxExtraTimePieces:
-    # Maximum number of extra Time Pieces from the DLCs.
-    # Arctic Cruise will add up to 6. Nyakuza Metro will add up to 10. The absolute maximum is 56.
+  RandomizeHatOrder:
+    # Randomize the order that hats are stitched in.
+    # Time Stop Last will force Time Stop to be the last hat in the sequence.
+    'false': 0
+    'true': 50
+    time_stop_last: 0
+
+  YarnAvailable:
+    # How much yarn is available to collect in the item pool.
     #
     # You can define additional values between the minimum and maximum values.
-    # Minimum value is 0
-    # Maximum value is 16
-    16: 50
+    # Minimum value is 30
+    # Maximum value is 80
+    50: 50
     random: 0
     random-low: 0
     random-high: 0
@@ -350,17 +322,6 @@ A Hat in Time:
     random-low: 0
     random-high: 0
 
-  YarnAvailable:
-    # How much yarn is available to collect in the item pool.
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 30
-    # Maximum value is 80
-    50: 50
-    random: 0
-    random-low: 0
-    random-high: 0
-
   MinExtraYarn:
     # The minimum number of extra yarn in the item pool.
     # There must be at least this much more yarn over the total number of yarn needed to craft all hats.
@@ -379,6 +340,45 @@ A Hat in Time:
     # Removes all yarn from the pool and turns the hats into individual items instead.
     'false': 50
     'true': 0
+
+  UmbrellaLogic:
+    # Makes Hat Kid's default punch attack do absolutely nothing, making the Umbrella much more relevant and useful
+    'false': 50
+    'true': 0
+
+  MaxExtraTimePieces:
+    # Maximum number of extra Time Pieces from the DLCs.
+    # Arctic Cruise will add up to 6. Nyakuza Metro will add up to 10. The absolute maximum is 56.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 16
+    16: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  YarnBalancePercent:
+    # How much (in percentage) of the yarn in the pool that will be progression balanced.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    20: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  TimePieceBalancePercent:
+    # How much (in percentage) of time pieces in the pool that will be progression balanced.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    35: 50
+    random: 0
+    random-low: 0
+    random-high: 0
 
   # Arctic Cruise Options
   EnableDLC1:
@@ -414,13 +414,6 @@ A Hat in Time:
     random-low: 0
     random-high: 0
 
-  ExcludeTour:
-    # Removes the Tour time rift from the game. This option is recommended if you don't want to deal with
-    # important levels being shuffled onto the Tour time rift, or important items being shuffled onto Tour pages
-    # when your goal is Time's End.
-    'false': 50
-    'true': 0
-
   ShipShapeCustomTaskGoal:
     # Change the number of tasks required to complete Ship Shape. If this option's value is 0, the number of tasks
     # required will be TasksanityTaskStep x TasksanityCheckCount, if Tasksanity is enabled. If Tasksanity is disabled,
@@ -435,16 +428,17 @@ A Hat in Time:
     random-low: 0
     random-high: 0
 
+  ExcludeTour:
+    # Removes the Tour time rift from the game. This option is recommended if you don't want to deal with
+    # important levels being shuffled onto the Tour time rift, or important items being shuffled onto Tour pages
+    # when your goal is Time's End.
+    'false': 50
+    'true': 0
+
   # Nyakuza Metro Options
   EnableDLC2:
     # Shuffle content from Nyakuza Metro (Chapter 7) into the game.
     # DO NOT ENABLE THIS OPTION IF YOU DO NOT HAVE NYAKUZA METRO DLC INSTALLED!!!
-    'false': 50
-    'true': 0
-
-  BaseballBat:
-    # Replace the Umbrella with the baseball bat from Nyakuza Metro.
-    # DLC2 content does not have to be shuffled for this option but Nyakuza Metro still needs to be installed.
     'false': 50
     'true': 0
 
@@ -492,6 +486,12 @@ A Hat in Time:
     random-low: 0
     random-high: 0
 
+  BaseballBat:
+    # Replace the Umbrella with the baseball bat from Nyakuza Metro.
+    # DLC2 content does not have to be shuffled for this option but Nyakuza Metro still needs to be installed.
+    'false': 50
+    'true': 0
+
   NoTicketSkips:
     # Prevent metro gate skips from being in logic on higher difficulties.
     # Rush Hour option will only consider the ticket skips for Rush Hour in logic.
@@ -505,6 +505,17 @@ A Hat in Time:
     # DO NOT ENABLE THIS OPTION IF YOU DO NOT HAVE SEAL THE DEAL DLC INSTALLED!!!
     'false': 50
     'true': 0
+
+  DWTimePieceRequirement:
+    # How many Time Pieces that will be required to unlock Death Wish.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 35
+    15: 50
+    random: 0
+    random-low: 0
+    random-high: 0
 
   DWShuffle:
     # An alternative mode for Death Wish where each contract is unlocked one by one, in a random order.
@@ -537,19 +548,6 @@ A Hat in Time:
     random: 0
     random-low: 0
     random-high: 0
-
-  DeathWishOnly:
-    # An alternative gameplay mode that allows you to exclusively play Death Wish in a seed.
-    # This has the following effects:
-    # - Death Wish is instantly unlocked from the start
-    # - All hats and other progression items are instantly given to you
-    # - Useful items such as Fast Hatter Badge will still be in the item pool instead of in your inventory at the start
-    # - All chapters and their levels are unlocked, act shuffle is forced off
-    # - Any checks other than Death Wish contracts are completely removed
-    # - All Pons in the item pool are replaced with Health Pons or random cosmetics
-    # - The EndGoal option is forced to complete Seal the Deal
-    'false': 50
-    'true': 0
 
   DWEnableBonus:
     # In Death Wish, add a location for completing all of a DW contract's bonuses,
@@ -607,16 +605,18 @@ A Hat in Time:
     'false': 0
     'true': 50
 
-  DWTimePieceRequirement:
-    # How many Time Pieces that will be required to unlock Death Wish.
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 0
-    # Maximum value is 35
-    15: 50
-    random: 0
-    random-low: 0
-    random-high: 0
+  DeathWishOnly:
+    # An alternative gameplay mode that allows you to exclusively play Death Wish in a seed.
+    # This has the following effects:
+    # - Death Wish is instantly unlocked from the start
+    # - All hats and other progression items are instantly given to you
+    # - Useful items such as Fast Hatter Badge will still be in the item pool instead of in your inventory at the start
+    # - All chapters and their levels are unlocked, act shuffle is forced off
+    # - Any checks other than Death Wish contracts are completely removed
+    # - All Pons in the item pool are replaced with Health Pons or random cosmetics
+    # - The EndGoal option is forced to complete Seal the Deal
+    'false': 50
+    'true': 0
 
   # Trap Options
   TrapChance:

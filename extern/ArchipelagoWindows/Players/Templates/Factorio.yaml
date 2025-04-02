@@ -32,7 +32,7 @@ description: Default Factorio Template
 
 game: Factorio
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Factorio:
   # Game Options
@@ -77,80 +77,6 @@ Factorio:
     rocket: 50
     satellite: 0
 
-  tech_tree_layout:
-    # Selects how the tech tree nodes are interwoven.
-    # Single: No dependencies
-    # Diamonds: Several grid graphs (4/9/16 nodes each)
-    # Pyramids: Several top halves of diamonds (6/10/15 nodes each)
-    # Funnels: Several bottom halves of diamonds (6/10/15 nodes each)
-    # Trees: Several trees
-    # Choices: A single balanced binary tree
-    single: 50
-    small_diamonds: 0
-    medium_diamonds: 0
-    large_diamonds: 0
-    small_pyramids: 0
-    medium_pyramids: 0
-    large_pyramids: 0
-    small_funnels: 0
-    medium_funnels: 0
-    large_funnels: 0
-    trees: 0
-    choices: 0
-
-  min_tech_cost:
-    # The cheapest a Technology can be in Science Packs.
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 1
-    # Maximum value is 10000
-    5: 50
-    random: 0
-    random-low: 0
-    random-high: 0
-
-  max_tech_cost:
-    # The most expensive a Technology can be in Science Packs.
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 1
-    # Maximum value is 10000
-    500: 50
-    random: 0
-    random-low: 0
-    random-high: 0
-
-  tech_cost_distribution:
-    # Random distribution of costs of the Science Packs.
-    # Even: any number between min and max is equally likely.
-    # Low: low costs, near the minimum, are more likely.
-    # Middle: medium costs, near the average, are more likely.
-    # High: high costs, near the maximum, are more likely.
-    even: 50
-    low: 0
-    middle: 0
-    high: 0
-
-  tech_cost_mix:
-    # Percent chance that a preceding Science Pack is also required.
-    # Chance is rolled per preceding pack.
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 0
-    # Maximum value is 100
-    70: 50
-    random: 0
-    random-low: 0
-    random-high: 0
-
-  ramping_tech_costs:
-    # Forces the amount of Science Packs required to ramp up with the highest involved Pack. Average is preserved.
-    # For example:
-    # off: Automation (red)/Logistics (green) sciences can range from 1 to 1000 Science Packs,
-    # on: Automation (red) ranges to ~500 packs and Logistics (green) from ~500 to 1000 Science Packs
-    'false': 50
-    'true': 0
-
   silo:
     # Ingredients to craft rocket silo or auto-place if set to spawn.
     vanilla: 50
@@ -177,15 +103,6 @@ Factorio:
     rare: 0
     epic: 0
     legendary: 0
-
-  tech_tree_information:
-    # How much information should be displayed in the tech tree.
-    # None: No indication of what a research unlocks.
-    # Advancement: Indicates if a research unlocks an item that is considered logical advancement, but not who it is for.
-    # Full: Labels with exact names and recipients of unlocked items; all researches are prefilled into the !hint command.
-    none: 0
-    advancement: 0
-    full: 50
 
   starting_items:
     # Mapping of Factorio internal item-name to amount granted on start.
@@ -323,6 +240,38 @@ Factorio:
     seed: null
     starting_area: 1
 
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
+  energy_link:
+    # Allow sending energy to other worlds. 25% of the energy is lost in the transfer.
+    'false': 50
+    'true': 0
+
+  # Technologies
+  tech_tree_layout:
+    # Selects how the tech tree nodes are interwoven.
+    # Single: No dependencies
+    # Diamonds: Several grid graphs (4/9/16 nodes each)
+    # Pyramids: Several top halves of diamonds (6/10/15 nodes each)
+    # Funnels: Several bottom halves of diamonds (6/10/15 nodes each)
+    # Trees: Several trees
+    # Choices: A single balanced binary tree
+    single: 50
+    small_diamonds: 0
+    medium_diamonds: 0
+    large_diamonds: 0
+    small_pyramids: 0
+    medium_pyramids: 0
+    large_pyramids: 0
+    small_funnels: 0
+    medium_funnels: 0
+    large_funnels: 0
+    trees: 0
+    choices: 0
+
   progressive:
     # Merges together Technologies like "automation-1" to "automation-3" into 3 copies of "Progressive Automation",
     # which awards them in order.
@@ -330,8 +279,107 @@ Factorio:
     grouped_random: 0
     'on': 50
 
+  min_tech_cost:
+    # The cheapest a Technology can be in Science Packs.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 10000
+    5: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_tech_cost:
+    # The most expensive a Technology can be in Science Packs.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 10000
+    500: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  tech_cost_distribution:
+    # Random distribution of costs of the Science Packs.
+    # Even: any number between min and max is equally likely.
+    # Low: low costs, near the minimum, are more likely.
+    # Middle: medium costs, near the average, are more likely.
+    # High: high costs, near the maximum, are more likely.
+    even: 50
+    low: 0
+    middle: 0
+    high: 0
+
+  tech_cost_mix:
+    # Percent chance that a preceding Science Pack is also required.
+    # Chance is rolled per preceding pack.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    70: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  ramping_tech_costs:
+    # Forces the amount of Science Packs required to ramp up with the highest involved Pack. Average is preserved.
+    # For example:
+    # off: Automation (red)/Logistics (green) sciences can range from 1 to 1000 Science Packs,
+    # on: Automation (red) ranges to ~500 packs and Logistics (green) from ~500 to 1000 Science Packs
+    'false': 50
+    'true': 0
+
+  tech_tree_information:
+    # How much information should be displayed in the tech tree.
+    # None: No indication of what a research unlocks.
+    # Advancement: Indicates if a research unlocks an item that is considered logical advancement, but not who it is for.
+    # Full: Labels with exact names and recipients of unlocked items; all researches are prefilled into the !hint command.
+    none: 0
+    advancement: 0
+    full: 50
+
+  # Traps
+  attack_traps:
+    # Trap items that when received trigger an attack on your base.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 25
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  evolution_traps:
+    # Trap items that when received increase the enemy evolution.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 10
+    0: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  evolution_trap_increase:
+    # How much an Evolution Trap increases the enemy evolution.
+    # Increases scale down proportionally to the session's current evolution factor
+    # (40 increase at 0.50 will add 0.20... 40 increase at 0.75 will add 0.10...)
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 100
+    10: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
   teleport_traps:
     # Trap items that when received trigger a random teleport.
+    # It is ensured the player can walk back to where they got teleported from.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
@@ -386,8 +434,9 @@ Factorio:
     random-low: 0
     random-high: 0
 
-  attack_traps:
-    # Trap items that when received trigger an attack on your base.
+  atomic_cliff_remover_traps:
+    # Trap items that when received trigger an atomic rocket explosion on a random cliff.
+    # Warning: there is no warning. The launch is instantaneous.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
@@ -397,39 +446,16 @@ Factorio:
     random-low: 0
     random-high: 0
 
-  evolution_traps:
-    # Trap items that when received increase the enemy evolution.
+  inventory_spill_traps:
+    # Trap items that when received trigger dropping your main inventory and trash inventory onto the ground.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
-    # Maximum value is 10
+    # Maximum value is 25
     0: 50
     random: 0
     random-low: 0
     random-high: 0
-
-  evolution_trap_increase:
-    # How much an Evolution Trap increases the enemy evolution.
-    # Increases scale down proportionally to the session's current evolution factor
-    # (40 increase at 0.50 will add 0.20... 40 increase at 0.75 will add 0.10...)
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 1
-    # Maximum value is 100
-    10: 50
-    random: 0
-    random-low: 0
-    random-high: 0
-
-  death_link:
-    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
-    'false': 50
-    'true': 0
-
-  energy_link:
-    # Allow sending energy to other worlds. 25% of the energy is lost in the transfer.
-    'false': 50
-    'true': 0
 
   # Item & Location Options
   local_items:
@@ -442,6 +468,12 @@ Factorio:
 
   start_inventory:
     # Start with these items.
+    {}
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
     {}
 
   start_hints:
@@ -463,9 +495,3 @@ Factorio:
   item_links:
     # Share part of your item pool with other players.
     []
-
-  start_inventory_from_pool:
-    # Start with these items and don't place them in the world.
-    # 
-    # The game decides what the replacement items will be.
-    {}

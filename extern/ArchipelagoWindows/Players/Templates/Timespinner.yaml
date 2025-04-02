@@ -32,7 +32,7 @@ description: Default Timespinner Template
 
 game: Timespinner
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Timespinner:
   # Game Options
@@ -127,6 +127,7 @@ Timespinner:
     scaled: 0
     unscaled: 0
     ryshia: 0
+    no_hell_spiders: 0
 
   damage_rando:
     # Randomly nerfs and buffs some orbs and their associated spells as well as some associated rings.
@@ -211,6 +212,17 @@ Timespinner:
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 1
+    # Maximum value is 999
+    999: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  aura_cap:
+    # Sets the maximum Aura Lunais is allowed to have. Level 1 is 80. Djinn Inferno costs 45.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 45
     # Maximum value is 999
     999: 50
     random: 0
@@ -385,6 +397,37 @@ Timespinner:
     'false': 50
     'true': 0
 
+  prism_break:
+    # Adds 3 Laser Access items to the item pool to remove the lasers blocking the military hangar area
+    # instead of needing to beat the Golden Idol, Aelana, and The Maw.
+    'false': 50
+    'true': 0
+
+  lock_key_amadeus:
+    # Lasers in Amadeus' Laboratory are disabled via items, rather than by de-powering the lab. Experiments will spawn in the lab.
+    'false': 50
+    'true': 0
+
+  risky_warps:
+    # Expanded free-warp eligible locations, including Azure Queen, Xarion, Amadeus' Laboratory, and Emperor's Tower.
+    'false': 50
+    'true': 0
+
+  pyramid_start:
+    # Start in ???. Takes priority over Inverted. Additional chests in Dark Forest and Pyramid. Sandman door behaves as it does in Enter Sandman.
+    'false': 50
+    'true': 0
+
+  gate_keep:
+    # The castle drawbridge starts raised, and can be lowered via item.
+    'false': 50
+    'true': 0
+
+  royal_roadblock:
+    # The Royal Towers entrance door requires a royal orb (Plasma Orb, Plasma Geyser, or Royal Ring) to enter.
+    'false': 50
+    'true': 0
+
   trap_chance:
     # Chance of traps in the item pool.
     # Traps will only replace filler items such as potions, vials and antidotes
@@ -399,7 +442,7 @@ Timespinner:
 
   traps:
     # List of traps that may be in the item pool to find
-    ['Meteor Sparrow Trap', 'Poison Trap', 'Chaos Trap', 'Neurotoxin Trap', 'Bee Trap']
+    ['Meteor Sparrow Trap', 'Poison Trap', 'Chaos Trap', 'Neurotoxin Trap', 'Bee Trap', 'Throw Stun Trap']
 
   # Item & Location Options
   local_items:

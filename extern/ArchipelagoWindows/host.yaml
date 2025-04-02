@@ -12,6 +12,7 @@ server_options:
   savefile: null
   disable_save: false
   loglevel: "info"
+  logtime: false
   # Allows for clients to log on and manage the server.  If this is null, no remote administration is possible.
   server_password: null
   # Disallow !getitem
@@ -83,6 +84,8 @@ generator:
   # swap -> Attempt to fix it by swapping prior placements around. (Default)
   # start_inventory -> Move remaining items to start_inventory, generate additional filler items to fill locations.
   panic_method: "swap"
+  loglevel: "info"
+  logtime: false
 sni_options:
   # Set this to your SNI folder location if you want the MultiClient to attempt an auto start, does nothing if not found
   sni_path: "SNI"
@@ -117,6 +120,9 @@ adventure_options:
 cv64_options:
   # File name of the CV64 US 1.0 rom
   rom_file: "Castlevania (USA).z64"
+cvcotm_options:
+  # File name of the Castlevania CotM US rom
+  rom_file: "Castlevania - Circle of the Moon (USA).gba"
 dkc3_options:
   # File name of the DKC3 US rom
   rom_file: "Donkey Kong Country 3 - Dixie Kong's Double Trouble! (USA) (En,Fr).sfc"
@@ -188,6 +194,16 @@ pokemon_rb_options:
   # File names of the Pokemon Red and Blue roms
   red_rom_file: "Pokemon Red (UE) [S][!].gb"
   blue_rom_file: "Pokemon Blue (UE) [S][!].gb"
+saving_princess_settings:
+  # Path to the game executable from which files are extracted
+  exe_path: "Saving Princess.exe"
+  # Path to the mod installation folder
+  install_folder: "Saving Princess"
+  # Set this to false to never autostart the game
+  launch_game: true
+  # The console command that will be used to launch the game
+  # The command will be executed with the installation folder as the current directory
+  launch_command: "\"Saving Princess v0_8.exe\""
 sm_options:
   # File name of the v1.0 J rom
   rom_file: "Super Metroid (JU).sfc"
@@ -209,12 +225,12 @@ tloz_options:
 tunic_options:
   # Disallows the TUNIC client from creating a local spoiler log.
   disable_local_spoiler: false
+  # Limits the impact of Grass Randomizer on the multiworld by disallowing local_fill percentages below 95.
+  limit_grass_rando: true
 wargroove_options:
   # Locate the Wargroove root directory on your system.
   # This is used by the Wargroove client, so it knows where to send communication files to
   root_directory: "C:/Program Files (x86)/Steam/steamapps/common/Wargroove"
-xenobladex_options:
-  executable: "Cemu"
 yoshisisland_options:
   # File name of the Yoshi's Island 1.0 US rom
   rom_file: "Super Mario World 2 - Yoshi's Island (U).sfc"

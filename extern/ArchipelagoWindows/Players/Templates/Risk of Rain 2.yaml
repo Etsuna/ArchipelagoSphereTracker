@@ -32,7 +32,7 @@ description: Default Risk of Rain 2 Template
 
 game: Risk of Rain 2
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Risk of Rain 2:
   # Game Options

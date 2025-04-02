@@ -32,7 +32,7 @@ description: Default Slay the Spire Template
 
 game: Slay the Spire
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Slay the Spire:
   # Game Options

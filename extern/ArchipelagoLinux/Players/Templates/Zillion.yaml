@@ -32,7 +32,7 @@ description: Default Zillion Template
 
 game: Zillion
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Zillion:
   # Game Options
@@ -182,6 +182,13 @@ Zillion:
     none: 50
     rooms: 0
     full: 0
+
+  priority_dead_ends:
+    # Single locations that are in a dead end behind a door
+    # (example: vanilla Apple location)
+    # are prioritized for progression items.
+    'false': 0
+    'true': 50
 
   # item counts
   id_card_count:

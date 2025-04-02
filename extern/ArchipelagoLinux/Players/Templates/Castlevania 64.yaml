@@ -32,7 +32,7 @@ description: Default Castlevania 64 Template
 
 game: Castlevania 64
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Castlevania 64:
   # Game Options
@@ -472,6 +472,12 @@ Castlevania 64:
     # Start with these items.
     {}
 
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}
+
   start_hints:
     # Start with these item's locations prefilled into the ``!hint`` command.
     []
@@ -491,9 +497,3 @@ Castlevania 64:
   item_links:
     # Share part of your item pool with other players.
     []
-
-  start_inventory_from_pool:
-    # Start with these items and don't place them in the world.
-    # 
-    # The game decides what the replacement items will be.
-    {}

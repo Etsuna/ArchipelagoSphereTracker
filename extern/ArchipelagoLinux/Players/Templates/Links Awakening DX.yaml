@@ -32,7 +32,7 @@ description: Default Links Awakening DX Template
 
 game: Links Awakening DX
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Links Awakening DX:
   # Game Options
@@ -93,6 +93,21 @@ Links Awakening DX:
     random-high: 0
 
   # Shuffles
+  shuffle_instruments:
+    # Shuffle Instruments
+    # [Original Dungeon] The item will be within its original dungeon
+    # [Own Dungeons] The item will be within a dungeon in your world
+    # [Own World] The item will be somewhere in your world
+    # [Any World] The item could be anywhere
+    # [Different World] The item will be somewhere in another world
+    # [Vanilla] The item will be in its vanilla location in your world
+    original_dungeon: 0
+    own_dungeons: 0
+    own_world: 0
+    any_world: 0
+    different_world: 0
+    vanilla: 50
+
   shuffle_nightmare_keys:
     # Shuffle Nightmare Keys
     # [Original Dungeon] The item will be within its original dungeon
@@ -158,33 +173,13 @@ Links Awakening DX:
     any_world: 0
     different_world: 0
 
-  shuffle_instruments:
-    # Shuffle Instruments
-    # [Original Dungeon] The item will be within its original dungeon
-    # [Own Dungeons] The item will be within a dungeon in your world
-    # [Own World] The item will be somewhere in your world
-    # [Any World] The item could be anywhere
-    # [Different World] The item will be somewhere in another world
-    # [Vanilla] The item will be in its vanilla location in your world
-    original_dungeon: 0
-    own_dungeons: 0
-    own_world: 0
-    any_world: 0
-    different_world: 0
-    vanilla: 50
-
   # Warp Points
-  warp_improvements:
-    # [On] Adds remake style warp screen to the game. Choose your warp destination on the map after jumping in a portal and press B to select.
-    # [Off] No change
-    'false': 50
-    'true': 0
-
-  additional_warp_points:
-    # [On] (requires warp improvements) Adds a warp point at Crazy Tracy's house (the Mambo teleport spot) and Eagle's Tower
-    # [Off] No change
-    'false': 50
-    'true': 0
+  warps:
+    # [Improved] Adds remake style warp screen to the game. Choose your warp destination on the map after jumping in a portal and press B to select.
+    # [Improved Additional] Improved warps, and adds a warp point at Crazy Tracy's house (the Mambo teleport spot) and Eagle's Tower.
+    vanilla: 50
+    improved: 0
+    improved_additional: 0
 
   # Miscellaneous
   tradequest:
@@ -194,10 +189,24 @@ Links Awakening DX:
     'true': 0
 
   rooster:
-    # [On] Adds the rooster to the item pool. 
-    # [Off] The rooster spot is still a check giving an item. But you will never find the rooster. Any rooster spot is accessible without rooster by other means.
+    # [On] Adds the rooster to the item pool.
+    # [Off] The rooster spot is still a check giving an item. But you will never find the rooster. In that case, any rooster spot is accessible without rooster by other means.
     'false': 0
     'true': 50
+
+  tarins_gift:
+    # [Local Progression] Forces Tarin's gift to be an item that immediately opens up local checks.
+    # Has little effect in single player games, and isn't always necessary with randomized entrances.
+    # [Bush Breaker] Forces Tarin's gift to be an item that can destroy bushes.
+    # [Any Item] Tarin's gift can be any item for any world
+    local_progression: 50
+    bush_breaker: 0
+    any_item: 0
+
+  overworld:
+    # [Open Mabe] Replaces rock on the east side of Mabe Village with bushes, allowing access to Ukuku Prairie without Power Bracelet.
+    normal: 50
+    open_mabe: 0
 
   trendy_game:
     # [Easy] All of the items hold still for you
@@ -213,10 +222,35 @@ Links Awakening DX:
     hardest: 0
     impossible: 0
 
+  in_game_hints:
+    # When enabled, owl statues and library books may indicate the location of your items in the multiworld.
+    'false': 0
+    'true': 50
+
   nag_messages:
     # Controls if nag messages are shown when rocks and crystals are touched. Useful for glitches, annoying for everyone else.
     'false': 50
     'true': 0
+
+  stabilize_item_pool:
+    # By default, rupees in the item pool may be randomly swapped with bombs, arrows, powders, or capacity upgrades. This option disables that swapping, which is useful for plando.
+    'false': 50
+    'true': 0
+
+  quickswap:
+    # Adds that the SELECT button swaps with either A or B. The item is swapped with the top inventory slot. The map is not available when quickswap is enabled.
+    none: 50
+    a: 0
+    b: 0
+
+  hard_mode:
+    # [Oracle] Less iframes and health from drops. Bombs damage yourself. Water damages you without flippers. No piece of power or acorn.
+    # [Hero] Switch version hero mode, double damage, no heart/fairy drops.
+    # [One hit KO] You die on a single hit, always.
+    none: 50
+    oracle: 0
+    hero: 0
+    ohko: 0
 
   boots_controls:
     # Adds additional button to activate Pegasus Boots (does nothing if you haven't picked up your boots!)
@@ -259,13 +293,8 @@ Links Awakening DX:
     invert_c: 0
     invert_d: 0
 
-  gfxmod:
-    # Sets the sprite for link, among other things
-    # The option should be the same name as a with sprite (and optional name) file in data/sprites/ladx
-    Link: 50
-
   palette:
-    # Sets the palette for the game. 
+    # Sets the palette for the game.
     # Note: A few places aren't patched, such as the menu and a few color dungeon tiles.
     # [Normal] The vanilla palette
     # [1-Bit] One bit of color per channel
@@ -286,6 +315,23 @@ Links Awakening DX:
     'false': 50
     'true': 0
 
+  foreign_item_icons:
+    # Choose how to display foreign items.
+    # [Guess By Name] Foreign items can look like any Link's Awakening item.
+    # [Indicate Progression] Foreign items are either a Piece of Power (progression) or Guardian Acorn (non-progression).
+    guess_by_name: 50
+    indicate_progression: 0
+
+  ap_title_screen:
+    # Enables AP specific title screen and disables the intro cutscene
+    'false': 0
+    'true': 50
+
+  gfxmod:
+    # Sets the sprite for link, among other things
+    # The option should be the same name as a with sprite (and optional name) file in data/sprites/ladx
+    Link: 50
+
   music:
     # [Vanilla] Regular Music
     # [Shuffled] Shuffled Music
@@ -301,8 +347,19 @@ Links Awakening DX:
     sword: 0
     always: 50
 
-  ap_title_screen:
-    # Enables AP specific title screen and disables the intro cutscene
+  low_hp_beep:
+    # Slows or disables the low health beeping sound.
+    default: 50
+    slow: 0
+    none: 0
+
+  text_mode:
+    # [Fast] Makes text appear twice as fast
+    normal: 0
+    fast: 50
+
+  no_flash:
+    # Remove the flashing light effects from Mamu, shopkeeper and MadBatter. Useful for capture cards and people that are sensitive to these things.
     'false': 0
     'true': 50
 

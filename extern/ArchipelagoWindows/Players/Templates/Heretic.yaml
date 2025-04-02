@@ -32,7 +32,7 @@ description: Default Heretic Template
 
 game: Heretic
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Heretic:
   # Game Options
@@ -68,14 +68,8 @@ Heretic:
     complete_boss_levels: 0
 
   difficulty:
-    # Choose the difficulty option. Those match DOOM's difficulty options.
-    # baby (I'm too young to die.) double ammos, half damage, less monsters or strength.
-    # easy (Hey, not too rough.) less monsters or strength.
-    # medium (Hurt me plenty.) Default.
-    # hard (Ultra-Violence.) More monsters or strength.
-    # nightmare (Nightmare!) Monsters attack more rapidly and respawn.
-    # 
-    # wet nurse (hou needeth a wet-nurse) - Fewer monsters and more items than medium. Damage taken is halved, and ammo pickups carry twice as much ammo. Any Quartz Flasks and Mystic Urns are automatically used when the player nears death.
+    # Choose the game difficulty. These options match Heretic's skill levels.
+    # wet nurse (Thou needeth a wet-nurse) - Fewer monsters and more items than medium. Damage taken is halved, and ammo pickups carry twice as much ammo. Any Quartz Flasks and Mystic Urns are automatically used when the player nears death.
     # easy (Yellowbellies-r-us) - Fewer monsters and more items than medium.
     # medium (Bringest them oneth) - Completely balanced, this is the standard difficulty level.
     # hard (Thou art a smite-meister) - More monsters and fewer items than medium.
@@ -183,6 +177,155 @@ Heretic:
     'false': 50
     'true': 0
 
+  split_bag_of_holding:
+    # Split the Bag of Holding into six individual items, each one increasing ammo capacity for one type of weapon only.
+    'false': 50
+    'true': 0
+
+  bag_of_holding_count:
+    # How many Bags of Holding will be available.
+    # If Split Bag of Holding is set, this will be the number of each capacity upgrade available.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 10
+    1: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_ammo_crystals:
+    # Set the starting ammo capacity for crystals (Elven Wand ammo).
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 100
+    # Maximum value is 999
+    100: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_ammo_arrows:
+    # Set the starting ammo capacity for arrows (Ethereal Crossbow ammo).
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 50
+    # Maximum value is 999
+    50: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_ammo_claw_orbs:
+    # Set the starting ammo capacity for claw orbs (Dragon Claw ammo).
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 200
+    # Maximum value is 999
+    200: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_ammo_runes:
+    # Set the starting ammo capacity for runes (Hellstaff ammo).
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 200
+    # Maximum value is 999
+    200: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_ammo_flame_orbs:
+    # Set the starting ammo capacity for flame orbs (Phoenix Rod ammo).
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 20
+    # Maximum value is 999
+    20: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  max_ammo_spheres:
+    # Set the starting ammo capacity for spheres (Firemace ammo).
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 150
+    # Maximum value is 999
+    150: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  added_ammo_crystals:
+    # Set the amount of crystal capacity gained when collecting a bag of holding or a capacity upgrade.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 10
+    # Maximum value is 999
+    100: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  added_ammo_arrows:
+    # Set the amount of arrow capacity gained when collecting a bag of holding or a capacity upgrade.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 5
+    # Maximum value is 999
+    50: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  added_ammo_claw_orbs:
+    # Set the amount of claw orb capacity gained when collecting a bag of holding or a capacity upgrade.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 20
+    # Maximum value is 999
+    200: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  added_ammo_runes:
+    # Set the amount of rune capacity gained when collecting a bag of holding or a capacity upgrade.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 20
+    # Maximum value is 999
+    200: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  added_ammo_flame_orbs:
+    # Set the amount of flame orb capacity gained when collecting a bag of holding or a capacity upgrade.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 2
+    # Maximum value is 999
+    20: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  added_ammo_spheres:
+    # Set the amount of sphere capacity gained when collecting a bag of holding or a capacity upgrade.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 15
+    # Maximum value is 999
+    150: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
   # Item & Location Options
   local_items:
     # Forces these items to be in their native world.
@@ -194,6 +337,12 @@ Heretic:
 
   start_inventory:
     # Start with these items.
+    {}
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
     {}
 
   start_hints:
@@ -215,9 +364,3 @@ Heretic:
   item_links:
     # Share part of your item pool with other players.
     []
-
-  start_inventory_from_pool:
-    # Start with these items and don't place them in the world.
-    # 
-    # The game decides what the replacement items will be.
-    {}

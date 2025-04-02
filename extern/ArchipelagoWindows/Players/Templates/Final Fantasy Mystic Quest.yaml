@@ -32,7 +32,7 @@ description: Default Final Fantasy Mystic Quest Template
 
 game: Final Fantasy Mystic Quest
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Final Fantasy Mystic Quest:
   # Game Options
@@ -57,8 +57,12 @@ Final Fantasy Mystic Quest:
     # **Full:** ensure everything can be reached and acquired.
     # 
     # **Minimal:** ensure what is needed to reach your goal can be acquired.
-    full: 50
+    # 
+    # **Items:** ensure all logically relevant items can be acquired. Some items, such as keys, may be self-locking, and
+    # some locations may be inaccessible.
+    full: 0
     minimal: 0
+    items: 50
 
   logic:
     # Placement logic sets the rules that will be applied when placing items. Friendly: Required Items to clear a

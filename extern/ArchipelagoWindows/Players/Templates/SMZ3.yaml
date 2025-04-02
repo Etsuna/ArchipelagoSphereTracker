@@ -32,7 +32,7 @@ description: Default SMZ3 Template
 
 game: SMZ3
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 SMZ3:
   # Game Options
@@ -200,6 +200,12 @@ SMZ3:
 
   start_inventory:
     # Start with these items.
+    {}
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
     {}
 
   start_hints:

@@ -32,7 +32,7 @@ description: Default Stardew Valley Template
 
 game: Stardew Valley
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Stardew Valley:
   # General
@@ -73,6 +73,7 @@ Stardew Valley:
 
   farm_type:
     # What farm to play on?
+    # Custom farms are not supported
     standard: 0
     riverland: 0
     forest: 0
@@ -131,7 +132,7 @@ Stardew Valley:
   exclude_ginger_island:
     # Exclude Ginger Island?
     # This option will forcefully exclude everything related to Ginger Island from the slot.
-    # If you pick a goal that requires Ginger Island, you cannot exclude it and it will get included anyway
+    # If you pick a goal that requires Ginger Island, this option will get forced to 'false'
     'false': 50
     'true': 0
 
@@ -148,7 +149,6 @@ Stardew Valley:
     progressive: 0
 
   cropsanity:
-    # Formerly named "Seed Shuffle"
     # Pierre now sells a random amount of seasonal seeds and Joja sells them without season requirements, but only in huge packs.
     # Disabled: All the seeds are unlocked from the start, there are no location checks for growing and harvesting crops
     # Enabled: Seeds are unlocked as archipelago items, for each seed there is a location check for growing and harvesting that crop
@@ -167,15 +167,25 @@ Stardew Valley:
   tool_progression:
     # Shuffle the tool upgrades?
     # Vanilla: Clint will upgrade your tools with metal bars.
-    # Progressive: You will randomly find Progressive Tool upgrades.
-    # Cheap: Tool Upgrades will cost 2/5th as much
-    # Very Cheap: Tool Upgrades will cost 1/5th as much
+    # Progressive: Your tools upgrades are randomized.
+    # Cheap: Tool Upgrades have a 60% discount
+    # Very Cheap: Tool Upgrades have an 80% discount
     vanilla: 0
     progressive: 50
     vanilla_cheap: 0
     vanilla_very_cheap: 0
     progressive_cheap: 0
     progressive_very_cheap: 0
+
+  elevator_progression:
+    # Shuffle the elevator?
+    # Vanilla: Reaching a mineshaft floor unlocks the elevator for it
+    # Progressive: You will randomly find Progressive Mine Elevators to go deeper.
+    # Progressive from previous floor: Same as progressive, but you cannot use the elevator to check elevator locations.
+    #     You must reach elevator floors on your own.
+    vanilla: 0
+    progressive: 0
+    progressive_from_previous_floor: 50
 
   skill_progression:
     # Shuffle skill levels?
@@ -191,24 +201,14 @@ Stardew Valley:
     # Vanilla: You can buy each building normally.
     # Progressive: You will receive the buildings and will be able to build the first one of each type for free,
     #     once it is received. If you want more of the same building, it will cost the vanilla price.
-    # Cheap: Buildings will cost half as much
-    # Very Cheap: Buildings will cost 1/5th as much
+    # Cheap: Buildings will have a 50% discount
+    # Very Cheap: Buildings will an 80% discount
     vanilla: 0
     vanilla_cheap: 0
     vanilla_very_cheap: 0
     progressive: 0
     progressive_cheap: 50
     progressive_very_cheap: 0
-
-  elevator_progression:
-    # Shuffle the elevator?
-    # Vanilla: Reaching a mineshaft floor unlocks the elevator for it
-    # Progressive: You will randomly find Progressive Mine Elevators to go deeper.
-    # Progressive from previous floor: Same as progressive, but you cannot use the elevator to check elevator locations.
-    #     You must reach elevator floors on your own.
-    vanilla: 0
-    progressive: 0
-    progressive_from_previous_floor: 50
 
   # Extra Shuffling
   festival_locations:
@@ -235,7 +235,7 @@ Stardew Valley:
 
   special_order_locations:
     # Shuffle Special Orders?
-    # Disabled: The special orders are not included in the Archipelago shuffling.
+    # Vanilla: The special orders are not included in the Archipelago shuffling. You may need to complete some of them anyway for their vanilla rewards
     # Board Only: The Special Orders on the board in town are location checks
     # Board and Qi: The Special Orders from Mr Qi's walnut room are checks, in addition to the board in town
     # Short: All Special Order requirements are reduced by 40%
@@ -272,12 +272,12 @@ Stardew Valley:
     maximum: 0 # equivalent to 56
 
   fishsanity:
-    # Locations for catching a fish the first time?
+    # Locations for catching each fish the first time?
     # None: There are no locations for catching fish
     # Legendaries: Each of the 5 legendary fish are checks, plus the extended family if qi board is turned on
     # Special: A curated selection of strong fish are checks
     # Randomized: A random selection of fish are checks
-    # All: Every single fish in the game is a location that contains an item. Pairs well with the Master Angler Goal
+    # All: Every single fish in the game is a location that contains an item.
     # Exclude Legendaries: Every fish except legendaries
     # Exclude Hard Fish: Every fish under difficulty 80
     # Only Easy Fish: Every fish under difficulty 50
@@ -300,6 +300,31 @@ Stardew Valley:
     milestones: 50
     randomized: 0
     all: 0
+
+  friendsanity:
+    # Shuffle Friendships?
+    # None: Friendship hearts are earned normally
+    # Bachelors: Hearts with bachelors are shuffled
+    # Starting NPCs: Hearts for NPCs available immediately are shuffled
+    # All: Hearts for all npcs are shuffled, including Leo, Kent, Sandy, etc
+    # All With Marriage: All hearts for all npcs are shuffled, including romance hearts up to 14 when applicable
+    none: 50
+    bachelors: 0
+    starting_npcs: 0
+    all: 0
+    all_with_marriage: 0
+
+  friendsanity_heart_size:
+    # If using friendsanity, how many hearts are received per heart item, and how many hearts must be earned to send a check
+    # A higher value will lead to fewer heart items in the item pool, reducing bloat
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 8
+    4: 50
+    random: 0
+    random-low: 0
+    random-high: 0
 
   monstersanity:
     # Locations for slaying monsters?
@@ -370,34 +395,9 @@ Stardew Valley:
   craftsanity:
     # Checks for crafting items?
     # If enabled, all recipes purchased in shops will be checks as well.
-    # Recipes obtained from other sources will depend on related archipelago settings
+    # Recipes obtained from other sources will depend on their respective archipelago settings
     none: 50
     all: 0
-
-  friendsanity:
-    # Shuffle Friendships?
-    # None: Friendship hearts are earned normally
-    # Bachelors: Hearts with bachelors are shuffled
-    # Starting NPCs: Hearts for NPCs available immediately are checks
-    # All: Hearts for all npcs are checks, including Leo, Kent, Sandy, etc
-    # All With Marriage: Hearts for all npcs are checks, including romance hearts up to 14 when applicable
-    none: 50
-    bachelors: 0
-    starting_npcs: 0
-    all: 0
-    all_with_marriage: 0
-
-  friendsanity_heart_size:
-    # If using friendsanity, how many hearts are received per heart item, and how many hearts must be earned to send a check
-    # A higher value will lead to fewer heart items in the item pool, reducing bloat
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 1
-    # Maximum value is 8
-    4: 50
-    random: 0
-    random-low: 0
-    random-high: 0
 
   booksanity:
     # Shuffle Books?
@@ -414,17 +414,11 @@ Stardew Valley:
     # Shuffle walnuts?
     # Puzzles: Walnuts obtained from solving a special puzzle or winning a minigame
     # Bushes: Walnuts that are in a bush and can be collected by clicking it
-    # Dig spots: Walnuts that are underground and must be digged up. Includes Journal scrap walnuts
+    # Dig Spots: Walnuts that are underground and must be digged up. Includes Journal scrap walnuts
     # Repeatables: Random chance walnuts from normal actions (fishing, farming, combat, etc)
     []
 
   # Multipliers and Buffs
-  quick_start:
-    # Do you want the quick start package? You will get a few items to help early game automation,
-    # so you can use the multiple day sleep at its maximum.
-    'false': 0
-    'true': 50
-
   starting_money:
     # Amount of gold when arriving at the farm.
     # Set to -1 or unlimited for infinite money
@@ -519,7 +513,7 @@ Stardew Valley:
 
   enabled_filler_buffs:
     # Enable various permanent player buffs to roll as filler items
-    # Luck: Increase daily luck
+    # Luck: Increased daily luck
     # Damage: Increased Damage %
     # Defense: Increased Defense
     # Immunity: Increased Immunity
@@ -528,7 +522,7 @@ Stardew Valley:
     # Bite Rate: Shorter delay to get a bite when fishing
     # Fish Trap: Effect similar to the Trap Bobber, but weaker
     # Fishing Bar Size: Increased Fishing Bar Size
-    ['Bite Rate', 'Luck', 'Defense']
+    ['Luck', 'Bite Rate', 'Defense']
 
   trap_items:
     # When rolling filler items, including resource packs, the game can also roll trap items.
@@ -561,7 +555,33 @@ Stardew Valley:
     expensive: 0 # equivalent to 50
     very expensive: 0 # equivalent to 100
 
+  quick_start:
+    # Do you want the quick start package? You will get a few items to help early game automation,
+    # so you can use the multiple day sleep at its maximum.
+    'false': 0
+    'true': 50
+
   # Advanced Options
+  gifting:
+    # Do you want to enable gifting items to and from other Archipelago slots?
+    # Items can only be sent to games that also support gifting
+    'false': 0
+    'true': 50
+
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
+  mods:
+    # List of mods that will be included in the shuffling.
+    []
+
+  bundle_plando:
+    # If using Remixed bundles, this guarantees some of them will show up in your community center.
+    # If more bundles are specified than what fits in their parent room, that room will randomly pick from only the plando ones
+    []
+
   progression_balancing:
     # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
     # 
@@ -585,26 +605,6 @@ Stardew Valley:
     # **Minimal:** ensure what is needed to reach your goal can be acquired.
     full: 50
     minimal: 0
-
-  gifting:
-    # Do you want to enable gifting items to and from other Archipelago slots?
-    # Items can only be sent to games that also support gifting
-    'false': 0
-    'true': 50
-
-  mods:
-    # List of mods that will be included in the shuffling.
-    []
-
-  bundle_plando:
-    # If using Remixed bundles, this guarantees some of them will show up in your community center.
-    # If more bundles are specified than what fits in their parent room, that room will randomly pick from only the plando ones
-    []
-
-  death_link:
-    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
-    'false': 50
-    'true': 0
 
   # Item & Location Options
   local_items:

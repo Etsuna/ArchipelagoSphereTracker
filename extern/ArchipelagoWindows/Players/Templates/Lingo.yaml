@@ -32,7 +32,7 @@ description: Default Lingo Template
 
 game: Lingo
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Lingo:
   # Game Options
@@ -273,6 +273,12 @@ Lingo:
     Iceland Trap: 1
     Slowness Trap: 1
 
+  speed_boost_mode:
+    # If on, the player's default speed is halved, as if affected by a Slowness Trap. Speed Boosts are added to
+    # the item pool, which temporarily return the player to normal speed. Slowness Traps are removed from the pool.
+    'false': 50
+    'true': 0
+
   puzzle_skip_percentage:
     # Replaces junk items with puzzle skips, at the specified rate.
     #
@@ -297,6 +303,12 @@ Lingo:
     # Start with these items.
     {}
 
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}
+
   start_hints:
     # Start with these item's locations prefilled into the ``!hint`` command.
     []
@@ -316,9 +328,3 @@ Lingo:
   item_links:
     # Share part of your item pool with other players.
     []
-
-  start_inventory_from_pool:
-    # Start with these items and don't place them in the world.
-    # 
-    # The game decides what the replacement items will be.
-    {}

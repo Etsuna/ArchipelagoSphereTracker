@@ -32,16 +32,10 @@ description: Default DLCQuest Template
 
 game: DLCQuest
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 DLCQuest:
   # General
-  coinsanity:
-    # Whether collecting coins are checks
-    # If none, you will collect your own coins
-    none: 50
-    coin: 0
-
   campaign:
     # Which campaign you want to play
     basic: 50
@@ -53,7 +47,23 @@ DLCQuest:
     disabled: 50
     shuffled: 0
 
+  coinsanity:
+    # Whether collecting coins are checks
+    # If none, you will collect your own coins
+    none: 50
+    coin: 0
+
   # Customization
+  ending_choice:
+    # Which ending is considered completion for the DLC Quest campaign, either any ending or the true ending
+    any: 0
+    'true': 50
+
+  permanent_coins:
+    # If purchasing a pack decreases your current coins amounts.
+    'false': 50
+    'true': 0
+
   coinbundlequantity:
     # This is the amount of coins in a coin bundle
     # You need to collect that number of coins to get a location check, and when receiving coin items, you will get bundles of this size
@@ -69,31 +79,27 @@ DLCQuest:
     low: 0 # equivalent to 5
     normal: 50 # equivalent to 20
     high: 0 # equivalent to 50
-
-  permanent_coins:
-    # If purchasing a pack decreases your current coins amounts.
-    'false': 50
-    'true': 0
-
-  ending_choice:
-    # Which ending is considered completion for the DLC Quest campaign, either any ending or the true ending
-    any: 0
-    'true': 50
+    surprise: 0 # equivalent to -1
 
   # Tedious and Grind
-  double_jump_glitch:
-    # Whether to include the double jump glitches in logic. Separated between the simple ones and the very difficult ones
-    none: 50
-    simple: 0
-    all: 0
-
   time_is_money:
     # Whether the Time is Money pack is considered required to complete the grindstone.
     # If optional, you may be expected to grind 10 000 times by hand
     required: 50
     optional: 0
 
+  double_jump_glitch:
+    # Whether to include the double jump glitches in logic. Separated between the simple ones and the very difficult ones
+    none: 50
+    simple: 0
+    all: 0
+
   # Advanced Options
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
   progression_balancing:
     # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
     # 
@@ -117,11 +123,6 @@ DLCQuest:
     # **Minimal:** ensure what is needed to reach your goal can be acquired.
     full: 50
     minimal: 0
-
-  death_link:
-    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
-    'false': 50
-    'true': 0
 
   # Item & Location Options
   local_items:

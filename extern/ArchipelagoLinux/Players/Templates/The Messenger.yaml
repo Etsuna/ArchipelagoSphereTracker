@@ -32,7 +32,7 @@ description: Default The Messenger Template
 
 game: The Messenger
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 The Messenger:
   # Game Options
@@ -117,6 +117,17 @@ The Messenger:
     checkpoints: 0
     anywhere: 0
 
+  shuffle_transitions:
+    # Whether the transitions between the levels should be randomized.
+    # Supports plando.
+    # 
+    # None: Level transitions lead where they should.
+    # Coupled: Returning through a transition will take you from whence you came.
+    # Decoupled: Any level transition can take you to any other level transition.
+    none: 50
+    coupled: 0
+    decoupled: 0
+
   goal:
     # Requirement to finish the game. To win with the power seal hunt goal, you must enter the Music Box through the shop chest.
     open_music_box: 50
@@ -192,6 +203,18 @@ The Messenger:
     #   exit: Sunny Day
     # - entrance: Searing Crags
     #   exit: Glacial Peak Portal
+    []
+
+  plando_connections:
+    # Plando connections to be used with transition shuffle.
+    # List of valid connections can be found at https://github.com/ArchipelagoMW/Archipelago/blob/main/worlds/messenger/connections.py#L641.
+    # Dictionary keys (left) are entrances and values (right) are exits. If transition shuffle is on coupled all plando
+    # connections will be coupled. If on decoupled, "entrance" and "exit" will be treated the same, simply making the
+    # plando connection one-way from entrance to exit.
+    # Example:
+    # - entrance: Searing Crags - Top
+    #   exit: Dark Cave - Right
+    #   direction: both
     []
 
   # Item & Location Options

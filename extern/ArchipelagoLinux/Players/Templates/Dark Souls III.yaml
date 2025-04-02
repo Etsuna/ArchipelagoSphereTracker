@@ -32,7 +32,7 @@ description: Default Dark Souls III Template
 
 game: Dark Souls III
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Dark Souls III:
   # Game Options
@@ -346,37 +346,9 @@ Dark Souls III:
     {}
 
   # Item & Location Options
-  local_items:
-    # Forces these items to be in their native world.
-    []
-
-  non_local_items:
-    # Forces these items to be outside their native world.
-    []
-
-  start_inventory:
-    # Start with these items.
-    {}
-
-  start_hints:
-    # Start with these item's locations prefilled into the ``!hint`` command.
-    []
-
-  start_location_hints:
-    # Start with these locations and their item prefilled into the ``!hint`` command.
-    []
-
   exclude_locations:
     # Prevent these locations from having an important item.
-    ['Small Crystal Lizards', 'Hidden', 'Upgrade', 'Small Souls', 'Miscellaneous']
-
-  priority_locations:
-    # Prevent these locations from having an unimportant item.
-    []
-
-  item_links:
-    # Share part of your item pool with other players.
-    []
+    ['Miscellaneous', 'Small Souls', 'Upgrade', 'Hidden', 'Small Crystal Lizards']
 
   excluded_location_behavior:
     # How to choose items for excluded locations in DS3.
@@ -411,3 +383,31 @@ Dark Souls III:
     allow_useful: 0
     forbid_useful: 50
     do_not_randomize: 0
+
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []

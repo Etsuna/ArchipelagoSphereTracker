@@ -32,7 +32,7 @@ description: Default Noita Template
 
 game: Noita
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Noita:
   # Game Options
@@ -93,6 +93,8 @@ Noita:
 
   hidden_chests:
     # Number of hidden chest checks added to the applicable biomes.
+    # Note: The number of hidden chests that spawn per run in each biome varies.
+    # You are expected do multiple runs to get all of your checks.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
@@ -104,6 +106,8 @@ Noita:
 
   pedestal_checks:
     # Number of checks that will spawn on pedestals in the applicable biomes.
+    # Note: The number of pedestals that spawn per run in each biome varies.
+    # You are expected do multiple runs to get all of your checks.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
@@ -167,6 +171,12 @@ Noita:
     # Start with these items.
     {}
 
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}
+
   start_hints:
     # Start with these item's locations prefilled into the ``!hint`` command.
     []
@@ -186,9 +196,3 @@ Noita:
   item_links:
     # Share part of your item pool with other players.
     []
-
-  start_inventory_from_pool:
-    # Start with these items and don't place them in the world.
-    # 
-    # The game decides what the replacement items will be.
-    {}

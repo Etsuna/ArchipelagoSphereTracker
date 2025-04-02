@@ -32,7 +32,7 @@ description: Default Kingdom Hearts Template
 
 game: Kingdom Hearts
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Kingdom Hearts:
   # Game Options
@@ -97,8 +97,8 @@ Kingdom Hearts:
     postcards: 0
     superbosses: 0
 
-  required_reports_eotw:
-    # If End of the World Unlock is set to "Reports", determines the number of Ansem's Reports required to open End of the World.
+  required_reports_door:
+    # If Final Rest Door is set to "Reports", determines the number of Ansem's Reports required to manifest the door in Final Rest to challenge Ansem.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
@@ -108,8 +108,8 @@ Kingdom Hearts:
     random-low: 0
     random-high: 0
 
-  required_reports_door:
-    # If Final Rest Door is set to "Reports", determines the number of Ansem's Reports required to manifest the door in Final Rest to challenge Ansem.
+  required_reports_eotw:
+    # If End of the World Unlock is set to "Reports", determines the number of Ansem's Reports required to open End of the World.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
@@ -141,14 +141,14 @@ Kingdom Hearts:
     'false': 50
     'true': 0
 
-  hundred_acre_wood:
-    # Toggle whether to include checks in the 100 Acre Wood.
-    'false': 50
-    'true': 0
-
   cups:
     # Toggle whether to include checks behind completing Phil, Pegasus, Hercules, or Hades cups.
     # Please note that the cup items will still appear in the multiworld even if toggled off, as they are required to challenge Sephiroth.
+    'false': 50
+    'true': 0
+
+  hundred_acre_wood:
+    # Toggle whether to include checks in the 100 Acre Wood.
     'false': 50
     'true': 0
 
@@ -327,17 +327,6 @@ Kingdom Hearts:
     'false': 50
     'true': 0
 
-  keyblade_min_str:
-    # Determines the minimum STR bonus a keyblade can have.
-    #
-    # You can define additional values between the minimum and maximum values.
-    # Minimum value is 0
-    # Maximum value is 20
-    3: 50
-    random: 0
-    random-low: 0
-    random-high: 0
-
   keyblade_max_str:
     # Determines the maximum STR bonus a keyblade can have.
     #
@@ -349,13 +338,13 @@ Kingdom Hearts:
     random-low: 0
     random-high: 0
 
-  keyblade_min_mp:
-    # Determines the minimum MP bonus a keyblade can have.
+  keyblade_min_str:
+    # Determines the minimum STR bonus a keyblade can have.
     #
     # You can define additional values between the minimum and maximum values.
-    # Minimum value is -2
-    # Maximum value is 5
-    -2: 50
+    # Minimum value is 0
+    # Maximum value is 20
+    3: 50
     random: 0
     random-low: 0
     random-high: 0
@@ -371,16 +360,18 @@ Kingdom Hearts:
     random-low: 0
     random-high: 0
 
-  # Misc
-  puppies:
-    # Determines how dalmatian puppies are shuffled into the pool.
-    # Full: All puppies are in one location
-    # Triplets: Puppies are found in triplets just as they are in the base game
-    # Individual: One puppy can be found per location
-    full: 0
-    triplets: 50
-    individual: 0
+  keyblade_min_mp:
+    # Determines the minimum MP bonus a keyblade can have.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is -2
+    # Maximum value is 5
+    -2: 50
+    random: 0
+    random-low: 0
+    random-high: 0
 
+  # Misc
   starting_worlds:
     # Number of random worlds to start with in addition to Traverse Town, which is always available.  Will only consider Atlantica if toggled, and will only consider End of the World if its unlock is set to "Item".
     #
@@ -391,6 +382,15 @@ Kingdom Hearts:
     random: 0
     random-low: 0
     random-high: 0
+
+  puppies:
+    # Determines how dalmatian puppies are shuffled into the pool.
+    # Full: All puppies are in one location
+    # Triplets: Puppies are found in triplets just as they are in the base game
+    # Individual: One puppy can be found per location
+    full: 0
+    triplets: 50
+    individual: 0
 
   interact_in_battle:
     # Allow Sora to talk to people, examine objects, and open chests in battle.
@@ -435,6 +435,12 @@ Kingdom Hearts:
     # Start with these items.
     {}
 
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}
+
   start_hints:
     # Start with these item's locations prefilled into the ``!hint`` command.
     []
@@ -454,9 +460,3 @@ Kingdom Hearts:
   item_links:
     # Share part of your item pool with other players.
     []
-
-  start_inventory_from_pool:
-    # Start with these items and don't place them in the world.
-    # 
-    # The game decides what the replacement items will be.
-    {}

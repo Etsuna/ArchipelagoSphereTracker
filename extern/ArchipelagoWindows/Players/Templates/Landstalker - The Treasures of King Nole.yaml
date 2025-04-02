@@ -32,7 +32,7 @@ description: Default Landstalker - The Treasures of King Nole Template
 
 game: Landstalker - The Treasures of King Nole
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Landstalker - The Treasures of King Nole:
   # Game Options

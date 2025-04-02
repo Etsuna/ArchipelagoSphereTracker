@@ -32,7 +32,7 @@ description: Default Muse Dash Template
 
 game: Muse Dash
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Muse Dash:
   # Game Options
@@ -113,7 +113,7 @@ Muse Dash:
     # Choose which DLC Packs will be included in the pool of chooseable songs.
     # 
     # Note: The [Just As Planned] DLC contains all [Muse Plus] songs.
-    {}
+    []
 
   streamer_mode_enabled:
     # In Muse Dash, an option named 'Streamer Mode' removes songs which may trigger copyright issues when streaming.
@@ -136,6 +136,21 @@ Muse Dash:
     []
 
   # Difficulty
+  grade_needed:
+    # Completing a song will require a grade of this value or higher in order to unlock items.
+    # The grades are as follows:
+    # - Silver S (SS): >= 95% accuracy
+    # - Pink S (S): >= 90% accuracy
+    # - A: >= 80% or a Full Combo
+    # - B: >= 70%
+    # - C: >= 60%
+    any: 50
+    c: 0
+    b: 0
+    a: 0
+    pinks: 0
+    silvers: 0
+
   song_difficulty_mode:
     # Ensures that at any chosen song has at least 1 value falling within these values.
     # - Any: All songs are available
@@ -179,21 +194,6 @@ Muse Dash:
     random-low: 0
     random-high: 0
 
-  grade_needed:
-    # Completing a song will require a grade of this value or higher in order to unlock items.
-    # The grades are as follows:
-    # - Silver S (SS): >= 95% accuracy
-    # - Pink S (S): >= 90% accuracy
-    # - A: >= 80% or a Full Combo
-    # - B: >= 70%
-    # - C: >= 60%
-    any: 50
-    c: 0
-    b: 0
-    a: 0
-    pinks: 0
-    silvers: 0
-
   death_link:
     # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
     'false': 50
@@ -207,7 +207,7 @@ Muse Dash:
     # - SFX Traps consist of changing your sfx setting to one possibly more annoying sfx.
     # 
     # Note: SFX traps are only available if [Just as Planned] DLC songs are enabled.
-    {}
+    []
 
   trap_count_percentage:
     # This controls how many traps to add into the pool, based the total number of songs.

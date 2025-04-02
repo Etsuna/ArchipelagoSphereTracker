@@ -32,7 +32,7 @@ description: Default Celeste 64 Template
 
 game: Celeste 64
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Celeste 64:
   # Game Options
@@ -100,7 +100,7 @@ Celeste 64:
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
-    # Maximum value is 46
+    # Maximum value is 55
     20: 50
     random: 0
     random-low: 0
@@ -132,6 +132,118 @@ Celeste 64:
     # Whether riding on cars grants location checks
     'false': 50
     'true': 0
+
+  checkpointsanity:
+    # Whether activating Checkpoints grants location checks
+    # 
+    # Activating this will also shuffle items into the pool which allow usage and warping to each Checkpoint
+    'false': 50
+    'true': 0
+
+  # Aesthetic Options
+  madeline_one_dash_hair_color:
+    # What color Madeline's hair is when she has one dash
+    # 
+    # The `any_color` option will choose a fully random color
+    # 
+    # A custom color entry may be supplied as a 6-character RGB hex color code
+    # e.g. F542C8
+    strawberry: 50
+    empty: 0
+    double: 0
+    golden: 0
+    baddy: 0
+    fire_red: 0
+    maroon: 0
+    salmon: 0
+    orange: 0
+    lime_green: 0
+    bright_green: 0
+    forest_green: 0
+    royal_blue: 0
+    brown: 0
+    black: 0
+    white: 0
+    grey: 0
+    any_color: 0
+
+  madeline_two_dash_hair_color:
+    # What color Madeline's hair is when she has two dashes
+    # 
+    # The `any_color` option will choose a fully random color
+    # 
+    # A custom color entry may be supplied as a 6-character RGB hex color code
+    # e.g. F542C8
+    strawberry: 0
+    empty: 0
+    double: 50
+    golden: 0
+    baddy: 0
+    fire_red: 0
+    maroon: 0
+    salmon: 0
+    orange: 0
+    lime_green: 0
+    bright_green: 0
+    forest_green: 0
+    royal_blue: 0
+    brown: 0
+    black: 0
+    white: 0
+    grey: 0
+    any_color: 0
+
+  madeline_no_dash_hair_color:
+    # What color Madeline's hair is when she has no dashes
+    # 
+    # The `any_color` option will choose a fully random color
+    # 
+    # A custom color entry may be supplied as a 6-character RGB hex color code
+    # e.g. F542C8
+    strawberry: 0
+    empty: 50
+    double: 0
+    golden: 0
+    baddy: 0
+    fire_red: 0
+    maroon: 0
+    salmon: 0
+    orange: 0
+    lime_green: 0
+    bright_green: 0
+    forest_green: 0
+    royal_blue: 0
+    brown: 0
+    black: 0
+    white: 0
+    grey: 0
+    any_color: 0
+
+  madeline_feather_hair_color:
+    # What color Madeline's hair is when she has a feather
+    # 
+    # The `any_color` option will choose a fully random color
+    # 
+    # A custom color entry may be supplied as a 6-character RGB hex color code
+    # e.g. F542C8
+    strawberry: 0
+    empty: 0
+    double: 0
+    golden: 50
+    baddy: 0
+    fire_red: 0
+    maroon: 0
+    salmon: 0
+    orange: 0
+    lime_green: 0
+    bright_green: 0
+    forest_green: 0
+    royal_blue: 0
+    brown: 0
+    black: 0
+    white: 0
+    grey: 0
+    any_color: 0
 
   # Badeline Chasers
   badeline_chaser_source:

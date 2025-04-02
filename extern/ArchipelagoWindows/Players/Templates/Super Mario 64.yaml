@@ -32,7 +32,7 @@ description: Default Super Mario 64 Template
 
 game: Super Mario 64
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Super Mario 64:
   # Game Options
@@ -60,6 +60,17 @@ Super Mario 64:
     full: 50
     minimal: 0
 
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
+  completion_type:
+    # Set goal for game completion
+    last_bowser_stage: 50
+    all_bowser_stages: 0
+
+  # Logic Options
   area_rando:
     # Randomize Entrances
     'off': 50
@@ -84,21 +95,17 @@ Super Mario 64:
     'true': 50
 
   enable_coin_stars:
-    # Disable to Ignore 100 Coin Stars. You can still collect them, but they don't do anything.
-    # Removes 15 locations from the pool.
-    'false': 0
-    'true': 50
-
-  enable_move_rando:
-    # Mario is unable to perform some actions until a corresponding item is picked up.
-    # This option is incompatible with builds using a 'nomoverando' branch.
-    # Specific actions to randomize can be specified in the YAML.
-    'false': 50
-    'true': 0
-
-  move_rando_actions:
-    # Which actions to randomize when Move Randomizer is enabled
-    ['Triple Jump', 'Long Jump', 'Backflip', 'Side Flip', 'Wall Kick', 'Dive', 'Ground Pound', 'Kick', 'Climb', 'Ledge Grab']
+    # Determine logic for 100 Coin Stars.
+    # 
+    # Off - Removed from pool. You can still collect them, but they don't do anything.
+    # Optimal for ignoring 100 Coin Stars entirely. Removes 15 locations from the pool.
+    # 
+    # On - Kept in pool, potentially randomized.
+    # 
+    # Vanilla - Kept in pool, but NOT randomized.
+    'off': 50
+    'on': 0
+    vanilla: 0
 
   strict_cap_requirements:
     # If disabled, Stars that expect special caps may have to be acquired without the caps
@@ -111,12 +118,25 @@ Super Mario 64:
     'false': 0
     'true': 50
 
+  # Ability Options
+  enable_move_rando:
+    # Mario is unable to perform some actions until a corresponding item is picked up.
+    # This option is incompatible with builds using a 'nomoverando' branch.
+    # Specific actions to randomize can be specified in the YAML.
+    'false': 50
+    'true': 0
+
+  move_rando_actions:
+    # Which actions to randomize when Move Randomizer is enabled
+    ['Triple Jump', 'Long Jump', 'Backflip', 'Side Flip', 'Wall Kick', 'Dive', 'Ground Pound', 'Kick', 'Climb', 'Ledge Grab']
+
   strict_move_requirements:
     # If disabled, Stars that expect certain moves may have to be acquired without them. Only makes a difference
     # if Move Randomization is enabled
     'false': 0
     'true': 50
 
+  # Star Options
   amount_of_stars:
     # How many stars exist.
     # If there aren't enough locations to hold the given total, the total will be reduced.
@@ -194,16 +214,6 @@ Super Mario 64:
     random: 0
     random-low: 0
     random-high: 0
-
-  death_link:
-    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
-    'false': 50
-    'true': 0
-
-  completion_type:
-    # Set goal for game completion
-    last_bowser_stage: 50
-    all_bowser_stages: 0
 
   # Item & Location Options
   local_items:

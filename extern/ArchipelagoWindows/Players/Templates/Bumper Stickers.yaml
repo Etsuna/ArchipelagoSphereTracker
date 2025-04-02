@@ -32,7 +32,7 @@ description: Default Bumper Stickers Template
 
 game: Bumper Stickers
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Bumper Stickers:
   # Game Options

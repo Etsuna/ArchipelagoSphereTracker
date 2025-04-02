@@ -32,7 +32,7 @@ description: Default Blasphemous Template
 
 game: Blasphemous
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Blasphemous:
   # Game Options
@@ -152,6 +152,11 @@ Blasphemous:
     'false': 50
     'true': 0
 
+  skill_randomizer:
+    # Randomizes the abilities from the skill tree into the item pool.
+    'false': 50
+    'true': 0
+
   boots_of_pleading:
     # Adds the custom relic Boots of Pleading into the item pool, which grants the ability to fall onto spikes and survive.
     # 
@@ -163,11 +168,6 @@ Blasphemous:
     # Adds the custom relic Purified Hand of the Nun into the item pool, which grants the ability to jump a second time in mid-air.
     # 
     # Must have the "Double Jump" mod installed to connect to a multiworld.
-    'false': 50
-    'true': 0
-
-  skill_randomizer:
-    # Randomizes the abilities from the skill tree into the item pool.
     'false': 50
     'true': 0
 
@@ -211,6 +211,12 @@ Blasphemous:
 
   start_inventory:
     # Start with these items.
+    {}
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
     {}
 
   start_hints:

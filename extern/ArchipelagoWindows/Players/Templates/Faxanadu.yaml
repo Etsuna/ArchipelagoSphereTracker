@@ -1,0 +1,170 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Faxanadu Template
+
+game: Faxanadu
+requires:
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+
+Faxanadu:
+  # Game Options
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0
+    random-high: 0
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  keep_shop_red_potions:
+    # Prevents the Shop's Red Potions from being shuffled. Those locations
+    # will have purchasable Red Potion as usual for their usual price.
+    'false': 50
+    'true': 0
+
+  include_pendant:
+    # Pendant is an item that boosts your attack power permanently when picked up.
+    # However, due to a programming error in the original game, it has the reverse
+    # effect. You start with the Pendant power, and lose it when picking
+    # it up. So this item is essentially a trap.
+    # There is a setting in the client to reverse the effect back to its original intend.
+    # This could be used in conjunction with this option to increase or lower difficulty.
+    'false': 50
+    'true': 0
+
+  include_poisons:
+    # Whether or not to include Poison Potions in the pool of items. Including them
+    # effectively turn them into traps in multiplayer.
+    'false': 0
+    'true': 50
+
+  require_dragon_slayer:
+    # Requires the Dragon Slayer to be available before fighting the final boss is required.
+    # Turning this on will turn Progressive Shields into progression items.
+    # 
+    # This setting does not force you to use Dragon Slayer to kill the final boss.
+    # Instead, it ensures that you will have the Dragon Slayer and be able to equip
+    # it before you are expected to beat the final boss.
+    'false': 50
+    'true': 0
+
+  random_musics:
+    # All levels' music is shuffled. Except the title screen because it's finite.
+    # This is an aesthetic option and doesn't affect gameplay.
+    'false': 50
+    'true': 0
+
+  random_sounds:
+    # All sounds are shuffled.
+    # This is an aesthetic option and doesn't affect gameplay.
+    'false': 50
+    'true': 0
+
+  random_npcs:
+    # NPCs and their portraits are shuffled.
+    # This is an aesthetic option and doesn't affect gameplay.
+    'false': 50
+    'true': 0
+
+  random_monsters:
+    # Choose how monsters are randomized.
+    # "Vanilla": No randomization
+    # "Level Shuffle": Monsters are shuffled within a level
+    # "Level Random": Monsters are picked randomly, balanced based on the ratio of the current level
+    # "World Shuffle": Monsters are shuffled across the entire world
+    # "World Random": Monsters are picked randomly, balanced based on the ratio of the entire world
+    # "Chaotic": Completely random, except big vs small ratio is kept. Big are mini-bosses.
+    vanilla: 50
+    level_shuffle: 0
+    level_random: 0
+    world_shuffle: 0
+    world_random: 0
+    chaotic: 0
+
+  random_rewards:
+    # Monsters drops are shuffled.
+    'false': 50
+    'true': 0
+
+  # Item & Location Options
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with these items.
+    {}
+
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []

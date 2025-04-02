@@ -32,7 +32,7 @@ description: Default Pokemon Emerald Template
 
 game: Pokemon Emerald
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Pokemon Emerald:
   # Game Options
@@ -607,6 +607,12 @@ Pokemon Emerald:
     'false': 50
     'true': 0
 
+  free_fly_blacklist:
+    # Disables specific locations as valid free fly locations.
+    # 
+    # Has no effect if Free Fly Location is disabled.
+    ['Littleroot Town', 'Oldale Town', 'Petalburg City', 'Rustboro City', 'Dewford Town']
+
   hm_requirements:
     # Sets the requirements to use HMs outside of battle.
     vanilla: 50
@@ -650,6 +656,8 @@ Pokemon Emerald:
 
   death_link:
     # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    # 
+    # In Pokemon Emerald, whiting out sends a death and receiving a death causes you to white out.
     'false': 50
     'true': 0
 
@@ -673,6 +681,12 @@ Pokemon Emerald:
     EMERALD SECRET: 50
 
   # Item & Location Options
+  start_inventory:
+    # Start with these items.
+    # 
+    # They will be in your PC, which you can access from your home or a pokemon center.
+    {}
+
   local_items:
     # Forces these items to be in their native world.
     []
@@ -680,10 +694,6 @@ Pokemon Emerald:
   non_local_items:
     # Forces these items to be outside their native world.
     []
-
-  start_inventory:
-    # Start with these items.
-    {}
 
   start_hints:
     # Start with these item's locations prefilled into the ``!hint`` command.

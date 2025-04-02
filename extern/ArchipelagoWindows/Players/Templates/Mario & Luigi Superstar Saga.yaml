@@ -32,7 +32,7 @@ description: Default Mario & Luigi Superstar Saga Template
 
 game: Mario & Luigi Superstar Saga
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Mario & Luigi Superstar Saga:
   # Game Options
@@ -73,7 +73,7 @@ Mario & Luigi Superstar Saga:
     'true': 0
 
   castle_skip:
-    # Skip straight from the entrance hall to Bowletta in Bowser's Castle.
+    # Skip straight from the Entrance Hall to Bowletta in Bowser's Castle.
     # All Bowser's Castle locations will be removed from the location pool.
     'false': 50
     'true': 0
@@ -118,6 +118,39 @@ Mario & Luigi Superstar Saga:
     none: 0
     only_visible: 0
     all: 50
+
+  goal:
+    # Vanilla: Complete jokes end with the required items and defeat Birdo to unlock Bowser's Castle.
+    # 
+    # Emblem Hunt: Find the required number of Beanstar Emblems to gain access to Bowser's Castle.
+    vanilla: 50
+    emblem_hunt: 0
+
+  emblems_required:
+    # Number of Beanstar Emblems to collect to unlock Bowser's Castle.
+    # 
+    # If Goal is not Emblem Hunt, this does nothing.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 100
+    50: 50
+    random: 0
+    random-low: 0
+    random-high: 0
+
+  emblems_amount:
+    # Number of Beanstar Emblems that are in the pool.
+    # 
+    # If Goal is not Emblem Hunt, this does nothing.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 150
+    75: 50
+    random: 0
+    random-low: 0
+    random-high: 0
 
   music_options:
     # Choose if you want to randomize or disable music.
@@ -257,6 +290,12 @@ Mario & Luigi Superstar Saga:
     # Start with these items.
     {}
 
+  start_inventory_from_pool:
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+    {}
+
   start_hints:
     # Start with these item's locations prefilled into the ``!hint`` command.
     []
@@ -276,9 +315,3 @@ Mario & Luigi Superstar Saga:
   item_links:
     # Share part of your item pool with other players.
     []
-
-  start_inventory_from_pool:
-    # Start with these items and don't place them in the world.
-    # 
-    # The game decides what the replacement items will be.
-    {}

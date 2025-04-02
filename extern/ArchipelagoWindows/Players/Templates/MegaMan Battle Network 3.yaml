@@ -32,7 +32,7 @@ description: Default MegaMan Battle Network 3 Template
 
 game: MegaMan Battle Network 3
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 MegaMan Battle Network 3:
   # Game Options
@@ -75,9 +75,14 @@ MegaMan Battle Network 3:
     random-high: 0
 
   include_jobs:
-    # Whether Jobs can be included in logic.
+    # Whether Jobs can contain progression or useful items.
     'false': 0
     'true': 50
+
+  include_secret:
+    # Whether the Secret Area (including Serenade) can contain progression or useful items.
+    'false': 50
+    'true': 0
 
   trade_quest_hinting:
     # Whether NPCs offering Chip Trades should show what item they provide.

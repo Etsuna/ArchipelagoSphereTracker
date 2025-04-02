@@ -32,7 +32,7 @@ description: Default Shivers Template
 
 game: Shivers
 requires:
-  version: 0.5.1 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
 
 Shivers:
   # Game Options
@@ -75,7 +75,7 @@ Shivers:
     # Chooses how keys needed to reach the lobby are placed.
     # - Normal: Keys are placed anywhere
     # - Early: Keys are placed early 
-    # - Local: Keys are placed locally
+    # - Local: Keys are placed locally and early
     normal: 0
     early: 50
     local: 0
@@ -83,7 +83,8 @@ Shivers:
   puzzle_hints_required:
     # If turned on puzzle hints/solutions will be available before the corresponding puzzle is required.
     # 
-    # For example: The Red Door puzzle will be logically required only after access to the Beth's Address Book which gives you the solution.
+    # For example: The Red Door puzzle will be logically required only after obtaining access to Beth's Address Book
+    # which gives you the solution.
     # 
     # Turning this off allows for greater randomization.
     'false': 0
@@ -107,7 +108,8 @@ Shivers:
     'true': 50
 
   early_beth:
-    # Beth's body is open at the start of the game. This allows any pot piece to be placed in the slide and early checks on the second half of the final riddle.
+    # Beth's body is open at the start of the game.
+    # This allows any pot piece to be placed in the slide and early checks on the second half of the final riddle.
     'false': 0
     'true': 50
 
@@ -122,9 +124,9 @@ Shivers:
     # - Own World: Pot pieces will be located within your own world
     # - Different World: Pot pieces will be located in another world
     # - Any World: Pot pieces will be located in any world
-    own_world: 50
+    own_world: 0
     different_world: 0
-    any_world: 0
+    any_world: 50
 
   full_pots:
     # Chooses if pots will be in pieces or already completed
@@ -134,6 +136,11 @@ Shivers:
     pieces: 50
     complete: 0
     mixed: 0
+
+  ixupi_captures_priority:
+    # Ixupi captures are set to priority locations. This forces a progression item into these locations if possible.
+    'false': 0
+    'true': 50
 
   puzzle_collect_behavior:
     # Defines what happens to puzzles on collect.
