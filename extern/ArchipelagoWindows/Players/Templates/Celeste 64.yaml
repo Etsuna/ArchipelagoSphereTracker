@@ -32,7 +32,7 @@ description: Default Celeste 64 Template
 
 game: Celeste 64
 requires:
-  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.1 # Version of Archipelago required for this yaml to work as expected.
 
 Celeste 64:
   # Game Options

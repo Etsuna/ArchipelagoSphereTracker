@@ -32,7 +32,7 @@ description: Default Final Fantasy Mystic Quest Template
 
 game: Final Fantasy Mystic Quest
 requires:
-  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.1 # Version of Archipelago required for this yaml to work as expected.
 
 Final Fantasy Mystic Quest:
   # Game Options

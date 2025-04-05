@@ -1,0 +1,151 @@
+client:
+  last_server_address: archipelago.gg:60151
+  uuid: 238300909107427
+datapackage:
+  games:
+    Manual_LeBureaudeNono_Nono:
+      checksum: 3f4a90232610af65e109e63e3ca55dee960e8b4e
+      item_name_to_id:
+        Accessoires d'Etabli: 27
+        Aspirateur: 7
+        Bacs de tri: 19
+        Balai: 4
+        Balayette: 6
+        Boite de Rangement: 8
+        Camera: 17
+        Chiffon: 10
+        "Cl\xE9 d'espace": 22
+        "Cl\xE9 de l'Etabli": 26
+        "Cl\xE9 de la Table": 14
+        "Cl\xE9 du Bordel de l'Etabli": 21
+        "Cl\xE9 du Bureau": 11
+        "Cl\xE9 du Sol": 23
+        Compresseur: 25
+        Crochet: 35
+        Escabeau: 33
+        Grand Plateau: 1
+        Gros Puzzle: 36
+        Kit nettoyage clavier: 12
+        "Lingette \xE0 poussi\xE8re": 9
+        Livre Voyageur: 37
+        "Moiti\xE9 de M\xE9daille du Placard": 34
+        "M\xE9daille de l'Etabli": 28
+        "M\xE9daille de l'Etag\xE8re \xE0 Outils": 30
+        "M\xE9daille de la Petite Etag\xE8re": 31
+        "M\xE9daille de la Table": 20
+        "M\xE9daille des Bacs \xE0 Laine": 32
+        "M\xE9daille du Bureau": 13
+        "M\xE9daille du Sol": 29
+        Pelle: 5
+        Petit Plateau: 2
+        Petite boite de rangement: 15
+        Puzzle: 18
+        Sacs poubelles: 3
+        "Serpill\xE8re": 24
+        Snack Time !: 39
+        Switch: 38
+        "Tr\xE9pied": 16
+      location_name_to_id:
+        "Acc\xE8s vers les Placards": 33
+        "Arranger les c\xE2bles sous le Bureau": 38
+        "Arranger les c\xE2bles sur le Bureau": 10
+        Bac 1: 62
+        Bac 2: 63
+        Bac 3: 64
+        Bac 4: 65
+        Bac 5: 66
+        Bac 6: 67
+        Bac 7: 68
+        Bac 8: 69
+        Bac 9: 70
+        "Bacs \xE0 Laine termin\xE9": 72
+        Balayer le Sol: 36
+        Batch de Masuda 1: 99
+        Batch de Masuda 2: 100
+        Batch de Masuda 3: 101
+        Batch de Masuda 4: 102
+        Batch de Masuda 5: 103
+        "Bordel au milieu de la pi\xE8ce": 32
+        Bordel dans les bacs de l'Etabli: 42
+        "Bordel de l'Etabli rang\xE9": 43
+        Bordel de la tablette de l'Etabli: 41
+        "Bordel derri\xE8re la porte": 34
+        "Bordel du Bureau rang\xE9": 4
+        "Bordel du Sol rang\xE9": 35
+        Bordel du bas de l'Etabli: 40
+        Bordel sous la Table: 31
+        Bordel sous le Bureau: 30
+        Bordel sur la Table: 12
+        Bordel sur le bureau (droite): 2
+        Bordel sur le bureau (gauche): 1
+        Bordel sur le bureau (milieu): 3
+        "Bordel \xE0 gauche de l'Etabli": 24
+        "Bordel \xE0 gauche du Bureau": 29
+        "Bureau nettoy\xE9": 11
+        Caisse devant l'Etabli (droite): 27
+        Caisse devant l'Etabli (milieu): 26
+        "Caisse devant l'\xE9tabli (gauche)": 25
+        Couvre-bacs: 71
+        Display dans les bacs de l'Etabli: 47
+        Display sous la tablette de l'Etabli: 44
+        Display sur la tablette de l'Etabli: 46
+        Display sur le mur de l'Etabli: 45
+        "Etabli termin\xE9": 48
+        Etage 1 (droite): 73
+        Etage 1 (gauche): 83
+        Etage 2 (droite): 74
+        Etage 2 (gauche): 84
+        Etage 3 (droite): 75
+        Etage 3 (gauche): 85
+        Etage 4 (droite): 76
+        Etage 4 (gauche): 86
+        Etage 5 (droite): 77
+        Etage 5 (haut gauche): 87
+        Etage 6 (droite): 78
+        Etage 6 (haut gauche): 88
+        Etage 7 (droite): 79
+        Etage 8 (haut droite): 80
+        Etage 9 (haut droite): 81
+        "Etag\xE8re \xE0 Outils termin\xE9e": 57
+        Gros puzzle: 92
+        Gros timelapse: 93
+        Laver le Sol: 37
+        Lecture 30min 1: 94
+        Lecture 30min 2: 95
+        Lecture 30min 3: 96
+        Lecture 30min 4: 97
+        "Lib\xE9rer l'acc\xE8s \xE0 l'Etabli": 28
+        Nettoyer clavier perso: 7
+        Nettoyer clavier pro: 8
+        Nettoyer laptop pro: 9
+        Nettoyer le PC: 39
+        "Nettoyer \xE9cran droit": 6
+        "Nettoyer \xE9cran gauche": 5
+        "Petite Etag\xE8re termin\xE9e": 61
+        "Placard droite termin\xE9": 82
+        "Placard gauche termin\xE9": 89
+        "Plateau de l'Etag\xE8re": 50
+        "Plateau de la Petite Etag\xE8re": 58
+        "Porte-cl\xE9 Lapin": 91
+        "Porte-cl\xE9 Nallena": 90
+        Puzzle 1: 14
+        Puzzle 2: 15
+        Puzzle 3: 16
+        Puzzle 4: 17
+        Puzzle 5: 18
+        Setup timelapse cam: 13
+        "Sol termin\xE9": 49
+        Timelapse 1: 19
+        Timelapse 2: 20
+        Timelapse 3: 21
+        Timelapse 4: 22
+        Timelapse 5: 23
+        "Tiroir 1 de l'Etag\xE8re": 51
+        "Tiroir 1 de la Petite Etag\xE8re": 59
+        "Tiroir 2 de l'Etag\xE8re": 52
+        "Tiroir 2 de la Petite Etag\xE8re": 60
+        "Tiroir 3 de l'Etag\xE8re": 53
+        "Tiroir 4 de l'Etag\xE8re": 54
+        "Tiroir 5 de l'Etag\xE8re": 55
+        "Tiroir 6 de l'Etag\xE8re": 56
+        "Tout rang\xE9 !": 98

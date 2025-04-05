@@ -7,7 +7,7 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        Console.WriteLine("Starting bot... Achipelago Version: Archipelago_0.6.0");
+        Console.WriteLine("Starting bot... Achipelago Version: Archipelago_0.6.1");
 
         Env.Load();
 

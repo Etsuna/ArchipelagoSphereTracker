@@ -32,7 +32,7 @@ description: Default Kingdom Hearts 2 Template
 
 game: Kingdom Hearts 2
 requires:
-  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.1 # Version of Archipelago required for this yaml to work as expected.
 
 Kingdom Hearts 2:
   # Game Options

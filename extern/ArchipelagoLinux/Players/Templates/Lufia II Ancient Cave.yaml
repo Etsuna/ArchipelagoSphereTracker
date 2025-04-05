@@ -32,7 +32,7 @@ description: Default Lufia II Ancient Cave Template
 
 game: Lufia II Ancient Cave
 requires:
-  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.1 # Version of Archipelago required for this yaml to work as expected.
 
 Lufia II Ancient Cave:
   # Game Options
@@ -136,10 +136,10 @@ Lufia II Ancient Cave:
     daos: 0
     egg_dragon: 0
     master: 50
-    random-sinistral: 0
-    random-middle: 0
     random-high: 0
+    random-middle: 0
     random-low: 0
+    random-sinistral: 0
 
   capsule_cravings_jp_style:
     # Make capsule monster cravings behave as in the Japanese version.

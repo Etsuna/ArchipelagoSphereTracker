@@ -32,7 +32,7 @@ description: Default Hollow Knight Template
 
 game: Hollow Knight
 requires:
-  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.1 # Version of Archipelago required for this yaml to work as expected.
 
 Hollow Knight:
   # Game Options

@@ -32,7 +32,7 @@ description: Default Stardew Valley Template
 
 game: Stardew Valley
 requires:
-  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.1 # Version of Archipelago required for this yaml to work as expected.
 
 Stardew Valley:
   # General
@@ -522,7 +522,7 @@ Stardew Valley:
     # Bite Rate: Shorter delay to get a bite when fishing
     # Fish Trap: Effect similar to the Trap Bobber, but weaker
     # Fishing Bar Size: Increased Fishing Bar Size
-    ['Luck', 'Bite Rate', 'Defense']
+    ['Defense', 'Bite Rate', 'Luck']
 
   trap_items:
     # When rolling filler items, including resource packs, the game can also roll trap items.

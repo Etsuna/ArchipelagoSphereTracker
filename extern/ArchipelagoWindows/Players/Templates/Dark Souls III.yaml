@@ -32,7 +32,7 @@ description: Default Dark Souls III Template
 
 game: Dark Souls III
 requires:
-  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.1 # Version of Archipelago required for this yaml to work as expected.
 
 Dark Souls III:
   # Game Options
@@ -348,7 +348,7 @@ Dark Souls III:
   # Item & Location Options
   exclude_locations:
     # Prevent these locations from having an important item.
-    ['Upgrade', 'Miscellaneous', 'Small Souls', 'Hidden', 'Small Crystal Lizards']
+    ['Hidden', 'Miscellaneous', 'Upgrade', 'Small Crystal Lizards', 'Small Souls']
 
   excluded_location_behavior:
     # How to choose items for excluded locations in DS3.

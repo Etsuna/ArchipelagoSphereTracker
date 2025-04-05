@@ -32,7 +32,7 @@ description: Default DLCQuest Template
 
 game: DLCQuest
 requires:
-  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+  version: 0.6.1 # Version of Archipelago required for this yaml to work as expected.
 
 DLCQuest:
   # General
@@ -79,7 +79,7 @@ DLCQuest:
     low: 0 # equivalent to 5
     normal: 50 # equivalent to 20
     high: 0 # equivalent to 50
-    surprise: 0 # equivalent to -1
+    coin piece: 0 # equivalent to -1
 
   # Tedious and Grind
   time_is_money:
