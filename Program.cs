@@ -5,10 +5,12 @@ using DotNetEnv;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Net;
+using Microsoft.Win32;
 
 class Program
 {
-    public static string version = "0.6.0";
+    public static string version = "0.6.1";
     public static string basePath = Path.Combine(AppContext.BaseDirectory);
     public static string externalFolder = Path.Combine(basePath, "extern");
     public static string versionFile = Path.Combine(externalFolder, "versionFile.txt");
@@ -22,6 +24,7 @@ class Program
     {
         string currentVersion = File.Exists(versionFile) ? await File.ReadAllTextAsync(versionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
         Console.WriteLine($"Starting bot... Archipelago Version: Archipelago_{currentVersion}");
 
@@ -38,7 +41,6 @@ class Program
             var pythonExecutable = isWindows
                 ? Path.Combine(venvPath, "Scripts", "python.exe")
                 : Path.Combine(venvPath, "bin", "python3");
-
 
             Console.WriteLine("Arrêt des processus Python en cours...");
 
@@ -57,7 +59,6 @@ class Program
             using (var process = Process.Start(killPythonProcess))
             {
                 process.WaitForExit();
-
                 Console.WriteLine("✅ Processus Python arrêtés !");
             }
 
@@ -101,6 +102,10 @@ class Program
             Directory.Delete(tempExtractPath, true);
             File.Delete(archivePath);
 
+            if (isLinux)
+            {
+                InstallLinuxBuildTools();
+            }
 
             Console.WriteLine("Création du virtualenv...");
             var venvCreateProcess = new ProcessStartInfo
@@ -152,12 +157,39 @@ class Program
                 }
             }
 
-            var allRequirement = Directory.GetFiles(extractPath, "requirements.txt", SearchOption.AllDirectories);
-
-            foreach (var requirement in allRequirement)
+            Console.WriteLine("Mise à jour de setuptools...");
+            var setuptoolsUpdateProcess = new ProcessStartInfo
             {
-                Console.WriteLine($"Installation des dépendances: {requirement}...");
-                var pipInstallProcess = new ProcessStartInfo
+                FileName = pythonExecutable,
+                Arguments = "-m pip install --upgrade setuptools",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using (var process = Process.Start(setuptoolsUpdateProcess))
+            {
+                process.WaitForExit();
+                if (process.ExitCode != 0)
+                {
+                    Console.WriteLine($"❌ ERREUR : Échec de la mise à jour de setuptools (code {process.ExitCode})");
+                }
+                else
+                {
+                    Console.WriteLine("✅ Setuptools mis à jour avec succès !");
+                }
+            }
+
+            var allRequirements = Directory.GetFiles(extractPath, "requirements.txt", SearchOption.AllDirectories);
+
+            foreach (var requirement in allRequirements)
+            {
+                Console.WriteLine($"Installation des dépendances : {requirement}...");
+
+                ProcessStartInfo pipInstallProcess;
+
+                pipInstallProcess = new ProcessStartInfo
                 {
                     FileName = pythonExecutable,
                     Arguments = $"-m pip install --quiet --no-input -r \"{requirement}\"",
@@ -170,11 +202,20 @@ class Program
                 using (var process = Process.Start(pipInstallProcess))
                 {
                     process.WaitForExit();
+
+                    if (process.ExitCode != 0)
+                    {
+                        Console.WriteLine($"❌ ERREUR : pip install a échoué pour {requirement} (code {process.ExitCode})");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ Dépendances installées avec succès !");
+                    }
                 }
             }
-            
+
             Console.WriteLine("Génération des templates YAML...");
-            if(File.Exists(generateTemplatesPath))
+            if (File.Exists(generateTemplatesPath))
             {
                 File.Delete(generateTemplatesPath);
             }
@@ -274,6 +315,35 @@ class Program
         foreach (var file in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
         {
             File.Move(file, file.Replace(sourcePath, targetPath), true);
+        }
+    }
+
+    private static void InstallLinuxBuildTools()
+    {
+        Console.WriteLine("⚠️ Les outils nécessaires ne sont pas installés. Installation de build-essential et python3-dev...");
+
+        var installProcess = new ProcessStartInfo
+        {
+            FileName = "bash",
+            Arguments = "-c \"sudo apt-get install -y build-essential python3-dev\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using (var process = Process.Start(installProcess))
+        {
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                Console.WriteLine("❌ ERREUR : L'installation des outils de compilation a échoué.");
+            }
+            else
+            {
+                Console.WriteLine("✅ Outils de compilation installés avec succès !");
+            }
         }
     }
 }
