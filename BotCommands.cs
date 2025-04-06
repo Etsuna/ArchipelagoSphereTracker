@@ -214,6 +214,24 @@ public static class BotCommands
             .WithDescription("Liste tous les yamls du channel"),
 
         new SlashCommandBuilder()
+            .WithName("backup-yamls")
+            .WithDescription("backup tous les yamls du channel"),
+
+        new SlashCommandBuilder()
+            .WithName("backup-apworld")
+            .WithDescription("backup tous les yamls du channel"),
+
+        new SlashCommandBuilder()
+            .WithName("download-template")
+            .WithDescription("download-template")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("template")
+                .WithDescription("Choisissez un fichier YAML à télécharger")
+                .WithType(ApplicationCommandOptionType.String)
+                .WithRequired(true)
+                .WithAutocomplete(true)),
+
+        new SlashCommandBuilder()
             .WithName("delete-yaml")
             .WithDescription("Supprime un fichier YAML spécifique du channel")
             .AddOption(new SlashCommandOptionBuilder()
@@ -331,19 +349,62 @@ public static class BotCommands
         if (interaction.Data.Current.Name == "file")
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            var archipelagoBaseVersion = string.Empty;
-            if (isWindows)
-            {
-                archipelagoBaseVersion = "ArchipelagoWindows";
-            }
-            else
-            {
-                archipelagoBaseVersion = "ArchipelagoLinux";
-            }
 
             string guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
-            string directoryPath = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
+            string directoryPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
+
+            if (guildId == null || !Directory.Exists(directoryPath))
+            {
+                await interaction.RespondAsync(new AutocompleteResult[0]);
+                return;
+            }
+
+            var yamlFiles = Directory.GetFiles(directoryPath, "*.yaml")
+                .Select(Path.GetFileName)
+                .ToList();
+
+            string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
+
+            int pageSize = 25;
+            int pageNumber = 1;
+
+            // Gestion de la pagination avec ">N"
+            if (userInput.StartsWith(">"))
+            {
+                if (int.TryParse(userInput.TrimStart('>'), out int parsedPage) && parsedPage > 0)
+                {
+                    pageNumber = parsedPage;
+                    userInput = "";
+                }
+            }
+
+            var filteredYamlFiles = yamlFiles
+                .Where(f => f.ToLower().Contains(userInput))
+                .OrderBy(f => f)
+                .ToList();
+
+            int totalFiles = filteredYamlFiles.Count;
+            int totalPages = (int)Math.Ceiling((double)totalFiles / pageSize);
+
+            if (pageNumber > totalPages) pageNumber = totalPages > 0 ? totalPages : 1;
+
+            var paginatedFiles = filteredYamlFiles
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(f => new AutocompleteResult(f, f))
+                .ToArray();
+
+            await interaction.RespondAsync(paginatedFiles);
+        }
+
+        if (interaction.Data.Current.Name == "template")
+        {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+            string guildId = interaction.GuildId?.ToString();
+            var channelId = interaction.ChannelId.ToString();
+            string directoryPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", "Templates");
 
             if (guildId == null || !Directory.Exists(directoryPath))
             {
@@ -530,7 +591,6 @@ public static class BotCommands
                                             ? $"Alias '{alias}' supprimé."
                                             : $"ADMIN : Alias '{alias}' supprimé.";
 
-                                        // Check and remove alias from recapList
                                         if (Declare.RecapList.Guild.TryGetValue(guildId, out var recapGuild) && recapGuild.Channel.TryGetValue(channelId, out var recapChannel))
                                         {
                                             if (recapChannel.Aliases.TryGetValue(value, out var subElements))
@@ -1254,15 +1314,6 @@ public static class BotCommands
             await command.DeferAsync(ephemeral: false);
 
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            var archipelagoBaseVersion = string.Empty;
-            if (isWindows)
-            {
-                archipelagoBaseVersion = "ArchipelagoWindows";
-            }
-            else
-            {
-                archipelagoBaseVersion = "ArchipelagoLinux";
-            }
 
             var channel = command.Channel as ITextChannel;
             if (channel != null)
@@ -1442,7 +1493,7 @@ public static class BotCommands
 
                         break;
                     case "list-yamls":
-                        string playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
+                        string playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
                         if (Directory.Exists(playersFolderChannel))
                         {
                             var listYamls = Directory.EnumerateFiles(playersFolderChannel, "*.yaml");
@@ -1467,9 +1518,47 @@ public static class BotCommands
                             message += "❌ Aucun fichier YAML trouvé !";
                         }
                         break;
+
+                    case "backup-yamls":
+                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
+                        if (Directory.Exists(playersFolderChannel))
+                        {
+                            var backupFolder = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "backup");
+                            if (!Directory.Exists(backupFolder))
+                            {
+                                Directory.CreateDirectory(backupFolder);
+                            }
+
+                            var zipPath = Path.Combine(backupFolder, $"backup_yaml_{channelId}.zip");
+
+                            if (File.Exists(zipPath))
+                            {
+                                File.Delete(zipPath);
+                            }
+
+                            using (var zipArchive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+                            {
+                                var files = Directory.GetFiles(playersFolderChannel, "*.yaml");
+                                foreach (var file in files)
+                                {
+                                    var fileName = Path.GetFileName(file);
+                                    zipArchive.CreateEntryFromFile(file, fileName);
+                                }
+                            }
+
+                            await command.FollowupWithFileAsync(zipPath, $"backup_yaml_{channelId}.zip");
+
+                            File.Delete(zipPath);
+                        }
+                        else
+                        {
+                            message += "❌ Aucun fichier YAML trouvé !";
+                        }
+                    break;
+
                     case "delete-yaml":
                         var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
-                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
+                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
 
                         if (!string.IsNullOrEmpty(fileSelected))
                         {
@@ -1497,8 +1586,9 @@ public static class BotCommands
                             message += "Aucun fichier sélectionné. ❌";
                         }
                         break;
+
                     case "clean-yamls":
-                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId);
+                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId);
                         if (Directory.Exists(playersFolderChannel))
                         {
                             try
@@ -1516,6 +1606,7 @@ public static class BotCommands
                             message = "Aucun fichier YAML trouvé.";
                         }
                         break;
+
                     case "send-yaml":
                         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
                         if (attachment == null || !attachment.Filename.EndsWith(".yaml"))
@@ -1524,7 +1615,7 @@ public static class BotCommands
                             break;
                         }
 
-                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
+                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
 
                         if (!Directory.Exists(playersFolderChannel))
                         {
@@ -1555,8 +1646,23 @@ public static class BotCommands
                             }
                         }
                         break;
+
+                    case "download-template":
+                        var yamlFile = command.Data.Options.FirstOrDefault()?.Value as string;
+                        string templatePath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", "Templates", yamlFile);
+
+                        if (File.Exists(templatePath))
+                        {
+                            await command.FollowupWithFileAsync(templatePath, yamlFile);
+                        }
+                        else
+                        {
+                            message = "❌ le fichier n'existe pas !";
+                        }
+                        break;
+
                     case "list-apworld":
-                        string apworldPath = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "custom_worlds");
+                        string apworldPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "custom_worlds");
                         if (Directory.Exists(apworldPath))
                         {
                             var listAppworld = Directory.EnumerateFiles(apworldPath, "*.apworld");
@@ -1576,8 +1682,45 @@ public static class BotCommands
                                 message += "❌ Aucun fichier apworld trouvé !";
                             }
                         }
-
                         break;
+
+                    case "backup-apworld":
+                        apworldPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "custom_worlds");
+                        if (Directory.Exists(apworldPath))
+                        {
+                            var backupFolder = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "backup");
+                            if (!Directory.Exists(backupFolder))
+                            {
+                                Directory.CreateDirectory(backupFolder);
+                            }
+
+                            var zipPath = Path.Combine(backupFolder, $"backup_apworld.zip");
+
+                            if (File.Exists(zipPath))
+                            {
+                                File.Delete(zipPath);
+                            }
+
+                            using (var zipArchive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+                            {
+                                var files = Directory.GetFiles(apworldPath, "*.apworld");
+                                foreach (var file in files)
+                                {
+                                    var fileName = Path.GetFileName(file);
+                                    zipArchive.CreateEntryFromFile(file, fileName);
+                                }
+                            }
+
+                            await command.FollowupWithFileAsync(zipPath, $"backup_apworld.zip");
+
+                            File.Delete(zipPath);
+                        }
+                        else
+                        {
+                            message += "❌ Aucun fichier APWORLD trouvé !";
+                        }
+                    break;
+
                     case "send-apworld":
                         attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
                         if (attachment == null || !attachment.Filename.EndsWith(".apworld"))
@@ -1586,7 +1729,7 @@ public static class BotCommands
                             break;
                         }
 
-                        var customWorldPath = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "custom_worlds");
+                        var customWorldPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "custom_worlds");
 
                         Directory.CreateDirectory(customWorldPath);
 
@@ -1603,12 +1746,21 @@ public static class BotCommands
                         {
                             await response.Content.CopyToAsync(fs);
                         }
+                        Program.GenerateYamls();
                         message = $"Fichier `{attachment.Filename}` envoyé.";
-
                         break;
+
                     case "generate":
-                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "yaml");
-                        var outputFolder = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "output", channelId, "yaml");
+                        var basePath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago");
+                        playersFolderChannel = Path.Combine(basePath, "Players", channelId, "yaml");
+                        var outputFolder = Path.Combine(basePath, "output", channelId, "yaml");
+                        var venvPath = Path.Combine(basePath, "venv");
+                        var pythonScript = Path.Combine(basePath, "Generate.py");
+                        var requirementsFile = Path.Combine(basePath, "requirements.txt");
+
+                        var pythonExecutable = isWindows
+                            ? Path.Combine(venvPath, "Scripts", "python.exe")
+                            : Path.Combine(venvPath, "bin", "python3");
 
                         if (Directory.Exists(outputFolder))
                         {
@@ -1625,16 +1777,14 @@ public static class BotCommands
                             break;
                         }
 
-                        var players = playersFolderChannel;
-                        var outputGeneration = outputFolder;
-
-                        var fileName = isWindows ? "ArchipelagoGenerate.exe" : "./ArchipelagoGenerate";
-                        var arguments = $"--player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
+                        var forceYesCommand = isWindows
+                        ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{pythonScript}\" --player_files_path \"{playersFolderChannel}\" --outputpath \"{outputFolder}\""
+                        : $"bash -c 'yes | \"{pythonExecutable}\" \"{pythonScript}\" --player_files_path \"{playersFolderChannel}\" --outputpath \"{outputFolder}\"'";
 
                         ProcessStartInfo startInfo = new ProcessStartInfo
                         {
-                            FileName = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, fileName),
-                            Arguments = arguments,
+                            FileName = isWindows ? "cmd.exe" : "/bin/bash",
+                            Arguments = isWindows ? $"/c {forceYesCommand}" : $"-c \"{forceYesCommand}\"",
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
                             UseShellExecute = false,
@@ -1721,6 +1871,7 @@ public static class BotCommands
                         });
 
                         break;
+
                     case "generate-with-zip":
                         attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
                         if (attachment == null || !attachment.Filename.EndsWith(".zip"))
@@ -1729,9 +1880,17 @@ public static class BotCommands
                             break;
                         }
 
-                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "zip");
-                        outputFolder = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "output", channelId, "zip");
+                        basePath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago");
+                        playersFolderChannel = Path.Combine(basePath, "Players", channelId, "zip");
+                        outputFolder = Path.Combine(basePath, "output", channelId, "zip");
+                        venvPath = Path.Combine(basePath, "venv");
+                        pythonScript = Path.Combine(basePath, "Generate.py");
+                        requirementsFile = Path.Combine(basePath, "requirements.txt");
                         filePath = Path.Combine(playersFolderChannel, attachment.Filename);
+
+                        pythonExecutable = isWindows
+                            ? Path.Combine(venvPath, "Scripts", "python.exe")
+                            : Path.Combine(venvPath, "bin", "python3");
 
                         if (Directory.Exists(playersFolderChannel))
                         {
@@ -1758,32 +1917,26 @@ public static class BotCommands
                         {
                             if (!file.EndsWith(".yaml"))
                             {
-                                fileName = Path.GetFileName(file);
+                                var fileName = Path.GetFileName(file);
                                 await command.FollowupAsync($"ℹ️ **Info** : `{fileName}` n'est pas un fichier YAML. Il a été supprimé avant la génération\n");
                                 File.Delete(file);
                             }
                         }
 
                         ymlFiles = Directory.GetFiles(playersFolderChannel, "*.yaml");
-
                         File.Delete(filePath);
 
                         if (!ymlFiles.Any())
                         {
-                            await command.FollowupAsync("❌ Aucun fichier YML trouvé dans l'archive !");
+                            await command.FollowupAsync("❌ Aucun fichier YAML trouvé dans l'archive !");
                             break;
                         }
 
-                        players = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "Players", channelId, "zip");
-                        outputGeneration = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion, "output", channelId, "zip");
-                        var workingDir = Path.Combine(AppContext.BaseDirectory, "extern", archipelagoBaseVersion);
+                        var arguments = $"\"{pythonScript}\" --player_files_path \"{playersFolderChannel}\" --outputpath \"{outputFolder}\"";
 
-                        fileName = isWindows ? "ArchipelagoGenerate.exe" : "./ArchipelagoGenerate";
-                        arguments = $"--player_files_path \"{players}\" --outputpath \"{outputGeneration}\"";
-
-                        var startInfoWithZip = new ProcessStartInfo
+                        ProcessStartInfo startInfoWithZip = new ProcessStartInfo
                         {
-                            FileName = Path.Combine(workingDir, fileName),
+                            FileName = pythonExecutable,
                             Arguments = arguments,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
@@ -1871,6 +2024,7 @@ public static class BotCommands
                         });
 
                         break;
+
 
                     default:
                         Console.WriteLine($"La commande a été exécutée dans le canal : {channel.Name}");

@@ -19,6 +19,8 @@ Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : http
 * Suppression automatique du fil après 1 semaine d'inactivité.
 * Envoyer des Yamls au server filtré par le channel.
 * Envoyer des Apworld au server.
+* Backup des Yamls envoyés au channel
+* Backup des Apwrolds envoyés au channel
 * Générer à partir du dossier du server un Multiworld.
 * Générer à partir du server une fichier Zip contenant tous les Yamls compris dans le Zip.
 * Lister les Yamls filtré par le channel.
@@ -32,6 +34,7 @@ Tous les jeux pris en charge par le Randomizer MultiWorld [Archipelago](https://
 ```
 dotnet-sdk-8.0
 Fonctionne sous Linux et Windows
+Python 3.13
 ```
 
 ## Configuration

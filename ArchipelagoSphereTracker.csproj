@@ -21,10 +21,4 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="extern\**\*">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
