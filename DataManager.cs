@@ -48,4 +48,6 @@ public static class DataManager
     public static void LoadHintStatus() => LoadData(Declare.HintStatusFile, ref Declare.HintStatuses, data => data.Guild.Clear());
 
     public static void SaveHintStatus() => SaveData(Declare.HintStatusFile, Declare.HintStatuses);
+
+    public static void LoadApWorldJsonList() => LoadData(Declare.ApworldJsonList, ref Declare.ApworldsInfo);
 }

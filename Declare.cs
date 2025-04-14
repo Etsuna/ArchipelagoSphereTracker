@@ -13,6 +13,8 @@ public static class Declare
     public static readonly string RolesAliasesFile = "rolesAliases.json";
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
 
+    public static readonly string ApworldJsonList = Path.Combine(AppContext.BaseDirectory, "APWorldList.json");
+
     public static GuildReceiverAliases ReceiverAliases = new GuildReceiverAliases();
     public static GuildRecapList RecapList = new GuildRecapList();
     public static GuildAliasChoices AliasChoices = new GuildAliasChoices();
@@ -20,6 +22,8 @@ public static class Declare
     public static GuildDisplayedItem DisplayedItems = new GuildDisplayedItem();
     public static GuildHintStatus HintStatuses = new GuildHintStatus();
     public static GuildChannelsAndUrls ChannelAndUrl = new GuildChannelsAndUrls();
+
+    public static List<ApWorldJsonList> ApworldsInfo = new List<ApWorldJsonList>();
 
     public static CancellationTokenSource Cts;
     public static DiscordSocketClient Client;

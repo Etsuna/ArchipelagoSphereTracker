@@ -280,6 +280,7 @@ class Program
         DataManager.LoadRecapList();
         DataManager.LoadHintStatus();
         DataManager.LoadDisplayedItems();
+        DataManager.LoadApWorldJsonList();
 
         await Declare.Client.LoginAsync(TokenType.Bot, Declare.DiscordToken);
         await Declare.Client.StartAsync();

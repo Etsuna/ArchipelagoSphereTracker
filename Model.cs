@@ -183,3 +183,19 @@ public class HintStatus
     public string Entrance { get; set; }
     public string Found { get; set; }
 }
+
+// ==========================
+// 🎯 ApWorldList
+// ==========================
+
+public class ApWorldJsonList
+{
+    public string Title { get; set; }
+    public List<ApWorldJsonItem> Items { get; set; }
+}
+
+public class ApWorldJsonItem
+{
+    public string Text { get; set; }
+    public string Link { get; set; }
+}

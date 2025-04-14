@@ -3,11 +3,13 @@ using Discord.Commands;
 using Discord.WebSocket;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualBasic;
 using System.Data;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 public static class BotCommands
@@ -212,6 +214,16 @@ public static class BotCommands
         new SlashCommandBuilder()
             .WithName("list-apworld")
             .WithDescription("Liste tous les yamls du channel"),
+
+        new SlashCommandBuilder()
+            .WithName("apworlds-info")
+            .WithDescription("Liste toutes les info des apworlds")
+            .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("apworldsinfo")
+                    .WithDescription("Choisissez un APWorld pour avoir ses infos")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
         new SlashCommandBuilder()
             .WithName("backup-yamls")
@@ -449,6 +461,66 @@ public static class BotCommands
 
             await interaction.RespondAsync(paginatedFiles);
         }
+
+        if (interaction.Data.Current.Name == "apworldsinfo")
+        {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+            string guildId = interaction.GuildId?.ToString();
+            var channelId = interaction.ChannelId.ToString();
+
+            if (guildId == null)
+            {
+                await interaction.RespondAsync(new AutocompleteResult[0]);
+                return;
+            }
+
+            List<ApWorldJsonList> sections;
+            try
+            {
+                sections = Declare.ApworldsInfo;
+            }
+            catch
+            {
+                await interaction.RespondAsync(new AutocompleteResult[0]);
+                return;
+            }
+
+            string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
+
+            int pageSize = 25;
+            int pageNumber = 1;
+
+            if (userInput.StartsWith(">"))
+            {
+                if (int.TryParse(userInput.TrimStart('>'), out int parsedPage) && parsedPage > 0)
+                {
+                    pageNumber = parsedPage;
+                    userInput = "";
+                }
+            }
+
+            var allTitles = sections.Select(s => s.Title).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+
+            var filteredTitles = allTitles
+                .Where(t => t.ToLower().Contains(userInput))
+                .OrderBy(t => t)
+                .ToList();
+
+            int totalTitles = filteredTitles.Count;
+            int totalPages = (int)Math.Ceiling((double)totalTitles / pageSize);
+
+            if (pageNumber > totalPages) pageNumber = totalPages > 0 ? totalPages : 1;
+
+            var paginatedTitles = filteredTitles
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => new AutocompleteResult(t, t))
+                .ToArray();
+
+            await interaction.RespondAsync(paginatedTitles);
+        }
+
 
         /*if (interaction.Data.Current.Name == "roles")
         {
@@ -1683,6 +1755,44 @@ public static class BotCommands
                             }
                         }
                         break;
+
+                    case "apworlds-info":
+                        var infoSelected = command.Data.Options.FirstOrDefault()?.Value as string;
+
+                        List<ApWorldJsonList> sections;
+                        try
+                        {
+                            sections = Declare.ApworldsInfo;
+                        }
+                        catch
+                        {
+                           message = "Erreur lors du chargement du JSON.";
+                           break;
+                        }
+
+                        var selectedSection = sections.FirstOrDefault(s => s.Title == infoSelected);
+
+                        if (selectedSection == null)
+                        {
+                            message = "Titre non trouvé.";
+                            break;
+                        }
+
+                        message = $"**{selectedSection.Title}**\n\n";
+
+                        foreach (var item in selectedSection.Items)
+                        {
+                            if (!string.IsNullOrWhiteSpace(item.Link))
+                            {
+                                message += $"• {item.Text} — [Link]({item.Link})\n";
+                            }
+                            else
+                            {
+                                message += $"• {item.Text}\n";
+                            }
+                        }
+
+                    break;
 
                     case "backup-apworld":
                         apworldPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "custom_worlds");
