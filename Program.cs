@@ -8,34 +8,33 @@ using System.Runtime.InteropServices;
 
 class Program
 {
-    public static string version = "0.6.1";
-    public static string basePath = Path.Combine(AppContext.BaseDirectory);
-    public static string externalFolder = Path.Combine(basePath, "extern");
-    public static string versionFile = Path.Combine(externalFolder, "versionFile.txt");
-    public static string extractPath = Path.Combine(externalFolder, "Archipelago");
-    public static string downloadUrl = $"https://github.com/ArchipelagoMW/Archipelago/archive/refs/tags/{version}.zip";
-    public static string archivePath = Path.Combine(basePath, "archive");
-    public static string tempExtractPath = Path.Combine(basePath, "tempExtract");
-    public static string generateTemplatesPath = Path.Combine(extractPath, "generateTemplates.py");
+    public static string Version = "0.6.1";
+    public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath);
+    public static string ExternalFolder = Path.Combine(BasePath, "extern");
+    public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
+    public static string ExtractPath = Path.Combine(ExternalFolder, "Archipelago");
+    public static string DownloadUrl = $"https://github.com/ArchipelagoMW/Archipelago/archive/refs/tags/{Version}.zip";
+    public static string ArchivePath = Path.Combine(BasePath, "archive");
+    public static string TempExtractPath = Path.Combine(BasePath, "tempExtract");
+    public static string GenerateTemplatesPath = Path.Combine(ExtractPath, "generateTemplates.py");
 
     static async Task Main(string[] args)
     {
-        string currentVersion = File.Exists(versionFile) ? await File.ReadAllTextAsync(versionFile) : "";
+        string currentVersion = File.Exists(VersionFile) ? await File.ReadAllTextAsync(VersionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
-        Console.WriteLine($"Starting bot... Archipelago Version: Archipelago_{currentVersion}");
-
-        if (currentVersion.Trim() == version)
+        if (currentVersion.Trim() == Version)
         {
-            Console.WriteLine($"Archipelago {version} est déjà installé.");
+            Console.WriteLine($"Archipelago {Version} est déjà installé.");
         }
         else
         {
-            Console.WriteLine($"Nouvelle version détectée : {version} (ancienne : {currentVersion})");
-            Directory.CreateDirectory(externalFolder);
+            Console.WriteLine($"Nouvelle version détectée : {Version} (ancienne : {currentVersion})");
+            Console.WriteLine($"{BasePath.ToString()}");
+            Directory.CreateDirectory(ExternalFolder);
 
-            var venvPath = Path.Combine(extractPath, "venv");
+            var venvPath = Path.Combine(ExtractPath, "venv");
             var pythonExecutable = isWindows
                 ? Path.Combine(venvPath, "Scripts", "python.exe")
                 : Path.Combine(venvPath, "bin", "python3");
@@ -80,8 +79,8 @@ class Program
 
             using (HttpClient client = new HttpClient())
             {
-                Console.WriteLine($"Téléchargement de {downloadUrl}...");
-                HttpResponseMessage response = await client.GetAsync(downloadUrl);
+                Console.WriteLine($"Téléchargement de {DownloadUrl}...");
+                HttpResponseMessage response = await client.GetAsync(DownloadUrl);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -90,16 +89,16 @@ class Program
                 }
 
                 byte[] data = await response.Content.ReadAsByteArrayAsync();
-                await File.WriteAllBytesAsync(archivePath, data);
+                await File.WriteAllBytesAsync(ArchivePath, data);
             }
 
-            if (Directory.Exists(tempExtractPath))
-                Directory.Delete(tempExtractPath, true);
+            if (Directory.Exists(TempExtractPath))
+                Directory.Delete(TempExtractPath, true);
 
             Console.WriteLine("Extraction temporaire...");
-            ZipFile.ExtractToDirectory(archivePath, tempExtractPath);
+            ZipFile.ExtractToDirectory(ArchivePath, TempExtractPath);
 
-            string extractedMainFolder = Directory.GetDirectories(tempExtractPath).FirstOrDefault();
+            string extractedMainFolder = Directory.GetDirectories(TempExtractPath).FirstOrDefault();
             if (string.IsNullOrEmpty(extractedMainFolder))
             {
                 Console.WriteLine("Erreur : Impossible de trouver le dossier extrait !");
@@ -107,10 +106,10 @@ class Program
             }
 
             Console.WriteLine("Déplacement des fichiers...");
-            MoveFilesRecursively(extractedMainFolder, extractPath);
+            MoveFilesRecursively(extractedMainFolder, ExtractPath);
 
-            Directory.Delete(tempExtractPath, true);
-            File.Delete(archivePath);
+            Directory.Delete(TempExtractPath, true);
+            File.Delete(ArchivePath);
 
             if (isLinux)
             {
@@ -215,7 +214,7 @@ class Program
                 }
             }
 
-            var allRequirements = Directory.GetFiles(extractPath, "requirements.txt", SearchOption.AllDirectories);
+            var allRequirements = Directory.GetFiles(ExtractPath, "requirements.txt", SearchOption.AllDirectories);
 
             foreach (var requirement in allRequirements)
             {
@@ -250,10 +249,12 @@ class Program
 
             GenerateYamls();
 
-            await File.WriteAllTextAsync(versionFile, version);
+            await File.WriteAllTextAsync(VersionFile, Version);
 
             Console.WriteLine("Mise à jour terminée !");
         }
+
+        Console.WriteLine($"Starting bot... Archipelago Version: Archipelago_{currentVersion}");
 
         Env.Load();
 
@@ -291,30 +292,30 @@ class Program
     public static void GenerateYamls()
     {
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-        var venvPath = Path.Combine(extractPath, "venv");
+        var venvPath = Path.Combine(ExtractPath, "venv");
         var pythonExecutable = isWindows
                 ? Path.Combine(venvPath, "Scripts", "python.exe")
                 : Path.Combine(venvPath, "bin", "python3");
 
         Console.WriteLine("Génération des templates YAML...");
-        if (File.Exists(generateTemplatesPath))
+        if (File.Exists(GenerateTemplatesPath))
         {
-            File.Delete(generateTemplatesPath);
+            File.Delete(GenerateTemplatesPath);
         }
 
-        File.WriteAllText(generateTemplatesPath, GenerateTemplates.pythonCode);
+        File.WriteAllText(GenerateTemplatesPath, GenerateTemplates.pythonCode);
 
-        Console.WriteLine($"Fichier Python créé à l'emplacement : {generateTemplatesPath}");
+        Console.WriteLine($"Fichier Python créé à l'emplacement : {GenerateTemplatesPath}");
 
         var generateYamlCommand = isWindows
-   ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{generateTemplatesPath}\""
-   : $"bash -c 'yes | \"{pythonExecutable}\" \"{generateTemplatesPath}\"'";
+   ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\""
+   : $"bash -c 'yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\"'";
 
         ProcessStartInfo generateYamlProcess = new ProcessStartInfo
         {
             FileName = isWindows ? "cmd.exe" : "/bin/bash",
             Arguments = isWindows ? $"/c {generateYamlCommand}" : $"-c \"{generateYamlCommand}\"",
-            WorkingDirectory = extractPath,
+            WorkingDirectory = ExtractPath,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,

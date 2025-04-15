@@ -1,0 +1,52 @@
+name: .NET Core Self-Contained Build
+
+on:
+  push:
+    branches: [ "Main" ]
+  pull_request:
+    branches: [ "Main" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+
+    env:
+      Solution_Name: ArchipelagoSphereTracker.csproj
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.Solution_Name }}
+
+    - name: Build project
+      run: dotnet build ${{ env.Solution_Name }} --configuration Release --no-restore
+
+    - name: Publish self-contained executable
+      run: >
+        dotnet publish ${{ env.Solution_Name }}
+        -c Release
+        -r ${{ matrix.rid }}
+        /p:SelfContained=true
+        /p:PublishSingleFile=true
+        /p:PublishTrimmed=false
+        /p:IncludeAllContentForSelfExtract=true
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-${{ matrix.rid }}-${{ github.run_id }}
+        path: bin/Release/net8.0/${{ matrix.rid }}/publish/

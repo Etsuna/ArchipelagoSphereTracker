@@ -3,13 +3,11 @@ using Discord.Commands;
 using Discord.WebSocket;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualBasic;
 using System.Data;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 
 public static class BotCommands
@@ -20,7 +18,6 @@ public static class BotCommands
             .AddSingleton(Declare.Client)
             .BuildServiceProvider();
     }
-
 
     public static async Task MessageReceivedAsync(SocketMessage arg)
     {
@@ -364,7 +361,7 @@ public static class BotCommands
 
             string guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
-            string directoryPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
+            string directoryPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
 
             if (guildId == null || !Directory.Exists(directoryPath))
             {
@@ -416,7 +413,7 @@ public static class BotCommands
 
             string guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
-            string directoryPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", "Templates");
+            string directoryPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", "Templates");
 
             if (guildId == null || !Directory.Exists(directoryPath))
             {
@@ -1565,7 +1562,7 @@ public static class BotCommands
 
                         break;
                     case "list-yamls":
-                        string playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
+                        string playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
                         if (Directory.Exists(playersFolderChannel))
                         {
                             var listYamls = Directory.EnumerateFiles(playersFolderChannel, "*.yaml");
@@ -1592,10 +1589,10 @@ public static class BotCommands
                         break;
 
                     case "backup-yamls":
-                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
+                        playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
                         if (Directory.Exists(playersFolderChannel))
                         {
-                            var backupFolder = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "backup");
+                            var backupFolder = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "backup");
                             if (!Directory.Exists(backupFolder))
                             {
                                 Directory.CreateDirectory(backupFolder);
@@ -1630,7 +1627,7 @@ public static class BotCommands
 
                     case "delete-yaml":
                         var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
-                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
+                        playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
 
                         if (!string.IsNullOrEmpty(fileSelected))
                         {
@@ -1660,7 +1657,7 @@ public static class BotCommands
                         break;
 
                     case "clean-yamls":
-                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId);
+                        playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId);
                         if (Directory.Exists(playersFolderChannel))
                         {
                             try
@@ -1687,7 +1684,7 @@ public static class BotCommands
                             break;
                         }
 
-                        playersFolderChannel = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", channelId, "yaml");
+                        playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
 
                         if (!Directory.Exists(playersFolderChannel))
                         {
@@ -1721,7 +1718,7 @@ public static class BotCommands
 
                     case "download-template":
                         var yamlFile = command.Data.Options.FirstOrDefault()?.Value as string;
-                        string templatePath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "Players", "Templates", yamlFile);
+                        string templatePath = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", "Templates", yamlFile);
 
                         if (File.Exists(templatePath))
                         {
@@ -1734,7 +1731,7 @@ public static class BotCommands
                         break;
 
                     case "list-apworld":
-                        string apworldPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "custom_worlds");
+                        string apworldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
                         if (Directory.Exists(apworldPath))
                         {
                             var listAppworld = Directory.EnumerateFiles(apworldPath, "*.apworld");
@@ -1795,10 +1792,10 @@ public static class BotCommands
                     break;
 
                     case "backup-apworld":
-                        apworldPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "custom_worlds");
+                        apworldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
                         if (Directory.Exists(apworldPath))
                         {
-                            var backupFolder = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "backup");
+                            var backupFolder = Path.Combine(Program.BasePath, "extern", "Archipelago", "backup");
                             if (!Directory.Exists(backupFolder))
                             {
                                 Directory.CreateDirectory(backupFolder);
@@ -1839,7 +1836,7 @@ public static class BotCommands
                             break;
                         }
 
-                        var customWorldPath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago", "custom_worlds");
+                        var customWorldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
 
                         Directory.CreateDirectory(customWorldPath);
 
@@ -1861,7 +1858,7 @@ public static class BotCommands
                         break;
 
                     case "generate":
-                        var basePath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago");
+                        var basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
                         playersFolderChannel = Path.Combine(basePath, "Players", channelId, "yaml");
                         var outputFolder = Path.Combine(basePath, "output", channelId, "yaml");
                         var venvPath = Path.Combine(basePath, "venv");
@@ -1990,7 +1987,7 @@ public static class BotCommands
                             break;
                         }
 
-                        basePath = Path.Combine(AppContext.BaseDirectory, "extern", "Archipelago");
+                        basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
                         playersFolderChannel = Path.Combine(basePath, "Players", channelId, "zip");
                         outputFolder = Path.Combine(basePath, "output", channelId, "zip");
                         venvPath = Path.Combine(basePath, "venv");
