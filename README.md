@@ -61,7 +61,15 @@ Les permissions suivantes seront accordées à ArchipelagoSphereTracker :
 * Ajouter des réactions  
 * Lire l’historique des messages  
 
-## Installation
+## Execution sans installation
+```
+Téléchargez la version Windows ou Linux "app-win-x64-vX.X.X" ou "app-linux-x64-vX.X.X" depuis la page des releases.
+Décompressez dans un dossier
+Ajoutez dans la même répertoire le fichier .env correctement configuré
+Executez le programme.
+```
+
+## Installation avec Dotnet
 ```
 # Clonez le dépôt
 git clone https://github.com/Etsuna/ArchipelagoSphereTracker.git
@@ -78,6 +86,6 @@ dotnet restore
 # Compilez le projet
 dotnet build
 
-# Lancez le projet
+# Lancez le bot
 dotnet run
 ```
