@@ -13,8 +13,11 @@ jobs:
         include:
           - os: windows-latest
             rid: win-x64
+            configuration: Release
           - os: ubuntu-latest
             rid: linux-x64
+            configuration: Release
+
     runs-on: ${{ matrix.os }}
 
     env:
@@ -33,17 +36,31 @@ jobs:
       run: dotnet restore ${{ env.Solution_Name }}
 
     - name: Build project
-      run: dotnet build ${{ env.Solution_Name }} --configuration Release --no-restore
+      run: dotnet build ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-restore
 
     - name: Publish self-contained executable
       run: >
         dotnet publish ${{ env.Solution_Name }}
-        -c Release
+        -c ${{ matrix.configuration }}
         -r ${{ matrix.rid }}
         /p:SelfContained=true
         /p:PublishSingleFile=true
         /p:PublishTrimmed=false
         /p:IncludeAllContentForSelfExtract=true
+
+    - name: Sign executable
+      if: matrix.os == 'windows-latest'
+      env:
+        CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD}}
+        CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64}}
+      run: |
+        New-Item -ItemType directory -Path certificate
+        Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
+        certutil -decode certificate\certificate.txt certificate\certificate.pfx
+
+        & 'C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x86/signtool.exe' sign /fd SHA256 /p $env:CODESIGN_PWD /f certificate\certificate.pfx /tr "http://timestamp.sectigo.com/rfc3161" /td sha256 bin\Release\net8.0\${{ matrix.rid }}\publish\ArchipelagoSphereTracker.exe
+        
+        Remove-Item -Recurse -Force certificate
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
