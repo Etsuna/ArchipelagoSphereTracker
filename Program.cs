@@ -275,6 +275,7 @@ class Program
         Declare.Client.Log += LogAsync;
         Declare.Client.Ready += ReadyAsync;
         Declare.Client.MessageReceived += BotCommands.MessageReceivedAsync;
+        Declare.Client.JoinedGuild += OnGuildJoined;
 
         await BotCommands.InstallCommandsAsync();
 
@@ -291,6 +292,11 @@ class Program
         await Declare.Client.StartAsync();
 
         await Task.Delay(-1);
+    }
+
+    private static async Task OnGuildJoined(SocketGuild guild)
+    {
+        BotCommands.RegisterCommandsAsync();
     }
 
     public static void GenerateYamls()
