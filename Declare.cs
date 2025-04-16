@@ -11,7 +11,7 @@ public static class Declare
     public static readonly string RecapListFile = "recap.json";
     public static readonly string HintStatusFile = "hintStatus.json";
     public static readonly string RolesAliasesFile = "rolesAliases.json";
-    public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
+    public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
 
     public static GuildReceiverAliases ReceiverAliases = new GuildReceiverAliases();
     public static GuildRecapList RecapList = new GuildRecapList();
@@ -23,10 +23,10 @@ public static class Declare
 
     public static List<ApWorldJsonList> ApworldsInfo = new List<ApWorldJsonList>();
 
-    public static CancellationTokenSource Cts;
-    public static DiscordSocketClient Client;
-    public static CommandService CommandService;
-    public static IServiceProvider Services;
+    public static CancellationTokenSource Cts = new CancellationTokenSource();
+    public static DiscordSocketClient Client = new DiscordSocketClient();
+    public static CommandService CommandService = new CommandService();
+    public static IServiceProvider Services = default!;
     public static bool ServiceRunning = false;
     public static HashSet<string> WarnedThreads = new HashSet<string>();
 }

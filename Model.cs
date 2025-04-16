@@ -38,17 +38,17 @@ public class ChannelAndUrl
 
 public class UrlAndChannel
 {
-    public string Room { get; set; }
-    public string Tracker { get; set; }
-    public string SphereTracker { get; set; }
-    public string Port { get; set; }
+    public string Room { get; set; } = string.Empty;
+    public string Tracker { get; set; } = string.Empty;
+    public string SphereTracker { get; set; } = string.Empty;
+    public string Port { get; set; } = string.Empty;
     public Dictionary<string, UrlAndChannelPatch> Aliases { get; set; } = new Dictionary<string, UrlAndChannelPatch>();
 }
 
 public class UrlAndChannelPatch
 {
-    public string GameName { get; set; }
-    public string Patch { get; set; }
+    public string GameName { get; set; } = string.Empty;
+    public string Patch { get; set; } = string.Empty;
 }
 
 
@@ -72,7 +72,7 @@ public class UserRecapList
 
 public class RecapList
 {
-    public string Alias { get; set; }
+    public string Alias { get; set; } = string.Empty;
     public List<string> Items { get; set; } = new List<string>();
 }
 
@@ -128,12 +128,12 @@ public class ChannelDisplayedItem
 
 public class DisplayedItem
 {
-    public string Sphere { get; set; }
-    public string Finder { get; set; }
-    public string Receiver { get; set; }
-    public string Item { get; set; }
-    public string Location { get; set; }
-    public string Game { get; set; }
+    public string Sphere { get; set; } = string.Empty;
+    public string Finder { get; set; } = string.Empty;
+    public string Receiver { get; set; } = string.Empty;
+    public string Item { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
+    public string Game { get; set; } = string.Empty;
 }
 
 // ==========================
@@ -151,13 +151,13 @@ public class ChannelGameStatus
 
 public class GameStatus
 {
-    public string Hashtag { get; set; }
-    public string Name { get; set; }
-    public string Game { get; set; }
-    public string Status { get; set; }
-    public string Checks { get; set; }
-    public string Percent { get; set; }
-    public string LastActivity { get; set; }
+    public string Hashtag { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Game { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Checks { get; set; } = string.Empty;
+    public string Percent { get; set; } = string.Empty;
+    public string LastActivity { get; set; } = string.Empty;
 }
 
 // ==========================
@@ -175,13 +175,13 @@ public class ChannelHintStatus
 
 public class HintStatus
 {
-    public string Finder { get; set; }
-    public string Receiver { get; set; }
-    public string Item { get; set; }
-    public string Location { get; set; }
-    public string Game { get; set; }
-    public string Entrance { get; set; }
-    public string Found { get; set; }
+    public string Finder { get; set; } = string.Empty;
+    public string Receiver { get; set; } = string.Empty;
+    public string Item { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
+    public string Game { get; set; } = string.Empty;
+    public string Entrance { get; set; } = string.Empty;
+    public string Found { get; set; } = string.Empty;
 }
 
 // ==========================
@@ -190,12 +190,12 @@ public class HintStatus
 
 public class ApWorldJsonList
 {
-    public string Title { get; set; }
-    public List<ApWorldJsonItem> Items { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public List<ApWorldJsonItem> Items { get; set; } = new List<ApWorldJsonItem>();
 }
 
 public class ApWorldJsonItem
 {
-    public string Text { get; set; }
-    public string Link { get; set; }
+    public string Text { get; set; } = string.Empty;
+    public string Link { get; set; } = string.Empty;
 }

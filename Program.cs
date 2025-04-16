@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 class Program
 {
     public static string Version = "0.6.1";
-    public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath);
+    public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
     public static string ExternalFolder = Path.Combine(BasePath, "extern");
     public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
     public static string ExtractPath = Path.Combine(ExternalFolder, "Archipelago");
@@ -59,8 +59,15 @@ class Program
 
             using (var process = Process.Start(killPythonProcess))
             {
-                process.WaitForExit();
-                Console.WriteLine("✅ Processus Python arrêtés !");
+                if(process !=null)
+                {
+                    process.WaitForExit();
+                    Console.WriteLine("✅ Processus Python arrêtés !");
+                }
+                else
+                {
+                    Console.WriteLine("❌ ERREUR : Impossible d'arrêter les processus Python.");
+                }
             }
 
             if (Directory.Exists(venvPath))
@@ -102,7 +109,7 @@ class Program
             Console.WriteLine("Extraction temporaire...");
             ZipFile.ExtractToDirectory(ArchivePath, TempExtractPath);
 
-            string extractedMainFolder = Directory.GetDirectories(TempExtractPath).FirstOrDefault();
+            string? extractedMainFolder = Directory.GetDirectories(TempExtractPath).FirstOrDefault();
             if (string.IsNullOrEmpty(extractedMainFolder))
             {
                 Console.WriteLine("Erreur : Impossible de trouver le dossier extrait !");
@@ -119,8 +126,7 @@ class Program
             {
                 InstallLinuxBuildTools();
             }
-
-            Console.WriteLine("Création du virtualenv...");
+            
             var venvCreateProcess = new ProcessStartInfo
             {
                 FileName = isWindows ? "python" : "python3",
@@ -133,7 +139,16 @@ class Program
 
             using (var process = Process.Start(venvCreateProcess))
             {
-                process.WaitForExit();
+                if(process != null)
+                {
+                    Console.WriteLine("Création du virtualenv...");
+                    process.WaitForExit();
+                }
+                else
+                {
+                    Console.WriteLine("❌ ERREUR : Impossible de créer le virtualenv.");
+                    return;
+                }
             }
 
             if (!File.Exists(pythonExecutable))
@@ -159,14 +174,22 @@ class Program
 
             using (var process = Process.Start(pipUpdateProcess))
             {
-                process.WaitForExit();
-                if (process.ExitCode != 0)
+                if(process != null)
                 {
-                    Console.WriteLine($"❌ ERREUR : Échec de la mise à jour de pip (code {process.ExitCode})");
+                    process.WaitForExit();
+                    if (process.ExitCode != 0)
+                    {
+                        Console.WriteLine($"❌ ERREUR : Échec de la mise à jour de pip (code {process.ExitCode})");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ Pip mis à jour avec succès !");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("✅ Pip mis à jour avec succès !");
+                    Console.WriteLine("❌ ERREUR : Impossible de mettre à jour pip.");
+                    return;
                 }
             }
 
@@ -183,14 +206,22 @@ class Program
 
             using (var process = Process.Start(setuptoolsUpdateProcess))
             {
-                process.WaitForExit();
-                if (process.ExitCode != 0)
+                if(process != null)
                 {
-                    Console.WriteLine($"❌ ERREUR : Échec de la mise à jour de setuptools (code {process.ExitCode})");
+                    process.WaitForExit();
+                    if (process.ExitCode != 0)
+                    {
+                        Console.WriteLine($"❌ ERREUR : Échec de la mise à jour de setuptools (code {process.ExitCode})");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ Setuptools mis à jour avec succès !");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("✅ Setuptools mis à jour avec succès !");
+                    Console.WriteLine("❌ ERREUR : Impossible de mettre à jour setuptools.");
+                    return;
                 }
             }
 
@@ -207,15 +238,24 @@ class Program
 
             using (var process = Process.Start(CythonProcess))
             {
-                process.WaitForExit();
-                if (process.ExitCode != 0)
+                if(process != null)
                 {
-                    Console.WriteLine($"❌ ERREUR : Échec de l'instalation de Cython (code {process.ExitCode})");
+                    process.WaitForExit();
+                    if (process.ExitCode != 0)
+                    {
+                        Console.WriteLine($"❌ ERREUR : Échec de l'instalation de Cython (code {process.ExitCode})");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ Cython installé avec succès !");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("✅ Cython installé avec succès !");
+                    Console.WriteLine("❌ ERREUR : Impossible d'installer Cython.");
+                    return;
                 }
+                
             }
 
             var allRequirements = Directory.GetFiles(ExtractPath, "requirements.txt", SearchOption.AllDirectories);
@@ -238,15 +278,24 @@ class Program
 
                 using (var process = Process.Start(pipInstallProcess))
                 {
-                    process.WaitForExit();
 
-                    if (process.ExitCode != 0)
+                    if(process != null)
                     {
-                        Console.WriteLine($"❌ ERREUR : pip install a échoué pour {requirement} (code {process.ExitCode})");
+                        process.WaitForExit();
+
+                        if (process.ExitCode != 0)
+                        {
+                            Console.WriteLine($"❌ ERREUR : pip install a échoué pour {requirement} (code {process.ExitCode})");
+                        }
+                        else
+                        {
+                            Console.WriteLine("✅ Dépendances installées avec succès !");
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("✅ Dépendances installées avec succès !");
+                        Console.WriteLine($"❌ ERREUR : Impossible d'installer les dépendances pour {requirement}.");
+                        return;
                     }
                 }
             }
@@ -296,7 +345,7 @@ class Program
 
     private static async Task OnGuildJoined(SocketGuild guild)
     {
-        BotCommands.RegisterCommandsAsync();
+       await BotCommands.RegisterCommandsAsync();
     }
 
     public static void GenerateYamls()
@@ -334,26 +383,35 @@ class Program
 
         using (var process = Process.Start(generateYamlProcess))
         {
-            process.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
-            process.ErrorDataReceived += (sender, args) => Console.WriteLine("Warning : " + args.Data);
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
+            if(process != null)
             {
-                Console.WriteLine($"❌ ERREUR : Échec de la génération des YAML (code {process.ExitCode})");
+                process.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
+                process.ErrorDataReceived += (sender, args) => Console.WriteLine("Warning : " + args.Data);
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    Console.WriteLine($"❌ ERREUR : Échec de la génération des YAML (code {process.ExitCode})");
+                }
+                else
+                {
+                    Console.WriteLine("✅ YAML générés avec succès !");
+                }
             }
             else
             {
-                Console.WriteLine("✅ YAML générés avec succès !");
+                Console.WriteLine("❌ ERREUR : Impossible de générer les YAML.");
+                return;
             }
         }
     }
 
-    static async Task LogAsync(LogMessage log)
+    static Task LogAsync(LogMessage log)
     {
         Console.WriteLine(log);
+        return Task.CompletedTask;
     }
 
     static async Task ReadyAsync()
@@ -392,16 +450,24 @@ class Program
 
         using (var process = Process.Start(installProcess))
         {
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
+            if(process != null)
             {
-                Console.WriteLine("❌ ERREUR : L'installation des outils de compilation a échoué.");
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    Console.WriteLine("❌ ERREUR : L'installation des outils de compilation a échoué.");
+                }
+                else
+                {
+                    Console.WriteLine("✅ Outils de compilation installés avec succès !");
+                }
             }
             else
             {
-                Console.WriteLine("✅ Outils de compilation installés avec succès !");
+                Console.WriteLine("❌ ERREUR : Impossible d'installer les outils de compilation.");
             }
+
         }
     }
 }

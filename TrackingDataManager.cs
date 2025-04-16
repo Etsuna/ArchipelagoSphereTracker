@@ -266,7 +266,7 @@ public static class TrackingDataManager
 
         if (!Declare.ReceiverAliases.Guild.TryGetValue(guild, out var channelReceiverAliases) ||
             !channelReceiverAliases.Channel.TryGetValue(channel, out var receiverAlias) ||
-            !receiverAlias.receiverAlias.TryGetValue(receiver, out List<string> userIds))
+            !receiverAlias.receiverAlias.TryGetValue(receiver, out List<string>? userIds))
         {
             return;
         }

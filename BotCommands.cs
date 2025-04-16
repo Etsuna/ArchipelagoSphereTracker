@@ -12,11 +12,12 @@ using System.Text.RegularExpressions;
 
 public static class BotCommands
 {
-    public static async Task InstallCommandsAsync()
+    public static Task InstallCommandsAsync()
     {
         Declare.Services = new ServiceCollection()
             .AddSingleton(Declare.Client)
             .BuildServiceProvider();
+        return Task.CompletedTask;
     }
 
     public static async Task MessageReceivedAsync(SocketMessage arg)
@@ -298,11 +299,17 @@ public static class BotCommands
 
     private static async Task HandleAutocompleteAsync(SocketAutocompleteInteraction interaction)
     {
-
         if (interaction.Data.Current.Name == "alias")
         {
-            string guildId = interaction.GuildId?.ToString();
+            string? guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
+
+            if(string.IsNullOrWhiteSpace(channelId))
+            {
+                await interaction.RespondAsync(new AutocompleteResult[0]);
+                return;
+            }
+
             if (guildId == null || !Declare.AliasChoices.Guild.ContainsKey(guildId))
             {
                 await interaction.RespondAsync(new AutocompleteResult[0]);
@@ -359,8 +366,15 @@ public static class BotCommands
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
-            string guildId = interaction.GuildId?.ToString();
+            string? guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
+
+            if(string.IsNullOrWhiteSpace(channelId))
+            {
+                await interaction.RespondAsync(new AutocompleteResult[0]);
+                return;
+            }
+
             string directoryPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
 
             if (guildId == null || !Directory.Exists(directoryPath))
@@ -389,9 +403,9 @@ public static class BotCommands
             }
 
             var filteredYamlFiles = yamlFiles
-                .Where(f => f.ToLower().Contains(userInput))
-                .OrderBy(f => f)
-                .ToList();
+            .Where(f => f != null && f.ToLower().Contains(userInput))
+            .OrderBy(f => f)
+            .ToList();
 
             int totalFiles = filteredYamlFiles.Count;
             int totalPages = (int)Math.Ceiling((double)totalFiles / pageSize);
@@ -411,7 +425,7 @@ public static class BotCommands
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
-            string guildId = interaction.GuildId?.ToString();
+            string? guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
             string directoryPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", "Templates");
 
@@ -441,9 +455,9 @@ public static class BotCommands
             }
 
             var filteredYamlFiles = yamlFiles
-                .Where(f => f.ToLower().Contains(userInput))
-                .OrderBy(f => f)
-                .ToList();
+            .Where(f => f != null && f.ToLower().Contains(userInput))
+            .OrderBy(f => f)
+            .ToList();
 
             int totalFiles = filteredYamlFiles.Count;
             int totalPages = (int)Math.Ceiling((double)totalFiles / pageSize);
@@ -463,7 +477,7 @@ public static class BotCommands
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
-            string guildId = interaction.GuildId?.ToString();
+            string? guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
 
             if (guildId == null)
@@ -595,6 +609,18 @@ public static class BotCommands
         var channelId = command.ChannelId.ToString();
         var guildId = command.GuildId.ToString();
 
+        if(string.IsNullOrWhiteSpace(guildId))
+        {
+            await command.RespondAsync("Cette commande ne peut pas être exécutée en dehors d'un serveur.");
+            return;
+        }
+
+        if(string.IsNullOrWhiteSpace(channelId))
+        {
+            await command.RespondAsync("Cette commande ne peut pas être exécutée en dehors d'un serveur.");
+            return;
+        }
+
         if (command.Channel is IThreadChannel threadChannel)
         {
             await command.DeferAsync(ephemeral: true);
@@ -703,6 +729,12 @@ public static class BotCommands
                         message = $"Aucune Alias trouvé.";
                         receiverAlias = new ReceiverAlias();
                         channelReceiverAliases.Channel[channelId] = receiverAlias;
+                    }
+
+                    if(string.IsNullOrWhiteSpace(alias))
+                    {
+                        message = "L'alias ne peut pas être vide.";
+                        break;
                     }
 
                     if (!receiverAlias.receiverAlias.TryGetValue(alias, out var aliasList))
@@ -843,7 +875,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        errorMessage = null;
+                        errorMessage = string.Empty;
                         return true;
                     }
 
@@ -910,7 +942,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        errorMessage = null;
+                        errorMessage = string.Empty;
                         return true;
                     }
 
@@ -980,7 +1012,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        errorMessage = null;
+                        errorMessage = string.Empty;
                         return true;
                     }
 
@@ -1060,7 +1092,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        errorMessage = null;
+                        errorMessage = string.Empty;
                         return true;
                     }
 
@@ -1081,7 +1113,7 @@ public static class BotCommands
                                 aliasElement.Items.Clear();
                                 aliasElement.Items.Add("Aucun élément");
                                 DataManager.SaveRecapList();
-                                resultMessage = null;
+                                resultMessage = string.Empty;
                                 return true;
                             }
 
@@ -1123,7 +1155,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        errorMessage = null;
+                        errorMessage = string.Empty;
                         return true;
                     }
 
@@ -1143,7 +1175,7 @@ public static class BotCommands
                                 subElement.Items.Add("Aucun élément");
                             }
                             DataManager.SaveRecapList();
-                            resultMessage = null;
+                            resultMessage = string.Empty;
                             return true;
                         }
 
@@ -1166,7 +1198,7 @@ public static class BotCommands
 
                 case "list-items":
                     receiverId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
-                    bool listByLine = (bool)command.Data.Options.FirstOrDefault(o => o.Name == "list-by-line")?.Value;
+                    bool listByLine = command.Data.Options.FirstOrDefault(o => o.Name == "list-by-line")?.Value as bool? ?? false;
 
                     string BuildItemMessage(IEnumerable<IGrouping<string, DisplayedItem>> filteredItems, bool listByLine)
                     {
@@ -1212,6 +1244,12 @@ public static class BotCommands
                     break;
 
                 case "hint-from-finder":
+                    if (string.IsNullOrEmpty(alias))
+                    {
+                        message = "Alias non spécifié.";
+                        break;
+                    }
+
                     string BuildHintMessage(IEnumerable<HintStatus> hints, string alias)
                     {
                         var messageBuilder = new StringBuilder();
@@ -1241,6 +1279,12 @@ public static class BotCommands
                     break;
 
                 case "hint-for-receiver":
+                    if (string.IsNullOrEmpty(alias))
+                    {
+                        message = "Alias non spécifié.";
+                        break;
+                    }
+
                     string BuildHintMessageReceiver(List<HintStatus> hints, string alias)
                     {
                         var messageBuilder = new StringBuilder();
@@ -1337,6 +1381,13 @@ public static class BotCommands
 
                 case "get-patch":
                     receiverId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
+
+                    if(string.IsNullOrWhiteSpace(receiverId))
+                    {
+                        message = "Receiver ID non spécifié.";
+                        break;
+                    }
+
                     if (Declare.ChannelAndUrl.Guild.TryGetValue(guildId, out var guildPatches) &&
                         guildPatches.Channel.TryGetValue(channelId, out var channelPatches) && channelPatches.Aliases.TryGetValue(receiverId, out var channelAlias))
                     {
@@ -1473,8 +1524,8 @@ public static class BotCommands
                                 }
                                 else
                                 {
-                                    string threadTitle = command.Data.Options.ElementAt(1).Value.ToString();
-                                    string threadType = command.Data.Options.ElementAt(2).Value.ToString();
+                                    string? threadTitle = command.Data.Options.ElementAt(1).Value.ToString();
+                                    string? threadType = command.Data.Options.ElementAt(2).Value.ToString();
 
                                     ThreadType type = threadType switch
                                     {
@@ -1517,8 +1568,22 @@ public static class BotCommands
 
                                     var channelData = Declare.ChannelAndUrl.Guild[guildId].Channel[channelId];
                                     channelData.Room = newUrl;
-                                    channelData.Tracker = trackerUrl;
-                                    channelData.SphereTracker = sphereTrackerUrl;
+                                    if (!string.IsNullOrEmpty(trackerUrl))
+                                    {
+                                        channelData.Tracker = trackerUrl;
+                                    }
+                                    else
+                                    {
+                                        channelData.Tracker = "Non trouvé";
+                                    }
+                                    if(!string.IsNullOrEmpty(sphereTrackerUrl))
+                                    {
+                                        channelData.SphereTracker = sphereTrackerUrl;
+                                    }
+                                    else
+                                    {
+                                        channelData.SphereTracker = "Non trouvé";
+                                    }
                                     channelData.Port = port;
 
                                     var rows = doc.DocumentNode.SelectNodes("//table//tr");
@@ -1718,6 +1783,13 @@ public static class BotCommands
 
                     case "download-template":
                         var yamlFile = command.Data.Options.FirstOrDefault()?.Value as string;
+
+                        if(string.IsNullOrEmpty(yamlFile))
+                        {
+                            message = "❌ Aucun fichier sélectionné.";
+                            break;
+                        }
+
                         string templatePath = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", "Templates", yamlFile);
 
                         if (File.Exists(templatePath))
@@ -2143,7 +2215,7 @@ public static class BotCommands
         }
     }
 
-    public static async Task<string> DeleteChannelAndUrl(string? channelId, string? guildId)
+    public static async Task<string> DeleteChannelAndUrl(string? channelId, string guildId)
     {
         string message;
         if (channelId == null)
