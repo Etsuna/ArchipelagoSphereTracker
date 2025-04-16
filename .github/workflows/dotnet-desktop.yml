@@ -71,11 +71,11 @@ jobs:
       run: |
         mkdir -p upload_dir
         if [ "${{ github.ref_type }}" = "tag" ]; then
-          echo "Release tag detected – excluding .pdb"
-          find bin/Release/net8.0/${{ matrix.rid }}/publish/ -type f ! -iname '*.pdb' -exec cp --parents {} upload_dir/ \;
+          echo "Tag detected: copying files without .pdb"
+          find bin/Release/net8.0/${{ matrix.rid }}/publish/ -maxdepth 1 -type f ! -iname '*.pdb' -exec cp {} upload_dir/ \;
         else
-          echo "Dev/main build – including all files"
-          cp -r bin/Release/net8.0/${{ matrix.rid }}/publish/* upload_dir/
+          echo "Branch build: copying all files"
+          cp bin/Release/net8.0/${{ matrix.rid }}/publish/* upload_dir/
         fi
 
     - name: Upload artifact
