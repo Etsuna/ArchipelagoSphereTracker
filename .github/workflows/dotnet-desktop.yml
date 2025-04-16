@@ -66,11 +66,23 @@ jobs:
 
         Remove-Item -Recurse -Force certificate
 
+    - name: Prepare upload folder
+      shell: bash
+      run: |
+        mkdir -p upload_dir
+        if [ "${{ github.ref_type }}" = "tag" ]; then
+          echo "Release tag detected – excluding .pdb"
+          find bin/Release/net8.0/${{ matrix.rid }}/publish/ -type f ! -iname '*.pdb' -exec cp --parents {} upload_dir/ \;
+        else
+          echo "Dev/main build – including all files"
+          cp -r bin/Release/net8.0/${{ matrix.rid }}/publish/* upload_dir/
+        fi
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: app-${{ matrix.rid }}${{ github.ref_type == 'tag' && format('-{0}', github.ref_name) || '' }}
-        path: bin/Release/net8.0/${{ matrix.rid }}/publish/
+        name: ast-${{ matrix.rid }}${{ github.ref_type == 'tag' && format('-{0}', github.ref_name) || '' }}
+        path: upload_dir/
 
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
@@ -78,5 +90,3 @@ jobs:
       with:
         name: Release ${{ github.ref_name }}
         tag_name: ${{ github.ref_name }}
-        files: |
-          bin/Release/net8.0/${{ matrix.rid }}/publish/*

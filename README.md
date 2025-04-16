@@ -63,10 +63,10 @@ Les permissions suivantes seront accordées à ArchipelagoSphereTracker :
 
 ## Execution sans installation
 ```
-Téléchargez la version Windows ou Linux "app-win-x64-vX.X.X" ou "app-linux-x64-vX.X.X" depuis la page des releases.
+Téléchargez la version Windows ou Linux "ast-win-x64-vX.X.X" ou "ast-linux-x64-vX.X.X" depuis la page des releases.
 Décompressez dans un dossier
 Ajoutez dans la même répertoire le fichier .env correctement configuré
-Executez le programme.
+Executez le programme ArchipelagoSphereTracker.
 ```
 
 ## Installation avec Dotnet
