@@ -32,7 +32,11 @@ class Program
         {
             Console.WriteLine($"Nouvelle version détectée : {Version} (ancienne : {currentVersion})");
             Console.WriteLine($"{BasePath.ToString()}");
-            Directory.CreateDirectory(ExternalFolder);
+
+            if (!Directory.Exists(ExternalFolder))
+            {
+                Directory.CreateDirectory(ExternalFolder);
+            }
 
             var venvPath = Path.Combine(ExtractPath, "venv");
             var pythonExecutable = isWindows
