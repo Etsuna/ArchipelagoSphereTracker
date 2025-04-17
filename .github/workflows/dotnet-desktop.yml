@@ -84,9 +84,22 @@ jobs:
         name: ast-${{ matrix.rid }}${{ github.ref_type == 'tag' && format('-{0}', github.ref_name) || '' }}
         path: upload_dir/
 
+    - name: Archive release files
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      run: |
+        mkdir -p release_assets
+        filename="ast-${{ matrix.rid }}-${{ github.ref_name }}"
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          zip -r "release_assets/${filename}.zip" upload_dir/*
+        else
+          tar -czvf "release_assets/${filename}.tar.gz" -C upload_dir .
+        fi
+
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         name: Release ${{ github.ref_name }}
         tag_name: ${{ github.ref_name }}
+        files: release_assets/*
