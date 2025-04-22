@@ -311,7 +311,7 @@ public static class BotCommands
             string? guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
 
-            if(string.IsNullOrWhiteSpace(channelId))
+            if (string.IsNullOrWhiteSpace(channelId))
             {
                 await interaction.RespondAsync(new AutocompleteResult[0]);
                 return;
@@ -374,7 +374,7 @@ public static class BotCommands
             string? guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
 
-            if(string.IsNullOrWhiteSpace(channelId))
+            if (string.IsNullOrWhiteSpace(channelId))
             {
                 await interaction.RespondAsync(new AutocompleteResult[0]);
                 return;
@@ -614,13 +614,13 @@ public static class BotCommands
         var channelId = command.ChannelId.ToString();
         var guildId = command.GuildId.ToString();
 
-        if(string.IsNullOrWhiteSpace(guildId))
+        if (string.IsNullOrWhiteSpace(guildId))
         {
             await command.RespondAsync("Cette commande ne peut pas être exécutée en dehors d'un serveur.");
             return;
         }
 
-        if(string.IsNullOrWhiteSpace(channelId))
+        if (string.IsNullOrWhiteSpace(channelId))
         {
             await command.RespondAsync("Cette commande ne peut pas être exécutée en dehors d'un serveur.");
             return;
@@ -737,7 +737,7 @@ public static class BotCommands
                         channelReceiverAliases.Channel[channelId] = receiverAlias;
                     }
 
-                    if(string.IsNullOrWhiteSpace(alias))
+                    if (string.IsNullOrWhiteSpace(alias))
                     {
                         message = "L'alias ne peut pas être vide.";
                         break;
@@ -1388,7 +1388,7 @@ public static class BotCommands
                 case "get-patch":
                     receiverId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
 
-                    if(string.IsNullOrWhiteSpace(receiverId))
+                    if (string.IsNullOrWhiteSpace(receiverId))
                     {
                         message = "Receiver ID non spécifié.";
                         break;
@@ -1582,7 +1582,7 @@ public static class BotCommands
                                     {
                                         channelData.Tracker = "Non trouvé";
                                     }
-                                    if(!string.IsNullOrEmpty(sphereTrackerUrl))
+                                    if (!string.IsNullOrEmpty(sphereTrackerUrl))
                                     {
                                         channelData.SphereTracker = sphereTrackerUrl;
                                     }
@@ -1623,9 +1623,24 @@ public static class BotCommands
                                     DataManager.SaveChannelAndUrl();
                                     message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
 
-                                    await TrackingDataManager.setAliasAndGameStatusAsync(guildId, channelId, trackerUrl);
-                                    await TrackingDataManager.checkGameStatus(guildId, channelId, trackerUrl);
-                                    await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl);
+                                    if (!string.IsNullOrEmpty(trackerUrl))
+                                    {
+                                        await TrackingDataManager.setAliasAndGameStatusAsync(guildId, channelId, trackerUrl);
+                                        await TrackingDataManager.checkGameStatus(guildId, channelId, trackerUrl);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Erreur : trackerUrl est null ou vide. Impossible d'exécuter setAliasAndGameStatusAsync.");
+                                    }
+
+                                    if (!string.IsNullOrEmpty(sphereTrackerUrl))
+                                    {
+                                        await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Erreur : sphereTrackerUrl est null ou vide. Impossible d'exécuter GetTableDataAsync.");
+                                    }
                                 }
                             }
                             else
@@ -1697,7 +1712,7 @@ public static class BotCommands
                         {
                             message += "❌ Aucun fichier YAML trouvé !";
                         }
-                    break;
+                        break;
 
                     case "delete-yaml":
                         var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
@@ -1793,7 +1808,7 @@ public static class BotCommands
                     case "download-template":
                         var yamlFile = command.Data.Options.FirstOrDefault()?.Value as string;
 
-                        if(string.IsNullOrEmpty(yamlFile))
+                        if (string.IsNullOrEmpty(yamlFile))
                         {
                             message = "❌ Aucun fichier sélectionné.";
                             break;
@@ -1844,8 +1859,8 @@ public static class BotCommands
                         }
                         catch
                         {
-                           message = "Erreur lors du chargement du JSON.";
-                           break;
+                            message = "Erreur lors du chargement du JSON.";
+                            break;
                         }
 
                         var selectedSection = sections.FirstOrDefault(s => s.Title == infoSelected);
@@ -1870,7 +1885,7 @@ public static class BotCommands
                             }
                         }
 
-                    break;
+                        break;
 
                     case "backup-apworld":
                         apworldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
@@ -1907,7 +1922,7 @@ public static class BotCommands
                         {
                             message += "❌ Aucun fichier APWORLD trouvé !";
                         }
-                    break;
+                        break;
 
                     case "send-apworld":
                         attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
