@@ -92,7 +92,7 @@ public class ChannelReceiverAliases
 
 public class ReceiverAlias
 {
-    public Dictionary<string, List<string>> receiverAlias = new Dictionary<string, List<string>>();
+    public Dictionary<string, Dictionary<string, bool>> receiverAlias = new();
 }
 
 // ==========================
@@ -110,7 +110,7 @@ public class ChannelAliasChoices
 
 public class AliasChoice
 {
-    public Dictionary<string, string> aliasChoices { get; set; } = new Dictionary<string, string>();
+    public Dictionary<string, Dictionary<string, string>> aliasChoices { get; set; } = new Dictionary<string, Dictionary<string, string>>();
 }
 
 // ==========================

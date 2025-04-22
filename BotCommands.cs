@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Data;
 using System.Diagnostics;
 using System.IO.Compression;
@@ -96,7 +97,13 @@ public static class BotCommands
                 .WithDescription("Choose an alias")
                 .WithType(ApplicationCommandOptionType.String)
                 .WithRequired(true)
-                .WithAutocomplete(true)),
+                .WithAutocomplete(true))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("skip_useless_mention")
+                .WithDescription("Set if you want to skip useless mention")
+                .WithType(ApplicationCommandOptionType.Boolean)
+                .WithRequired(true)
+                ),
 
         new SlashCommandBuilder()
             .WithName("add-url")
@@ -322,9 +329,7 @@ public static class BotCommands
                 return;
             }
 
-            var aliases = Declare.AliasChoices.Guild[guildId].Channel[channelId].aliasChoices
-                .GroupBy(pair => pair.Value)
-                .ToDictionary(group => group.Key, group => group.First().Value);
+            var aliases = Declare.AliasChoices.Guild[guildId].Channel[channelId].aliasChoices.Keys;
 
             string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
 
@@ -341,21 +346,21 @@ public static class BotCommands
             }
 
             var filteredAliases = aliases
-                .Where(a => a.Key.ToLower().Contains(userInput))
-                .OrderBy(a => a.Key)
+                .Where(a => a.ToLower().Contains(userInput))
+                .OrderBy(a => a)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .Select(a => new AutocompleteResult(a.Key, a.Value))
+                .Select(a => new AutocompleteResult(a, a))
                 .ToArray();
 
             if (filteredAliases.Length == 0 && pageNumber > 1)
             {
                 pageNumber = (aliases.Count / pageSize) + 1;
                 filteredAliases = aliases
-                    .OrderBy(a => a.Key)
+                    .OrderBy(a => a)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
-                    .Select(a => new AutocompleteResult(a.Key, a.Value))
+                    .Select(a => new AutocompleteResult(a, a))
                     .ToArray();
             }
 
@@ -645,7 +650,7 @@ public static class BotCommands
                         {
                             foreach (var value in kvp.Value)
                             {
-                                var user = await Declare.Client.GetUserAsync(ulong.Parse(value));
+                                var user = await Declare.Client.GetUserAsync(ulong.Parse(value.Key));
                                 sb.AppendLine($"| {user.Username} | {kvp.Key} |");
                             }
                         }
@@ -675,7 +680,7 @@ public static class BotCommands
                         {
                             if (channelAliases.receiverAlias.TryGetValue(alias, out var values))
                             {
-                                foreach (var value in values)
+                                foreach (var value in values.Keys)
                                 {
                                     if (value == command.User.Id.ToString() || (guildUser != null && guildUser.GuildPermissions.Administrator))
                                     {
@@ -716,6 +721,7 @@ public static class BotCommands
 
                 case "add-alias":
                     receiverId = command.User.Id.ToString();
+                    var skipUselessMention = command.Data.Options.ElementAtOrDefault(1)?.Value as bool? ?? false;
 
                     if (!Declare.ReceiverAliases.Guild.TryGetValue(guildId, out var channelReceiverAliases))
                     {
@@ -740,17 +746,17 @@ public static class BotCommands
                     if (!receiverAlias.receiverAlias.TryGetValue(alias, out var aliasList))
                     {
                         message = $"Aucune Alias trouvé.";
-                        aliasList = new List<string>();
+                        aliasList = new Dictionary<string, bool>();
                         receiverAlias.receiverAlias[alias] = aliasList;
                     }
 
-                    if (aliasList.Contains(receiverId))
+                    if (aliasList.Keys.Contains(receiverId))
                     {
                         message = $"L'alias '{alias}' est déjà enregistré pour <@{receiverId}>.";
                         break;
                     }
 
-                    aliasList.Add(receiverId);
+                    aliasList.Add(receiverId, skipUselessMention);
 
                     if (!Declare.RecapList.Guild.TryGetValue(guildId, out var channelRecapList))
                     {
@@ -869,7 +875,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -936,7 +942,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -1006,7 +1012,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -1086,7 +1092,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -1149,7 +1155,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -1614,9 +1620,12 @@ public static class BotCommands
                                             }
                                         }
                                     }
-
                                     DataManager.SaveChannelAndUrl();
                                     message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
+
+                                    await TrackingDataManager.setAliasAndGameStatusAsync(guildId, channelId, trackerUrl);
+                                    await TrackingDataManager.checkGameStatus(guildId, channelId, trackerUrl);
+                                    await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl);
                                 }
                             }
                             else
