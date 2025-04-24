@@ -11,6 +11,7 @@ public static class Declare
     public static readonly string RecapListFile = "recap.json";
     public static readonly string HintStatusFile = "hintStatus.json";
     public static readonly string RolesAliasesFile = "rolesAliases.json";
+    public static readonly string ItemsTableFile = Program.GenerateItemsTableJson;
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
 
     public static GuildReceiverAliases ReceiverAliases = new GuildReceiverAliases();
@@ -20,6 +21,7 @@ public static class Declare
     public static GuildDisplayedItem DisplayedItems = new GuildDisplayedItem();
     public static GuildHintStatus HintStatuses = new GuildHintStatus();
     public static GuildChannelsAndUrls ChannelAndUrl = new GuildChannelsAndUrls();
+    public static ItemsTable ItemsTable = new ItemsTable();
 
     public static List<ApWorldJsonList> ApworldsInfo = new List<ApWorldJsonList>();
 

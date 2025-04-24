@@ -71,5 +71,7 @@ public static class DataManager
 
     public static void SaveHintStatus() => SaveData(Declare.HintStatusFile, Declare.HintStatuses);
 
+    public static void LoadItemsTable() => LoadData(Declare.ItemsTableFile, ref Declare.ItemsTable);
+
     public static void LoadApWorldJsonList() => LoadApWorld(ref Declare.ApworldsInfo);
 }

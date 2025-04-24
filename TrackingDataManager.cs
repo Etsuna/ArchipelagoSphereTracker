@@ -232,23 +232,35 @@ public static class TrackingDataManager
         return false;
     }
 
-
     private static string BuildMessage(string guild, string channel, DisplayedItem item)
     {
         if (item.Finder == item.Receiver)
-        {
             return $"{item.Finder} found their {item.Item} ({item.Location})";
-        }
 
-        if (Declare.ReceiverAliases.Guild[guild].Channel[channel].receiverAlias.TryGetValue(item.Receiver, out var userIds))
+        var aliases = Declare.ReceiverAliases.Guild;
+        if (aliases.TryGetValue(guild, out var guildData) &&
+            guildData.Channel.TryGetValue(channel, out var channelData) &&
+            channelData.receiverAlias.TryGetValue(item.Receiver, out var userIds))
         {
-            var mentions = string.Join(" ", userIds.Select(id => $"<@{id}>"));
-            return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
+            var mentions = string.Join(" ", userIds.Keys.Select(id => $"<@{id}>"));
+
+            var getGameName = Declare.AliasChoices.Guild[guild].Channel[channel].aliasChoices[item.Receiver].FirstOrDefault(x => x.Key.Equals(item.Receiver)).Value;
+
+            if(userIds.ContainsValue(true))
+            {
+                Declare.ItemsTable.TryGetValue(getGameName, out var gameDataTest);
+
+                if (gameDataTest != null && gameDataTest.filler != null && gameDataTest.filler.Contains(item.Item))
+                {
+                    return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
+                }
+            }
+            
+            return $"{item.Finder} sent {item.Item} to {mentions} ({item.Location})";
         }
 
         return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
     }
-
 
     private static void UpdateRecapList(string guild, string channel, string receiver, string item)
     {

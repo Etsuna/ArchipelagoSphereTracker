@@ -18,6 +18,7 @@ class Program
     public static string TempExtractPath = Path.Combine(BasePath, "tempExtract");
     public static string GenerateTemplatesPath = Path.Combine(ExtractPath, "generateTemplates.py");
     public static string GenerateItemsTablePath = Path.Combine(ExtractPath, "generateItemsTable.py");
+    public static string GenerateItemsTableJson = Path.Combine(ExtractPath, "all_items_by_game.json");
     public static string WorldsPath = Path.Combine(ExtractPath, "worlds");
 
     static async Task Main(string[] args)
@@ -339,6 +340,7 @@ class Program
         DataManager.LoadHintStatus();
         DataManager.LoadDisplayedItems();
         DataManager.LoadApWorldJsonList();
+        DataManager.LoadItemsTable();
 
         await Declare.Client.LoginAsync(TokenType.Bot, Declare.DiscordToken);
         await Declare.Client.StartAsync();

@@ -30,6 +30,7 @@ CUSTOM_ITEM_TABLE_NAMES = [
     ""l2ac_item_table"",
     ""item_info"",
     ""cvcotm_item_info"",
+    ""filler_items""
 ]
 
 # Dictionary to keep track of already processed games
@@ -145,6 +146,7 @@ def extract_items(game_name: str, module: ModuleType, true_game_name: str):
 
     # SPECIFIC PATCH FOR LADX
     if game_name.lower() == ""ladx"":
+        true_game_name = ""Links Awakening DX""
         if hasattr(module, ""links_awakening_items""):
             print(f""[INFO] Using custom patch for LADX"")
             item_list = getattr(module, ""links_awakening_items"")
@@ -215,6 +217,59 @@ def extract_items(game_name: str, module: ModuleType, true_game_name: str):
                     continue
 
             output[true_game_name] = items_by_type
+            processed_games.add(game_name)
+            return
+
+    # PATCH FOR KH2
+    if game_name.lower() == ""kh2"":
+        print(f""[INFO] Using custom patch for KH2"")
+
+        try:
+            item_dict = getattr(module, ""item_dictionary_table"", {})
+            progression_names = set(getattr(module, ""Progression_Table"", {}).keys())
+            useful_names = set(getattr(module, ""Usefull_Table"", {}).keys())
+            filler_values = set(getattr(module, ""filler_items"", []))  # These are values like ""Potion"", not keys
+
+            # Inverser le mapping de ItemName (valeur → clé)
+            itemname_value_map = {
+                v: k for k, v in module.__dict__.get(""ItemName"", {}).__dict__.items()
+                if not k.startswith(""__"")
+            } if hasattr(module, ""ItemName"") else {}
+
+            # Ou à défaut, faire une simulation basique si ItemName pas dispo
+            def key_to_value(key):
+                try:
+                    return getattr(module.ItemName, key)
+                except Exception:
+                    return key
+
+            items_by_type = {
+                ""progression"": [],
+                ""useful"": [],
+                ""filler"": [],
+            }
+
+            for name, item in item_dict.items():
+                try:
+                    readable_value = key_to_value(name)
+
+                    if name in progression_names:
+                        items_by_type[""progression""].append(name)
+                    elif name in useful_names:
+                        items_by_type[""useful""].append(name)
+                    elif readable_value in filler_values:
+                        items_by_type[""filler""].append(name)
+                except Exception as e:
+                    print(f""[ERROR] KH2 item classification failed for {name}: {e}"")
+                    continue
+
+            output[true_game_name] = items_by_type
+            processed_games.add(game_name)
+            return
+
+        except Exception as e:
+            print(f""[ERROR] Failed custom KH2 patch: {e}"")
+            output[true_game_name] = {""filler"": []}
             processed_games.add(game_name)
             return
 
