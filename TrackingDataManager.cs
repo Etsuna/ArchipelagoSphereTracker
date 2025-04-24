@@ -232,23 +232,35 @@ public static class TrackingDataManager
         return false;
     }
 
-
     private static string BuildMessage(string guild, string channel, DisplayedItem item)
     {
         if (item.Finder == item.Receiver)
-        {
             return $"{item.Finder} found their {item.Item} ({item.Location})";
-        }
 
-        if (Declare.ReceiverAliases.Guild[guild].Channel[channel].receiverAlias.TryGetValue(item.Receiver, out var userIds))
+        var aliases = Declare.ReceiverAliases.Guild;
+        if (aliases.TryGetValue(guild, out var guildData) &&
+            guildData.Channel.TryGetValue(channel, out var channelData) &&
+            channelData.receiverAlias.TryGetValue(item.Receiver, out var userIds))
         {
-            var mentions = string.Join(" ", userIds.Select(id => $"<@{id}>"));
-            return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
+            var mentions = string.Join(" ", userIds.Keys.Select(id => $"<@{id}>"));
+
+            var getGameName = Declare.AliasChoices.Guild[guild].Channel[channel].aliasChoices[item.Receiver].FirstOrDefault(x => x.Key.Equals(item.Receiver)).Value;
+
+            if(userIds.ContainsValue(true))
+            {
+                Declare.ItemsTable.TryGetValue(getGameName, out var gameDataTest);
+
+                if (gameDataTest != null && gameDataTest.filler != null && gameDataTest.filler.Contains(item.Item))
+                {
+                    return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
+                }
+            }
+            
+            return $"{item.Finder} sent {item.Item} to {mentions} ({item.Location})";
         }
 
         return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
     }
-
 
     private static void UpdateRecapList(string guild, string channel, string receiver, string item)
     {
@@ -266,12 +278,12 @@ public static class TrackingDataManager
 
         if (!Declare.ReceiverAliases.Guild.TryGetValue(guild, out var channelReceiverAliases) ||
             !channelReceiverAliases.Channel.TryGetValue(channel, out var receiverAlias) ||
-            !receiverAlias.receiverAlias.TryGetValue(receiver, out List<string>? userIds))
+            !receiverAlias.receiverAlias.TryGetValue(receiver, out var userIds))
         {
             return;
         }
 
-        foreach (var userId in userIds)
+        foreach (var userId in userIds.Keys)
         {
             if (!userRecapList.Aliases.TryGetValue(userId, out var userItems))
             {
@@ -329,7 +341,12 @@ public static class TrackingDataManager
                 LastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim())
             };
 
-            Declare.AliasChoices.Guild[guild].Channel[channel].aliasChoices.TryAdd(newGameStatus.Name, newGameStatus.Name);
+            var gameName = new Dictionary<string, string>
+            {
+                { newGameStatus.Name, newGameStatus.Game }
+            };
+
+            Declare.AliasChoices.Guild[guild].Channel[channel].aliasChoices.TryAdd(newGameStatus.Name, gameName);
 
             if (!Declare.GameStatus.Guild[guild].Channel[channel].Any(x => x.Name == newGameStatus.Name))
             {
@@ -343,7 +360,6 @@ public static class TrackingDataManager
             Declare.GameStatus.Guild[guild].Channel[channel].Sort((x, y) => x.Name.CompareTo(y.Name));
             DataManager.SaveAliasChoices();
             DataManager.SaveGameStatus();
-            await BotCommands.RegisterCommandsAsync();
             await BotCommands.SendMessageAsync("Aliases Updated!", channel);
         }
 

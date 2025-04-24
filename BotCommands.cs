@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Data;
 using System.Diagnostics;
 using System.IO.Compression;
@@ -96,7 +97,13 @@ public static class BotCommands
                 .WithDescription("Choose an alias")
                 .WithType(ApplicationCommandOptionType.String)
                 .WithRequired(true)
-                .WithAutocomplete(true)),
+                .WithAutocomplete(true))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("skip_useless_mention")
+                .WithDescription("Set if you want to skip useless mention")
+                .WithType(ApplicationCommandOptionType.Boolean)
+                .WithRequired(true)
+                ),
 
         new SlashCommandBuilder()
             .WithName("add-url")
@@ -304,7 +311,7 @@ public static class BotCommands
             string? guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
 
-            if(string.IsNullOrWhiteSpace(channelId))
+            if (string.IsNullOrWhiteSpace(channelId))
             {
                 await interaction.RespondAsync(new AutocompleteResult[0]);
                 return;
@@ -322,9 +329,7 @@ public static class BotCommands
                 return;
             }
 
-            var aliases = Declare.AliasChoices.Guild[guildId].Channel[channelId].aliasChoices
-                .GroupBy(pair => pair.Value)
-                .ToDictionary(group => group.Key, group => group.First().Value);
+            var aliases = Declare.AliasChoices.Guild[guildId].Channel[channelId].aliasChoices.Keys;
 
             string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
 
@@ -341,21 +346,21 @@ public static class BotCommands
             }
 
             var filteredAliases = aliases
-                .Where(a => a.Key.ToLower().Contains(userInput))
-                .OrderBy(a => a.Key)
+                .Where(a => a.ToLower().Contains(userInput))
+                .OrderBy(a => a)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .Select(a => new AutocompleteResult(a.Key, a.Value))
+                .Select(a => new AutocompleteResult(a, a))
                 .ToArray();
 
             if (filteredAliases.Length == 0 && pageNumber > 1)
             {
                 pageNumber = (aliases.Count / pageSize) + 1;
                 filteredAliases = aliases
-                    .OrderBy(a => a.Key)
+                    .OrderBy(a => a)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
-                    .Select(a => new AutocompleteResult(a.Key, a.Value))
+                    .Select(a => new AutocompleteResult(a, a))
                     .ToArray();
             }
 
@@ -369,7 +374,7 @@ public static class BotCommands
             string? guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
 
-            if(string.IsNullOrWhiteSpace(channelId))
+            if (string.IsNullOrWhiteSpace(channelId))
             {
                 await interaction.RespondAsync(new AutocompleteResult[0]);
                 return;
@@ -609,13 +614,13 @@ public static class BotCommands
         var channelId = command.ChannelId.ToString();
         var guildId = command.GuildId.ToString();
 
-        if(string.IsNullOrWhiteSpace(guildId))
+        if (string.IsNullOrWhiteSpace(guildId))
         {
             await command.RespondAsync("Cette commande ne peut pas être exécutée en dehors d'un serveur.");
             return;
         }
 
-        if(string.IsNullOrWhiteSpace(channelId))
+        if (string.IsNullOrWhiteSpace(channelId))
         {
             await command.RespondAsync("Cette commande ne peut pas être exécutée en dehors d'un serveur.");
             return;
@@ -645,7 +650,7 @@ public static class BotCommands
                         {
                             foreach (var value in kvp.Value)
                             {
-                                var user = await Declare.Client.GetUserAsync(ulong.Parse(value));
+                                var user = await Declare.Client.GetUserAsync(ulong.Parse(value.Key));
                                 sb.AppendLine($"| {user.Username} | {kvp.Key} |");
                             }
                         }
@@ -675,7 +680,7 @@ public static class BotCommands
                         {
                             if (channelAliases.receiverAlias.TryGetValue(alias, out var values))
                             {
-                                foreach (var value in values)
+                                foreach (var value in values.Keys)
                                 {
                                     if (value == command.User.Id.ToString() || (guildUser != null && guildUser.GuildPermissions.Administrator))
                                     {
@@ -716,6 +721,7 @@ public static class BotCommands
 
                 case "add-alias":
                     receiverId = command.User.Id.ToString();
+                    var skipUselessMention = command.Data.Options.ElementAtOrDefault(1)?.Value as bool? ?? false;
 
                     if (!Declare.ReceiverAliases.Guild.TryGetValue(guildId, out var channelReceiverAliases))
                     {
@@ -731,7 +737,7 @@ public static class BotCommands
                         channelReceiverAliases.Channel[channelId] = receiverAlias;
                     }
 
-                    if(string.IsNullOrWhiteSpace(alias))
+                    if (string.IsNullOrWhiteSpace(alias))
                     {
                         message = "L'alias ne peut pas être vide.";
                         break;
@@ -740,17 +746,17 @@ public static class BotCommands
                     if (!receiverAlias.receiverAlias.TryGetValue(alias, out var aliasList))
                     {
                         message = $"Aucune Alias trouvé.";
-                        aliasList = new List<string>();
+                        aliasList = new Dictionary<string, bool>();
                         receiverAlias.receiverAlias[alias] = aliasList;
                     }
 
-                    if (aliasList.Contains(receiverId))
+                    if (aliasList.Keys.Contains(receiverId))
                     {
                         message = $"L'alias '{alias}' est déjà enregistré pour <@{receiverId}>.";
                         break;
                     }
 
-                    aliasList.Add(receiverId);
+                    aliasList.Add(receiverId, skipUselessMention);
 
                     if (!Declare.RecapList.Guild.TryGetValue(guildId, out var channelRecapList))
                     {
@@ -869,7 +875,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -936,7 +942,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -1006,7 +1012,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -1086,7 +1092,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -1149,7 +1155,7 @@ public static class BotCommands
                             return false;
                         }
 
-                        if (!channel.receiverAlias.Any(x => x.Value.Contains(receiverId)))
+                        if (!channel.receiverAlias.Any(x => x.Value.Keys.Contains(receiverId)))
                         {
                             errorMessage = "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
                             return false;
@@ -1382,7 +1388,7 @@ public static class BotCommands
                 case "get-patch":
                     receiverId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
 
-                    if(string.IsNullOrWhiteSpace(receiverId))
+                    if (string.IsNullOrWhiteSpace(receiverId))
                     {
                         message = "Receiver ID non spécifié.";
                         break;
@@ -1576,7 +1582,7 @@ public static class BotCommands
                                     {
                                         channelData.Tracker = "Non trouvé";
                                     }
-                                    if(!string.IsNullOrEmpty(sphereTrackerUrl))
+                                    if (!string.IsNullOrEmpty(sphereTrackerUrl))
                                     {
                                         channelData.SphereTracker = sphereTrackerUrl;
                                     }
@@ -1614,9 +1620,27 @@ public static class BotCommands
                                             }
                                         }
                                     }
-
                                     DataManager.SaveChannelAndUrl();
                                     message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
+
+                                    if (!string.IsNullOrEmpty(trackerUrl))
+                                    {
+                                        await TrackingDataManager.setAliasAndGameStatusAsync(guildId, channelId, trackerUrl);
+                                        await TrackingDataManager.checkGameStatus(guildId, channelId, trackerUrl);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Erreur : trackerUrl est null ou vide. Impossible d'exécuter setAliasAndGameStatusAsync.");
+                                    }
+
+                                    if (!string.IsNullOrEmpty(sphereTrackerUrl))
+                                    {
+                                        await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Erreur : sphereTrackerUrl est null ou vide. Impossible d'exécuter GetTableDataAsync.");
+                                    }
                                 }
                             }
                             else
@@ -1688,7 +1712,7 @@ public static class BotCommands
                         {
                             message += "❌ Aucun fichier YAML trouvé !";
                         }
-                    break;
+                        break;
 
                     case "delete-yaml":
                         var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
@@ -1784,7 +1808,7 @@ public static class BotCommands
                     case "download-template":
                         var yamlFile = command.Data.Options.FirstOrDefault()?.Value as string;
 
-                        if(string.IsNullOrEmpty(yamlFile))
+                        if (string.IsNullOrEmpty(yamlFile))
                         {
                             message = "❌ Aucun fichier sélectionné.";
                             break;
@@ -1835,8 +1859,8 @@ public static class BotCommands
                         }
                         catch
                         {
-                           message = "Erreur lors du chargement du JSON.";
-                           break;
+                            message = "Erreur lors du chargement du JSON.";
+                            break;
                         }
 
                         var selectedSection = sections.FirstOrDefault(s => s.Title == infoSelected);
@@ -1861,7 +1885,7 @@ public static class BotCommands
                             }
                         }
 
-                    break;
+                        break;
 
                     case "backup-apworld":
                         apworldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
@@ -1898,7 +1922,7 @@ public static class BotCommands
                         {
                             message += "❌ Aucun fichier APWORLD trouvé !";
                         }
-                    break;
+                        break;
 
                     case "send-apworld":
                         attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;

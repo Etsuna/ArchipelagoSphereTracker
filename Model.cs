@@ -92,7 +92,7 @@ public class ChannelReceiverAliases
 
 public class ReceiverAlias
 {
-    public Dictionary<string, List<string>> receiverAlias = new Dictionary<string, List<string>>();
+    public Dictionary<string, Dictionary<string, bool>> receiverAlias = new();
 }
 
 // ==========================
@@ -110,7 +110,7 @@ public class ChannelAliasChoices
 
 public class AliasChoice
 {
-    public Dictionary<string, string> aliasChoices { get; set; } = new Dictionary<string, string>();
+    public Dictionary<string, Dictionary<string, string>> aliasChoices { get; set; } = new Dictionary<string, Dictionary<string, string>>();
 }
 
 // ==========================
@@ -199,3 +199,18 @@ public class ApWorldJsonItem
     public string Text { get; set; } = string.Empty;
     public string Link { get; set; } = string.Empty;
 }
+
+// ==========================
+// 🎯 Items Table
+// ==========================
+public class ItemsTableList
+{
+    public Dictionary<string, ItemsTable> GameData { get; set; } = new Dictionary<string, ItemsTable>();
+    public List<string>? progression { get; set; }
+    public List<string>? useful { get; set; }
+    public List<string>? filler { get; set; }
+    public List<string>? trap { get; set; }
+    public List<string>? progression_skip_balancing { get; set; }
+}
+
+public class ItemsTable : Dictionary<string, ItemsTableList> { }

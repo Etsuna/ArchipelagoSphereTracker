@@ -17,6 +17,9 @@ class Program
     public static string ArchivePath = Path.Combine(BasePath, "archive");
     public static string TempExtractPath = Path.Combine(BasePath, "tempExtract");
     public static string GenerateTemplatesPath = Path.Combine(ExtractPath, "generateTemplates.py");
+    public static string GenerateItemsTablePath = Path.Combine(ExtractPath, "generateItemsTable.py");
+    public static string GenerateItemsTableJson = Path.Combine(ExtractPath, "all_items_by_game.json");
+    public static string WorldsPath = Path.Combine(ExtractPath, "worlds");
 
     static async Task Main(string[] args)
     {
@@ -301,6 +304,7 @@ class Program
             }
 
             GenerateYamls();
+            GenerateItemsTableClass();
 
             await File.WriteAllTextAsync(VersionFile, Version);
 
@@ -336,6 +340,7 @@ class Program
         DataManager.LoadHintStatus();
         DataManager.LoadDisplayedItems();
         DataManager.LoadApWorldJsonList();
+        DataManager.LoadItemsTable();
 
         await Declare.Client.LoginAsync(TokenType.Bot, Declare.DiscordToken);
         await Declare.Client.StartAsync();
@@ -403,6 +408,66 @@ class Program
             else
             {
                 Console.WriteLine("❌ ERREUR : Impossible de générer les YAML.");
+                return;
+            }
+        }
+    }
+
+    public static void GenerateItemsTableClass()
+    {
+        var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        var venvPath = Path.Combine(ExtractPath, "venv");
+        var pythonExecutable = isWindows
+                ? Path.Combine(venvPath, "Scripts", "python.exe")
+                : Path.Combine(venvPath, "bin", "python3");
+
+        Console.WriteLine("Génération des templates Tables D'items...");
+        if (File.Exists(GenerateItemsTablePath))
+        {
+            File.Delete(GenerateItemsTablePath);
+        }
+
+        File.WriteAllText(GenerateItemsTablePath, GenerateItemsTable.pythonCode.Replace("{WORLD_PATH}", WorldsPath));
+
+        Console.WriteLine($"Fichier Python créé à l'emplacement : {GenerateItemsTablePath}");
+
+        var generateItemsTableCommand = isWindows
+   ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{GenerateItemsTablePath}\""
+   : $"bash -c 'yes | \"{pythonExecutable}\" \"{GenerateItemsTablePath}\"'";
+
+        ProcessStartInfo generateItemsTableProcess = new ProcessStartInfo
+        {
+            FileName = isWindows ? "cmd.exe" : "/bin/bash",
+            Arguments = isWindows ? $"/c {generateItemsTableCommand}" : $"-c \"{generateItemsTableCommand}\"",
+            WorkingDirectory = ExtractPath,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using (var process = Process.Start(generateItemsTableProcess))
+        {
+            if (process != null)
+            {
+                process.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
+                process.ErrorDataReceived += (sender, args) => Console.WriteLine("Warning : " + args.Data);
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    Console.WriteLine($"❌ ERREUR : Échec de la génération des Tables D'items (code {process.ExitCode})");
+                }
+                else
+                {
+                    Console.WriteLine("✅ Tables D'items générés avec succès !");
+                }
+            }
+            else
+            {
+                Console.WriteLine("❌ ERREUR : Impossible de générer les Tables D'items.");
                 return;
             }
         }
