@@ -256,7 +256,7 @@ public static class TrackingDataManager
                 }
             }
             
-            return $"{item.Finder} sent {item.Item} to {mentions} ({item.Location})";
+            return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
         }
 
         return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
