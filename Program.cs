@@ -19,7 +19,6 @@ class Program
     public static string GenerateTemplatesPath = Path.Combine(ExtractPath, "generateTemplates.py");
     public static string GenerateItemsTablePath = Path.Combine(ExtractPath, "generateItemsTable.py");
     public static string GenerateItemsTableJson = Path.Combine(ExtractPath, "all_items_by_game.json");
-    public static string WorldsPath = Path.Combine(ExtractPath, "worlds");
 
     static async Task Main(string[] args)
     {
@@ -427,7 +426,7 @@ class Program
             File.Delete(GenerateItemsTablePath);
         }
 
-        File.WriteAllText(GenerateItemsTablePath, GenerateItemsTable.pythonCode.Replace("{WORLD_PATH}", WorldsPath));
+        File.WriteAllText(GenerateItemsTablePath, GenerateItemsTable.pythonCode.Replace("{ARCHIPELAGO_PATH}", ExtractPath));
 
         Console.WriteLine($"Fichier Python créé à l'emplacement : {GenerateItemsTablePath}");
 
