@@ -651,7 +651,7 @@ public static class BotCommands
                             foreach (var value in kvp.Value)
                             {
                                 var user = await Declare.Client.GetUserAsync(ulong.Parse(value.Key));
-                                sb.AppendLine($"| {user.Username} | {kvp.Key} |");
+                                sb.AppendLine($"| {user.Username} | {kvp.Key} | Useless Item Skip: {value.Value.ToString()}");
                             }
                         }
                         message = sb.ToString();
