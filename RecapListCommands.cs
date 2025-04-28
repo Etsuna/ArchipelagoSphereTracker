@@ -20,7 +20,7 @@ public static class RecapListCommands
                 await connection.OpenAsync();
                 using (var command = new SQLiteCommand(connection))
                 {
-                    command.CommandText = @"INSERT OR REPLACE INTO RecapListTable
+                    command.CommandText = @"INSERT INTO RecapListTable
                         (GuildId, ChannelId, UserId, Alias)
                         VALUES (@GuildId, @ChannelId, @UserId, @Alias)";
                     command.Parameters.AddWithValue("@GuildId", guildId);
@@ -64,7 +64,7 @@ public static class RecapListCommands
                     using (var transaction = connection.BeginTransaction())
                     {
                         using (var command = new SQLiteCommand(@"
-                        INSERT OR REPLACE INTO RecapListItemsTable
+                        INSERT INTO RecapListItemsTable
                         (RecapListTableId, Item)
                         VALUES (@RecapListTableId, @Item);", connection, transaction))
                         {
@@ -106,7 +106,7 @@ public static class RecapListCommands
                     foreach (var item in items)
                     {
                         using (var command = new SQLiteCommand(@"
-                        INSERT OR REPLACE INTO RecapListItemsTable
+                        INSERT INTO RecapListItemsTable
                         (RecapListTableId, Item)
                         VALUES (@RecapListTableId, @Item);", connection, transaction))
                         {

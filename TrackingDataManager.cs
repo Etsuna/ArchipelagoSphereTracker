@@ -437,7 +437,6 @@ public static class TrackingDataManager
             if (existing.Status != newEntry.Status) { existing.Status = newEntry.Status; isChanged = true; }
             if (existing.Percent != newEntry.Percent) { existing.Percent = newEntry.Percent; isChanged = true; }
             if (existing.Checks != newEntry.Checks) { existing.Checks = newEntry.Checks; isChanged = true; }
-            if (existing.LastActivity != newEntry.LastActivity) { existing.LastActivity = newEntry.LastActivity; isChanged = true; }
 
             if (isChanged)
                 statusChanges.Add(existing);
@@ -452,7 +451,10 @@ public static class TrackingDataManager
 
                 if (!silent)
                 {
-                    await BotCommands.SendMessageAsync($"@everyone\n{newEntry.Name} has completed their goal for this game: {newEntry.Game}!", channel);
+                    if(isChanged)
+                    {
+                        await BotCommands.SendMessageAsync($"@everyone\n{newEntry.Name} has completed their goal for this game: {newEntry.Game}!", channel);
+                    }
                 }
             }
         }

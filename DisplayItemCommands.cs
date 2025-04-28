@@ -36,7 +36,7 @@ public static class DisplayItemCommands
         return items;
     }
 
-    public static async Task<List<DisplayedItem>> GetUserItemsGroupedAsync(string guildId, string channelId, string userId)
+    public static async Task<List<DisplayedItem>> GetUserItemsGroupedAsync(string guildId, string channelId, string receiver)
     {
         var itemsFromDb = new List<DisplayedItem>();
 
@@ -45,17 +45,15 @@ public static class DisplayItemCommands
             await connection.OpenAsync();
 
             using (var command = new SQLiteCommand(@"
-            SELECT Item, COUNT(*) AS Count, GuildId, ChannelId, Sphere, Finder, Receiver, Location, Game
+            SELECT *
             FROM DisplayedItemTable
             WHERE GuildId = @GuildId
               AND ChannelId = @ChannelId
-              AND Receiver = @UserId
-            GROUP BY Item
-            ORDER BY Item ASC;", connection))
+              AND Receiver = @Receiver;", connection))
             {
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
-                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@Receiver", receiver);
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {
@@ -89,13 +87,11 @@ public static class DisplayItemCommands
             await connection.OpenAsync();
 
             using (var command = new SQLiteCommand(@"
-            SELECT Item, COUNT(*) AS Count, GuildId, ChannelId, Sphere, Finder, Receiver, Location, Game
+            SELECT Item, GuildId, ChannelId, Sphere, Finder, Receiver, Location, Game
             FROM DisplayedItemTable
             WHERE GuildId = @GuildId
               AND ChannelId = @ChannelId
-              AND Receiver = @Receiver
-            GROUP BY Item
-            ORDER BY Item ASC;", connection))
+              AND Receiver = @Receiver;", connection))
             {
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
