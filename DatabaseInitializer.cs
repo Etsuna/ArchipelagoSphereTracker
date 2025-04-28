@@ -129,6 +129,34 @@ CREATE TABLE IF NOT EXISTS HintStatusTable (
     Entrance TEXT,
     Found TEXT
 );
+
+-- ==========================
+-- 🎯 ApWorldList
+-- ==========================
+CREATE TABLE IF NOT EXISTS ApWorldListTable (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Title TEXT NOT NULL,
+    Item TEXT NOT NULL 
+);
+
+CREATE TABLE IF NOT EXISTS ApWorldItemTable (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ApWorldListTableId INTEGER,
+    Text TEXT NOT NULL,
+    Link TEXT NOT NULL,
+    FOREIGN KEY (ApWorldListTableId) REFERENCES ApWorldListTable(Id)
+);
+
+-- ==========================
+-- 🎯 ItemsTable
+-- ==========================
+CREATE TABLE IF NOT EXISTS ItemsTable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    GameName TEXT NOT NULL,
+    Category TEXT NOT NULL,
+    ItemName TEXT NOT NULL,
+    UNIQUE(GameName, Category, ItemName)
+);
 ";
         command.ExecuteNonQuery();
     }

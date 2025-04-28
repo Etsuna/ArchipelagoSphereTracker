@@ -39,34 +39,3 @@ public class HintStatus
     public string Entrance { get; set; } = string.Empty;
     public string Found { get; set; } = string.Empty;
 }
-
-// ==========================
-// 🎯 ApWorldList
-// ==========================
-
-public class ApWorldJsonList
-{
-    public string Title { get; set; } = string.Empty;
-    public List<ApWorldJsonItem> Items { get; set; } = new List<ApWorldJsonItem>();
-}
-
-public class ApWorldJsonItem
-{
-    public string Text { get; set; } = string.Empty;
-    public string Link { get; set; } = string.Empty;
-}
-
-// ==========================
-// 🎯 Items Table
-// ==========================
-public class ItemsTableList
-{
-    public Dictionary<string, ItemsTable> GameData { get; set; } = new Dictionary<string, ItemsTable>();
-    public List<string>? progression { get; set; }
-    public List<string>? useful { get; set; }
-    public List<string>? filler { get; set; }
-    public List<string>? trap { get; set; }
-    public List<string>? progression_skip_balancing { get; set; }
-}
-
-public class ItemsTable : Dictionary<string, ItemsTableList> { }

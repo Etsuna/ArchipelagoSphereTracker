@@ -490,10 +490,10 @@ public static class BotCommands
                 return;
             }
 
-            List<ApWorldJsonList> sections;
+            List<string> sections;
             try
             {
-                sections = Declare.ApworldsInfo;
+                sections = await ApWorldListCommands.GetAllTitles();
             }
             catch
             {
@@ -514,10 +514,7 @@ public static class BotCommands
                     userInput = "";
                 }
             }
-
-            var allTitles = sections.Select(s => s.Title).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
-
-            var filteredTitles = allTitles
+            var filteredTitles = sections
                 .Where(t => t.ToLower().Contains(userInput))
                 .OrderBy(t => t)
                 .ToList();
@@ -535,61 +532,6 @@ public static class BotCommands
 
             await interaction.RespondAsync(paginatedTitles);
         }
-
-
-        /*if (interaction.Data.Current.Name == "roles")
-        {
-            string guildId = interaction.GuildId?.ToString();
-            if (guildId == null)
-            {
-                await interaction.RespondAsync(new AutocompleteResult[0]);
-                return;
-            }
-
-            var getguild = Declare.Client.GetGuild(ulong.Parse(guildId));
-
-            if (getguild != null)
-            {
-                string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
-
-                int pageSize = 25;
-                int pageNumber = 1;
-
-                if (userInput.StartsWith(">"))
-                {
-                    if (int.TryParse(userInput.TrimStart('>'), out int parsedPage) && parsedPage > 0)
-                    {
-                        pageNumber = parsedPage;
-                        userInput = "";
-                    }
-                }
-
-                var filteredRoles = getguild.Roles
-                    .Where(r => r.Name.ToLower().Contains(userInput))
-                    .OrderBy(r => r.Name)
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(r => new AutocompleteResult(r.Name, r.Name))
-                    .ToArray();
-
-                if (filteredRoles.Length == 0 && pageNumber > 1)
-                {
-                    pageNumber = (getguild.Roles.Count() / pageSize) + 1;
-                    filteredRoles = getguild.Roles
-                        .OrderBy(r => r.Name)
-                        .Skip((pageNumber - 1) * pageSize)
-                        .Take(pageSize)
-                        .Select(r => new AutocompleteResult(r.Name, r.Name))
-                        .ToArray();
-                }
-
-                await interaction.RespondAsync(filteredRoles);
-            }
-            else
-            {
-                await interaction.RespondAsync(new AutocompleteResult[0]);
-            }
-        }*/
     }
 
     public static SlashCommandOptionBuilder BuildListItemsOption()
@@ -1424,20 +1366,17 @@ public static class BotCommands
 
                         bool IsValidUrl(string url) => url.Contains(baseUrl + "/room");
 
-                        // Vérification si l'URL peut être ajoutée
                         async Task<bool> CanAddUrlAsync(string guildId, string channelId)
                         {
                             var checkIfChannelExistsAsync = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
-                            return !checkIfChannelExistsAsync; // Retourne true si l'URL peut être ajoutée
+                            return !checkIfChannelExistsAsync; 
                         }
 
-                        // Méthode pour valider l'URL, récupérer les informations à partir du HTML avec Regex
                         async Task<(bool isValid, string pageContent)> IsAllUrlIsValidAsync(string newUrl)
                         {
                             using HttpClient client = new();
                             string pageContent = await client.GetStringAsync(newUrl);
 
-                            // Recherche du port avec Regex
                             var portMatch = Regex.Match(pageContent, @"/connect archipelago\.gg:(\d+)");
                             if (portMatch.Success)
                             {
@@ -1447,20 +1386,17 @@ public static class BotCommands
                             else
                             {
                                 Console.WriteLine("Port non trouvé.");
-                                return (false, pageContent); // Retourne false si port non trouvé
+                                return (false, pageContent); 
                             }
 
-                            // Recherche des URLs de Tracker (Multiworld Tracker) avec Regex
                             trackerUrl = ExtractUrl(pageContent, "Multiworld Tracker");
                             sphereTrackerUrl = ExtractUrl(pageContent, "Sphere Tracker");
 
-                            // Si les URLs de Tracker ou SphereTracker sont invalides ou manquantes
                             if (string.IsNullOrEmpty(trackerUrl) || string.IsNullOrEmpty(sphereTrackerUrl) || string.IsNullOrEmpty(port))
                             {
-                                return (false, pageContent); // Retourne false si l'une des URLs ou le port est manquant
+                                return (false, pageContent); 
                             }
 
-                            // Compléter les URL si elles ne commencent pas par "http"
                             if (!trackerUrl.StartsWith("http"))
                             {
                                 trackerUrl = baseUrl + trackerUrl;
@@ -1470,10 +1406,9 @@ public static class BotCommands
                                 sphereTrackerUrl = baseUrl + sphereTrackerUrl;
                             }
 
-                            return (true, pageContent); // Retourne true si tout est valide
+                            return (true, pageContent);
                         }
 
-                        // Fonction d'extraction d'URL à partir du contenu HTML avec Regex
                         string? ExtractUrl(string htmlContent, string linkText)
                         {
                             var match = Regex.Match(htmlContent, $@"<a[^>]*>.*{linkText}.*</a>", RegexOptions.IgnoreCase);
@@ -1508,7 +1443,6 @@ public static class BotCommands
                                 }
                                 else
                                 {
-                                    // Appel à IsAllUrlIsValidAsync pour récupérer la page et vérifier la validité
                                     var (isValid, pageContent) = await IsAllUrlIsValidAsync(newUrl);
 
                                     if (!isValid)
@@ -1537,19 +1471,14 @@ public static class BotCommands
 
                                         channelId = thread.Id.ToString();
 
-                                        List<IGuildUser> allMembers = new List<IGuildUser>();
-
                                         await foreach (var memberBatch in channel.GetUsersAsync())
                                         {
-                                            allMembers.AddRange(memberBatch);
+                                            foreach (var member in memberBatch)
+                                            {
+                                                await thread.AddUserAsync(member);
+                                            }
                                         }
 
-                                        foreach (var member in allMembers)
-                                        {
-                                            await thread.AddUserAsync(member);
-                                        }
-
-                                        // Extraction des lignes de la page HTML pour récupérer les alias de jeu et les liens de patch
                                         var rowsMatch = Regex.Matches(pageContent, @"<tr[^>]*>.*?</tr>", RegexOptions.Singleline);
                                         var patchLinkList = new List<Patch>();
 
@@ -1568,12 +1497,7 @@ public static class BotCommands
                                                 var downloadLinkMatch = Regex.Match(downloadLinkHtml, @"href=\""(.*?)\""");
                                                 string downloadLink = downloadLinkMatch.Success ? downloadLinkMatch.Groups[1].Value.Trim() : "Aucun fichier";
 
-                                                if (string.IsNullOrEmpty(downloadLink))
-                                                {
-                                                    downloadLink = "Aucun fichier";
-                                                }
-
-                                                if(downloadLink.Equals("Aucun fichier"))
+                                                if (string.IsNullOrEmpty(downloadLink) || downloadLink.Equals("Aucun fichier"))
                                                 {
                                                     continue;
                                                 }
@@ -1584,7 +1508,7 @@ public static class BotCommands
                                                 {
                                                     GameAlias = gameAlias,
                                                     GameName = gameName,
-                                                    PatchLink = baseUrl + downloadLink 
+                                                    PatchLink = baseUrl + downloadLink
                                                 };
 
                                                 patchLinkList.Add(patchLink);
@@ -1594,22 +1518,11 @@ public static class BotCommands
                                         if (!string.IsNullOrEmpty(trackerUrl) && !string.IsNullOrEmpty(sphereTrackerUrl))
                                         {
                                             await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, newUrl, trackerUrl, sphereTrackerUrl, silent);
+                                            await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
+                                            await TrackingDataManager.SetAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
+                                            await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
+                                            await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
 
-                                            if (patchLinkList.Any())
-                                            {
-                                                await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
-                                            }
-
-                                            if (!string.IsNullOrEmpty(trackerUrl))
-                                            {
-                                                await TrackingDataManager.setAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
-                                                await TrackingDataManager.checkGameStatus(guildId, channelId, trackerUrl, silent);
-                                            }
-
-                                            if (!string.IsNullOrEmpty(sphereTrackerUrl))
-                                            {
-                                                await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
-                                            }
                                         }
 
                                         message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
@@ -1623,8 +1536,6 @@ public static class BotCommands
                         }
 
                         break;
-
-
 
                     case "list-yamls":
                         string playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
@@ -1763,9 +1674,7 @@ public static class BotCommands
                             File.Delete(filePath);
                         }
 
-                        using (HttpClient httpClient = new HttpClient())
-                        {
-                            var response = await httpClient.GetAsync(attachment.Url);
+                        using (var response = await Declare.HttpClient.GetAsync(attachment.Url))
                             if (response.IsSuccessStatusCode)
                             {
                                 await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
@@ -1778,7 +1687,6 @@ public static class BotCommands
                             {
                                 message = "❌ Échec du téléchargement du fichier.";
                             }
-                        }
                         break;
 
                     case "download-template":
@@ -1828,39 +1736,27 @@ public static class BotCommands
                     case "apworlds-info":
                         var infoSelected = command.Data.Options.FirstOrDefault()?.Value as string;
 
-                        List<ApWorldJsonList> sections;
-                        try
+                        if (infoSelected == null)
                         {
-                            sections = Declare.ApworldsInfo;
-                        }
-                        catch
-                        {
-                            message = "Erreur lors du chargement du JSON.";
+                            message = "❌ Aucun fichier sélectionné.";
                             break;
                         }
 
-                        var selectedSection = sections.FirstOrDefault(s => s.Title == infoSelected);
+                        var selectedSection = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected);
 
-                        if (selectedSection == null)
+                        if (string.IsNullOrWhiteSpace(selectedSection))
                         {
-                            message = "Titre non trouvé.";
+                            message = "❌ Aucun fichier sélectionné.";
                             break;
                         }
+                        message = selectedSection;
 
-                        message = $"**{selectedSection.Title}**\n\n";
-
-                        foreach (var item in selectedSection.Items)
+                        if (string.IsNullOrWhiteSpace(selectedSection))
                         {
-                            if (!string.IsNullOrWhiteSpace(item.Link))
-                            {
-                                message += $"• {item.Text} — [Link]({item.Link})\n";
-                            }
-                            else
-                            {
-                                message += $"• {item.Text}\n";
-                            }
+                            message = "❌ Aucun fichier sélectionné.";
+                            break;
                         }
-
+                        message = selectedSection;
                         break;
 
                     case "backup-apworld":
@@ -1919,8 +1815,7 @@ public static class BotCommands
                             File.Delete(filePath);
                         }
 
-                        using (HttpClient httpClient = new HttpClient())
-                        using (var response = await httpClient.GetAsync(attachment.Url))
+                        using (var response = await Declare.HttpClient.GetAsync(attachment.Url))
                         using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
                         {
                             await response.Content.CopyToAsync(fs);
@@ -2082,8 +1977,7 @@ public static class BotCommands
 
                         Directory.CreateDirectory(playersFolderChannel);
 
-                        using (HttpClient httpClient = new HttpClient())
-                        using (var response = await httpClient.GetAsync(attachment.Url))
+                        using (var response = await Declare.HttpClient.GetAsync(attachment.Url))
                         using (var fs = new FileStream(filePath, FileMode.Create))
                         {
                             await response.Content.CopyToAsync(fs);

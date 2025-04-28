@@ -93,7 +93,6 @@ public static class AliasChoicesCommands
             {
                 await connection.OpenAsync();
 
-                // Requête SQL pour récupérer tous les alias
                 using (var command = new SQLiteCommand(connection))
                 {
                     command.CommandText = @"
@@ -107,7 +106,6 @@ public static class AliasChoicesCommands
 
                     using (var reader = await command.ExecuteReaderAsync())
                     {
-                        // Lecture des résultats et ajout des alias à la liste
                         while (await reader.ReadAsync())
                         {
                             var alias = reader["Alias"].ToString();

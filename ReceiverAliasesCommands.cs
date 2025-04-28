@@ -211,16 +211,13 @@ public static class ReceiverAliasesCommands
                         var alias = reader["Alias"].ToString();
                         var recapListTableId = Convert.ToInt64(reader["RecapListTableId"]);
 
-                        // Si un alias spécifique est fourni, on ne cherche que cet alias
                         if (!string.IsNullOrEmpty(specificAlias) && alias != specificAlias)
                         {
-                            continue; // Ignorer cet alias, car ce n'est pas celui recherché
+                            continue;
                         }
 
-                        // Initialiser la liste des items pour chaque alias
                         var items = new List<string>();
 
-                        // Requête pour récupérer les items associés à cet alias via RecapListItemsTable
                         var itemsQuery = @"
                     SELECT Item
                     FROM RecapListItemsTable
@@ -237,13 +234,12 @@ public static class ReceiverAliasesCommands
                                     var item = itemReader["Item"] as string;
                                     if (!string.IsNullOrEmpty(item))
                                     {
-                                        items.Add(item); // Ajouter l'item à la liste de cet alias
+                                        items.Add(item);
                                     }
                                 }
                             }
                         }
 
-                        // Ajouter l'alias et sa liste d'items si des items ont été trouvés
                         if (items.Count > 0)
                         {
                             if(alias == null)

@@ -51,30 +51,43 @@ public static class GameStatusCommands
         return gameStatuses;
     }
 
-    public static async Task<GameStatus> GetGameStatusByName(string guildId, string channelId, string name)
+    public static async Task<Dictionary<string, GameStatus>> GetStatusesByNamesAsync(string guildId, string channelId, List<string> names)
     {
-        GameStatus gameStatus = new GameStatus();
+        var statuses = new Dictionary<string, GameStatus>();
+
+        if (names == null || names.Count == 0)
+            return statuses;
+
         try
         {
             using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
             {
                 await connection.OpenAsync();
+
+                var parameters = string.Join(", ", names.Select((_, i) => $"@Name{i}"));
+
                 using (var command = new SQLiteCommand(connection))
                 {
-                    command.CommandText = @"
+                    command.CommandText = $@"
                     SELECT Hashtag, Name, Game, Status, Checks, Percent, LastActivity
                     FROM GameStatusTable
                     WHERE GuildId = @GuildId
                       AND ChannelId = @ChannelId
-                      AND Name = @Name";
+                      AND Name IN ({parameters})";
+
                     command.Parameters.AddWithValue("@GuildId", guildId);
                     command.Parameters.AddWithValue("@ChannelId", channelId);
-                    command.Parameters.AddWithValue("@Name", name);
+
+                    for (int i = 0; i < names.Count; i++)
+                    {
+                        command.Parameters.AddWithValue($"@Name{i}", names[i]);
+                    }
+
                     using (var reader = await command.ExecuteReaderAsync())
                     {
-                        if (await reader.ReadAsync())
+                        while (await reader.ReadAsync())
                         {
-                            gameStatus = new GameStatus
+                            var status = new GameStatus
                             {
                                 Hashtag = reader["Hashtag"]?.ToString() ?? string.Empty,
                                 Name = reader["Name"]?.ToString() ?? string.Empty,
@@ -84,6 +97,8 @@ public static class GameStatusCommands
                                 Percent = reader["Percent"]?.ToString() ?? string.Empty,
                                 LastActivity = reader["LastActivity"]?.ToString() ?? string.Empty
                             };
+
+                            statuses[status.Name] = status;
                         }
                     }
                 }
@@ -91,43 +106,57 @@ public static class GameStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des informations de statut du jeu : {ex.Message}");
+            Console.WriteLine($"Erreur lors de la récupération des GameStatus multiples : {ex.Message}");
         }
-        return gameStatus;
+
+        return statuses;
     }
 
-    public static async Task<bool> IsGameExistForGuildAndChannelAsync(string guildId, string channelId, string game)
+    public static async Task<HashSet<string>> GetExistingGameNamesAsync(string guildId, string channelId, List<string> games)
     {
+        var existingGames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (games == null || games.Count == 0)
+            return existingGames;
+
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            using var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;");
+            await connection.OpenAsync();
+
+            var parameterNames = games.Select((_, index) => $"@Game{index}").ToArray();
+            var inClause = string.Join(", ", parameterNames);
+
+            var commandText = $@"
+            SELECT Game
+            FROM GameStatusTable
+            WHERE GuildId = @GuildId
+              AND ChannelId = @ChannelId
+              AND Game IN ({inClause})";
+
+            using var command = new SQLiteCommand(commandText, connection);
+
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+
+            for (int i = 0; i < games.Count; i++)
             {
-                await connection.OpenAsync();
+                command.Parameters.AddWithValue($"@Game{i}", games[i]);
+            }
 
-                using (var command = new SQLiteCommand(connection))
-                {
-                    command.CommandText = @"
-                    SELECT COUNT(1)
-                    FROM GameStatusTable
-                    WHERE GuildId = @GuildId
-                      AND ChannelId = @ChannelId
-                      AND Game = @Game";
-
-                    command.Parameters.AddWithValue("@GuildId", guildId);
-                    command.Parameters.AddWithValue("@ChannelId", channelId);
-                    command.Parameters.AddWithValue("@Game", game);
-
-                    var result = await command.ExecuteScalarAsync();
-
-                    return Convert.ToInt32(result) > 0;
-                }
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var gameName = reader.GetString(0);
+                existingGames.Add(gameName);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la vérification de l'existence du jeu : {ex.Message}");
-            return false;
+            Console.WriteLine($"Erreur lors de la récupération des jeux existants : {ex.Message}");
         }
+
+        return existingGames;
     }
 
     public static async Task<bool> IsNameExistForGuildAndChannelAsync(string guildId, string channelId, string name)
