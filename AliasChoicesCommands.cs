@@ -1,0 +1,131 @@
+﻿using Discord;
+using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Text;
+using System.Threading.Tasks;
+
+public static class AliasChoicesCommands
+{
+    public static async Task<string?> GetGameForAliasAsync(string guildId, string channelId, string alias)
+    {
+        try
+        {
+            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            {
+                await connection.OpenAsync();
+
+                var query = @"
+                SELECT Game 
+                FROM AliasChoicesTable 
+                WHERE GuildId = @GuildId 
+                  AND ChannelId = @ChannelId 
+                  AND Alias = @Alias";
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@GuildId", guildId);
+                    command.Parameters.AddWithValue("@ChannelId", channelId);
+                    command.Parameters.AddWithValue("@Alias", alias);
+
+                    var result = await command.ExecuteScalarAsync();
+
+                    return result?.ToString();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la récupération du Game pour l'alias : {ex.Message}");
+            return null;
+        }
+    }
+
+    public static async Task AddOrReplaceAliasChoiceAsync(string guildId, string channelId, List<Dictionary<string, string>> gameStatus)
+    {
+        try
+        {
+            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            {
+                await connection.OpenAsync();
+
+                using (var transaction = await connection.BeginTransactionAsync())
+                using (var command = new SQLiteCommand(connection))
+                {
+                    command.CommandText = @"
+                    INSERT OR REPLACE INTO AliasChoicesTable (GuildId, ChannelId, Alias, Game)
+                    VALUES (@GuildId, @ChannelId, @Alias, @Game)";
+
+                    command.Parameters.AddWithValue("@GuildId", guildId);
+                    command.Parameters.AddWithValue("@ChannelId", channelId);
+                    var aliasParam = command.Parameters.Add("@Alias", System.Data.DbType.String);
+                    var gameParam = command.Parameters.Add("@Game", System.Data.DbType.String);
+
+                    foreach (var games in gameStatus)
+                    {
+                        foreach (var game in games)
+                        {
+                            aliasParam.Value = game.Key;
+                            gameParam.Value = game.Value;
+                            await command.ExecuteNonQueryAsync();
+                        }
+                    }
+
+                    await transaction.CommitAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de l'ajout ou remplacement du choix d'alias : {ex.Message}");
+        }
+    }
+
+    public static async Task<List<string>> GetAliasesForGuildAndChannelAsync(string guildId, string channelId)
+    {
+        var aliases = new List<string>();
+
+        try
+        {
+            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            {
+                await connection.OpenAsync();
+
+                // Requête SQL pour récupérer tous les alias
+                using (var command = new SQLiteCommand(connection))
+                {
+                    command.CommandText = @"
+                    SELECT Alias
+                    FROM AliasChoicesTable
+                    WHERE GuildId = @GuildId
+                      AND ChannelId = @ChannelId";
+
+                    command.Parameters.AddWithValue("@GuildId", guildId);
+                    command.Parameters.AddWithValue("@ChannelId", channelId);
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        // Lecture des résultats et ajout des alias à la liste
+                        while (await reader.ReadAsync())
+                        {
+                            var alias = reader["Alias"].ToString();
+                            if (!string.IsNullOrEmpty(alias))
+                            {
+                                aliases.Add(alias);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la récupération des alias : {ex.Message}");
+        }
+
+        return aliases;
+    }
+
+}

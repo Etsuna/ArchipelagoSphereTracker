@@ -43,34 +43,6 @@ public static class DataManager
         File.WriteAllText(filePath, json);
     }
 
-    public static void LoadDisplayedItems() => LoadData(Declare.DisplayedItemsFile, ref Declare.DisplayedItems);
-
-    public static void SaveDisplayedItems() => SaveData(Declare.DisplayedItemsFile, Declare.DisplayedItems);
-
-    public static void LoadReceiverAliases() => LoadData(Declare.AliasFile, ref Declare.ReceiverAliases, data => data.Guild.Clear());
-
-    public static void SaveReceiverAliases() => SaveData(Declare.AliasFile, Declare.ReceiverAliases, Formatting.Indented);
-
-    public static void LoadUrlAndChannel() => LoadData(Declare.UrlChannelFile, ref Declare.ChannelAndUrl, data => data.Guild.Clear());
-
-    public static void SaveChannelAndUrl() => SaveData(Declare.UrlChannelFile, Declare.ChannelAndUrl, Formatting.Indented);
-
-    public static void SaveRecapList() => SaveData(Declare.RecapListFile, Declare.RecapList);
-
-    public static void LoadRecapList() => LoadData(Declare.RecapListFile, ref Declare.RecapList, data => data.Guild.Clear());
-
-    public static void SaveAliasChoices() => SaveData(Declare.AliasChoicesFile, Declare.AliasChoices);
-
-    public static void LoadAliasChoices() => LoadData(Declare.AliasChoicesFile, ref Declare.AliasChoices, data => data.Guild.Clear());
-
-    public static void SaveGameStatus() => SaveData(Declare.GameStatusFile, Declare.GameStatus);
-
-    public static void LoadGameStatus() => LoadData(Declare.GameStatusFile, ref Declare.GameStatus, data => data.Guild.Clear());
-
-    public static void LoadHintStatus() => LoadData(Declare.HintStatusFile, ref Declare.HintStatuses, data => data.Guild.Clear());
-
-    public static void SaveHintStatus() => SaveData(Declare.HintStatusFile, Declare.HintStatuses);
-
     public static void LoadItemsTable() => LoadData(Declare.ItemsTableFile, ref Declare.ItemsTable);
 
     public static void LoadApWorldJsonList() => LoadApWorld(ref Declare.ApworldsInfo);

@@ -26,6 +26,8 @@ class Program
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
+        DatabaseInitializer.InitializeDatabase();
+
         if (currentVersion.Trim() == Version)
         {
             Console.WriteLine($"Archipelago {Version} est déjà installé.");
@@ -331,15 +333,8 @@ class Program
 
         await BotCommands.InstallCommandsAsync();
 
-        DataManager.LoadReceiverAliases();
-        DataManager.LoadAliasChoices();
-        DataManager.LoadGameStatus();
-        DataManager.LoadUrlAndChannel();
-        DataManager.LoadRecapList();
-        DataManager.LoadHintStatus();
-        DataManager.LoadDisplayedItems();
-        DataManager.LoadApWorldJsonList();
-        DataManager.LoadItemsTable();
+/*        DataManager.LoadApWorldJsonList();
+        DataManager.LoadItemsTable();*/
 
         await Declare.Client.LoginAsync(TokenType.Bot, Declare.DiscordToken);
         await Declare.Client.StartAsync();

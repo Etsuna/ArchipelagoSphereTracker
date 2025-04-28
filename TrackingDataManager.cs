@@ -1,8 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using HtmlAgilityPack;
 using System.Globalization;
 using System.Net;
+using System.Web;
+using System.Text.RegularExpressions;
 
 public static class TrackingDataManager
 {
@@ -24,16 +25,18 @@ public static class TrackingDataManager
                 {
                     Declare.ServiceRunning = true;
 
-                    foreach (var guild in Declare.ChannelAndUrl.Guild)
+                    var getAllGuild = await DatabaseCommands.GetAllGuildsAsync("ChannelsAndUrlsTable");
+
+                    foreach (var guild in getAllGuild)
                     {
-                        var guildCheck = Declare.Client.GetGuild(ulong.Parse(guild.Key));
+                        var guildCheck = Declare.Client.GetGuild(ulong.Parse(guild));
                         if (guildCheck != null)
                         {
-                            foreach (var urls in guild.Value.Channel)
+                            var getAllChannel = await DatabaseCommands.GetAllChannelsAsync(guild, "ChannelsAndUrlsTable");
+
+                            foreach (var channel in getAllChannel)
                             {
-                                var channel = urls.Key;
-                                var urlSphereTracker = urls.Value.SphereTracker;
-                                var urlTracker = urls.Value.Tracker;
+                                var (urlTracker, urlSphereTracker, room, silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guild, channel);
 
                                 var channelCheck = guildCheck.GetChannel(ulong.Parse(channel));
 
@@ -84,7 +87,7 @@ public static class TrackingDataManager
                                         {
                                             Console.WriteLine($"Dernière activité : {lastActivity}");
                                             Console.WriteLine("Aucune activité depuis 7 jours, suppression du thread...");
-                                            await BotCommands.DeleteChannelAndUrl(channel, guild.Key);
+                                            await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
                                             await thread.DeleteAsync();
                                             Console.WriteLine("Thread supprimé.");
 
@@ -93,22 +96,22 @@ public static class TrackingDataManager
                                         }
                                     }
 
-                                    await setAliasAndGameStatusAsync(guild.Key, channel, urlTracker);
-                                    await checkGameStatus(guild.Key, channel, urlTracker);
-                                    await GetTableDataAsync(guild.Key, channel, urlSphereTracker);
+                                    await setAliasAndGameStatusAsync(guild, channel, urlTracker, silent);
+                                    await checkGameStatus(guild, channel, urlTracker, silent);
+                                    await GetTableDataAsync(guild, channel, urlSphereTracker, silent);
                                 }
                                 else
                                 {
                                     Console.WriteLine($"Le salon n'existe plus, Suppression des informations Channel:{channel}.");
-                                    await BotCommands.DeleteChannelAndUrl(channel, guild.Key);
+                                    await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
                                     Console.WriteLine($"Suppression effectuée");
                                 }
                             }
                         }
                         else
                         {
-                            Console.WriteLine($"Serveur introuvable {guild.Key}, Suppression des informations.");
-                            await BotCommands.DeleteChannelAndUrl(null, guild.Key);
+                            Console.WriteLine($"Serveur introuvable {guild}, Suppression des informations.");
+                            await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guild);
                             Console.WriteLine($"Suppression effectuée");
                         }
                     }
@@ -124,133 +127,110 @@ public static class TrackingDataManager
 
     }
 
-    public static async Task GetTableDataAsync(string guild, string channel, string url)
+    public static async Task GetTableDataAsync(string guild, string channel, string url, bool silent)
     {
-        bool isUpdated = false;
-        var haveDisplayStatus = Declare.DisplayedItems.Guild.TryGetValue(guild, out var guildItemSave) && guildItemSave.Channel.TryGetValue(channel, out var channelGamesSave);
+        var checkIfChannelExistsAsync = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
 
         using var clientHttp = new HttpClient();
         var html = await clientHttp.GetStringAsync(url);
-        var doc = new HtmlDocument();
-        doc.LoadHtml(html);
 
-        var rows = doc.DocumentNode.SelectNodes("//table//tr");
-        if (rows == null) return;
+        var rowPattern = new Regex(@"<tr>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        var cellPattern = new Regex(@"<td.*?>(.*?)</td>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-        EnsureDictionaryStructureTableDataAsync(guild, channel);
-
-        foreach (var row in rows)
+        var rows = rowPattern.Matches(html);
+        if (rows.Count == 0)
         {
-            var cells = row.SelectNodes("td");
-            if (cells?.Count != 6) continue;
+            if (!checkIfChannelExistsAsync)
+            {
+                await BotCommands.SendMessageAsync("BOT Ready!", channel);
+            }
+            return;
+        }
+
+        var existingItems = await DisplayItemCommands.GetAllItemsAsync(guild, channel);
+        var existingKeys = new HashSet<string>(
+            existingItems.Select(x => $"{x.Sphere}|{x.Finder}|{x.Receiver}|{x.Item}|{x.Location}|{x.Game}")
+        );
+
+        var newItems = new List<DisplayedItem>();
+
+        foreach (Match rowMatch in rows)
+        {
+            var cells = cellPattern.Matches(rowMatch.Groups[1].Value);
+            if (cells.Count != 6) continue;
 
             var newItem = new DisplayedItem
             {
-                Sphere = WebUtility.HtmlDecode(cells[0].InnerText.Trim()),
-                Finder = WebUtility.HtmlDecode(cells[1].InnerText.Trim()),
-                Receiver = WebUtility.HtmlDecode(cells[2].InnerText.Trim()),
-                Item = WebUtility.HtmlDecode(cells[3].InnerText.Trim()),
-                Location = WebUtility.HtmlDecode(cells[4].InnerText.Trim()),
-                Game = WebUtility.HtmlDecode(cells[5].InnerText.Trim())
+                Sphere = HttpUtility.HtmlDecode(cells[0].Groups[1].Value.Trim()),
+                Finder = HttpUtility.HtmlDecode(cells[1].Groups[1].Value.Trim()),
+                Receiver = HttpUtility.HtmlDecode(cells[2].Groups[1].Value.Trim()),
+                Item = HttpUtility.HtmlDecode(cells[3].Groups[1].Value.Trim()),
+                Location = HttpUtility.HtmlDecode(cells[4].Groups[1].Value.Trim()),
+                Game = HttpUtility.HtmlDecode(cells[5].Groups[1].Value.Trim())
             };
 
-            if (!IsItemExists(guild, channel, newItem))
+            var key = $"{newItem.Sphere}|{newItem.Finder}|{newItem.Receiver}|{newItem.Item}|{newItem.Location}|{newItem.Game}";
+
+            if (!existingKeys.Contains(key))
             {
-                isUpdated = true;
-                Declare.DisplayedItems.Guild[guild].Channel[channel].Add(newItem);
-                string message = BuildMessage(guild, channel, newItem);
+                newItems.Add(newItem);
+            }
+        }
 
-                UpdateRecapList(guild, channel, newItem.Receiver, newItem.Item);
+        if (newItems.Any())
+        {
+            await DisplayItemCommands.AddItemsAsync(newItems, guild, channel);
+            await UpdateRecapList(guild, channel, newItems);
 
-                if (haveDisplayStatus)
+            if (checkIfChannelExistsAsync)
+            {
+                foreach (var item in newItems)
                 {
-                    await BotCommands.SendMessageAsync(message, channel);
+                    var message = await BuildMessageAsync(guild, channel, item, silent);
+                    if (!string.IsNullOrWhiteSpace(message))
+                    {
+                        await BotCommands.SendMessageAsync(message, channel);
+                    }
                 }
             }
         }
 
-        if (isUpdated || !haveDisplayStatus)
-        {
-            DataManager.SaveRecapList();
-            DataManager.SaveDisplayedItems();
-        }
-
-        if (!haveDisplayStatus)
+        if (!checkIfChannelExistsAsync)
         {
             await BotCommands.SendMessageAsync("BOT Ready!", channel);
         }
     }
 
-
-    private static void EnsureDictionaryStructureTableDataAsync(string guild, string channel)
+    private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
     {
-        if (!Declare.DisplayedItems.Guild.TryGetValue(guild, out var channelDisplayedItem))
+        if(!silent)
         {
-            channelDisplayedItem = new ChannelDisplayedItem();
-            Declare.DisplayedItems.Guild[guild] = channelDisplayedItem;
+            if (item.Finder == item.Receiver)
+                return $"{item.Finder} found their {item.Item} ({item.Location})";
         }
-
-        if (!channelDisplayedItem.Channel.ContainsKey(channel))
+        var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, item.Receiver);
+        if (userIds.Count > 0)
         {
-            channelDisplayedItem.Channel[channel] = new List<DisplayedItem>();
-        }
-
-        if (!Declare.ReceiverAliases.Guild.TryGetValue(guild, out var channelReceiverAliases))
-        {
-            channelReceiverAliases = new ChannelReceiverAliases();
-            Declare.ReceiverAliases.Guild[guild] = channelReceiverAliases;
-        }
-
-        if (!channelReceiverAliases.Channel.ContainsKey(channel))
-        {
-            channelReceiverAliases.Channel[channel] = new ReceiverAlias();
-        }
-    }
-
-
-    private static bool IsItemExists(string guild, string channel, DisplayedItem newItem)
-    {
-        if (!Declare.DisplayedItems.Guild.TryGetValue(guild, out var channelItems) ||
-            !channelItems.Channel.TryGetValue(channel, out var items))
-        {
-            return false;
-        }
-
-        foreach (var item in items)
-        {
-            if (item.Sphere == newItem.Sphere &&
-                item.Finder == newItem.Finder &&
-                item.Receiver == newItem.Receiver &&
-                item.Item == newItem.Item &&
-                item.Location == newItem.Location &&
-                item.Game == newItem.Game)
+            if(silent)
             {
-                return true;
+                if (item.Finder == item.Receiver)
+                    return $"{item.Finder} found their {item.Item} ({item.Location})";
             }
-        }
 
-        return false;
-    }
-
-    private static string BuildMessage(string guild, string channel, DisplayedItem item)
-    {
-        if (item.Finder == item.Receiver)
-            return $"{item.Finder} found their {item.Item} ({item.Location})";
-
-        var aliases = Declare.ReceiverAliases.Guild;
-        if (aliases.TryGetValue(guild, out var guildData) &&
-            guildData.Channel.TryGetValue(channel, out var channelData) &&
-            channelData.receiverAlias.TryGetValue(item.Receiver, out var userIds))
-        {
             var mentions = string.Join(" ", userIds.Keys.Select(id => $"<@{id}>"));
 
-            var getGameName = Declare.AliasChoices.Guild[guild].Channel[channel].aliasChoices[item.Receiver].FirstOrDefault(x => x.Key.Equals(item.Receiver)).Value;
+            var getGameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver);
 
-            if(userIds.ContainsValue(true))
+            if (userIds.ContainsValue(true))
             {
-                Declare.ItemsTable.TryGetValue(getGameName, out var gameDataTest);
+                if(string.IsNullOrWhiteSpace(getGameName))
+                {
+                    return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
+                }
 
-                if (gameDataTest != null && gameDataTest.filler != null && gameDataTest.filler.Contains(item.Item))
+                Declare.ItemsTable.TryGetValue(getGameName, out var itemList);
+
+                if (itemList != null && itemList.filler != null && itemList.filler.Contains(item.Item))
                 {
                     return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
                 }
@@ -259,286 +239,288 @@ public static class TrackingDataManager
             return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
         }
 
+        if(silent)
+        {
+            return string.Empty;
+        }
         return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
     }
 
-    private static void UpdateRecapList(string guild, string channel, string receiver, string item)
+    private static async Task UpdateRecapList(string guild, string channel, List<DisplayedItem> items)
     {
-        if (!Declare.RecapList.Guild.TryGetValue(guild, out var channelRecapList))
-        {
-            channelRecapList = new ChannelRecapList();
-            Declare.RecapList.Guild[guild] = channelRecapList;
-        }
+        var newItems = new List<DisplayedItem>();
 
-        if (!channelRecapList.Channel.TryGetValue(channel, out var userRecapList))
+        foreach (var item in items)
         {
-            userRecapList = new UserRecapList();
-            channelRecapList.Channel[channel] = userRecapList;
-        }
+            var usersIds = await ReceiverAliasesCommands.GetAllUsersIds(guild, channel, item.Receiver);
 
-        if (!Declare.ReceiverAliases.Guild.TryGetValue(guild, out var channelReceiverAliases) ||
-            !channelReceiverAliases.Channel.TryGetValue(channel, out var receiverAlias) ||
-            !receiverAlias.receiverAlias.TryGetValue(receiver, out var userIds))
-        {
-            return;
-        }
-
-        foreach (var userId in userIds.Keys)
-        {
-            if (!userRecapList.Aliases.TryGetValue(userId, out var userItems))
+            if (usersIds.Count == 0)
             {
-                userItems = new List<RecapList> { new RecapList { Alias = receiver, Items = new List<string> { item } } };
-                userRecapList.Aliases[userId] = userItems;
+                return;
             }
-            else
+
+            foreach (var userId in usersIds)
             {
-                var itemToAdd = userItems.Find(e => e.Alias == receiver);
-                if (itemToAdd == null)
+                var checkRecapList = await RecapListCommands.CheckIfExists(guild, channel, userId, item.Receiver);
+                if (!checkRecapList)
                 {
-                    userItems.Add(new RecapList { Alias = receiver, Items = new List<string> { item } });
+                    await RecapListCommands.AddOrEditRecapListAsync(guild, channel, userId, item.Receiver);
                 }
-                else
-                {
-                    itemToAdd.Items.Add(item);
-                    itemToAdd.Items.Remove("Aucun élément");
-                }
+
+                newItems.Add(item);
             }
         }
+
+        await RecapListCommands.AddOrEditRecapListItemsForAllAsync(guild, channel, newItems);
     }
 
-    public static async Task setAliasAndGameStatusAsync(string guild, string channel, string urlTracker)
+    public static async Task setAliasAndGameStatusAsync(string guild, string channel, string urlTracker, bool silent)
     {
-        if (Declare.AliasChoices.Guild.TryGetValue(guild, out var guildAliases) &&
-            guildAliases.Channel.ContainsKey(channel))
-        {
+        var checkIfChannelExistsAsync = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "AliasChoicesTable");
+        if (checkIfChannelExistsAsync)
             return;
-        }
 
-        using var clientHttp = new HttpClient();
-        var html = await clientHttp.GetStringAsync(urlTracker);
-        var doc = new HtmlDocument();
-        doc.LoadHtml(html);
+        using var client = new HttpClient();
+        using var stream = await client.GetStreamAsync(urlTracker);
+        using var reader = new StreamReader(stream);
 
-        var rows = doc.DocumentNode.SelectNodes("//table//tr")?.Skip(1);
-        if (rows == null) return;
-
-        EnsureDictionaryStructureAliasAndGameStatus(guild, channel);
+        var tablePattern = new Regex(@"<table.*?>(.*?)</table>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        var rowPattern = new Regex(@"<tr>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        var cellPattern = new Regex(@"<td.*?>(.*?)</td>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
         var newGameStatuses = new List<GameStatus>();
-        foreach (var row in rows)
+        var gameNameList = new List<Dictionary<string, string>>();
+
+        var html = await reader.ReadToEndAsync();
+        var tableMatches = tablePattern.Matches(html);
+
+        if (tableMatches.Count > 0)
         {
-            var cells = row.SelectNodes("td") ?? row.SelectNodes("th");
-            if (cells == null || cells.Count != 7) continue;
+            var firstTableHtml = tableMatches[0].Groups[1].Value; // Récupère uniquement le contenu du premier tableau
+            var rowMatches = rowPattern.Matches(firstTableHtml);
 
-            var newGameStatus = new GameStatus
+            for (int i = 1; i < rowMatches.Count; i++)
             {
-                Hashtag = WebUtility.HtmlDecode(cells[0].InnerText.Trim()),
-                Name = WebUtility.HtmlDecode(cells[1].InnerText.Trim()),
-                Game = WebUtility.HtmlDecode(cells[2].InnerText.Trim()),
-                Status = WebUtility.HtmlDecode(cells[3].InnerText.Trim()),
-                Checks = WebUtility.HtmlDecode(cells[4].InnerText.Trim()),
-                Percent = WebUtility.HtmlDecode(cells[5].InnerText.Trim()),
-                LastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim())
-            };
+                var rowHtml = rowMatches[i].Groups[1].Value;
+                var cellMatches = cellPattern.Matches(rowHtml);
 
-            var gameName = new Dictionary<string, string>
-            {
-                { newGameStatus.Name, newGameStatus.Game }
-            };
+                if (cellMatches.Count != 7)
+                    continue;
 
-            Declare.AliasChoices.Guild[guild].Channel[channel].aliasChoices.TryAdd(newGameStatus.Name, gameName);
+                // Extraction du Hashtag
+                var hashtagCellHtml = WebUtility.HtmlDecode(cellMatches[0].Groups[1].Value.Trim());
+                var hashtagMatch = Regex.Match(hashtagCellHtml, @">([^<]+)<");
+                var hashtag = hashtagMatch.Success ? hashtagMatch.Groups[1].Value.Trim() : hashtagCellHtml.Trim();
 
-            if (!Declare.GameStatus.Guild[guild].Channel[channel].Any(x => x.Name == newGameStatus.Name))
-            {
-                newGameStatuses.Add(newGameStatus);
+                // Création du nouvel objet GameStatus
+                var newGameStatus = new GameStatus
+                {
+                    Hashtag = hashtag,
+                    Name = WebUtility.HtmlDecode(cellMatches[1].Groups[1].Value.Trim()),
+                    Game = WebUtility.HtmlDecode(cellMatches[2].Groups[1].Value.Trim()),
+                    Status = WebUtility.HtmlDecode(cellMatches[3].Groups[1].Value.Trim()),
+                    Checks = WebUtility.HtmlDecode(cellMatches[4].Groups[1].Value.Trim()),
+                    Percent = WebUtility.HtmlDecode(cellMatches[5].Groups[1].Value.Trim()),
+                    LastActivity = WebUtility.HtmlDecode(cellMatches[6].Groups[1].Value.Trim())
+                };
+
+                gameNameList.Add(new Dictionary<string, string> { { newGameStatus.Name, newGameStatus.Game } });
+
+                var isGameExist = await GameStatusCommands.IsGameExistForGuildAndChannelAsync(guild, channel, newGameStatus.Name);
+                if (!isGameExist)
+                {
+                    newGameStatuses.Add(newGameStatus);
+                }
             }
         }
+
+        await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guild, channel, gameNameList);
 
         if (newGameStatuses.Count > 0)
         {
-            Declare.GameStatus.Guild[guild].Channel[channel].AddRange(newGameStatuses);
-            Declare.GameStatus.Guild[guild].Channel[channel].Sort((x, y) => x.Name.CompareTo(y.Name));
-            DataManager.SaveAliasChoices();
-            DataManager.SaveGameStatus();
+            await GameStatusCommands.AddOrReplaceGameStatusAsync(guild, channel, newGameStatuses);
             await BotCommands.SendMessageAsync("Aliases Updated!", channel);
         }
 
-        if (Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases.Any())
+        if (!silent)
         {
-            foreach (var alias in Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases.Keys)
-            {
-                var gameName = Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases[alias].GameName;
-                var patch = Declare.ChannelAndUrl.Guild[guild].Channel[channel].Aliases[alias].Patch;
-                await BotCommands.SendMessageAsync($"Patch Pour {alias}, {gameName} : {patch}", channel);
-            }
-        }
-    }
-    private static void EnsureDictionaryStructureAliasAndGameStatus(string guild, string channel)
-    {
-        if (!Declare.AliasChoices.Guild.TryGetValue(guild, out var aliasChoices))
-        {
-            aliasChoices = new ChannelAliasChoices();
-            Declare.AliasChoices.Guild[guild] = aliasChoices;
-        }
-
-        if (!aliasChoices.Channel.ContainsKey(channel))
-        {
-            aliasChoices.Channel[channel] = new AliasChoice();
-        }
-
-        if (!Declare.GameStatus.Guild.TryGetValue(guild, out var gameStatus))
-        {
-            gameStatus = new ChannelGameStatus();
-            Declare.GameStatus.Guild[guild] = gameStatus;
-        }
-
-        if (!gameStatus.Channel.ContainsKey(channel))
-        {
-            gameStatus.Channel[channel] = new List<GameStatus>();
+            await ChannelsAndUrlsCommands.SendAllPatchesForChannelAsync(guild, channel);
         }
     }
 
-
-    public static async Task checkGameStatus(string guild, string channel, string urlTracker)
+    public static async Task checkGameStatus(string guild, string channel, string urlTracker, bool silent)
     {
         using var clientHttp = new HttpClient();
-        var html = await clientHttp.GetStringAsync(urlTracker);
-        var doc = new HtmlDocument();
-        doc.LoadHtml(html);
+        using var stream = await clientHttp.GetStreamAsync(urlTracker);
+        using var reader = new StreamReader(stream);
 
-        var tables = doc.DocumentNode.SelectNodes("//table");
-        if (tables == null || tables.Count < 2) return;
+        var html = await reader.ReadToEndAsync();
 
-        EnsureDictionaryStructureHintTable(guild, channel);
+        // Trouver toutes les tables
+        var tableMatches = Regex.Matches(html, @"<table.*?>(.*?)</table>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        if (tableMatches.Count < 2)
+            return;
 
-        bool changeFound = ProcessGameStatusTable(tables[0], guild, channel);
-        if (changeFound) DataManager.SaveGameStatus();
+        var table1Html = tableMatches[0].Groups[1].Value;
+        var table2Html = tableMatches[1].Groups[1].Value;
 
-        changeFound = ProcessHintTable(tables[1], guild, channel);
-        if (changeFound) DataManager.SaveHintStatus();
+        if (!string.IsNullOrEmpty(table1Html))
+        {
+            bool changeFound = await ProcessGameStatusTableAsync(table1Html, guild, channel, silent);
+        }
+
+        if (!string.IsNullOrEmpty(table2Html))
+        {
+            bool changeFound = await ProcessHintTableAsync(table2Html, guild, channel);
+        }
     }
 
-    private static bool ProcessGameStatusTable(HtmlNode gameStatusTable, string guild, string channel)
+    private static async Task<bool> ProcessGameStatusTableAsync(string gameStatusTableHtml, string guild, string channel, bool silent)
     {
-        var rows = gameStatusTable.SelectNodes(".//tr")?.Skip(1);
-        if (rows == null) return false;
+        var rowPattern = new Regex(@"<tr>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        var cellPattern = new Regex(@"<td.*?>(.*?)</td>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+        var rows = rowPattern.Matches(gameStatusTableHtml).Skip(1); // On skippe l'en-tête
+
+        if (!rows.Any()) return false;
 
         bool changeFound = false;
-        var gameStatusList = Declare.GameStatus.Guild[guild].Channel[channel];
+        var newGameStatuses = new List<GameStatus>();
+        var statusChanges = new List<GameStatus>();
 
-        foreach (var row in rows)
+        foreach (Match row in rows)
         {
-            var cells = row.SelectNodes("td") ?? row.SelectNodes("th");
-            if (cells == null || cells.Count != 7) continue;
+            var cells = cellPattern.Matches(row.Groups[1].Value).ToList();
+            if (cells.Count != 7) continue;
 
             var newEntry = new GameStatus
             {
-                Hashtag = WebUtility.HtmlDecode(cells[0].InnerText.Trim()),
-                Name = WebUtility.HtmlDecode(cells[1].InnerText.Trim()),
-                Game = WebUtility.HtmlDecode(cells[2].InnerText.Trim()),
-                Status = WebUtility.HtmlDecode(cells[3].InnerText.Trim()),
-                Checks = WebUtility.HtmlDecode(cells[4].InnerText.Trim()),
-                Percent = WebUtility.HtmlDecode(cells[5].InnerText.Trim()),
-                LastActivity = WebUtility.HtmlDecode(cells[6].InnerText.Trim())
+                Hashtag = WebUtility.HtmlDecode(cells[0].Groups[1].Value.Trim()),
+                Name = WebUtility.HtmlDecode(cells[1].Groups[1].Value.Trim()),
+                Game = WebUtility.HtmlDecode(cells[2].Groups[1].Value.Trim()),
+                Status = WebUtility.HtmlDecode(cells[3].Groups[1].Value.Trim()),
+                Checks = WebUtility.HtmlDecode(cells[4].Groups[1].Value.Trim()),
+                Percent = WebUtility.HtmlDecode(cells[5].Groups[1].Value.Trim()),
+                LastActivity = WebUtility.HtmlDecode(cells[6].Groups[1].Value.Trim())
             };
 
-            var existingStatus = gameStatusList.FirstOrDefault(x => x.Name == newEntry.Name);
+            var existingStatus = await GameStatusCommands.GetGameStatusByName(guild, channel, newEntry.Name);
 
             if (existingStatus == null)
             {
-                gameStatusList.Add(newEntry);
+                newGameStatuses.Add(newEntry);
                 changeFound = true;
             }
-            else if (existingStatus.Status != "Goal Completed")
+            else
             {
+                bool isChanged = false;
+
+                if (existingStatus.Status != newEntry.Status)
+                {
+                    existingStatus.Status = newEntry.Status;
+                    isChanged = true;
+                }
                 if (existingStatus.Percent != newEntry.Percent)
                 {
-                    existingStatus.Checks = newEntry.Checks;
                     existingStatus.Percent = newEntry.Percent;
+                    isChanged = true;
+                }
+                if (existingStatus.Checks != newEntry.Checks)
+                {
+                    existingStatus.Checks = newEntry.Checks;
+                    isChanged = true;
+                }
+                if (existingStatus.LastActivity != newEntry.LastActivity)
+                {
+                    existingStatus.LastActivity = newEntry.LastActivity;
+                    isChanged = true;
+                }
+
+                if (isChanged)
+                {
+                    statusChanges.Add(existingStatus);
                     changeFound = true;
                 }
 
                 if (newEntry.Percent == "100.00" || newEntry.Status == "Goal Complete")
                 {
-                    BotCommands.SendMessageAsync($"@everyone\n{newEntry.Name} has completed their goal for this game: {newEntry.Game}!", channel).Wait();
-                    existingStatus.Status = "Goal Completed";
-                    existingStatus.Percent = "100.00";
-                    changeFound = true;
+                    existingStatus.Status = newEntry.Status;
+                    existingStatus.Percent = newEntry.Percent;
+                    existingStatus.Checks = newEntry.Checks;
+                    existingStatus.LastActivity = newEntry.LastActivity;
+
+                    statusChanges.Add(existingStatus);
+                    if (!silent)
+                    {
+                        await BotCommands.SendMessageAsync($"@everyone\n{newEntry.Name} has completed their goal for this game: {newEntry.Game}!", channel);
+                    }
                 }
             }
         }
 
+        if (newGameStatuses.Any())
+        {
+            await GameStatusCommands.AddOrReplaceGameStatusAsync(guild, channel, newGameStatuses);
+        }
+
+        if (statusChanges.Any())
+        {
+            await GameStatusCommands.UpdateGameStatusBatchAsync(guild, channel, statusChanges);
+        }
+
         return changeFound;
     }
 
-
-    private static bool ProcessHintTable(HtmlNode hintTable, string guild, string channel)
+    private static async Task<bool> ProcessHintTableAsync(string hintTableHtml, string guild, string channel)
     {
-        var rows = hintTable.SelectNodes(".//tr")?.Skip(1);
-        if (rows == null) return false;
+        // Utilisation de Regex pour extraire les lignes de la table <tr> après la première ligne d'en-tête.
+        var rowsMatch = Regex.Matches(hintTableHtml, @"<tr[^>]*>.*?</tr>", RegexOptions.Singleline);
+        if (rowsMatch.Count == 0) return false;
 
         bool changeFound = false;
-        var hintStatuses = Declare.HintStatuses.Guild[guild].Channel[channel];
 
-        foreach (var row in rows)
+        var getHintStatusForGuildAndChannelAsync = new List<HintStatus>();
+
+        foreach (Match rowMatch in rowsMatch)
         {
-            var cells = row.SelectNodes("td") ?? row.SelectNodes("th");
-            if (cells == null || cells.Count != 7) continue;
+            // Extraction des cellules (td) de chaque ligne
+            var cellsMatch = Regex.Matches(rowMatch.Value, @"<td[^>]*>(.*?)</td>", RegexOptions.Singleline);
+            if (cellsMatch.Count != 7) continue; // On vérifie qu'il y a bien 7 cellules
 
             var newHint = new HintStatus
             {
-                Finder = WebUtility.HtmlDecode(cells[0].InnerText.Trim()),
-                Receiver = WebUtility.HtmlDecode(cells[1].InnerText.Trim()),
-                Item = WebUtility.HtmlDecode(cells[2].InnerText.Trim()),
-                Location = WebUtility.HtmlDecode(cells[3].InnerText.Trim()),
-                Game = WebUtility.HtmlDecode(cells[4].InnerText.Trim()),
-                Entrance = WebUtility.HtmlDecode(cells[5].InnerText.Trim()),
-                Found = WebUtility.HtmlDecode(cells[6].InnerText.Trim())
+                Finder = WebUtility.HtmlDecode(cellsMatch[0].Groups[1].Value.Trim()),
+                Receiver = WebUtility.HtmlDecode(cellsMatch[1].Groups[1].Value.Trim()),
+                Item = WebUtility.HtmlDecode(cellsMatch[2].Groups[1].Value.Trim()),
+                Location = WebUtility.HtmlDecode(cellsMatch[3].Groups[1].Value.Trim()),
+                Game = WebUtility.HtmlDecode(cellsMatch[4].Groups[1].Value.Trim()),
+                Entrance = WebUtility.HtmlDecode(cellsMatch[5].Groups[1].Value.Trim()),
+                Found = WebUtility.HtmlDecode(cellsMatch[6].Groups[1].Value.Trim())
             };
 
-            var existingHint = hintStatuses.FirstOrDefault(x => x.Finder == newHint.Finder && x.Receiver == newHint.Receiver &&
-                                                                x.Item == newHint.Item && x.Location == newHint.Location &&
-                                                                x.Game == newHint.Game && x.Entrance == newHint.Entrance);
+            // Vérifier si l'indice existe déjà dans la base de données
+            var existingHint = await HintStatusCommands.CheckIfExists(guild, channel, newHint);
 
-            if (existingHint == null && string.IsNullOrEmpty(newHint.Found))
+            if (!existingHint && string.IsNullOrEmpty(newHint.Found))
             {
-                hintStatuses.Add(newHint);
+                getHintStatusForGuildAndChannelAsync.Add(newHint);
                 changeFound = true;
             }
-            else if (existingHint != null && !string.IsNullOrEmpty(newHint.Found))
+            else if (existingHint && !string.IsNullOrEmpty(newHint.Found))
             {
-                hintStatuses.Remove(existingHint);
+                // Suppression de l'ancien indice si une modification est détectée
+                getHintStatusForGuildAndChannelAsync.Remove(newHint);
                 changeFound = true;
             }
+        }
+
+        if (changeFound)
+        {
+            // Ajouter ou mettre à jour le statut des indices
+            await HintStatusCommands.AddOrReplaceHintStatusAsync(guild, channel, getHintStatusForGuildAndChannelAsync);
         }
 
         return changeFound;
-    }
-
-
-    private static void EnsureDictionaryStructureHintTable(string guild, string channel)
-    {
-        if (!Declare.GameStatus.Guild.TryGetValue(guild, out var gameStatus))
-        {
-            gameStatus = new ChannelGameStatus();
-            Declare.GameStatus.Guild[guild] = gameStatus;
-        }
-
-        if (!gameStatus.Channel.ContainsKey(channel))
-        {
-            gameStatus.Channel[channel] = new List<GameStatus>();
-        }
-
-        if (!Declare.HintStatuses.Guild.TryGetValue(guild, out var hintStatus))
-        {
-            hintStatus = new ChannelHintStatus();
-            Declare.HintStatuses.Guild[guild] = hintStatus;
-        }
-
-        if (!hintStatus.Channel.ContainsKey(channel))
-        {
-            hintStatus.Channel[channel] = new List<HintStatus>();
-        }
     }
 
 }
