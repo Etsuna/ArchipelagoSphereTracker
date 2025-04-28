@@ -10,14 +10,14 @@ public static class GenerateItemsTable
 import os
 import sys
 import importlib
-import json
+import sqlite3
 sys.stdout.reconfigure(encoding='utf-8')
 
 from BaseClasses import MultiWorld
 from worlds.AutoWorld import AutoWorldRegister
 
 # 📁 Adapte ce chemin si besoin
-ARCHIPELAGO_ROOT = r""{ARCHIPELAGO_PATH}""
+ARCHIPELAGO_ROOT = r""{WORLDS_PATH}""
 WORLDS_PATH = os.path.join(ARCHIPELAGO_ROOT, ""worlds"")
 
 # 📌 Ajoute Archipelago à sys.path pour les imports
@@ -141,10 +141,60 @@ def categorize_items(world_class, player: int = 1):
 
     return categorized
 
+def delete_all_items(conn):
+    """"""Supprime tous les items de la table ItemsTable.""""""
+    cursor = conn.cursor()
+    cursor.execute(""""""
+        DELETE FROM ItemsTable;
+    """""")
+    conn.commit()
+
+def connect_db(db_path=r""{BDD_PATH}""):
+    """"""Connexion à la base de données SQLite avec le chemin spécifié.""""""
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row  # Pour accéder aux colonnes par nom
+    return conn
+
+def create_table_if_not_exists(conn):
+    """"""Crée la table ItemsTable si elle n'existe pas.""""""
+    cursor = conn.cursor()
+    cursor.execute(""""""
+        CREATE TABLE IF NOT EXISTS ItemsTable (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            GameName TEXT NOT NULL,
+            Category TEXT NOT NULL,
+            ItemName TEXT NOT NULL,
+            UNIQUE(GameName, Category, ItemName)
+        );
+    """""")
+    conn.commit()
+
+def insert_items_into_db(conn, world_name, categorized_items):
+    """"""Insère les items catégorisés dans la base de données après suppression des anciens.""""""
+   
+    
+    cursor = conn.cursor()
+
+    for category, items in categorized_items.items():
+        for item_name in items:
+            cursor.execute(""""""
+                INSERT OR IGNORE INTO ItemsTable (GameName, Category, ItemName)
+                VALUES (?, ?, ?)
+            """""", (world_name, category, item_name))
+
+    conn.commit()
+
 def main():
     import_world_modules(WORLDS_PATH)
 
-    all_worlds_items = {}
+    # Connexion à la base de données SQLite
+    db_conn = connect_db()
+
+    # Création de la table si elle n'existe pas
+    create_table_if_not_exists(db_conn)
+
+    # Supprime tous les items avant d'insérer les nouveaux
+    delete_all_items(db_conn)
 
     for world_name, world_class in AutoWorldRegister.world_types.items():
         if world_name == ""Archipelago"":
@@ -153,13 +203,12 @@ def main():
         print(f""Traitement de {world_name}..."")
         categorized = categorize_items(world_class)
         if any(categorized.values()):
-            all_worlds_items[world_name] = categorized
+            insert_items_into_db(db_conn, world_name, categorized)
 
+    # Fermeture de la connexion à la base de données
+    db_conn.close()
 
-    with open(""all_items_by_game.json"", ""w"", encoding=""utf-8"") as f:
-        json.dump(all_worlds_items, f, indent=4, ensure_ascii=False)
-
-    print(""Extraction done : categorized_items.json"")
+    print(""Insertion des items dans la base de données terminée."")
 
 if __name__ == ""__main__"":
     main()

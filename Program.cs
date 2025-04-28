@@ -18,14 +18,18 @@ class Program
     public static string TempExtractPath = Path.Combine(BasePath, "tempExtract");
     public static string GenerateTemplatesPath = Path.Combine(ExtractPath, "generateTemplates.py");
     public static string GenerateItemsTablePath = Path.Combine(ExtractPath, "generateItemsTable.py");
-    public static string GenerateItemsTableJson = Path.Combine(ExtractPath, "all_items_by_game.json");
+    public static string BddPath = Path.Combine(BasePath, "AST.db");
 
     static async Task Main(string[] args)
     {
+        Env.Load();
+
         string currentVersion = File.Exists(VersionFile) ? await File.ReadAllTextAsync(VersionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
+        DatabaseInitializer.InitializeDatabase();
+        
         if (currentVersion.Trim() == Version)
         {
             Console.WriteLine($"Archipelago {Version} est déjà installé.");
@@ -61,7 +65,7 @@ class Program
 
             using (var process = Process.Start(killPythonProcess))
             {
-                if(process !=null)
+                if (process != null)
                 {
                     process.WaitForExit();
                     Console.WriteLine("✅ Processus Python arrêtés !");
@@ -90,20 +94,17 @@ class Program
                 Console.WriteLine("Aucun dossier .pyxbld à supprimer.");
             }
 
-            using (HttpClient client = new HttpClient())
+            Console.WriteLine($"Téléchargement de {DownloadUrl}...");
+            HttpResponseMessage response = await Declare.HttpClient.GetAsync(DownloadUrl);
+
+            if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Téléchargement de {DownloadUrl}...");
-                HttpResponseMessage response = await client.GetAsync(DownloadUrl);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"Erreur : Impossible de télécharger Archipelago (code {response.StatusCode}).");
-                    return;
-                }
-
-                byte[] data = await response.Content.ReadAsByteArrayAsync();
-                await File.WriteAllBytesAsync(ArchivePath, data);
+                Console.WriteLine($"Erreur : Impossible de télécharger Archipelago (code {response.StatusCode}).");
+                return;
             }
+
+            byte[] data = await response.Content.ReadAsByteArrayAsync();
+            await File.WriteAllBytesAsync(ArchivePath, data);
 
             if (Directory.Exists(TempExtractPath))
                 Directory.Delete(TempExtractPath, true);
@@ -128,7 +129,7 @@ class Program
             {
                 InstallLinuxBuildTools();
             }
-            
+
             var venvCreateProcess = new ProcessStartInfo
             {
                 FileName = isWindows ? "python" : "python3",
@@ -141,7 +142,7 @@ class Program
 
             using (var process = Process.Start(venvCreateProcess))
             {
-                if(process != null)
+                if (process != null)
                 {
                     Console.WriteLine("Création du virtualenv...");
                     process.WaitForExit();
@@ -176,7 +177,7 @@ class Program
 
             using (var process = Process.Start(pipUpdateProcess))
             {
-                if(process != null)
+                if (process != null)
                 {
                     process.WaitForExit();
                     if (process.ExitCode != 0)
@@ -208,7 +209,7 @@ class Program
 
             using (var process = Process.Start(setuptoolsUpdateProcess))
             {
-                if(process != null)
+                if (process != null)
                 {
                     process.WaitForExit();
                     if (process.ExitCode != 0)
@@ -240,7 +241,7 @@ class Program
 
             using (var process = Process.Start(CythonProcess))
             {
-                if(process != null)
+                if (process != null)
                 {
                     process.WaitForExit();
                     if (process.ExitCode != 0)
@@ -257,7 +258,7 @@ class Program
                     Console.WriteLine("❌ ERREUR : Impossible d'installer Cython.");
                     return;
                 }
-                
+
             }
 
             var allRequirements = Directory.GetFiles(ExtractPath, "requirements.txt", SearchOption.AllDirectories);
@@ -281,7 +282,7 @@ class Program
                 using (var process = Process.Start(pipInstallProcess))
                 {
 
-                    if(process != null)
+                    if (process != null)
                     {
                         process.WaitForExit();
 
@@ -304,6 +305,9 @@ class Program
 
             GenerateYamls();
             GenerateItemsTableClass();
+            
+            Console.WriteLine("Importation des ApWorlds dans la BDD...");
+            ApworldListDatabase.Import();
 
             await File.WriteAllTextAsync(VersionFile, Version);
 
@@ -312,7 +316,7 @@ class Program
 
         Console.WriteLine($"Starting bot... Archipelago Version: Archipelago_{currentVersion}");
 
-        Env.Load();
+        
 
         var config = new DiscordSocketConfig
         {
@@ -331,16 +335,6 @@ class Program
 
         await BotCommands.InstallCommandsAsync();
 
-        DataManager.LoadReceiverAliases();
-        DataManager.LoadAliasChoices();
-        DataManager.LoadGameStatus();
-        DataManager.LoadUrlAndChannel();
-        DataManager.LoadRecapList();
-        DataManager.LoadHintStatus();
-        DataManager.LoadDisplayedItems();
-        DataManager.LoadApWorldJsonList();
-        DataManager.LoadItemsTable();
-
         await Declare.Client.LoginAsync(TokenType.Bot, Declare.DiscordToken);
         await Declare.Client.StartAsync();
 
@@ -349,7 +343,7 @@ class Program
 
     private static async Task OnGuildJoined(SocketGuild guild)
     {
-       await BotCommands.RegisterCommandsAsync();
+        await BotCommands.RegisterCommandsAsync();
     }
 
     public static void GenerateYamls()
@@ -387,7 +381,7 @@ class Program
 
         using (var process = Process.Start(generateYamlProcess))
         {
-            if(process != null)
+            if (process != null)
             {
                 process.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
                 process.ErrorDataReceived += (sender, args) => Console.WriteLine("Warning : " + args.Data);
@@ -426,7 +420,7 @@ class Program
             File.Delete(GenerateItemsTablePath);
         }
 
-        File.WriteAllText(GenerateItemsTablePath, GenerateItemsTable.pythonCode.Replace("{ARCHIPELAGO_PATH}", ExtractPath));
+        File.WriteAllText(GenerateItemsTablePath, GenerateItemsTable.pythonCode.Replace("{WORLDS_PATH}", ExtractPath).Replace("{BDD_PATH}", BddPath));
 
         Console.WriteLine($"Fichier Python créé à l'emplacement : {GenerateItemsTablePath}");
 
@@ -514,7 +508,7 @@ class Program
 
         using (var process = Process.Start(installProcess))
         {
-            if(process != null)
+            if (process != null)
             {
                 process.WaitForExit();
 
