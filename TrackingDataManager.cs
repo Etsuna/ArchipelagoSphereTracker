@@ -256,7 +256,7 @@ public static class TrackingDataManager
 
             if (usersIds.Count == 0)
             {
-                return;
+                continue;
             }
 
             foreach (var userId in usersIds)
