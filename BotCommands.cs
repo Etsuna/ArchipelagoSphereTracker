@@ -638,7 +638,7 @@ public static class BotCommands
                                             ? $"Alias '{alias}' supprimé."
                                             : $"ADMIN : Alias '{alias}' supprimé.";
 
-                                        await RecapListCommands.DeleteRecapListAsync(guildId, channelId, value, alias);
+                                        await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, value, alias);
                                     }
                                     else
                                     {

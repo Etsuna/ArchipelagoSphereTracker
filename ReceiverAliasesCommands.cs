@@ -236,13 +236,17 @@ public static class ReceiverAliasesCommands
                                     {
                                         items.Add(item);
                                     }
+                                    else
+                                    {
+                                        items.Add("Aucun élément.");
+                                    }
                                 }
                             }
                         }
 
                         if (items.Count > 0)
                         {
-                            if(alias == null)
+                            if (alias == null)
                             {
                                 Console.WriteLine($"Aucun alias trouvé pour l'utilisateur : {userId}");
                                 continue;
@@ -252,7 +256,13 @@ public static class ReceiverAliasesCommands
                         }
                         else
                         {
-                            Console.WriteLine($"Aucun item trouvé pour l'alias : {alias}");
+                            if (alias == null)
+                            {
+                                Console.WriteLine($"Aucun alias trouvé pour l'utilisateur : {userId}");
+                                continue;
+                            }
+
+                            aliasesWithItems[alias] = ["Aucun élément."];
                         }
                     }
                 }
