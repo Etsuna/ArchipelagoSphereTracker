@@ -204,7 +204,7 @@ public static class TrackingDataManager
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
     {
-        if(!silent)
+        if (!silent)
         {
             if (item.Finder == item.Receiver)
                 return $"{item.Finder} found their {item.Item} ({item.Location})";
@@ -212,7 +212,7 @@ public static class TrackingDataManager
         var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, item.Receiver);
         if (userIds.Count > 0)
         {
-            if(silent)
+            if (silent)
             {
                 if (item.Finder == item.Receiver)
                     return $"{item.Finder} found their {item.Item} ({item.Location})";
@@ -224,7 +224,7 @@ public static class TrackingDataManager
 
             if (userIds.ContainsValue(true))
             {
-                if(!string.IsNullOrWhiteSpace(getGameName))
+                if (!string.IsNullOrWhiteSpace(getGameName))
                 {
                     var isFiller = await ItemsCommands.IsFillerAsync(getGameName, item.Item);
 
@@ -235,11 +235,11 @@ public static class TrackingDataManager
                     return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
                 }
             }
-            
+
             return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
         }
 
-        if(silent)
+        if (silent)
         {
             return string.Empty;
         }
@@ -297,7 +297,7 @@ public static class TrackingDataManager
 
         var parsedRows = new List<Match[]>(rowMatches.Count);
 
-        for (int i = 1; i < rowMatches.Count; i++) 
+        for (int i = 1; i < rowMatches.Count; i++)
         {
             var cells = CellRegex.Matches(rowMatches[i].Groups[1].Value);
             if (cells.Count == 7)
@@ -364,7 +364,6 @@ public static class TrackingDataManager
         }
     }
 
-
     private static readonly Regex RowRegex2 = new(@"<tr.*?>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public static async Task CheckGameStatusAsync(string guild, string channel, string urlTracker, bool silent)
@@ -388,11 +387,11 @@ public static class TrackingDataManager
             await ProcessHintTableAsync(table2Html, guild, channel);
     }
 
-    private static async Task<bool> ProcessGameStatusTableAsync(string tableHtml, string guild, string channel, bool silent)
+    private static async Task ProcessGameStatusTableAsync(string tableHtml, string guild, string channel, bool silent)
     {
         var rows = RowRegex2.Matches(tableHtml);
         if (rows.Count <= 1)
-            return false;
+            return;
 
         var newGameStatuses = new List<GameStatus>(rows.Count);
         var statusChanges = new List<GameStatus>(rows.Count);
@@ -405,9 +404,13 @@ public static class TrackingDataManager
             if (cells.Count != 7)
                 continue;
 
+            var hashtagRaw = WebUtility.HtmlDecode(cells[0].Groups[1].Value.Trim());
+            var hashtagMatch = Regex.Match(hashtagRaw, @">([^<]+)<");
+            var hashtag = hashtagMatch.Success ? hashtagMatch.Groups[1].Value.Trim() : hashtagRaw;
+
             var entry = new GameStatus
             {
-                Hashtag = WebUtility.HtmlDecode(cells[0].Groups[1].Value.Trim()),
+                Hashtag = hashtag,
                 Name = WebUtility.HtmlDecode(cells[1].Groups[1].Value.Trim()),
                 Game = WebUtility.HtmlDecode(cells[2].Groups[1].Value.Trim()),
                 Status = WebUtility.HtmlDecode(cells[3].Groups[1].Value.Trim()),
@@ -420,7 +423,7 @@ public static class TrackingDataManager
         }
 
         if (parsedEntries.Count == 0)
-            return false;
+            return;
 
         var existingStatuses = await GameStatusCommands.GetStatusesByNamesAsync(guild, channel, parsedEntries.Keys.ToList());
 
@@ -451,7 +454,7 @@ public static class TrackingDataManager
 
                 if (!silent)
                 {
-                    if(isChanged)
+                    if (isChanged)
                     {
                         await BotCommands.SendMessageAsync($"@everyone\n{newEntry.Name} has completed their goal for this game: {newEntry.Game}!", channel);
                     }
@@ -464,19 +467,20 @@ public static class TrackingDataManager
 
         if (statusChanges.Count > 0)
             await GameStatusCommands.UpdateGameStatusBatchAsync(guild, channel, statusChanges);
-
-        return newGameStatuses.Count > 0 || statusChanges.Count > 0;
     }
 
-    private static async Task<bool> ProcessHintTableAsync(string tableHtml, string guild, string channel)
+    private static async Task ProcessHintTableAsync(string tableHtml, string guild, string channel)
     {
         var rows = RowRegex2.Matches(tableHtml);
         if (rows.Count == 0)
-            return false;
+            return;
 
         var hintsToAdd = new List<HintStatus>(rows.Count);
+        var hintsToUpdate = new List<HintStatus>(rows.Count);
 
-        for (int i = 1; i < rows.Count; i++) 
+        var getHintStatusList = await HintStatusCommands.GetHintStatus(guild, channel);
+
+        for (int i = 1; i < rows.Count; i++)
         {
             var cells = CellRegex.Matches(rows[i].Groups[1].Value);
             if (cells.Count != 7)
@@ -493,16 +497,40 @@ public static class TrackingDataManager
                 Found = WebUtility.HtmlDecode(cells[6].Groups[1].Value.Trim())
             };
 
-            if (string.IsNullOrEmpty(hint.Found))
+            if (hint.Found == "✔")
+            {
+                hint.Found = "OK";
+            }
+
+            var existingKey = getHintStatusList.Where(getHintStatusList => getHintStatusList.Finder == hint.Finder 
+            && getHintStatusList.Receiver == hint.Receiver 
+            && getHintStatusList.Item == hint.Item 
+            && getHintStatusList.Location == hint.Location 
+            && getHintStatusList.Game == hint.Game 
+            && getHintStatusList.Entrance == hint.Entrance).FirstOrDefault();    
+
+            if (existingKey != null)
+            {
+                if(existingKey.Found != hint.Found)
+                {
+                    existingKey.Found = "OK";
+                    hintsToUpdate.Add(existingKey);
+                }
+            }
+            else
+            {
                 hintsToAdd.Add(hint);
+            }
         }
 
         if (hintsToAdd.Count > 0)
         {
-            await HintStatusCommands.AddOrReplaceHintStatusAsync(guild, channel, hintsToAdd);
-            return true;
+            await HintStatusCommands.AddHintStatusAsync(guild, channel, hintsToAdd);
         }
 
-        return false;
+        if(hintsToUpdate.Count > 0)
+        {
+            await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
+        }
     }
 }

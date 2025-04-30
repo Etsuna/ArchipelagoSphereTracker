@@ -158,36 +158,5 @@ public static class DisplayItemCommands
 
         await transaction.CommitAsync();
     }
-
-    public static async Task<bool> CheckIfExists(string guildId, string channelId, DisplayedItem item)
-    {
-        using var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;");
-        await connection.OpenAsync();
-        using var command = new SQLiteCommand(@"
-            SELECT COUNT(*) 
-            FROM DisplayedItemTable 
-            WHERE GuildId = @GuildId 
-              AND ChannelId = @ChannelId 
-              AND Sphere = @Sphere 
-              AND Finder = @Finder 
-              AND Receiver = @Receiver 
-              AND Item = @Item 
-              AND Location = @Location 
-              AND Game = @Game;", connection);
-        command.Parameters.AddWithValue("@GuildId", guildId);
-        command.Parameters.AddWithValue("@ChannelId", channelId);
-        command.Parameters.AddWithValue("@Sphere", item.Sphere);
-        command.Parameters.AddWithValue("@Finder", item.Finder);
-        command.Parameters.AddWithValue("@Receiver", item.Receiver);
-        command.Parameters.AddWithValue("@Item", item.Item);
-        command.Parameters.AddWithValue("@Location", item.Location);
-        command.Parameters.AddWithValue("@Game", item.Game);
-        var count = (long)(await command.ExecuteScalarAsync() ?? 0);
-        if (count > 0)
-        {
-            return true;
-        }
-        return false;
-    }
 }
 

@@ -159,40 +159,6 @@ public static class GameStatusCommands
         return existingGames;
     }
 
-    public static async Task<bool> IsNameExistForGuildAndChannelAsync(string guildId, string channelId, string name)
-    {
-        try
-        {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
-            {
-                await connection.OpenAsync();
-
-                using (var command = new SQLiteCommand(connection))
-                {
-                    command.CommandText = @"
-                    SELECT COUNT(1)
-                    FROM GameStatusTable
-                    WHERE GuildId = @GuildId
-                      AND ChannelId = @ChannelId
-                      AND Name = @Name";
-
-                    command.Parameters.AddWithValue("@GuildId", guildId);
-                    command.Parameters.AddWithValue("@ChannelId", channelId);
-                    command.Parameters.AddWithValue("@Name", name);
-
-                    var result = await command.ExecuteScalarAsync();
-
-                    return Convert.ToInt32(result) > 0;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erreur lors de la vérification de l'existence du jeu : {ex.Message}");
-            return false;
-        }
-    }
-
     public static async Task AddOrReplaceGameStatusAsync(string guildId, string channelId, List<GameStatus> gameStatuses)
     {
         try

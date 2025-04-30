@@ -1180,21 +1180,28 @@ public static class BotCommands
                         return messageBuilder.ToString();
                     }
 
-                    var getHintStatusForGuildAndChannelAsync = await HintStatusCommands.GetHintStatusForGuildAndChannelAsync(guildId, channelId);
+                    var getHintStatusForFinder = await HintStatusCommands.GetHintStatusForFinder(guildId, channelId, alias);
 
-                    if (getHintStatusForGuildAndChannelAsync.Any())
+                    if (getHintStatusForFinder.Any())
                     {
-                        var hintByFinder = getHintStatusForGuildAndChannelAsync.Where(h => h.Finder == alias).ToList();
+                        var hintByFinder = new List<HintStatus>();
+
+                        foreach (var hint in getHintStatusForFinder)
+                        {
+                            if (hint.Finder == alias)
+                            {
+                                hintByFinder.Add(hint);
+                            }
+                        }
 
                         message = hintByFinder.Count > 0
-                            ? BuildHintMessage(hintByFinder, alias)
+                            ? BuildHintMessageReceiver(hintByFinder, alias)
                             : "No hint found for this finder";
                     }
                     else
                     {
                         message = "Pas d'URL Enregistrée pour ce channel ou Aucun hint.";
                     }
-
                     break;
 
                 case "hint-for-receiver":
@@ -1217,13 +1224,13 @@ public static class BotCommands
                         return messageBuilder.ToString();
                     }
 
-                    getHintStatusForGuildAndChannelAsync = await HintStatusCommands.GetHintStatusForGuildAndChannelAsync(guildId, channelId);
+                    var getHintStatusForReceiver = await HintStatusCommands.GetHintStatusForReceiver(guildId, channelId, alias);
 
-                    if (getHintStatusForGuildAndChannelAsync.Any())
+                    if (getHintStatusForReceiver.Any())
                     {
                         var hintByReceiver = new List<HintStatus>();
 
-                        foreach (var hint in getHintStatusForGuildAndChannelAsync)
+                        foreach (var hint in getHintStatusForReceiver)
                         {
                             if (hint.Receiver == alias)
                             {
