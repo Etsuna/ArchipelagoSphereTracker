@@ -1167,7 +1167,7 @@ public static class BotCommands
                         break;
                     }
 
-                    string BuildHintMessage(IEnumerable<HintStatus> hints, string alias)
+                    string BuildHintMessageFinder(IEnumerable<HintStatus> hints, string alias)
                     {
                         var messageBuilder = new StringBuilder();
                         messageBuilder.AppendLine($"Item from {alias} :");
@@ -1195,7 +1195,7 @@ public static class BotCommands
                         }
 
                         message = hintByFinder.Count > 0
-                            ? BuildHintMessageReceiver(hintByFinder, alias)
+                            ? BuildHintMessageFinder(hintByFinder, alias)
                             : "No hint found for this finder";
                     }
                     else

@@ -19,9 +19,9 @@ public static class ItemsCommands
 
                     var result = await command.ExecuteScalarAsync();
 
-                    if (result != null)
+                    if (result is string category)
                     {
-                        return result.ToString().Equals("filler", StringComparison.OrdinalIgnoreCase);
+                        return category.Equals("filler", StringComparison.OrdinalIgnoreCase);
                     }
                     else
                     {

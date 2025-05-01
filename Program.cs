@@ -307,7 +307,7 @@ class Program
             GenerateItemsTableClass();
             
             Console.WriteLine("Importation des ApWorlds dans la BDD...");
-            ApworldListDatabase.Import();
+            await ApworldListDatabase.Import();
 
             await File.WriteAllTextAsync(VersionFile, Version);
 
