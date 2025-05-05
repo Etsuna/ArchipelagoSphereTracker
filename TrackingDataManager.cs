@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Net;
 using System.Web;
 using System.Text.RegularExpressions;
+using System.Text;
 
 public static class TrackingDataManager
 {
@@ -134,28 +135,14 @@ public static class TrackingDataManager
         using var stream = await Declare.HttpClient.GetStreamAsync(url);
         using var html = new StreamReader(stream);
 
-        var rowPattern = new Regex(@"<tr>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
         var cellPattern = new Regex(@"<td.*?>(.*?)</td>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-        var htmlContent = await html.ReadToEndAsync();
-        var rows = rowPattern.Matches(htmlContent);
-        if (rows.Count == 0)
-        {
-            if (!checkIfChannelExistsAsync)
-            {
-                await BotCommands.SendMessageAsync("BOT Ready!", channel);
-            }
-            return;
-        }
-
-        var existingItems = await DisplayItemCommands.GetAllItemsAsync(guild, channel);
-        var existingKeys = new HashSet<string>(existingItems.Select(x => $"{x.Sphere}|{x.Finder}|{x.Receiver}|{x.Item}|{x.Location}|{x.Game}"));
-
+        var existingKeys = await DisplayItemCommands.GetExistingKeysAsync(guild, channel);
         var newItems = new List<DisplayedItem>();
 
-        foreach (Match rowMatch in rows)
+        foreach (var rowHtml in StreamHtmlRows(html))
         {
-            var cells = cellPattern.Matches(rowMatch.Groups[1].Value);
+            var cells = cellPattern.Matches(rowHtml);
             if (cells.Count == 6)
             {
                 var newItem = new DisplayedItem
@@ -188,8 +175,7 @@ public static class TrackingDataManager
 
                 var tasks = messages
                     .Where(message => !string.IsNullOrWhiteSpace(message))
-                    .Select(message => BotCommands.SendMessageAsync(message!, channel))
-                    .ToArray();
+                    .Select(message => BotCommands.SendMessageAsync(message!, channel));
 
                 await Task.WhenAll(tasks);
             }
@@ -198,6 +184,34 @@ public static class TrackingDataManager
         if (!checkIfChannelExistsAsync)
         {
             await BotCommands.SendMessageAsync("BOT Ready!", channel);
+        }
+    }
+
+
+    private static IEnumerable<string> StreamHtmlRows(StreamReader reader)
+    {
+        var sb = new StringBuilder();
+        string? line;
+        bool insideRow = false;
+
+        while ((line = reader.ReadLine()) != null)
+        {
+            if (line.Contains("<tr", StringComparison.OrdinalIgnoreCase))
+            {
+                insideRow = true;
+                sb.Clear();
+            }
+
+            if (insideRow)
+            {
+                sb.AppendLine(line);
+            }
+
+            if (line.Contains("</tr>", StringComparison.OrdinalIgnoreCase))
+            {
+                insideRow = false;
+                yield return sb.ToString();
+            }
         }
     }
 

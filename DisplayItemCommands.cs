@@ -5,16 +5,16 @@ public static class DisplayItemCommands
     // ==========================
     // 🎯 Display Item
     // ==========================
-    public static async Task<List<DisplayedItem>> GetAllItemsAsync(string guildId, string channelId)
+    public static async Task<HashSet<string>> GetExistingKeysAsync(string guildId, string channelId)
     {
-        var items = new List<DisplayedItem>();
+        var keys = new HashSet<string>();
 
         using var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;");
         await connection.OpenAsync();
         using var command = new SQLiteCommand(@"
-        SELECT Sphere, Finder, Receiver, Item, Location, Game 
-        FROM DisplayedItemTable 
-        WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
+    SELECT Sphere, Finder, Receiver, Item, Location, Game 
+    FROM DisplayedItemTable 
+    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
 
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
@@ -22,18 +22,11 @@ public static class DisplayItemCommands
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            items.Add(new DisplayedItem
-            {
-                Sphere = reader["Sphere"]?.ToString() ?? string.Empty,
-                Finder = reader["Finder"]?.ToString() ?? string.Empty,
-                Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
-                Item = reader["Item"]?.ToString() ?? string.Empty,
-                Location = reader["Location"]?.ToString() ?? string.Empty,
-                Game = reader["Game"]?.ToString() ?? string.Empty,
-            });
+            var key = $"{reader["Sphere"]}|{reader["Finder"]}|{reader["Receiver"]}|{reader["Item"]}|{reader["Location"]}|{reader["Game"]}";
+            keys.Add(key);
         }
 
-        return items;
+        return keys;
     }
 
     public static async Task<List<DisplayedItem>> GetUserItemsGroupedAsync(string guildId, string channelId, string receiver)
@@ -127,7 +120,7 @@ public static class DisplayItemCommands
 
         using var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;");
         await connection.OpenAsync();
-        using var transaction = connection.BeginTransaction(); 
+        using var transaction = connection.BeginTransaction();
 
         using var command = new SQLiteCommand(@"
             INSERT INTO DisplayedItemTable (GuildId, ChannelId, Sphere, Finder, Receiver, Item, Location, Game)
