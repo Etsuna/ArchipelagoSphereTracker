@@ -180,11 +180,6 @@ public static class TrackingDataManager
                 await Task.WhenAll(tasks);
             }
         }
-
-        if (!checkIfChannelExistsAsync)
-        {
-            await BotCommands.SendMessageAsync("BOT Ready!", channel);
-        }
     }
 
 

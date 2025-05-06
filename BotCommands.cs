@@ -1376,7 +1376,7 @@ public static class BotCommands
                         async Task<bool> CanAddUrlAsync(string guildId, string channelId)
                         {
                             var checkIfChannelExistsAsync = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
-                            return !checkIfChannelExistsAsync; 
+                            return !checkIfChannelExistsAsync;
                         }
 
                         async Task<(bool isValid, string pageContent)> IsAllUrlIsValidAsync(string newUrl)
@@ -1393,7 +1393,7 @@ public static class BotCommands
                             else
                             {
                                 Console.WriteLine("Port non trouvé.");
-                                return (false, pageContent); 
+                                return (false, pageContent);
                             }
 
                             trackerUrl = ExtractUrl(pageContent, "Multiworld Tracker");
@@ -1401,7 +1401,7 @@ public static class BotCommands
 
                             if (string.IsNullOrEmpty(trackerUrl) || string.IsNullOrEmpty(sphereTrackerUrl) || string.IsNullOrEmpty(port))
                             {
-                                return (false, pageContent); 
+                                return (false, pageContent);
                             }
 
                             if (!trackerUrl.StartsWith("http"))
@@ -1529,6 +1529,7 @@ public static class BotCommands
                                             await TrackingDataManager.SetAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
                                             await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
                                             await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
+                                            await BotCommands.SendMessageAsync("BOT Ready!", channelId);
 
                                         }
 
