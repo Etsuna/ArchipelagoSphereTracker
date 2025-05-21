@@ -1,5 +1,4 @@
 ﻿using System.Data.SQLite;
-using System.Net.NetworkInformation;
 
 public static class ReceiverAliasesCommands
 {

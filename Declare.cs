@@ -1,6 +1,5 @@
 ﻿using Discord.WebSocket;
 using Discord.Commands;
-using System.Data.SQLite;
 
 public static class Declare
 {

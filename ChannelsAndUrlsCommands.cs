@@ -1,6 +1,5 @@
 ﻿using System.Data.SQLite;
 
-
 public static class ChannelsAndUrlsCommands
 {
     private const string DefaultTrackerValue = "Non trouvé";

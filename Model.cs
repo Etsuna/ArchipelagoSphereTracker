@@ -42,6 +42,6 @@ public class HintStatus
 
 public class ReceiverUserInfo
 {
-    public string UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
     public bool IsEnabled { get; set; }
 }

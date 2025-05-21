@@ -1,4 +1,5 @@
 ﻿using System.Data.SQLite;
+
 public static class GameStatusCommands
 {
     public static async Task<List<GameStatus>> GetGameStatusForGuildAndChannelAsync(string guildId, string channelId)
