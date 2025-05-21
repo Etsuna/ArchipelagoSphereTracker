@@ -216,7 +216,7 @@ public static class TrackingDataManager
         if (!silent)
         {
             if (item.Finder == item.Receiver)
-                return $"{item.Finder} found their {item.Item} ({item.Location})";
+                return string.Empty;
         }
         var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, item.Receiver);
         if (userIds.Count > 0)
@@ -224,7 +224,7 @@ public static class TrackingDataManager
             if (silent)
             {
                 if (item.Finder == item.Receiver)
-                    return $"{item.Finder} found their {item.Item} ({item.Location})";
+                    return string.Empty;
             }
 
             var mentions = string.Join(" ", userIds.Select(x => x.UserId).Select(id => $"<@{id}>"));

@@ -47,6 +47,11 @@ public static class RecapListCommands
 
                 foreach (var item in items)
                 {
+                    if(item.Receiver == item.Finder)
+                    {
+                        continue;
+                    }
+
                     var getIds = await DatabaseCommands.GetIdsAsync(guildId, channelId, item.Receiver, "RecapListTable");
 
                     if (getIds == null || getIds.Count == 0)
@@ -103,12 +108,17 @@ public static class RecapListCommands
                     {
                         foreach (var item in items)
                         {
+                            if(item.Receiver == item.Finder)
+                            {
+                                continue;
+                            }
+
                             using (var command = new SQLiteCommand(@"
                         INSERT INTO RecapListItemsTable
                         (RecapListTableId, Item)
                         VALUES (@RecapListTableId, @Item);", connection, transaction))
                             {
-                                command.Parameters.AddWithValue("@RecapListTableId", getIds);
+                                command.Parameters.AddWithValue("@RecapListTableId", id);
                                 command.Parameters.AddWithValue("@Item", item.Item);
                                 await command.ExecuteNonQueryAsync();
                             }
