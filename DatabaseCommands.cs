@@ -112,38 +112,40 @@ public static class DatabaseCommands
         }
     }
 
-    public static async Task<long> GetIdAsync(string guildId, string channelId, string alias, string table)
+    public static async Task<List<long>> GetIdsAsync(string guildId, string channelId, string alias, string table)
     {
+        var ids = new List<long>();
+
         try
         {
             using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
             {
                 await connection.OpenAsync();
 
-                using (var command = new SQLiteCommand($@"SELECT Id FROM {table}
-                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Alias = @Alias", connection))
+                using (var command = new SQLiteCommand($@"
+                SELECT Id FROM {table}
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Alias = @Alias", connection))
                 {
                     command.Parameters.AddWithValue("@GuildId", guildId);
                     command.Parameters.AddWithValue("@ChannelId", channelId);
                     command.Parameters.AddWithValue("@Alias", alias);
 
-                    var result = await command.ExecuteScalarAsync();
-                    if (result != null)
+                    using (var reader = await command.ExecuteReaderAsync())
                     {
-                        return (long)result;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Aucun enregistrement trouvé pour le GuildId et ChannelId spécifiés.");
-                        return -1;
+                        while (await reader.ReadAsync())
+                        {
+                            ids.Add(reader.GetInt64(0));
+                        }
                     }
                 }
             }
+
+            return ids;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération de l'ID du canal : {ex.Message}");
-            return -1;
+            Console.WriteLine($"Erreur lors de la récupération des IDs : {ex.Message}");
+            return new List<long>();
         }
     }
 

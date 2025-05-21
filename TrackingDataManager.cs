@@ -167,17 +167,17 @@ public static class TrackingDataManager
         if (newItems.Any())
         {
             await DisplayItemCommands.AddItemsAsync(newItems, guild, channel);
-            await UpdateRecapList(guild, channel, newItems);
+            await RecapListCommands.AddOrEditRecapListItemsForAllAsync(guild, channel, newItems);
 
             if (checkIfChannelExistsAsync)
             {
                 var messages = await Task.WhenAll(newItems.Select(item => BuildMessageAsync(guild, channel, item, silent)));
 
-                var tasks = messages
-                    .Where(message => !string.IsNullOrWhiteSpace(message))
-                    .Select(message => BotCommands.SendMessageAsync(message!, channel));
-
-                await Task.WhenAll(tasks);
+                foreach (var message in messages.Where(m => !string.IsNullOrWhiteSpace(m)))
+                {
+                    await BotCommands.SendMessageAsync(message!, channel);
+                    await Task.Delay(1100);
+                }
             }
         }
     }
@@ -227,11 +227,11 @@ public static class TrackingDataManager
                     return $"{item.Finder} found their {item.Item} ({item.Location})";
             }
 
-            var mentions = string.Join(" ", userIds.Keys.Select(id => $"<@{id}>"));
+            var mentions = string.Join(" ", userIds.Select(x => x.UserId).Select(id => $"<@{id}>"));
 
             var getGameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver);
 
-            if (userIds.ContainsValue(true))
+            if (userIds.Any(x => x.Equals(true)))
             {
                 if (!string.IsNullOrWhiteSpace(getGameName))
                 {
@@ -253,34 +253,6 @@ public static class TrackingDataManager
             return string.Empty;
         }
         return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
-    }
-
-    private static async Task UpdateRecapList(string guild, string channel, List<DisplayedItem> items)
-    {
-        var newItems = new List<DisplayedItem>();
-
-        foreach (var item in items)
-        {
-            var usersIds = await ReceiverAliasesCommands.GetAllUsersIds(guild, channel, item.Receiver);
-
-            if (usersIds.Count == 0)
-            {
-                continue;
-            }
-
-            foreach (var userId in usersIds)
-            {
-                var checkRecapList = await RecapListCommands.CheckIfExists(guild, channel, userId, item.Receiver);
-                if (!checkRecapList)
-                {
-                    await RecapListCommands.AddOrEditRecapListAsync(guild, channel, userId, item.Receiver);
-                }
-
-                newItems.Add(item);
-            }
-        }
-
-        await RecapListCommands.AddOrEditRecapListItemsForAllAsync(guild, channel, newItems);
     }
 
     private static readonly Regex TableRegex = new(@"<table.*?>(.*?)</table>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);

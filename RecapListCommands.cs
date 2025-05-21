@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Data.SQLite;
 
 public static class RecapListCommands
 {
@@ -53,26 +47,28 @@ public static class RecapListCommands
 
                 foreach (var item in items)
                 {
-                    long guildChannelId = await DatabaseCommands.GetIdAsync(guildId, channelId, item.Receiver, "RecapListTable");
+                    var getIds = await DatabaseCommands.GetIdsAsync(guildId, channelId, item.Receiver, "RecapListTable");
 
-                    if (guildChannelId == -1)
+                    if (getIds == null || getIds.Count == 0)
                     {
-                        Console.WriteLine("Erreur : Aucun enregistrement Guild/Channel trouvé. Impossible d'ajouter les items.");
-                        return;
+                        continue;
                     }
 
-                    using (var transaction = connection.BeginTransaction())
+                    foreach(var id in getIds)
                     {
-                        using (var command = new SQLiteCommand(@"
+                        using (var transaction = connection.BeginTransaction())
+                        {
+                            using (var command = new SQLiteCommand(@"
                         INSERT INTO RecapListItemsTable
                         (RecapListTableId, Item)
                         VALUES (@RecapListTableId, @Item);", connection, transaction))
-                        {
-                            command.Parameters.AddWithValue("@RecapListTableId", guildChannelId);
-                            command.Parameters.AddWithValue("@Item", item.Item);
-                            await command.ExecuteNonQueryAsync();
+                            {
+                                command.Parameters.AddWithValue("@RecapListTableId", id);
+                                command.Parameters.AddWithValue("@Item", item.Item);
+                                await command.ExecuteNonQueryAsync();
+                            }
+                            transaction.Commit();
                         }
-                        transaction.Commit();
                     }
                 }
             }
@@ -93,29 +89,32 @@ public static class RecapListCommands
             using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
             {
                 await connection.OpenAsync();
-                long guildChannelId = await DatabaseCommands.GetIdAsync(guildId, channelId, alias, "RecapListTable");
+                var getIds = await DatabaseCommands.GetIdsAsync(guildId, channelId, alias, "RecapListTable");
 
-                if (guildChannelId == -1)
+                if (getIds == null || getIds.Count == 0)
                 {
                     Console.WriteLine("Erreur : Aucun enregistrement Guild/Channel trouvé. Impossible d'ajouter les items.");
                     return;
                 }
 
-                using (var transaction = connection.BeginTransaction())
+                foreach(var id in getIds)
                 {
-                    foreach (var item in items)
+                    using (var transaction = connection.BeginTransaction())
                     {
-                        using (var command = new SQLiteCommand(@"
+                        foreach (var item in items)
+                        {
+                            using (var command = new SQLiteCommand(@"
                         INSERT INTO RecapListItemsTable
                         (RecapListTableId, Item)
                         VALUES (@RecapListTableId, @Item);", connection, transaction))
-                        {
-                            command.Parameters.AddWithValue("@RecapListTableId", guildChannelId);
-                            command.Parameters.AddWithValue("@Item", item.Item);
-                            await command.ExecuteNonQueryAsync();
+                            {
+                                command.Parameters.AddWithValue("@RecapListTableId", getIds);
+                                command.Parameters.AddWithValue("@Item", item.Item);
+                                await command.ExecuteNonQueryAsync();
+                            }
                         }
+                        transaction.Commit();
                     }
-                    transaction.Commit();
                 }
             }
         }

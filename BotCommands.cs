@@ -591,12 +591,12 @@ public static class BotCommands
                         var sb = new StringBuilder("Voici le tableau des utilisateurs :\n");
                         foreach (var getReceiverAliase in getReceiverAliases)
                         {
-                            var getUserId = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guildId, channelId, getReceiverAliase);
+                            var getUserIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guildId, channelId, getReceiverAliase);
 
-                            foreach (var value in getUserId)
+                            foreach (var value in getUserIds)
                             {
-                                var user = await Declare.Client.GetUserAsync(ulong.Parse(value.Key));
-                                sb.AppendLine($"| {user.Username} | {getReceiverAliase} | Useless Item Skip: {value.Value.ToString()}");
+                                var user = await Declare.Client.GetUserAsync(ulong.Parse(value.UserId));
+                                sb.AppendLine($"| {user.Username} | {getReceiverAliase} | Useless Item Skip: {value.IsEnabled.ToString()}");
                             }
                         }
                         message = sb.ToString();
@@ -628,7 +628,7 @@ public static class BotCommands
                             if (getUserId != null)
                             {
                                 message = $"Aucun alias trouvé pour '{alias}'.";
-                                foreach (var value in getUserId.Keys)
+                                foreach (var value in getUserId.Select(x => x.UserId))
                                 {
                                     if (value == command.User.Id.ToString() || (guildUser != null && guildUser.GuildPermissions.Administrator))
                                     {

@@ -39,3 +39,9 @@ public class HintStatus
     public string Entrance { get; set; } = string.Empty;
     public string Found { get; set; } = string.Empty;
 }
+
+public class ReceiverUserInfo
+{
+    public string UserId { get; set; }
+    public bool IsEnabled { get; set; }
+}

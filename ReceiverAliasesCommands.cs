@@ -66,9 +66,9 @@ public static class ReceiverAliasesCommands
     // ==========================
     // 🎯 GET RECEIVER USER IDS
     // ==========================
-    public static async Task<Dictionary<string, bool>> GetReceiverUserIdsAsync(string guildId, string channelId, string receiver)
+    public static async Task<List<ReceiverUserInfo>> GetReceiverUserIdsAsync(string guildId, string channelId, string receiver)
     {
-        var userIds = new Dictionary<string, bool>();
+        var userInfos = new List<ReceiverUserInfo>();
 
         using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
         {
@@ -77,11 +77,11 @@ public static class ReceiverAliasesCommands
             using (var command = new SQLiteCommand(connection))
             {
                 command.CommandText = @"
-                SELECT Receiver, UserId, IsEnabled
-                FROM ReceiverAliasesTable
-                WHERE GuildId = @GuildId
-                  AND ChannelId = @ChannelId
-                  AND Receiver = @Receiver;";
+            SELECT Receiver, UserId, IsEnabled
+            FROM ReceiverAliasesTable
+            WHERE GuildId = @GuildId
+              AND ChannelId = @ChannelId
+              AND Receiver = @Receiver;";
 
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
@@ -91,16 +91,20 @@ public static class ReceiverAliasesCommands
                 {
                     while (await reader.ReadAsync())
                     {
-                        var alias = reader["UserId"]?.ToString() ?? "";
-                        var isEnabled = reader["IsEnabled"] != DBNull.Value && (bool)reader["IsEnabled"];
-                        if (!string.IsNullOrEmpty(alias))
-                            userIds[alias] = isEnabled;
+                        var info = new ReceiverUserInfo()
+                        {
+                            UserId = reader["UserId"]?.ToString() ?? "",
+                            IsEnabled = reader["IsEnabled"] != DBNull.Value && (bool)reader["IsEnabled"],
+                        };
+
+                        if (!string.IsNullOrEmpty(info.UserId))
+                            userInfos.Add(info);
                     }
                 }
             }
         }
 
-        return userIds;
+        return userInfos;
     }
 
 
