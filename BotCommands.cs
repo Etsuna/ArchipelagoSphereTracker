@@ -1331,12 +1331,15 @@ public static class BotCommands
                             else
                             {
                                 var filteredGameStatus = getGameStatusForGuildAndChannelAsync
-                                    .Where(x =>
-                                    {
-                                        if (getReceiverAliases == null) return false;
-                                        var match = Regex.Match(x.Name, @"\(([^)]+)\)$");
-                                        return match.Success && getReceiverAliases.Contains(match.Groups[1].Value);
-                                    });
+                                 .Where(x =>
+                                 {
+                                     if (getReceiverAliases == null) return false;
+
+                                     var match = Regex.Match(x.Name, @"\(([^)]+)\)$");
+                                     var alias = match.Success ? match.Groups[1].Value : x.Name;
+
+                                     return getReceiverAliases.Contains(alias);
+                                 });
 
                                 foreach (var game in filteredGameStatus)
                                 {
