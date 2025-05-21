@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Data;
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -82,7 +83,7 @@ public static class BotCommands
             .WithName("delete-alias")
             .WithDescription("Delete Alias")
             .AddOption(new SlashCommandOptionBuilder()
-                .WithName("alias")
+                .WithName("added-alias")
                 .WithDescription("Choose an alias")
                 .WithType(ApplicationCommandOptionType.String)
                 .WithRequired(true)
@@ -156,7 +157,7 @@ public static class BotCommands
             .WithName("recap")
             .WithDescription("Recap List of items for a specific game")
             .AddOption(new SlashCommandOptionBuilder()
-                .WithName("alias")
+                .WithName("added-alias")
                 .WithDescription("Choose an alias")
                 .WithType(ApplicationCommandOptionType.String)
                 .WithRequired(true)
@@ -166,7 +167,7 @@ public static class BotCommands
             .WithName("recap-and-clean")
             .WithDescription("Recap and clean List of items for a specific game")
             .AddOption(new SlashCommandOptionBuilder()
-                .WithName("alias")
+                .WithName("added-alias")
                 .WithDescription("Choose an alias")
                 .WithType(ApplicationCommandOptionType.String)
                 .WithRequired(true)
@@ -176,7 +177,7 @@ public static class BotCommands
             .WithName("clean")
             .WithDescription("Recap and clean List of items for a specific game")
             .AddOption(new SlashCommandOptionBuilder()
-                .WithName("alias")
+                .WithName("added-alias")
                 .WithDescription("Choose an alias")
                 .WithType(ApplicationCommandOptionType.String)
                 .WithRequired(true)
@@ -329,6 +330,61 @@ public static class BotCommands
             }
 
             var aliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId);
+
+            string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
+
+            int pageSize = 25;
+            int pageNumber = 1;
+
+            if (userInput.StartsWith(">"))
+            {
+                if (int.TryParse(userInput.TrimStart('>'), out int parsedPage) && parsedPage > 0)
+                {
+                    pageNumber = parsedPage;
+                    userInput = "";
+                }
+            }
+
+            var filteredAliases = aliases
+                .Where(a => a.ToLower().Contains(userInput))
+                .OrderBy(a => a)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => new AutocompleteResult(a, a))
+                .ToArray();
+
+            if (filteredAliases.Length == 0 && pageNumber > 1)
+            {
+                pageNumber = (aliases.Count / pageSize) + 1;
+                filteredAliases = aliases
+                    .OrderBy(a => a)
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(a => new AutocompleteResult(a, a))
+                    .ToArray();
+            }
+
+            await interaction.RespondAsync(filteredAliases);
+        }
+
+        if (interaction.Data.Current.Name == "added-alias")
+        {
+            string? guildId = interaction.GuildId?.ToString();
+            var channelId = interaction.ChannelId.ToString();
+
+            if (string.IsNullOrWhiteSpace(channelId))
+            {
+                await interaction.RespondAsync(new AutocompleteResult[0]);
+                return;
+            }
+
+            if (guildId == null)
+            {
+                await interaction.RespondAsync(new AutocompleteResult[0]);
+                return;
+            }
+
+            var aliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 
             string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
 
@@ -551,7 +607,11 @@ public static class BotCommands
         var userId = "";
         string message = "";
         const int maxMessageLength = 1999;
-        var alias = command.Data.Options.FirstOrDefault()?.Value as string;
+        var realAlias = command.Data.Options.FirstOrDefault()?.Value as string;
+        
+        var matchCustomAlias = !string.IsNullOrEmpty(realAlias) ? Regex.Match(realAlias, @"\(([^)]+)\)$") : Match.Empty;
+        var alias = matchCustomAlias.Success ? matchCustomAlias.Groups[1].Value : realAlias;
+
         var channelId = command.ChannelId.ToString();
         var guildId = command.GuildId.ToString();
 
@@ -1106,7 +1166,6 @@ public static class BotCommands
                     break;
 
                 case "list-items":
-                    userId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
                     bool listByLine = command.Data.Options.FirstOrDefault(o => o.Name == "list-by-line")?.Value as bool? ?? false;
 
                     string BuildItemMessage(IEnumerable<IGrouping<string, DisplayedItem>> filteredItems, bool listByLine)
@@ -1133,13 +1192,13 @@ public static class BotCommands
 
                     if (checkIfChannelExists)
                     {
-                        if (string.IsNullOrWhiteSpace(userId))
+                        if (string.IsNullOrWhiteSpace(alias))
                         {
-                            message = "Receiver ID non spécifié.";
+                            message = "Erreur d'Alias.";
                             break;
                         }
 
-                        var getGameStatusTextsAsync = await DisplayItemCommands.GetUserItemsGroupedAsync(guildId, channelId, userId);
+                        var getGameStatusTextsAsync = await DisplayItemCommands.GetUserItemsGroupedAsync(guildId, channelId, alias);
                         var filteredItems = getGameStatusTextsAsync
                                     .GroupBy(item => item.Item)
                                     .OrderBy(group => group.Key);
@@ -1161,16 +1220,16 @@ public static class BotCommands
                     break;
 
                 case "hint-from-finder":
-                    if (string.IsNullOrEmpty(alias))
+                    if (string.IsNullOrEmpty(realAlias))
                     {
                         message = "Alias non spécifié.";
                         break;
                     }
 
-                    string BuildHintMessageFinder(IEnumerable<HintStatus> hints, string alias)
+                    string BuildHintMessageFinder(IEnumerable<HintStatus> hints, string realAlias)
                     {
                         var messageBuilder = new StringBuilder();
-                        messageBuilder.AppendLine($"Item from {alias} :");
+                        messageBuilder.AppendLine($"Item from {realAlias} :");
 
                         foreach (var item in hints)
                         {
@@ -1180,7 +1239,7 @@ public static class BotCommands
                         return messageBuilder.ToString();
                     }
 
-                    var getHintStatusForFinder = await HintStatusCommands.GetHintStatusForFinder(guildId, channelId, alias);
+                    var getHintStatusForFinder = await HintStatusCommands.GetHintStatusForFinder(guildId, channelId, realAlias);
 
                     if (getHintStatusForFinder.Any())
                     {
@@ -1188,14 +1247,14 @@ public static class BotCommands
 
                         foreach (var hint in getHintStatusForFinder)
                         {
-                            if (hint.Finder == alias)
+                            if (hint.Finder == realAlias)
                             {
                                 hintByFinder.Add(hint);
                             }
                         }
 
                         message = hintByFinder.Count > 0
-                            ? BuildHintMessageFinder(hintByFinder, alias)
+                            ? BuildHintMessageFinder(hintByFinder, realAlias)
                             : "No hint found for this finder";
                     }
                     else
@@ -1205,16 +1264,16 @@ public static class BotCommands
                     break;
 
                 case "hint-for-receiver":
-                    if (string.IsNullOrEmpty(alias))
+                    if (string.IsNullOrEmpty(realAlias))
                     {
                         message = "Alias non spécifié.";
                         break;
                     }
 
-                    string BuildHintMessageReceiver(List<HintStatus> hints, string alias)
+                    string BuildHintMessageReceiver(List<HintStatus> hints, string realAlias)
                     {
                         var messageBuilder = new StringBuilder();
-                        messageBuilder.AppendLine($"Item for {alias} :");
+                        messageBuilder.AppendLine($"Item for {realAlias} :");
 
                         foreach (var item in hints)
                         {
@@ -1224,7 +1283,7 @@ public static class BotCommands
                         return messageBuilder.ToString();
                     }
 
-                    var getHintStatusForReceiver = await HintStatusCommands.GetHintStatusForReceiver(guildId, channelId, alias);
+                    var getHintStatusForReceiver = await HintStatusCommands.GetHintStatusForReceiver(guildId, channelId, realAlias);
 
                     if (getHintStatusForReceiver.Any())
                     {
@@ -1232,14 +1291,14 @@ public static class BotCommands
 
                         foreach (var hint in getHintStatusForReceiver)
                         {
-                            if (hint.Receiver == alias)
+                            if (hint.Receiver == realAlias)
                             {
                                 hintByReceiver.Add(hint);
                             }
                         }
 
                         message = hintByReceiver.Count > 0
-                            ? BuildHintMessageReceiver(hintByReceiver, alias)
+                            ? BuildHintMessageReceiver(hintByReceiver, realAlias)
                             : "No hint found for this receiver";
                     }
                     else
@@ -1249,35 +1308,76 @@ public static class BotCommands
                     break;
 
                 case "status-games-list":
-                    message = "Status for all games :\n";
-
                     var getGameStatusForGuildAndChannelAsync = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guildId, channelId);
+                    var (urlTracker, urlSphereTracker, room, silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
 
-                    if (getGameStatusForGuildAndChannelAsync.Any())
+                    if(silent)
                     {
-                        foreach (var game in getGameStatusForGuildAndChannelAsync)
-                        {
-                            string gameStatus = (game.Percent != "100.00")
-                                ? $"**{game.Name} - {game.Game} - {game.Percent}%**\n"
-                                : $"~~{game.Name} - {game.Game} - {game.Percent}%~~\n";
+                        message = "Status for all games, Thread is silent, Only for added aliases :\n";
+                        getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 
-                            message += gameStatus;
+                        if (getReceiverAliases.Count == 0)
+                        {
+                            message += "Aucun Alias est enregistré.";
+                        }
+                        else
+                        {
+                            getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
+
+                            if (getReceiverAliases.Count == 0)
+                            {
+                                message += "Aucun Alias est enregistré.";
+                            }
+                            else
+                            {
+                                var filteredGameStatus = getGameStatusForGuildAndChannelAsync
+                                    .Where(x =>
+                                    {
+                                        if (getReceiverAliases == null) return false;
+                                        var match = Regex.Match(x.Name, @"\(([^)]+)\)$");
+                                        return match.Success && getReceiverAliases.Contains(match.Groups[1].Value);
+                                    });
+
+                                foreach (var game in filteredGameStatus)
+                                {
+                                    string gameStatus = (game.Percent != "100.00")
+                                        ? $"**{game.Name} - {game.Game} - {game.Percent}%**\n"
+                                        : $"~~{game.Name} - {game.Game} - {game.Percent}%~~\n";
+                                    message += gameStatus;
+                                }
+                            }
                         }
                     }
                     else
                     {
-                        message = "Pas d'URL Enregistrée pour ce channel.";
+                        message = "Status for all games :\n";
+
+                        if (getGameStatusForGuildAndChannelAsync.Any())
+                        {
+                            foreach (var game in getGameStatusForGuildAndChannelAsync)
+                            {
+                                string gameStatus = (game.Percent != "100.00")
+                                    ? $"**{game.Name} - {game.Game} - {game.Percent}%**\n"
+                                    : $"~~{game.Name} - {game.Game} - {game.Percent}%~~\n";
+
+                                message += gameStatus;
+                            }
+                        }
+                        else
+                        {
+                            message = "Pas d'URL Enregistrée pour ce channel.";
+                        }
                     }
                     break;
+
                 case "info":
-                    var (urlTracker, urlSphereTracker, room, silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
+                    (urlTracker, urlSphereTracker, room, silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
 
                     if (!string.IsNullOrEmpty(room))
                     {
                         using HttpClient client = new();
                         string pageContent = await client.GetStringAsync(room);
 
-                        // Essayer de récupérer le port depuis la page
                         string? port = null;
                         var match = Regex.Match(pageContent, @"/connect archipelago\.gg:(\d+)", RegexOptions.Singleline);
 

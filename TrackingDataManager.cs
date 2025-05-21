@@ -433,7 +433,12 @@ public static class TrackingDataManager
                 existing.LastActivity = newEntry.LastActivity;
                 statusChanges.Add(existing);
 
-                if (!silent)
+                var matchCustomAlias = Regex.Match(existing.Name, @"\(([^)]+)\)$");
+                var alias = matchCustomAlias.Success ? matchCustomAlias.Groups[1].Value : existing.Name;
+
+                var getReceivers = await ReceiverAliasesCommands.CheckIfReceiverExists(guild, channel, alias);
+
+                if (!silent || getReceivers)
                 {
                     if (isChanged)
                     {

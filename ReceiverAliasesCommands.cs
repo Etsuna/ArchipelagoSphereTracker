@@ -1,4 +1,5 @@
 ﻿using System.Data.SQLite;
+using System.Net.NetworkInformation;
 
 public static class ReceiverAliasesCommands
 {
@@ -32,6 +33,29 @@ public static class ReceiverAliasesCommands
             }
         }
         return receivers;
+    }
+
+    public static async Task<bool> CheckIfReceiverExists(string guildId, string channelId, string receiver)
+    {
+        using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+        {
+            await connection.OpenAsync();
+            using (var command = new SQLiteCommand(connection))
+            {
+                command.CommandText = @"
+                SELECT COUNT(*)
+                FROM ReceiverAliasesTable
+                WHERE GuildId = @GuildId
+                  AND ChannelId = @ChannelId
+                  AND Receiver = @Receiver;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                command.Parameters.AddWithValue("@Receiver", receiver);
+                var result = await command.ExecuteScalarAsync();
+                var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0;
+                return count > 0;
+            }
+        }
     }
 
     public static async Task<List<string>> GetUserIds(string guildId, string channelId)
