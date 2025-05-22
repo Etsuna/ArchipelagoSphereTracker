@@ -11,17 +11,17 @@ public static class AliasChoicesCommands
                 await connection.OpenAsync();
 
                 var query = @"
-                SELECT Game 
-                FROM AliasChoicesTable 
-                WHERE GuildId = @GuildId 
-                  AND ChannelId = @ChannelId 
-                  AND Alias = @Alias";
+            SELECT Game 
+            FROM AliasChoicesTable 
+            WHERE GuildId = @GuildId 
+              AND ChannelId = @ChannelId 
+              AND Alias LIKE @Alias";
 
                 using (var command = new SQLiteCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@GuildId", guildId);
                     command.Parameters.AddWithValue("@ChannelId", channelId);
-                    command.Parameters.AddWithValue("@Alias", alias);
+                    command.Parameters.AddWithValue("@Alias", $"%{alias}%");
 
                     var result = await command.ExecuteScalarAsync();
 

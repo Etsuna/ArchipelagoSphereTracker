@@ -229,10 +229,10 @@ public static class TrackingDataManager
 
             var mentions = string.Join(" ", userIds.Select(x => x.UserId).Select(id => $"<@{id}>"));
 
-            var getGameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver);
-
-            if (userIds.Any(x => x.Equals(true)))
+            if (userIds.Any(x => x.IsEnabled.Equals(true)))
             {
+                var getGameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver);
+
                 if (!string.IsNullOrWhiteSpace(getGameName))
                 {
                     var isFiller = await ItemsCommands.IsFillerAsync(getGameName, item.Item);
