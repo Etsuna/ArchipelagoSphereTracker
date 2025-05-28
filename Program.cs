@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 class Program
 {
     public static string Version = "0.6.1";
-    public static string BotVersion = "2.1.3";
+    public static string BotVersion = "2.2.1";
     public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
     public static string ExternalFolder = Path.Combine(BasePath, "extern");
     public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
