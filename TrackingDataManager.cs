@@ -97,8 +97,11 @@ public static class TrackingDataManager
                                         }
                                     }
 
+                                    Console.WriteLine($"Set des Alias et GameStatus pour le salon {channelCheck.Name}...");
                                     await SetAliasAndGameStatusAsync(guild, channel, urlTracker, silent);
+                                    Console.WriteLine($"Vérification du GameStatus pour le salon {channelCheck.Name}...");
                                     await CheckGameStatusAsync(guild, channel, urlTracker, silent);
+                                    Console.WriteLine($"Vérification des Items pour le salon {channelCheck.Name}...");
                                     await GetTableDataAsync(guild, channel, urlSphereTracker, silent);
                                 }
                                 else
@@ -116,7 +119,7 @@ public static class TrackingDataManager
                             Console.WriteLine($"Suppression effectuée");
                         }
                     }
-
+                    Console.WriteLine("Attente de 5 minutes avant la prochaine vérification...");
                     await Task.Delay(300000, token);
                 }
             }

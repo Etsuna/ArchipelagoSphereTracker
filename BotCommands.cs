@@ -372,32 +372,26 @@ public static class BotCommands
             string? guildId = interaction.GuildId?.ToString();
             var channelId = interaction.ChannelId.ToString();
 
-            if (string.IsNullOrWhiteSpace(channelId))
+            if (string.IsNullOrWhiteSpace(channelId) || guildId == null)
             {
-                await interaction.RespondAsync(new AutocompleteResult[0]);
+                await interaction.RespondAsync(Array.Empty<AutocompleteResult>());
                 return;
             }
 
-            if (guildId == null)
-            {
-                await interaction.RespondAsync(new AutocompleteResult[0]);
-                return;
-            }
-
-            var aliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
+            var aliases = (await ReceiverAliasesCommands.GetReceiver(guildId, channelId))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             string userInput = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
 
             int pageSize = 25;
             int pageNumber = 1;
 
-            if (userInput.StartsWith(">"))
+            if (userInput.StartsWith(">") &&
+                int.TryParse(userInput.TrimStart('>'), out int parsedPage) && parsedPage > 0)
             {
-                if (int.TryParse(userInput.TrimStart('>'), out int parsedPage) && parsedPage > 0)
-                {
-                    pageNumber = parsedPage;
-                    userInput = "";
-                }
+                pageNumber = parsedPage;
+                userInput = "";
             }
 
             var filteredAliases = aliases
