@@ -262,5 +262,32 @@ public static class GameStatusCommands
             Console.WriteLine($"Erreur lors de la mise à jour des GameStatus : {ex.Message}");
         }
     }
+
+    public static async Task DeleteGameStatusAsync(string guildId, string channelId, string name)
+    {
+        try
+        {
+            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            {
+                await connection.OpenAsync();
+                using (var command = new SQLiteCommand(connection))
+                {
+                    command.CommandText = @"
+                    DELETE FROM GameStatusTable
+                    WHERE GuildId = @GuildId
+                      AND ChannelId = @ChannelId
+                      AND Name = @Name";
+                    command.Parameters.AddWithValue("@GuildId", guildId);
+                    command.Parameters.AddWithValue("@ChannelId", channelId);
+                    command.Parameters.AddWithValue("@Name", name);
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la suppression du GameStatus : {ex.Message}");
+        }
+    }
 }
 
