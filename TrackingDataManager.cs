@@ -373,6 +373,8 @@ public static class TrackingDataManager
 
     private static async Task ProcessGameStatusTableAsync(string tableHtml, string guild, string channel, bool silent)
     {
+        await GameStatusCommands.DeleteAllBaseNamesWithAliasAsync(guild, channel);
+
         var rows = RowRegex2.Matches(tableHtml);
         if (rows.Count <= 1)
             return;
@@ -418,16 +420,7 @@ public static class TrackingDataManager
                 newGameStatuses.Add(newEntry);
                 continue;
             }
-
-            if (existingStatuses.Any(x => x.Key.Equals(name)))
-            {
-                if (existingStatuses.Any(x => x.Key.EndsWith($"({name})")))
-                {
-                    await GameStatusCommands.DeleteGameStatusAsync(guild, channel, name);
-                    continue;
-                }
-            }
-
+             
             bool isChanged = false;
 
             if (existing.Status != newEntry.Status) { existing.Status = newEntry.Status; isChanged = true; }

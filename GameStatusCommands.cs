@@ -1,4 +1,5 @@
 ﻿using System.Data.SQLite;
+using System.Text.RegularExpressions;
 
 public static class GameStatusCommands
 {
@@ -263,30 +264,68 @@ public static class GameStatusCommands
         }
     }
 
-    public static async Task DeleteGameStatusAsync(string guildId, string channelId, string name)
+    public static async Task DeleteAllBaseNamesWithAliasAsync(string guildId, string channelId)
     {
         try
         {
             using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
             {
                 await connection.OpenAsync();
-                using (var command = new SQLiteCommand(connection))
+
+                var existingNames = new List<string>();
+                using (var selectCommand = new SQLiteCommand(connection))
                 {
-                    command.CommandText = @"
-                    DELETE FROM GameStatusTable
+                    selectCommand.CommandText = @"
+                    SELECT Name
+                    FROM GameStatusTable
                     WHERE GuildId = @GuildId
-                      AND ChannelId = @ChannelId
-                      AND Name = @Name";
-                    command.Parameters.AddWithValue("@GuildId", guildId);
-                    command.Parameters.AddWithValue("@ChannelId", channelId);
-                    command.Parameters.AddWithValue("@Name", name);
-                    await command.ExecuteNonQueryAsync();
+                      AND ChannelId = @ChannelId";
+                    selectCommand.Parameters.AddWithValue("@GuildId", guildId);
+                    selectCommand.Parameters.AddWithValue("@ChannelId", channelId);
+
+                    using (var reader = await selectCommand.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            existingNames.Add(reader.GetString(0));
+                        }
+                    }
+                }
+
+                var namesToDelete = new HashSet<string>();
+                foreach (var name in existingNames)
+                {
+                    var match = Regex.Match(name, @"\((.+?)\)$");
+                    if (match.Success)
+                    {
+                        var baseName = match.Groups[1].Value;
+                        if (existingNames.Contains(baseName))
+                        {
+                            namesToDelete.Add(baseName);
+                        }
+                    }
+                }
+
+                foreach (var nameToDelete in namesToDelete)
+                {
+                    using (var deleteCommand = new SQLiteCommand(connection))
+                    {
+                        deleteCommand.CommandText = @"
+                        DELETE FROM GameStatusTable
+                        WHERE GuildId = @GuildId
+                          AND ChannelId = @ChannelId
+                          AND Name = @Name";
+                        deleteCommand.Parameters.AddWithValue("@GuildId", guildId);
+                        deleteCommand.Parameters.AddWithValue("@ChannelId", channelId);
+                        deleteCommand.Parameters.AddWithValue("@Name", nameToDelete);
+                        await deleteCommand.ExecuteNonQueryAsync();
+                    }
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la suppression du GameStatus : {ex.Message}");
+            Console.WriteLine($"Erreur lors de la suppression des GameStatus : {ex.Message}");
         }
     }
 }
