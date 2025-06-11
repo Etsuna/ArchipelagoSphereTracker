@@ -264,7 +264,7 @@ public static class GameStatusCommands
         }
     }
 
-    public static async Task DeleteAllBaseNamesWithAliasAsync(string guildId, string channelId)
+    public static async Task DeleteDuplicateAliasAsync(string guildId, string channelId)
     {
         try
         {

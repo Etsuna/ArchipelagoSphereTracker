@@ -1,4 +1,5 @@
 ﻿using System.Data.SQLite;
+using System.Text.RegularExpressions;
 
 public static class HintStatusCommands
 {
@@ -197,6 +198,136 @@ public static class HintStatusCommands
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors de l'ajout ou remplacement du statut d'indice : {ex.Message}");
+        }
+    }
+
+    public static async Task DeleteDuplicateReceiversAliasAsync(string guildId, string channelId)
+    {
+        try
+        {
+            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            {
+                await connection.OpenAsync();
+
+                var existingReceivers = new List<string>();
+                using (var selectCommand = new SQLiteCommand(connection))
+                {
+                    selectCommand.CommandText = @"
+                    SELECT Receiver
+                    FROM HintStatusTable
+                    WHERE GuildId = @GuildId
+                      AND ChannelId = @ChannelId";
+                    selectCommand.Parameters.AddWithValue("@GuildId", guildId);
+                    selectCommand.Parameters.AddWithValue("@ChannelId", channelId);
+
+                    using (var reader = await selectCommand.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            existingReceivers.Add(reader.GetString(0));
+                        }
+                    }
+                }
+
+                var receiversToDelete = new HashSet<string>();
+                foreach (var name in existingReceivers)
+                {
+                    var match = Regex.Match(name, @"\((.+?)\)$");
+                    if (match.Success)
+                    {
+                        var baseName = match.Groups[1].Value;
+                        if (existingReceivers.Contains(baseName))
+                        {
+                            receiversToDelete.Add(baseName);
+                        }
+                    }
+                }
+
+                foreach (var receiverToDelete in receiversToDelete)
+                {
+                    using (var deleteCommand = new SQLiteCommand(connection))
+                    {
+                        deleteCommand.CommandText = @"
+                        DELETE FROM GameStatusTable
+                        WHERE GuildId = @GuildId
+                          AND ChannelId = @ChannelId
+                          AND Receiver = @Receiver";
+                        deleteCommand.Parameters.AddWithValue("@GuildId", guildId);
+                        deleteCommand.Parameters.AddWithValue("@ChannelId", channelId);
+                        deleteCommand.Parameters.AddWithValue("@Receiver", receiverToDelete);
+                        await deleteCommand.ExecuteNonQueryAsync();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la suppression des HintStatus : {ex.Message}");
+        }
+    }
+
+    public static async Task DeleteDuplicateFindersAliasAsync(string guildId, string channelId)
+    {
+        try
+        {
+            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            {
+                await connection.OpenAsync();
+
+                var existingFinders = new List<string>();
+                using (var selectCommand = new SQLiteCommand(connection))
+                {
+                    selectCommand.CommandText = @"
+                    SELECT Finder
+                    FROM HintStatusTable
+                    WHERE GuildId = @GuildId
+                      AND ChannelId = @ChannelId";
+                    selectCommand.Parameters.AddWithValue("@GuildId", guildId);
+                    selectCommand.Parameters.AddWithValue("@ChannelId", channelId);
+
+                    using (var reader = await selectCommand.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            existingFinders.Add(reader.GetString(0));
+                        }
+                    }
+                }
+
+                var findersToDelete = new HashSet<string>();
+                foreach (var name in existingFinders)
+                {
+                    var match = Regex.Match(name, @"\((.+?)\)$");
+                    if (match.Success)
+                    {
+                        var baseName = match.Groups[1].Value;
+                        if (existingFinders.Contains(baseName))
+                        {
+                            findersToDelete.Add(baseName);
+                        }
+                    }
+                }
+
+                foreach (var finderToDelete in findersToDelete)
+                {
+                    using (var deleteCommand = new SQLiteCommand(connection))
+                    {
+                        deleteCommand.CommandText = @"
+                        DELETE FROM GameStatusTable
+                        WHERE GuildId = @GuildId
+                          AND ChannelId = @ChannelId
+                          AND Finder = @Finder";
+                        deleteCommand.Parameters.AddWithValue("@GuildId", guildId);
+                        deleteCommand.Parameters.AddWithValue("@ChannelId", channelId);
+                        deleteCommand.Parameters.AddWithValue("@Finder", finderToDelete);
+                        await deleteCommand.ExecuteNonQueryAsync();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la suppression des HintStatus : {ex.Message}");
         }
     }
 }

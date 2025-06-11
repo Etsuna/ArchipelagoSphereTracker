@@ -373,7 +373,7 @@ public static class TrackingDataManager
 
     private static async Task ProcessGameStatusTableAsync(string tableHtml, string guild, string channel, bool silent)
     {
-        await GameStatusCommands.DeleteAllBaseNamesWithAliasAsync(guild, channel);
+        await GameStatusCommands.DeleteDuplicateAliasAsync(guild, channel);
 
         var rows = RowRegex2.Matches(tableHtml);
         if (rows.Count <= 1)
@@ -420,7 +420,12 @@ public static class TrackingDataManager
                 newGameStatuses.Add(newEntry);
                 continue;
             }
-             
+
+            if (existing.Percent == "100.00")
+            {
+                continue; // Skip entries that are already complete
+            }
+
             bool isChanged = false;
 
             if (existing.Status != newEntry.Status) { existing.Status = newEntry.Status; isChanged = true; }
@@ -428,9 +433,6 @@ public static class TrackingDataManager
             if (existing.Checks != newEntry.Checks) { existing.Checks = newEntry.Checks; isChanged = true; }
 
             if (isChanged)
-                statusChanges.Add(existing);
-
-            if (newEntry.Percent == "100.00" || newEntry.Status == "Goal Complete")
             {
                 existing.Status = newEntry.Status;
                 existing.Percent = newEntry.Percent;
@@ -438,16 +440,19 @@ public static class TrackingDataManager
                 existing.LastActivity = newEntry.LastActivity;
                 statusChanges.Add(existing);
 
-                var matchCustomAlias = Regex.Match(existing.Name, @"\(([^)]+)\)$");
-                var alias = matchCustomAlias.Success ? matchCustomAlias.Groups[1].Value : existing.Name;
-
-                var getReceivers = await ReceiverAliasesCommands.CheckIfReceiverExists(guild, channel, alias);
-
-                if (!silent || getReceivers)
+                if (newEntry.Percent == "100.00" || newEntry.Status == "Goal Complete")
                 {
-                    if (isChanged)
+                    var matchCustomAlias = Regex.Match(existing.Name, @"\(([^)]+)\)$");
+                    var alias = matchCustomAlias.Success ? matchCustomAlias.Groups[1].Value : existing.Name;
+
+                    var getReceivers = await ReceiverAliasesCommands.CheckIfReceiverExists(guild, channel, alias);
+
+                    if (!silent || getReceivers)
                     {
-                        await BotCommands.SendMessageAsync($"@everyone\n{newEntry.Name} has completed their goal for this game: {newEntry.Game}!", channel);
+                        if (isChanged)
+                        {
+                            await BotCommands.SendMessageAsync($"@everyone\n{newEntry.Name} has completed their goal for this game: {newEntry.Game}!", channel);
+                        }
                     }
                 }
             }
@@ -462,6 +467,9 @@ public static class TrackingDataManager
 
     private static async Task ProcessHintTableAsync(string tableHtml, string guild, string channel)
     {
+        await HintStatusCommands.DeleteDuplicateReceiversAliasAsync(guild, channel);
+        await HintStatusCommands.DeleteDuplicateFindersAliasAsync(guild, channel);
+
         var rows = RowRegex2.Matches(tableHtml);
         if (rows.Count == 0)
             return;
