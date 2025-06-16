@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 class Program
 {
     public static string Version = "0.6.1";
-    public static string BotVersion = "2.2.4";
+    public static string BotVersion = "2.2.5";
     public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
     public static string ExternalFolder = Path.Combine(BasePath, "extern");
     public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
@@ -20,6 +20,13 @@ class Program
     public static string GenerateTemplatesPath = Path.Combine(ExtractPath, "generateTemplates.py");
     public static string GenerateItemsTablePath = Path.Combine(ExtractPath, "generateItemsTable.py");
     public static string BddPath = Path.Combine(BasePath, "AST.db");
+    public static string PlayersPath = Path.Combine(ExtractPath, "Players");
+    public static string CustomPath = Path.Combine(ExtractPath, "custom_worlds");
+    public static string WorldsPath = Path.Combine(ExtractPath, "worlds");
+    public static string BackupPath = Path.Combine(ExternalFolder,$"backup_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}");
+    public static string RomBackupPath = Path.Combine(BackupPath, "rom_backup");
+    public static string ApworldsBackupPath = Path.Combine(BackupPath, "apworlds_backup");
+    public static string PlayersBackup = Path.Combine(BackupPath, "players_backup");
 
     static async Task Main(string[] args)
     {
@@ -30,14 +37,16 @@ class Program
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
         DatabaseInitializer.InitializeDatabase();
-        
+
         if (currentVersion.Trim() == Version)
         {
             Console.WriteLine($"Archipelago {Version} est déjà installé.");
         }
         else
         {
+            await Backup();
             await Install(currentVersion, isWindows, isLinux);
+            await RestoreBackup();
         }
 
         Console.WriteLine($"Starting bot... Archipelago Version: Archipelago_{currentVersion}");
@@ -68,10 +77,201 @@ class Program
         await Task.Delay(-1);
     }
 
+    public static Task Backup()
+    {
+        if (!Directory.Exists(ExtractPath))
+        {
+            Console.WriteLine("Le dossier externe n'existe pas, impossible de faire une sauvegarde.");
+            return Task.CompletedTask;
+        }
+
+        if (!Directory.Exists(BackupPath))
+        {
+            Directory.CreateDirectory(BackupPath);
+        }
+
+        if (Directory.Exists(RomBackupPath))
+        {
+            Directory.Delete(RomBackupPath, true);
+        }
+
+        Directory.CreateDirectory(RomBackupPath);
+
+        HashSet<string> extensionsRoms = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".apworld", ".zip", ".7z",
+            ".nes", ".sfc", ".smc", ".gba", ".gb", ".gbc",
+            ".z64", ".n64", ".v64", ".nds", ".gcm", ".iso", ".cue", ".bin",
+            ".gen", ".md", ".img", ".msu", ".pcm"
+        };
+
+        foreach (var fichier in Directory.GetFiles(ExtractPath, "*.*", SearchOption.TopDirectoryOnly))
+        {
+            string extension = Path.GetExtension(fichier);
+            if (extensionsRoms.Contains(extension))
+            {
+                string nomFichier = Path.GetFileName(fichier);
+                string cheminDestination = Path.Combine(RomBackupPath, nomFichier);
+
+                try
+                {
+                    File.Move(fichier, cheminDestination, true);
+                    Console.WriteLine($"Déplacé : {nomFichier} → {cheminDestination}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erreur sur {fichier} : {ex.Message}");
+                }
+            }
+        }
+
+        Console.WriteLine("Rom Backup terminé.");
+
+        if (Directory.Exists(CustomPath))
+        {
+            if (Directory.Exists(ApworldsBackupPath))
+            {
+                Directory.Delete(ApworldsBackupPath, true);
+            }
+
+            Directory.CreateDirectory(ApworldsBackupPath);
+
+            foreach (var fichier in Directory.GetFiles(CustomPath, "*.apworld", SearchOption.TopDirectoryOnly))
+            {
+                string nomFichier = Path.GetFileName(fichier);
+                string cheminDestination = Path.Combine(ApworldsBackupPath, nomFichier);
+                try
+                {
+                    File.Move(fichier, cheminDestination, true);
+                    Console.WriteLine($"Déplacé : {nomFichier} → {cheminDestination}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erreur sur {fichier} : {ex.Message}");
+                }
+            }
+
+            Console.WriteLine("Custom_Worlds Backup terminé.");
+        }
+
+
+        if (Directory.Exists(PlayersPath))
+        {
+            if (Directory.Exists(PlayersBackup))
+            {
+                Directory.Delete(PlayersBackup, true);
+            }
+
+            Directory.CreateDirectory(PlayersBackup);
+
+            foreach (var fichier in Directory.GetFiles(PlayersPath, "*", SearchOption.TopDirectoryOnly))
+            {
+                string nomFichier = Path.GetFileName(fichier);
+                string destination = Path.Combine(PlayersBackup, nomFichier);
+                File.Move(fichier, destination, overwrite: true);
+                Console.WriteLine($"Fichier déplacé : {nomFichier}");
+            }
+
+            foreach (var dossier in Directory.GetDirectories(PlayersPath, "*", SearchOption.TopDirectoryOnly))
+            {
+                string nomDossier = Path.GetFileName(dossier);
+                if (string.Equals(nomDossier, "templates", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                string destination = Path.Combine(PlayersBackup, nomDossier);
+
+                if (Directory.Exists(destination))
+                    Directory.Delete(destination, recursive: true);
+
+                Directory.Move(dossier, destination);
+                Console.WriteLine($"Dossier déplacé : {nomDossier}");
+            }
+
+            Console.WriteLine("Déplacement du dossier Players terminé.");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public static Task RestoreBackup()
+    {
+        if (!Directory.Exists(BackupPath))
+        {
+            Console.WriteLine("Le dossier de sauvegarde n'existe pas, impossible de restaurer.");
+            return Task.CompletedTask;
+        }
+
+        if (Directory.Exists(RomBackupPath))
+        {
+            foreach (var fichier in Directory.GetFiles(RomBackupPath, "*.*", SearchOption.TopDirectoryOnly))
+            {
+                string nomFichier = Path.GetFileName(fichier);
+                string cheminDestination = Path.Combine(ExtractPath, nomFichier);
+                try
+                {
+                    File.Move(fichier, cheminDestination, true);
+                    Console.WriteLine($"Restauré : {nomFichier} → {cheminDestination}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erreur sur {fichier} : {ex.Message}");
+                }
+            }
+        }
+
+        if (Directory.Exists(ApworldsBackupPath))
+        {
+            foreach (var fichier in Directory.GetFiles(ApworldsBackupPath, "*.apworld", SearchOption.TopDirectoryOnly))
+            {
+                string nomFichier = Path.GetFileName(fichier);
+                string cheminDestination = Path.Combine(CustomPath, nomFichier);
+                try
+                {
+                    File.Move(fichier, cheminDestination, true);
+                    Console.WriteLine($"Restauré : {nomFichier} → {cheminDestination}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erreur sur {fichier} : {ex.Message}");
+                }
+            }
+
+            GenerateYamls();
+        }
+
+        if (Directory.Exists(PlayersBackup))
+        {
+            foreach (var fichier in Directory.GetFiles(PlayersBackup, "*", SearchOption.TopDirectoryOnly))
+            {
+                string nomFichier = Path.GetFileName(fichier);
+                string destination = Path.Combine(PlayersPath, nomFichier);
+                File.Move(fichier, destination, overwrite: true);
+                Console.WriteLine($"Fichier restauré : {nomFichier}");
+            }
+            foreach (var dossier in Directory.GetDirectories(PlayersBackup, "*", SearchOption.TopDirectoryOnly))
+            {
+                string nomDossier = Path.GetFileName(dossier);
+                string destination = Path.Combine(PlayersPath, nomDossier);
+                if (Directory.Exists(destination))
+                    Directory.Delete(destination, recursive: true);
+                Directory.Move(dossier, destination);
+                Console.WriteLine($"Dossier restauré : {nomDossier}");
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
     private static async Task Install(string currentVersion, bool isWindows, bool isLinux)
     {
         Console.WriteLine($"Nouvelle version détectée : {Version} (ancienne : {currentVersion})");
         Console.WriteLine($"{BasePath.ToString()}");
+
+        if(Directory.Exists(ExtractPath))
+        {
+            Console.WriteLine($"Le dossier {ExtractPath} existe déjà, on va le supprimer.");
+            Directory.Delete(ExtractPath, true);
+        }
 
         if (!Directory.Exists(ExternalFolder))
         {
@@ -371,9 +571,55 @@ class Program
 
         Console.WriteLine($"Fichier Python créé à l'emplacement : {GenerateTemplatesPath}");
 
+        List<string> dossiersExtraits = new List<string>();
+        if (Directory.Exists(CustomPath))
+        {
+            var fichiersApworld = Directory.GetFiles(CustomPath, "*.apworld");
+
+            if (fichiersApworld.Length > 0)
+            {
+                HashSet<string> dossiersExistants = new HashSet<string>(Directory.GetDirectories(WorldsPath));
+
+                foreach (var fichier in Directory.GetFiles(CustomPath, "*.apworld"))
+                {
+                    using (ZipArchive archive = ZipFile.OpenRead(fichier))
+                    {
+                        string dossierRacine = null;
+                        foreach (var entry in archive.Entries)
+                        {
+                            if (!string.IsNullOrEmpty(entry.FullName) && entry.FullName.EndsWith("/"))
+                            {
+                                dossierRacine = entry.FullName.Split('/')[0];
+                                break;
+                            }
+                        }
+
+                        if (dossierRacine == null)
+                        {
+                            Console.WriteLine($"Pas de dossier racine trouvé dans {fichier}");
+                            continue;
+                        }
+
+                        string cheminExtraction = Path.Combine(WorldsPath, dossierRacine);
+
+                        if (!Directory.Exists(cheminExtraction))
+                        {
+                            Console.WriteLine($"Extraction de {fichier} dans {cheminExtraction}...");
+                            ZipFile.ExtractToDirectory(fichier, WorldsPath);
+                            dossiersExtraits.Add(cheminExtraction);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Le dossier {cheminExtraction} existe déjà, on ignore.");
+                        }
+                    }
+                }
+            }
+        }
+
         var generateYamlCommand = isWindows
-   ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\""
-   : $"bash -c 'yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\"'";
+       ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\""
+       : $"bash -c 'yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\"'";
 
         ProcessStartInfo generateYamlProcess = new ProcessStartInfo
         {
@@ -411,6 +657,26 @@ class Program
                 return;
             }
         }
+
+        if (Directory.Exists(CustomPath))
+        {
+            var fichiersApworld = Directory.GetFiles(CustomPath, "*.apworld");
+            if (fichiersApworld.Length > 0)
+            {
+                foreach (var dossier in dossiersExtraits)
+                {
+                    try
+                    {
+                        Directory.Delete(dossier, recursive: true);
+                        Console.WriteLine($"Supprimé : {dossier}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Erreur suppression {dossier} : {ex.Message}");
+                    }
+                }
+            }
+        }
     }
 
     public static void GenerateItemsTableClass()
@@ -432,8 +698,8 @@ class Program
         Console.WriteLine($"Fichier Python créé à l'emplacement : {GenerateItemsTablePath}");
 
         var generateItemsTableCommand = isWindows
-   ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{GenerateItemsTablePath}\""
-   : $"bash -c 'yes | \"{pythonExecutable}\" \"{GenerateItemsTablePath}\"'";
+    ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{GenerateItemsTablePath}\""
+    : $"bash -c 'yes | \"{pythonExecutable}\" \"{GenerateItemsTablePath}\"'";
 
         ProcessStartInfo generateItemsTableProcess = new ProcessStartInfo
         {
