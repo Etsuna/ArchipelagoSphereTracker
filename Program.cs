@@ -584,7 +584,7 @@ class Program
                 {
                     using (ZipArchive archive = ZipFile.OpenRead(fichier))
                     {
-                        string dossierRacine = null;
+                        string? dossierRacine = null;
                         foreach (var entry in archive.Entries)
                         {
                             if (!string.IsNullOrEmpty(entry.FullName) && entry.FullName.EndsWith("/"))
