@@ -35,6 +35,8 @@ Tous les jeux pris en charge par le Randomizer MultiWorld [Archipelago](https://
 dotnet-sdk-8.0
 Fonctionne sous Linux et Windows
 Python 3.13
+python3-pip
+python3-venv
 ```
 
 ## Configuration
