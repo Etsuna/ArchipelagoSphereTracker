@@ -1,20 +1,17 @@
 <?php
 $dir = __DIR__ . '/telemetry';
 $files = glob($dir . '/*.json');
-krsort($files); // plus récents d'abord
+sort($files); // plus anciens d'abord
 
 $dates = [];
 $dataByDate = [];
 $programIds = [];
-$totalGuilds = 0;
-$totalChannels = 0;
+$latestPerProgram = [];
 
 foreach ($files as $file) {
     $jsonContent = file_get_contents($file);
     $entries = json_decode($jsonContent, true);
-    if (!is_array($entries)) {
-        continue;
-    }
+    if (!is_array($entries)) continue;
 
     $date = basename($file, '.json');
     $dates[] = $date;
@@ -28,9 +25,6 @@ foreach ($files as $file) {
         $guildsCount = isset($entry['guilds']) ? (int)$entry['guilds'] : 0;
         $channelsCount = isset($entry['channels']) ? (int)$entry['channels'] : 0;
 
-        $totalGuilds += $guildsCount;
-        $totalChannels += $channelsCount;
-
         if (!isset($dataByDate[$date])) {
             $dataByDate[$date] = [];
         }
@@ -38,28 +32,165 @@ foreach ($files as $file) {
             'guilds' => $guildsCount,
             'channels' => $channelsCount
         ];
+
+        // Enregistre la dernière donnée connue (on suppose que les fichiers sont triés du plus ancien au plus récent)
+        $latestPerProgram[$id] = [
+            'guilds' => $guildsCount,
+            'channels' => $channelsCount,
+            'date' => $date
+        ];
     }
 }
 
-rsort($dates); // du plus ancien au plus récent (pour graphique)
 $programIds = array_keys($programIds);
 sort($programIds);
 $totalPrograms = count($programIds);
+
+// Calculs finaux à partir des dernières valeurs
+$totalGuilds = array_sum(array_column($latestPerProgram, 'guilds'));
+$totalChannels = array_sum(array_column($latestPerProgram, 'channels'));
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <title>Télémétrie ArchipelagoSphereTracker - Statistiques par programme</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <title>Télémétrie ArchipelagoSphereTracker - Statistiques par programme</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 40px auto;
+      max-width: 1500px;
+      padding: 0 20px;
+      background: #f8fafc;
+      color: #1f2937;
+    }
+
+    h1, h2 {
+      color: #111827;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 0.5em;
+    }
+
+    h2 {
+      margin-top: 2em;
+      font-size: 1.5em;
+    }
+
+    p {
+      margin: 0.5em 0;
+    }
+
+    select {
+      padding: 0.5em;
+      font-size: 1em;
+      margin-top: 0.5em;
+      margin-bottom: 1em;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: #f9fafb;
+    }
+
+    canvas {
+      margin-top: 2em;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    label {
+      display: block;
+      margin-top: 1em;
+      font-weight: 600;
+    }
+
+    hr {
+      margin: 2em 0;
+      border: none;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .table-wrapper {
+      max-height: 300px; /* Ajuste ici la hauteur souhaitée */
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Fixe les entêtes pour la lisibilité si tu veux (facultatif) */
+    .table-wrapper thead th {
+      position: sticky;
+      top: 0;
+      background-color: #f1f5f9;
+      z-index: 1;
+    }
+  </style>
 </head>
 <body>
 
 <h1>Télémétrie ArchipelagoSphereTracker</h1>
 
 <p><strong>Total de programmes uniques enregistrés :</strong> <?= $totalPrograms ?></p>
-<p><strong>Total cumulé des Guilds :</strong> <?= $totalGuilds ?></p>
-<p><strong>Total cumulé des Channels :</strong> <?= $totalChannels ?></p>
+<p><strong>Total actuel des Guilds :</strong> <?= $totalGuilds ?></p>
+<p><strong>Total actuel des Fils :</strong> <?= $totalChannels ?></p>
+
+<h2>Détail par programme (dernière valeur connue)</h2>
+<div class="table-wrapper">
+  <table>
+    <thead>
+        <tr>
+            <th>Programme</th>
+            <th>Guilds</th>
+            <th>Fils</th>
+            <th>Dernière date</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($latestPerProgram as $pid => $info): ?>
+            <tr>
+                <td><?= htmlspecialchars($pid) ?></td>
+                <td><?= $info['guilds'] ?></td>
+                <td><?= $info['channels'] ?></td>
+                <td><?= htmlspecialchars($info['date']) ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </tbody>
+      </table>
+</div>
+</table>
+
+<hr>
 
 <label for="programSelect">Sélectionner un programme :</label>
 <select id="programSelect">
@@ -69,7 +200,7 @@ $totalPrograms = count($programIds);
     <?php endforeach; ?>
 </select>
 
-<h2>Statistiques Guilds & Channels</h2>
+<h2>Évolution dans le temps</h2>
 <canvas id="telemetryChart" width="900" height="400"></canvas>
 
 <script>
@@ -87,7 +218,6 @@ function updateChart(programId) {
         const dayData = dataByDate[date] || {};
 
         if (programId === 'all') {
-            // somme de tous les programmes
             let guildsSum = 0;
             let channelsSum = 0;
             for (const pid in dayData) {
@@ -97,7 +227,6 @@ function updateChart(programId) {
             guildsData.push(guildsSum);
             channelsData.push(channelsSum);
         } else {
-            // stats du programme spécifique
             if (dayData[programId]) {
                 guildsData.push(dayData[programId].guilds);
                 channelsData.push(dayData[programId].channels);
@@ -123,7 +252,7 @@ function updateChart(programId) {
                     yAxisID: 'y',
                 },
                 {
-                    label: `Channels - ${programId === 'all' ? 'Tous les programmes' : programId}`,
+                    label: `Fils - ${programId === 'all' ? 'Tous les programmes' : programId}`,
                     data: channelsData,
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
@@ -164,7 +293,7 @@ function updateChart(programId) {
                     position: 'right',
                     title: {
                         display: true,
-                        text: 'Channels'
+                        text: 'Fils'
                     },
                     beginAtZero: true,
                     grid: { drawOnChartArea: false },
