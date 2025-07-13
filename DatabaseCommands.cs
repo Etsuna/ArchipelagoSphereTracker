@@ -40,6 +40,39 @@ public static class DatabaseCommands
         return guilds;
     }
 
+    public static async Task<string> ProgramIdentifier(string tableName)
+    {
+        try
+        {
+            using var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;");
+            await connection.OpenAsync();
+
+            using (var selectCmd = new SQLiteCommand("SELECT ProgramId FROM ProgramIdTable LIMIT 1", connection))
+            {
+                var result = await selectCmd.ExecuteScalarAsync() as string;
+                if (!string.IsNullOrEmpty(result))
+                {
+                    return result;
+                }
+            }
+
+            var newId = Guid.NewGuid().ToString();
+
+            using (var insertCmd = new SQLiteCommand("INSERT INTO ProgramIdTable (ProgramId) VALUES (@ProgramId)", connection))
+            {
+                insertCmd.Parameters.AddWithValue("@ProgramId", newId);
+                await insertCmd.ExecuteNonQueryAsync();
+            }
+
+            return newId;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur dans GetOrCreateProgramIdAsync : {ex.Message}");
+            return Guid.NewGuid().ToString();
+        }
+    }
+
     // ====================
     // 🎯 GET ALL CHANNELS
     // ====================
@@ -73,6 +106,45 @@ public static class DatabaseCommands
         }
 
         return channels;
+    }
+
+    // ==========================
+    // 🎯 GET DISTINCT GUILDS AND CHANNELS COUNT
+    // ==========================
+    public static async Task<(int GuildCount, int ChannelCount)> GetDistinctGuildsAndChannelsCountAsync(string table)
+    {
+        int guildCount = 0;
+        int channelCount = 0;
+
+        try
+        {
+            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            {
+                await connection.OpenAsync();
+
+                // Count distinct GuildIds
+                using (var cmdGuild = new SQLiteCommand($@"SELECT COUNT(DISTINCT GuildId) FROM {table}", connection))
+                {
+                    var resultGuild = await cmdGuild.ExecuteScalarAsync();
+                    if (resultGuild != null && int.TryParse(resultGuild.ToString(), out int parsedGuildCount))
+                        guildCount = parsedGuildCount;
+                }
+
+                // Count distinct ChannelIds
+                using (var cmdChannel = new SQLiteCommand($@"SELECT COUNT(DISTINCT ChannelId) FROM {table}", connection))
+                {
+                    var resultChannel = await cmdChannel.ExecuteScalarAsync();
+                    if (resultChannel != null && int.TryParse(resultChannel.ToString(), out int parsedChannelCount))
+                        channelCount = parsedChannelCount;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la récupération des counts : {ex.Message}");
+        }
+
+        return (guildCount, channelCount);
     }
 
     // ==========================================

@@ -91,3 +91,26 @@ dotnet build
 # Lancez le bot
 dotnet run
 ```
+
+## Télémétrie
+Une fonctionnalité de télémétrie a été ajoutée pour collecter des statistiques d’usage anonymes du programme.
+
+Que collecte la télémétrie ?
+* Le nombre total de serveurs Discord (guilds) où le programme est actif
+* Le nombre total de fils utilisés
+* Le nombre d’instances distinctes du programme en fonctionnement (identifiées par un identifiant unique local, anonymisé)
+
+Ce qui n’est pas collecté :
+* Aucune donnée personnelle ou sensible (pas de noms, IDs Discord, IP, messages, etc.)
+* Aucun détail sur les fils ou contenus des serveurs
+
+## Pourquoi cette télémétrie ?
+
+Elle permet de mieux comprendre l’adoption du programme, d’évaluer son utilisation, et d’améliorer son développement, tout en respectant la vie privée des utilisateurs.
+Fonctionnement technique
+
+* La télémétrie est envoyée automatiquement une fois par jour depuis chaque instance.
+* Les données sont transmises de façon sécurisée via HTTPS vers un serveur dédié.
+* Chaque instance génère localement un identifiant unique non personnel utilisé pour compter les programmes distincts.
+* Un mécanisme évite les envois multiples par jour depuis une même instance.
+* Aucune donnée personnelle n’est envoyée.

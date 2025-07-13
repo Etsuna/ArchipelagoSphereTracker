@@ -17,16 +17,19 @@ public static class TrackingDataManager
 
         Declare.Cts = new CancellationTokenSource();
         var token = Declare.Cts.Token;
+        
 
         Task.Run(async () =>
         {
             try
             {
+                var programID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable");
                 while (!token.IsCancellationRequested)
                 {
                     Declare.ServiceRunning = true;
 
                     var getAllGuild = await DatabaseCommands.GetAllGuildsAsync("ChannelsAndUrlsTable");
+                    await Telemetry.SendDailyTelemetryAsync(programID);
 
                     foreach (var guild in getAllGuild)
                     {

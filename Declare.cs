@@ -13,4 +13,5 @@ public static class Declare
     public static HashSet<string> WarnedThreads = new HashSet<string>();
     public const string DatabaseFile = "AST.db";
     public static HttpClient HttpClient = new HttpClient();
+    public static string ProgramID { get; set; } = "";
 }

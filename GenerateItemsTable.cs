@@ -82,9 +82,18 @@ def categorize_items(world_class, player: int = 1):
 
     # Liste des options par défaut à vérifier et appliquer si manquantes
     DEFAULT_OPTIONS_CHECK = {
+        #The Messenger
         ""logic_level"": 0,
+
+        #A Short Hike
         ""easier_races"": True,
-        ""shuffle_paintings"": 0
+        
+        #Lingo
+        ""shuffle_paintings"": 0,
+        
+        #Shapez
+        ""include_achievements"": False,
+        ""goal"": ""vanilla"",
     }
 
     categorized = {

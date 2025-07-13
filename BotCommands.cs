@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Data;
 using System.Diagnostics;
 using System.IO.Compression;
-using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -623,7 +622,12 @@ public static class BotCommands
 
         if (command.Channel is IThreadChannel threadChannel)
         {
-            await command.DeferAsync(ephemeral: true);
+            var requestOption = new RequestOptions
+            {
+                Timeout = 300000
+            };
+
+            await command.DeferAsync(ephemeral: true, requestOption);
 
             switch (command.CommandName)
             {
@@ -1646,7 +1650,7 @@ public static class BotCommands
                         string playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
                         if (Directory.Exists(playersFolderChannel))
                         {
-                            var listYamls = Directory.EnumerateFiles(playersFolderChannel, "*.yaml");
+                            var listYamls = Directory.EnumerateFiles(playersFolderChannel, "*.yaml").OrderBy(path => Path.GetFileName(path));
 
                             if (listYamls.Any())
                             {
@@ -1819,7 +1823,7 @@ public static class BotCommands
                         string apworldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
                         if (Directory.Exists(apworldPath))
                         {
-                            var listAppworld = Directory.EnumerateFiles(apworldPath, "*.apworld");
+                            var listAppworld = Directory.EnumerateFiles(apworldPath, "*.apworld").OrderBy(path => Path.GetFileName(path));
 
                             if (listAppworld.Any())
                             {

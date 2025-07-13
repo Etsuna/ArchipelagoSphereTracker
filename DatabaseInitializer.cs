@@ -157,6 +157,20 @@ CREATE TABLE IF NOT EXISTS ItemsTable (
     ItemName TEXT NOT NULL,
     UNIQUE(GameName, Category, ItemName)
 );
+
+-- ==========================
+-- 🎯 ProgramIdTable
+-- ==========================
+CREATE TABLE IF NOT EXISTS ProgramIdTable (
+    ProgramId TEXT PRIMARY KEY
+);
+
+-- ==========================
+-- 🎯 TelemetryTable
+-- ==========================
+CREATE TABLE IF NOT EXISTS TelemetryTable (
+    Date TEXT PRIMARY KEY
+);
 ";
         command.ExecuteNonQuery();
     }
