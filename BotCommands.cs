@@ -601,7 +601,6 @@ public static class BotCommands
         string message = "";
         const int maxMessageLength = 1999;
         var realAlias = command.Data.Options.FirstOrDefault()?.Value as string;
-        
         var matchCustomAlias = !string.IsNullOrEmpty(realAlias) ? Regex.Match(realAlias, @"\(([^)]+)\)$") : Match.Empty;
         var alias = matchCustomAlias.Success ? matchCustomAlias.Groups[1].Value : realAlias;
 
@@ -1309,7 +1308,7 @@ public static class BotCommands
                     var getGameStatusForGuildAndChannelAsync = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guildId, channelId);
                     var (urlTracker, urlSphereTracker, room, silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
 
-                    if(silent)
+                    if (silent)
                     {
                         message = "Status for all games, Thread is silent, Only for added aliases :\n";
                         getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
@@ -1566,7 +1565,7 @@ public static class BotCommands
                                         {
                                             "Private" => ThreadType.PrivateThread,
                                             "Public" => ThreadType.PublicThread,
-                                            _ => ThreadType.PublicThread
+                                            _ => ThreadType.PrivateThread
                                         };
 
                                         var thread = await channel.CreateThreadAsync(
@@ -1579,11 +1578,26 @@ public static class BotCommands
 
                                         channelId = thread.Id.ToString();
 
-                                        await foreach (var memberBatch in channel.GetUsersAsync())
+                                        if (type == ThreadType.PrivateThread)
                                         {
-                                            foreach (var member in memberBatch)
+                                            IGuildUser? user = command.User as IGuildUser;
+                                            if (user == null)
                                             {
-                                                await thread.AddUserAsync(member);
+                                                message = "Utilisateur introuvable pour le thread privé.";
+                                            }
+                                            else
+                                            { 
+                                                await thread.AddUserAsync(user);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            await foreach (var memberBatch in channel.GetUsersAsync())
+                                            {
+                                                foreach (var member in memberBatch)
+                                                {
+                                                    await thread.AddUserAsync(member);
+                                                }
                                             }
                                         }
 
