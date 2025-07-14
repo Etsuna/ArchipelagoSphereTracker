@@ -37,9 +37,12 @@ Aucun prérequis nécessaire.
 
 ## Prérequis pour l'installation des commands d'Archipelago (Génération de multiworld, envoi de yamls/apworlds, etc)
 ```
+Windows et Linux:
 Python 3.13
 python3-pip
 python3-venv
+
+Windows Only: Visual Studio (compilation C++)
 ```
 
 ## Configuration
