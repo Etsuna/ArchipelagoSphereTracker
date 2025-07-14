@@ -30,10 +30,13 @@ Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : http
 ## Jeux Pris en Charge
 Tous les jeux pris en charge par le Randomizer MultiWorld [Archipelago](https://github.com/ArchipelagoMW/Archipelago) sont compatibles et ont une compatibilité MultiWorld complète entre eux.
 
-## Prérequis
+## Prérequis sans l'installation des commands d'Archipelago
 ```
-dotnet-sdk-8.0
-Fonctionne sous Linux et Windows
+Aucun prérequis nécessaire.
+```
+
+## Prérequis pour l'installation des commands d'Archipelago (Génération de multiworld, envoi de yamls/apworlds, etc)
+```
 Python 3.13
 python3-pip
 python3-venv
@@ -63,12 +66,34 @@ Les permissions suivantes seront accordées à ArchipelagoSphereTracker :
 * Ajouter des réactions  
 * Lire l’historique des messages  
 
-## Execution sans installation
+## Execution sans l'intégration d'Archipelago
 ```
 Téléchargez la version Windows "ast-win-x64-vX.X.X.zip" ou Linux "ast-linux-x64-vX.X.X.tar.gz" depuis la page des releases.
 Décompressez dans un dossier
 Ajoutez dans la même répertoire le fichier .env correctement configuré
-Executez le programme ArchipelagoSphereTracker.
+Executez le programme ArchipelagoSphereTracker
+```
+
+## Execution avec l'intégration d'Archipelago (Génération de multiworld, envoi de yamls/apworlds, etc)
+```
+Téléchargez la version Windows "ast-win-x64-vX.X.X.zip" ou Linux "ast-linux-x64-vX.X.X.tar.gz" depuis la page des releases.
+Décompressez dans un dossier
+Ajoutez dans la même répertoire le fichier .env correctement configuré
+Windows: Executez le programme ArchipelagoSphereTracker.exe archipelago
+Linux: Executez le programme ./ArchipelagoSphereTracker archipelago
+```
+
+## Commandes disponible
+```
+ArchipelagoSphereTracker.exe help
+    Affiche toutes les commandes disponibles.
+
+ArchipelagoSphereTracker.exe archipelago
+    Lance le programme avec l’intégration complète d’Archipelago 
+    (voir les prérequis nécessaires).
+
+ArchipelagoSphereTracker.exe install
+    Installe les dépendances et Archipelago pour le bot, puis quitte le programme après l’installation.
 ```
 
 ## Installation avec Dotnet
@@ -86,10 +111,12 @@ vim .env
 dotnet restore
 
 # Compilez le projet
-dotnet build
+dotnet build --configuration Release
 
 # Lancez le bot
-dotnet run
+Allez dans le dossier .\bin\Release\net8.0\
+Windows: executez ArchipelagoSphereTracker.exe
+Linux: executez ./ArchipelagoSphereTracker
 ```
 
 ## Télémétrie

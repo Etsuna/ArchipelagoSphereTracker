@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 class Program
 {
     public static string Version = "0.6.2";
-    public static string BotVersion = "2.5.1";
+    public static string BotVersion = "2.6.0";
     public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
     public static string ExternalFolder = Path.Combine(BasePath, "extern");
     public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
@@ -38,6 +38,34 @@ class Program
 
         DatabaseInitializer.InitializeDatabase();
 
+        if (args.Length > 0 && args[0].ToLower() == "help")
+        {
+            Console.WriteLine(@"
+╔══════════════════════════════════════════════════════════════╗
+║               ArchipelagoSphereTracker - Help                ║
+╠══════════════════════════════════════════════════════════════╣
+║ Commandes disponibles :                                      ║
+║                                                              ║
+║ ArchipelagoSphereTracker.exe                                 ║
+║    ➜ Lance le bot Discord en mode simple (mode par défaut)   ║
+║                                                              ║
+║ ArchipelagoSphereTracker.exe archipelago                     ║
+║    ➜ Active toutes les fonctionnalités Archipelago           ║
+║      (Génération de multiworld, envoi de yamls/apworlds, etc)║
+║                                                              ║
+║ ArchipelagoSphereTracker.exe install                         ║
+║    ➜ Lance le processus d'installation :                     ║
+║      * Sauvegarde les fichiers                               ║
+║      * Installe les composants nécessaires                   ║
+║      * Restaure la sauvegarde                                ║
+║                                                              ║
+║ ArchipelagoSphereTracker.exe help                            ║
+║    ➜ Affiche cette aide                                      ║
+╚══════════════════════════════════════════════════════════════╝
+");
+            return;
+        }
+
         if (args.Length > 0 && args[0].ToLower() == "install")
         {
             Console.WriteLine("Installation Mode Only");
@@ -47,19 +75,29 @@ class Program
             return;
         }
 
-        if (currentVersion.Trim() == Version)
+        if (args.Length > 0 && args[0].ToLower() == "archipelago")
         {
-            Console.WriteLine($"Archipelago {Version} est déjà installé.");
-        }
-        else
-        {
-            await Backup();
-            await Install(currentVersion, isWindows, isLinux);
-            await RestoreBackup();
+            Console.WriteLine("Archipelago Mode");
+            Declare.IsBotMode = false;
         }
 
-        Console.WriteLine($"Starting bot... AST Version : {BotVersion} - Archipelago Version : {Version}");
+        if (!Declare.IsBotMode)
+        {
+            if (currentVersion.Trim() == Version)
+            {
+                Console.WriteLine($"Archipelago {Version} est déjà installé.");
+            }
+            else
+            {
+                await Backup();
+                await Install(currentVersion, isWindows, isLinux);
+                await RestoreBackup();
+            }
+        }
 
+        string version = Declare.IsBotMode ? $"AST v{BotVersion}" : $"AST v{BotVersion} - Archipelago v{Version}";
+        
+        Console.WriteLine($"Starting bot... {version}");
 
         var config = new DiscordSocketConfig
         {
@@ -76,7 +114,7 @@ class Program
         Declare.Client.MessageReceived += BotCommands.MessageReceivedAsync;
         Declare.Client.JoinedGuild += OnGuildJoined;
 
-        await Declare.Client.SetCustomStatusAsync($"AST v{BotVersion} - Archipelago v{Version}");
+        await Declare.Client.SetCustomStatusAsync(version);
 
         await BotCommands.InstallCommandsAsync();
 

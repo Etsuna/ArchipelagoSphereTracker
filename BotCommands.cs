@@ -70,6 +70,7 @@ public static class BotCommands
             Console.WriteLine($"Erreur lors de l'envoi du message : {ex.Message}");
         }
     }
+
     public static async Task RegisterCommandsAsync()
     {
         var commands = new List<SlashCommandBuilder>
@@ -217,87 +218,95 @@ public static class BotCommands
                 .WithAutocomplete(true))
             .AddOption(BuildListItemsOption()),
 
-        new SlashCommandBuilder()
-            .WithName("list-yamls")
-            .WithDescription("Liste tous les yamls du channel"),
 
-        new SlashCommandBuilder()
-            .WithName("list-apworld")
-            .WithDescription("Liste tous les yamls du channel"),
+    };
 
-        new SlashCommandBuilder()
-            .WithName("apworlds-info")
-            .WithDescription("Liste toutes les info des apworlds")
-            .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("apworldsinfo")
-                    .WithDescription("Choisissez un APWorld pour avoir ses infos")
+        if (!Declare.IsBotMode)
+        {
+            commands.AddRange(
+            [
+            new SlashCommandBuilder()
+                .WithName("list-yamls")
+                .WithDescription("Liste tous les yamls du channel"),
+
+            new SlashCommandBuilder()
+                .WithName("list-apworld")
+                .WithDescription("Liste tous les yamls du channel"),
+
+            new SlashCommandBuilder()
+                .WithName("apworlds-info")
+                .WithDescription("Liste toutes les info des apworlds")
+                .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("apworldsinfo")
+                        .WithDescription("Choisissez un APWorld pour avoir ses infos")
+                        .WithType(ApplicationCommandOptionType.String)
+                        .WithRequired(true)
+                        .WithAutocomplete(true)),
+
+            new SlashCommandBuilder()
+                .WithName("backup-yamls")
+                .WithDescription("backup tous les yamls du channel"),
+
+            new SlashCommandBuilder()
+                .WithName("backup-apworld")
+                .WithDescription("backup tous les yamls du channel"),
+
+            new SlashCommandBuilder()
+                .WithName("download-template")
+                .WithDescription("download-template")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("template")
+                    .WithDescription("Choisissez un fichier YAML à télécharger")
                     .WithType(ApplicationCommandOptionType.String)
                     .WithRequired(true)
                     .WithAutocomplete(true)),
 
-        new SlashCommandBuilder()
-            .WithName("backup-yamls")
-            .WithDescription("backup tous les yamls du channel"),
+            new SlashCommandBuilder()
+                .WithName("delete-yaml")
+                .WithDescription("Supprime un fichier YAML spécifique du channel")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("file")
+                    .WithDescription("Choisissez un fichier YAML à supprimer")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .WithAutocomplete(true)),
 
-        new SlashCommandBuilder()
-            .WithName("backup-apworld")
-            .WithDescription("backup tous les yamls du channel"),
+            new SlashCommandBuilder()
+                .WithName("clean-yamls")
+                .WithDescription("Clean tous les yamls du channel"),
 
-        new SlashCommandBuilder()
-            .WithName("download-template")
-            .WithDescription("download-template")
-            .AddOption(new SlashCommandOptionBuilder()
-                .WithName("template")
-                .WithDescription("Choisissez un fichier YAML à télécharger")
-                .WithType(ApplicationCommandOptionType.String)
-                .WithRequired(true)
-                .WithAutocomplete(true)),
+            new SlashCommandBuilder()
+                .WithName("send-yaml")
+                .WithDescription("Envoyer ou remplacer le yaml sur le server pour la génération")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("fichier")
+                    .WithDescription("Téléchargez un fichier YAML")
+                    .WithType(ApplicationCommandOptionType.Attachment)
+                    .WithRequired(true)),
 
-        new SlashCommandBuilder()
-            .WithName("delete-yaml")
-            .WithDescription("Supprime un fichier YAML spécifique du channel")
-            .AddOption(new SlashCommandOptionBuilder()
-                .WithName("file")
-                .WithDescription("Choisissez un fichier YAML à supprimer")
-                .WithType(ApplicationCommandOptionType.String)
-                .WithRequired(true)
-                .WithAutocomplete(true)),
+            new SlashCommandBuilder()
+                .WithName("generate-with-zip")
+                .WithDescription("Génère un multiworld à partir d'un fichier ZIP")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("fichier")
+                    .WithDescription("Téléchargez un fichier ZIP contenant les fichiers YML")
+                    .WithType(ApplicationCommandOptionType.Attachment)
+                    .WithRequired(true)),
 
-        new SlashCommandBuilder()
-            .WithName("clean-yamls")
-            .WithDescription("Clean tous les yamls du channel"),
+            new SlashCommandBuilder()
+                .WithName("send-apworld")
+                .WithDescription("Ajouter ou remplacer un apworld au server")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("fichier")
+                    .WithDescription("Téléchargez un fichier apworld")
+                    .WithType(ApplicationCommandOptionType.Attachment)
+                    .WithRequired(true)),
 
-        new SlashCommandBuilder()
-            .WithName("send-yaml")
-            .WithDescription("Envoyer ou remplacer le yaml sur le server pour la génération")
-            .AddOption(new SlashCommandOptionBuilder()
-                .WithName("fichier")
-                .WithDescription("Téléchargez un fichier YAML")
-                .WithType(ApplicationCommandOptionType.Attachment)
-                .WithRequired(true)),
-
-        new SlashCommandBuilder()
-            .WithName("generate-with-zip")
-            .WithDescription("Génère un multiworld à partir d'un fichier ZIP")
-            .AddOption(new SlashCommandOptionBuilder()
-                .WithName("fichier")
-                .WithDescription("Téléchargez un fichier ZIP contenant les fichiers YML")
-                .WithType(ApplicationCommandOptionType.Attachment)
-                .WithRequired(true)),
-
-        new SlashCommandBuilder()
-            .WithName("send-apworld")
-            .WithDescription("Ajouter ou remplacer un apworld au server")
-            .AddOption(new SlashCommandOptionBuilder()
-                .WithName("fichier")
-                .WithDescription("Téléchargez un fichier apworld")
-                .WithType(ApplicationCommandOptionType.Attachment)
-                .WithRequired(true)),
-
-        new SlashCommandBuilder()
-            .WithName("generate")
-            .WithDescription("Génère un multiworld à partir des yamls déjà présent sur le server")
-    };
+            new SlashCommandBuilder()
+                .WithName("generate")
+                .WithDescription("Génère un multiworld à partir des yamls déjà présent sur le server")
+            ]);
+        }
 
         var builtCommands = commands.Select(cmd => cmd.Build()).ToArray();
 
@@ -1586,7 +1595,7 @@ public static class BotCommands
                                                 message = "Utilisateur introuvable pour le thread privé.";
                                             }
                                             else
-                                            { 
+                                            {
                                                 await thread.AddUserAsync(user);
                                             }
                                         }
