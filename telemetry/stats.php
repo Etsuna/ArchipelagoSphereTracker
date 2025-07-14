@@ -24,6 +24,8 @@ foreach ($files as $file) {
 
         $guildsCount = isset($entry['guilds']) ? (int)$entry['guilds'] : 0;
         $channelsCount = isset($entry['channels']) ? (int)$entry['channels'] : 0;
+        $astversion = isset($entry['astversion']) && $entry['astversion'] !== '' ? $entry['astversion'] : '—';
+        $version = isset($entry['version']) && $entry['version'] !== '' ? $entry['version'] : '—';
 
         if (!isset($dataByDate[$date])) {
             $dataByDate[$date] = [];
@@ -37,7 +39,10 @@ foreach ($files as $file) {
         $latestPerProgram[$id] = [
             'guilds' => $guildsCount,
             'channels' => $channelsCount,
-            'date' => $date
+            'date' => $date,
+            'astversion' => $astversion,
+            'version' => $version
+            
         ];
     }
 }
@@ -141,14 +146,13 @@ $totalChannels = array_sum(array_column($latestPerProgram, 'channels'));
     }
 
     .table-wrapper {
-      max-height: 300px; /* Ajuste ici la hauteur souhaitée */
+      max-height: 300px;
       overflow-y: auto;
       border: 1px solid #e5e7eb;
       border-radius: 8px;
       box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
     }
 
-    /* Fixe les entêtes pour la lisibilité si tu veux (facultatif) */
     .table-wrapper thead th {
       position: sticky;
       top: 0;
@@ -171,6 +175,8 @@ $totalChannels = array_sum(array_column($latestPerProgram, 'channels'));
     <thead>
         <tr>
             <th>Programme</th>
+            <th>AST Version</th>
+            <th>Version</th>
             <th>Guilds</th>
             <th>Fils</th>
             <th>Dernière date</th>
@@ -180,15 +186,16 @@ $totalChannels = array_sum(array_column($latestPerProgram, 'channels'));
         <?php foreach ($latestPerProgram as $pid => $info): ?>
             <tr>
                 <td><?= htmlspecialchars($pid) ?></td>
+                <td><?= htmlspecialchars($info['astversion']) ?></td>
+                <td><?= htmlspecialchars($info['version']) ?></td>
                 <td><?= $info['guilds'] ?></td>
                 <td><?= $info['channels'] ?></td>
                 <td><?= htmlspecialchars($info['date']) ?></td>
             </tr>
         <?php endforeach; ?>
     </tbody>
-      </table>
+  </table>
 </div>
-</table>
 
 <hr>
 
@@ -213,6 +220,7 @@ let chart = null;
 function updateChart(programId) {
     const guildsData = [];
     const channelsData = [];
+    const programCountData = [];
 
     for (const date of dates) {
         const dayData = dataByDate[date] || {};
@@ -226,6 +234,7 @@ function updateChart(programId) {
             }
             guildsData.push(guildsSum);
             channelsData.push(channelsSum);
+            programCountData.push(Object.keys(dayData).length);
         } else {
             if (dayData[programId]) {
                 guildsData.push(dayData[programId].guilds);
@@ -234,39 +243,51 @@ function updateChart(programId) {
                 guildsData.push(null);
                 channelsData.push(null);
             }
+            programCountData.push(null); // Pas pertinent quand un programme spécifique est sélectionné
         }
+    }
+
+    const datasets = [
+        {
+            label: `Guilds - ${programId === 'all' ? 'Tous les programmes' : programId}`,
+            data: guildsData,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            fill: false,
+            tension: 0.1
+        },
+        {
+            label: `Fils - ${programId === 'all' ? 'Tous les programmes' : programId}`,
+            data: channelsData,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            fill: false,
+            tension: 0.1
+        }
+    ];
+
+    if (programId === 'all') {
+        datasets.push({
+            label: 'Programmes actifs',
+            data: programCountData,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            fill: false,
+            tension: 0.1
+        });
     }
 
     const config = {
         type: 'line',
         data: {
             labels: dates,
-            datasets: [
-                {
-                    label: `Guilds - ${programId === 'all' ? 'Tous les programmes' : programId}`,
-                    data: guildsData,
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    fill: false,
-                    tension: 0.1,
-                    yAxisID: 'y',
-                },
-                {
-                    label: `Fils - ${programId === 'all' ? 'Tous les programmes' : programId}`,
-                    data: channelsData,
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    fill: false,
-                    tension: 0.1,
-                    yAxisID: 'y1',
-                }
-            ]
+            datasets: datasets
         },
         options: {
             responsive: true,
             interaction: {
                 mode: 'index',
-                intersect: false,
+                intersect: false
             },
             stacked: false,
             plugins: {
@@ -282,28 +303,16 @@ function updateChart(programId) {
                     position: 'left',
                     title: {
                         display: true,
-                        text: 'Guilds'
+                        text: 'Valeurs'
                     },
                     beginAtZero: true,
-                    ticks: { stepSize: 1 }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: {
-                        display: true,
-                        text: 'Fils'
-                    },
-                    beginAtZero: true,
-                    grid: { drawOnChartArea: false },
                     ticks: { stepSize: 1 }
                 }
             }
         }
     };
 
-    if(chart) {
+    if (chart) {
         chart.destroy();
     }
     chart = new Chart(ctx, config);

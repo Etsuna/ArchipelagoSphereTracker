@@ -109,7 +109,7 @@ Ce qui n’est pas collecté :
 Elle permet de mieux comprendre l’adoption du programme, d’évaluer son utilisation, et d’améliorer son développement, tout en respectant la vie privée des utilisateurs.
 Fonctionnement technique
 
-* La télémétrie est envoyée automatiquement une fois par jour depuis chaque instance.
+* La télémétrie est envoyée automatiquement une fois par jour ou a chaque fois qu'une URL d'un Room est ajoutée ou supprimée depuis chaque instance.
 * Les données sont transmises de façon sécurisée via HTTPS vers un serveur dédié.
 * Chaque instance génère localement un identifiant unique non personnel utilisé pour compter les programmes distincts.
 * Un mécanisme évite les envois multiples par jour depuis une même instance.

@@ -1644,8 +1644,8 @@ public static class BotCommands
                                             await TrackingDataManager.SetAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
                                             await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
                                             await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
-                                            await BotCommands.SendMessageAsync("BOT Ready!", channelId);
-
+                                            await SendMessageAsync("BOT Ready!", channelId);
+                                            await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
                                         }
 
                                         message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
@@ -2247,6 +2247,7 @@ public static class BotCommands
 
         message = "URL Supprimée.";
         await RegisterCommandsAsync();
+        await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
         return message;
     }
 }

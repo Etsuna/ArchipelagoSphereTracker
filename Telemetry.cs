@@ -12,11 +12,11 @@ public static class Telemetry
         return Encoding.UTF8.GetString(bytes);
     }
 
-    public static async Task SendDailyTelemetryAsync(string programId)
+    public static async Task SendDailyTelemetryAsync(string programId, bool check = true)
     {
         try
         {
-            if (await TelemetryCommands.HasTelemetryBeenSentTodayAsync())
+            if (await TelemetryCommands.HasTelemetryBeenSentTodayAsync() && check)
                 return;
 
             var (guildCount, channelCount) = await DatabaseCommands.GetDistinctGuildsAndChannelsCountAsync("ChannelsAndUrlsTable");
@@ -26,7 +26,9 @@ public static class Telemetry
                 id = programId,
                 timestamp = DateTime.UtcNow.ToString("o"),
                 guilds = guildCount,
-                channels = channelCount
+                channels = channelCount,
+                version = Program.Version,
+                astversion = Program.BotVersion
             };
 
             string json = JsonSerializer.Serialize(payload);

@@ -44,10 +44,15 @@ public static class TelemetryCommands
             {
                 await connection.OpenAsync();
 
-                using (var command = new SQLiteCommand("INSERT OR IGNORE INTO TelemetryTable (Date) VALUES (@Date)", connection))
+                using (var deleteCmd = new SQLiteCommand("DELETE FROM TelemetryTable", connection))
                 {
-                    command.Parameters.AddWithValue("@Date", today);
-                    await command.ExecuteNonQueryAsync();
+                    await deleteCmd.ExecuteNonQueryAsync();
+                }
+
+                using (var insertCmd = new SQLiteCommand("INSERT INTO TelemetryTable (Date) VALUES (@Date)", connection))
+                {
+                    insertCmd.Parameters.AddWithValue("@Date", today);
+                    await insertCmd.ExecuteNonQueryAsync();
                 }
             }
         }
