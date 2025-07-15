@@ -42,7 +42,10 @@ Python 3.13
 python3-pip
 python3-venv
 
-Windows Only: Visual Studio (compilation C++)
+Windows Only:
+Installer Visual Studio Build Tools (léger et suffisant)
+https://visualstudio.microsoft.com/fr/visual-cpp-build-tools/
+Cochez "Développement en C++ pour bureau Windows"
 ```
 
 ## Configuration
