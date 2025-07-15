@@ -91,14 +91,19 @@ Linux: Executez le programme ./ArchipelagoSphereTracker archipelago
 
 ## Commandes disponible
 ```
-ArchipelagoSphereTracker.exe help
+Windows Commands / Linux Commands
+
+ArchipelagoSphereTracker.exe / ArchipelagoSphereTracker
+    Lance le programme en mode Bot Only.
+
+ArchipelagoSphereTracker.exe help / ArchipelagoSphereTracker help
     Affiche toutes les commandes disponibles.
 
-ArchipelagoSphereTracker.exe archipelago
+ArchipelagoSphereTracker.exe archipelago  / ArchipelagoSphereTracker archipelago
     Lance le programme avec l’intégration complète d’Archipelago 
     (voir les prérequis nécessaires).
 
-ArchipelagoSphereTracker.exe install
+ArchipelagoSphereTracker.exe install / ArchipelagoSphereTracker install
     Installe les dépendances et Archipelago pour le bot, puis quitte le programme après l’installation.
 ```
 
