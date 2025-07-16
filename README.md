@@ -37,15 +37,23 @@ Aucun prérequis nécessaire.
 
 ## Prérequis pour l'installation des commands d'Archipelago (Génération de multiworld, envoi de yamls/apworlds, etc)
 ```
-Windows et Linux:
-Python 3.13
-python3-pip
-python3-venv
+Linux: 
+- python3
+- python3-pip
+- python3-venv
+- git
+- curl
+- wget
 
-Windows Only:
-Installer Visual Studio Build Tools (léger et suffisant)
-https://visualstudio.microsoft.com/fr/visual-cpp-build-tools/
-Cochez "Développement en C++ pour bureau Windows"
+Windows:
+- Python 3.13
+- Git (installation par défaut)
+- Installer Visual Studio Build Tools:
+    https://visualstudio.microsoft.com/fr/visual-cpp-build-tools/
+    Selectionnez Composants Individuels: 
+    MSVC v143 - VS 2022 C++ X64/X86 Build tools
+    Windows 11 SDK ou Kit SDK Windows 10
+    Outils C++ Cmake pour Windows
 ```
 
 ## Configuration
