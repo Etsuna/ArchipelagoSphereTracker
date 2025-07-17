@@ -81,7 +81,7 @@ jobs:
     - name: Copy command files
       shell: bash
       run: |
-        cp Install/${{ matrix.rid }}$/* upload_dir/
+        cp Install/${{ matrix.rid }}/* upload_dir/
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
