@@ -17,17 +17,15 @@ public static class TrackingDataManager
 
         Declare.Cts = new CancellationTokenSource();
         var token = Declare.Cts.Token;
-        
 
         Task.Run(async () =>
         {
             try
             {
-                var programID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable");
+                var programID  = await DatabaseCommands.ProgramIdentifier("ProgramIdTable");
+
                 while (!token.IsCancellationRequested)
                 {
-                    Declare.ServiceRunning = true;
-
                     var getAllGuild = await DatabaseCommands.GetAllGuildsAsync("ChannelsAndUrlsTable");
                     await Telemetry.SendDailyTelemetryAsync(programID);
 
@@ -426,7 +424,7 @@ public static class TrackingDataManager
 
             if (existing.Percent == "100.00")
             {
-                continue; // Skip entries that are already complete
+                continue; 
             }
 
             bool isChanged = false;
@@ -504,16 +502,16 @@ public static class TrackingDataManager
                 hint.Found = "OK";
             }
 
-            var existingKey = getHintStatusList.Where(getHintStatusList => getHintStatusList.Finder == hint.Finder 
-            && getHintStatusList.Receiver == hint.Receiver 
-            && getHintStatusList.Item == hint.Item 
-            && getHintStatusList.Location == hint.Location 
-            && getHintStatusList.Game == hint.Game 
-            && getHintStatusList.Entrance == hint.Entrance).FirstOrDefault();    
+            var existingKey = getHintStatusList.Where(getHintStatusList => getHintStatusList.Finder == hint.Finder
+            && getHintStatusList.Receiver == hint.Receiver
+            && getHintStatusList.Item == hint.Item
+            && getHintStatusList.Location == hint.Location
+            && getHintStatusList.Game == hint.Game
+            && getHintStatusList.Entrance == hint.Entrance).FirstOrDefault();
 
             if (existingKey != null)
             {
-                if(existingKey.Found != hint.Found)
+                if (existingKey.Found != hint.Found)
                 {
                     existingKey.Found = "OK";
                     hintsToUpdate.Add(existingKey);
@@ -530,7 +528,7 @@ public static class TrackingDataManager
             await HintStatusCommands.AddHintStatusAsync(guild, channel, hintsToAdd);
         }
 
-        if(hintsToUpdate.Count > 0)
+        if (hintsToUpdate.Count > 0)
         {
             await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
         }

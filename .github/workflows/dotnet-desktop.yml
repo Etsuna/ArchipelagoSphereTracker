@@ -78,6 +78,11 @@ jobs:
           cp bin/Release/net8.0/${{ matrix.rid }}/publish/* upload_dir/
         fi
 
+    - name: Copy command files
+      shell: bash
+      run: |
+      cp Install/${{ matrix.rid }}$/* upload_dir/
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:

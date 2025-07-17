@@ -509,6 +509,38 @@ class Program
             }
         }
 
+        Console.WriteLine("Installation de wheel...");
+        var wheelProcess = new ProcessStartInfo
+        {
+            FileName = pythonExecutable,
+            Arguments = "-m pip install --upgrade wheel",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using (var process = Process.Start(wheelProcess))
+        {
+            if (process != null)
+            {
+                process.WaitForExit();
+                if (process.ExitCode != 0)
+                {
+                    Console.WriteLine("❌ ERREUR : Échec de l'installation de wheel.");
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("✅ wheel installé avec succès !");
+                }
+            }
+            else
+            {
+                Console.WriteLine("❌ ERREUR : Impossible d'installer wheel.");
+                return;
+            }
+        }
+
         Console.WriteLine("Installation de Cython...");
         var CythonProcess = new ProcessStartInfo
         {

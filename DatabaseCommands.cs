@@ -57,6 +57,14 @@ public static class DatabaseCommands
             }
 
             var newId = Guid.NewGuid().ToString();
+            if (Declare.IsDev)
+            {
+                newId = "AST_TEST";
+            }
+            else
+            {
+                newId = Guid.NewGuid().ToString();
+            }
 
             using (var insertCmd = new SQLiteCommand("INSERT INTO ProgramIdTable (ProgramId) VALUES (@ProgramId)", connection))
             {
