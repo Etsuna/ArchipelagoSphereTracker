@@ -77,7 +77,6 @@ def categorize_items(world_class, player: int = 1):
             ""gyre_archives"": False,
             ""downloadable_items"": True,
         }
-        # Tu peux ajouter d'autres ici...
     }
 
     # Liste des options par défaut à vérifier et appliquer si manquantes

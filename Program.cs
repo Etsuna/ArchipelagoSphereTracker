@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 class Program
 {
     public static string Version = "0.6.2";
-    public static string BotVersion = "2.6.1";
+    public static string BotVersion = "2.6.2";
     public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
     public static string ExternalFolder = Path.Combine(BasePath, "extern");
     public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
@@ -154,10 +154,14 @@ class Program
 
         foreach (var fichier in Directory.GetFiles(ExtractPath, "*.*", SearchOption.TopDirectoryOnly))
         {
+            string nomFichier = Path.GetFileName(fichier);
+
+            if (nomFichier.Equals("README.md", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             string extension = Path.GetExtension(fichier);
             if (extensionsRoms.Contains(extension))
             {
-                string nomFichier = Path.GetFileName(fichier);
                 string cheminDestination = Path.Combine(RomBackupPath, nomFichier);
 
                 try
@@ -650,52 +654,6 @@ class Program
 
         Console.WriteLine($"Fichier Python créé à l'emplacement : {GenerateTemplatesPath}");
 
-        List<string> dossiersExtraits = new List<string>();
-        if (Directory.Exists(CustomPath))
-        {
-            var fichiersApworld = Directory.GetFiles(CustomPath, "*.apworld");
-
-            if (fichiersApworld.Length > 0)
-            {
-                HashSet<string> dossiersExistants = new HashSet<string>(Directory.GetDirectories(WorldsPath));
-
-                foreach (var fichier in Directory.GetFiles(CustomPath, "*.apworld"))
-                {
-                    using (ZipArchive archive = ZipFile.OpenRead(fichier))
-                    {
-                        string? dossierRacine = null;
-                        foreach (var entry in archive.Entries)
-                        {
-                            if (!string.IsNullOrEmpty(entry.FullName) && entry.FullName.EndsWith("/"))
-                            {
-                                dossierRacine = entry.FullName.Split('/')[0];
-                                break;
-                            }
-                        }
-
-                        if (dossierRacine == null)
-                        {
-                            Console.WriteLine($"Pas de dossier racine trouvé dans {fichier}");
-                            continue;
-                        }
-
-                        string cheminExtraction = Path.Combine(WorldsPath, dossierRacine);
-
-                        if (!Directory.Exists(cheminExtraction))
-                        {
-                            Console.WriteLine($"Extraction de {fichier} dans {cheminExtraction}...");
-                            ZipFile.ExtractToDirectory(fichier, WorldsPath);
-                            dossiersExtraits.Add(cheminExtraction);
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Le dossier {cheminExtraction} existe déjà, on ignore.");
-                        }
-                    }
-                }
-            }
-        }
-
         var generateYamlCommand = isWindows
        ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\""
        : $"bash -c 'yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\"'";
@@ -734,26 +692,6 @@ class Program
             {
                 Console.WriteLine("❌ ERREUR : Impossible de générer les YAML.");
                 return;
-            }
-        }
-
-        if (Directory.Exists(CustomPath))
-        {
-            var fichiersApworld = Directory.GetFiles(CustomPath, "*.apworld");
-            if (fichiersApworld.Length > 0)
-            {
-                foreach (var dossier in dossiersExtraits)
-                {
-                    try
-                    {
-                        Directory.Delete(dossier, recursive: true);
-                        Console.WriteLine($"Supprimé : {dossier}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Erreur suppression {dossier} : {ex.Message}");
-                    }
-                }
             }
         }
     }

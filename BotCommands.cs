@@ -217,8 +217,6 @@ public static class BotCommands
                 .WithRequired(true)
                 .WithAutocomplete(true))
             .AddOption(BuildListItemsOption()),
-
-
     };
 
         if (!Declare.IsBotMode)
@@ -1953,6 +1951,7 @@ public static class BotCommands
                             await response.Content.CopyToAsync(fs);
                         }
                         Program.GenerateYamls();
+                        Program.GenerateItemsTableClass();
                         message = $"Fichier `{attachment.Filename}` envoyé.";
                         break;
 
