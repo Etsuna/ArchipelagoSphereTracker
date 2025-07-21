@@ -1,8 +1,11 @@
 # ArchipelagoSphereTracker 
+<details>
+<summary>🇫🇷 Français</summary>
+
 Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : https://archipelago.gg/room/trackerID).
 
 ## Fonctionnalités Actuelles
-* Multi Discord et Multi Channel
+* Multi-Discord et Multi-Channel
 * Ajouter une URL (Droits d'admin requis)
 * Supprimer une URL (Droits d'admin requis)
 * Récupérer tous les noms depuis le tracker
@@ -124,3 +127,136 @@ Elle permet de mieux comprendre l’adoption du programme, d’évaluer son util
 * Chaque instance génère localement un identifiant unique non personnel utilisé pour compter les programmes distincts.
 * Un mécanisme évite les envois multiples par jour depuis une même instance.
 * Aucune donnée personnelle n’est envoyée.
+
+
+</details>
+
+<details open>
+<summary>🇬🇧 English</summary>
+A Discord bot designed to be linked to an Archipelago room (example: https://archipelago.gg/room/trackerID).
+
+## Current Features
+* Multi-Discord and Multi-Channel support  
+* Add a tracker URL (admin rights required)  
+* Remove a tracker URL (admin rights required)  
+* Fetch all player names from the tracker  
+* Set an alias (replaces the name with your Discord username)  
+* Delete your alias (owner or admin required)  
+* Summarize the loot table since last cleanup (only if alias is set)  
+* Summarize and clean the loot table (only if alias is set)  
+* Automatically post messages when new items are received (with Discord tag, only if alias is set)  
+* Automatically announce when a player completes their goal  
+* List items received by a player (option to display items line-by-line or comma-separated)  
+* List hints by receivers or by finders  
+* List patch links  
+* Retrieve the tracker connection port  
+* Auto-delete threads after 1 week of inactivity  
+* Upload `.yaml` files to the server (filtered by channel)  
+* Upload `.apworld` files to the server  
+* Backup uploaded `.yaml` files by channel  
+* Backup uploaded `.apworld` files by channel  
+* Generate a Multiworld from the server’s folder  
+* Generate a ZIP file containing all `.yaml` files from the server  
+* List `.yaml` files filtered by channel  
+* List `.apworld` files on the server  
+* Automatic handling of Windows/Linux compatibility for Multiworld generation  
+
+More info available on the [Wiki](https://github.com/Etsuna/ArchipelagoSphereTracker/wiki)
+
+## Supported Games
+All games supported by the [Archipelago MultiWorld Randomizer](https://github.com/ArchipelagoMW/Archipelago) are fully compatible with this tool.
+
+## Requirements
+```
+No requirements for using the precompiled version.
+Dotnet 8 is only needed if you want to compile the project yourself.
+```
+## Configuration
+```
+A `.env` file is required in the root folder.
+```
+
+### Example:
+```
+DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
+APP_ID=YOUR_DISCORD_BOT_APP_ID
+TELEMETRY=true/false if not set, telemetry is enabled by default.
+```
+
+If you want to create your own bot using this code, your bot must have the permissions defined by the integer `395137117248`.
+
+The following permissions will be used by ArchipelagoSphereTracker:
+* View channels  
+* Send messages  
+* Create public threads  
+* Create private threads  
+* Send messages in threads  
+* Manage messages  
+* Manage threads  
+* Embed links  
+* Attach files  
+* Add reactions  
+* Read message history  
+
+## Running with Archipelago Integration (Multiworld generation, `.yaml`/`.apworld` uploads, etc.)
+```
+Download the Windows version "ast-win-x64-vX.X.X.zip" or Linux version "ast-linux-x64-vX.X.X.tar.gz" from the release page.
+Unzip into a folder
+Add a properly configured .env file to the same folder
+Windows: Run ArchipelagoSphereTracker.exe
+Linux: Run ./ArchipelagoSphereTracker
+```
+
+## Installation with Dotnet 8
+```
+Clone the repo
+
+git clone https://github.com/Etsuna/ArchipelagoSphereTracker.git
+Enter the folder
+
+cd ArchipelagoSphereTracker
+Set up the .env file
+
+vim .env
+Restore project dependencies
+
+dotnet restore
+Build the project
+
+dotnet build --configuration Release
+Publish the project
+
+Windows: dotnet publish ArchipelagoSphereTracker.csproj -c Release -r win-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+Linux: dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+Run the bot
+
+Go to the folder .\bin\Release\net8.0\linux-x64\publish\ or .\bin\Release\net8.0\win-x64\publish\ depending on your OS
+Copy the .env file to this folder
+Windows: run ArchipelagoSphereTracker.exe
+Linux: run ./ArchipelagoSphereTracker
+```
+
+## Telemetry
+A telemetry feature has been added to collect anonymous usage statistics.  
+It can be disabled by setting `TELEMETRY=false` in the `.env` file.
+
+### What telemetry collects:
+* Total number of Discord servers (guilds) where the bot is active  
+* Total number of threads used  
+* Number of distinct bot instances (identified by a local, anonymized unique ID)  
+
+### What is **not** collected:
+* No personal or sensitive data (no names, Discord IDs, IPs, messages, etc.)  
+* No details about threads or server content  
+
+### Why telemetry?
+It helps understand adoption, usage, and improve development, while fully respecting user privacy.
+
+### Technical details:
+* Telemetry is sent once per day or when a tracker URL is added or removed.  
+* Data is transmitted securely over HTTPS to a dedicated server.  
+* Each bot instance generates a unique local ID used only to count instances.  
+* Duplicate submissions from the same instance are prevented.  
+* No personal data is sent.
+</details>
+
