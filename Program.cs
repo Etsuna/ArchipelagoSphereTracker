@@ -12,7 +12,7 @@ using System.Reflection;
 class Program
 {
     public static string Version = "0.6.2";
-    public static string BotVersion = "3.0.0";
+    public static string BotVersion = "3.0.3";
 
     public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
 
