@@ -1,3 +1,3 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-./ArchipelagoSphereTracker.exe install
+./ArchipelagoSphereTracker install

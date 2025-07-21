@@ -253,6 +253,11 @@ class Program
 
         if (Directory.Exists(ApworldsBackupPath))
         {
+            if(!Directory.Exists(CustomPath))
+            {
+                Directory.CreateDirectory(CustomPath);
+            }
+
             foreach (var fichier in Directory.GetFiles(ApworldsBackupPath, "*.apworld", SearchOption.TopDirectoryOnly))
             {
                 string nomFichier = Path.GetFileName(fichier);
