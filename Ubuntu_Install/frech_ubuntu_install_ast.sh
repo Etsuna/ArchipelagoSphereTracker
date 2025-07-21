@@ -8,10 +8,6 @@ if grep -qi microsoft /proc/sys/kernel/osrelease; then
   echo "⚠️ Environnement WSL détecté : certaines opérations seront ignorées (swap, systemd, cron…)."
 fi
 
-### 1) Mise à jour & dépendances
-sudo apt update
-sudo apt install -y python3 python3-pip python3-venv git curl wget
-
 ### 2) Swap 2Go (sauf si WSL)
 if [ "$IS_WSL" = false ]; then
   if ! grep -q "/swapfile" /etc/fstab; then
@@ -73,7 +69,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=$APPDIR
-ExecStart=$APPDIR/ArchipelagoSphereTracker archipelago
+ExecStart=$APPDIR/ArchipelagoSphereTracker
 Restart=always
 User=$USER
 

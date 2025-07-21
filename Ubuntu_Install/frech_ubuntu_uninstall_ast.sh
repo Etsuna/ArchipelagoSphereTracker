@@ -92,14 +92,4 @@ else
   echo "⏭️ Ignoré sous WSL"
 fi
 
-### 6) (Optionnel) Supprimer Python, pip, git ?
-read -p "❓ Supprimer aussi Python3, pip, git installés via apt ? (y/N): " REMOVE_PKGS
-if [[ "$REMOVE_PKGS" =~ ^[Yy]$ ]]; then
-  echo "🗑 Suppression de python3, python3-pip, python3-venv, git"
-  sudo apt remove --purge -y python3 python3-pip python3-venv git
-  sudo apt autoremove -y
-else
-  echo "👍 Dépendances conservées."
-fi
-
 echo "✅ Désinstallation terminée avec succès."

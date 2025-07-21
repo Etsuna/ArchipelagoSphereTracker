@@ -49,6 +49,19 @@ class Program
 
         DatabaseInitializer.InitializeDatabase();
 
+        if (args.Length > 0 && args[0].ToLower() == "install")
+        {
+            Console.WriteLine("Installation Mode Only");
+            await Backup();
+            await Install(currentVersion, isWindows, isLinux);
+            await RestoreBackup();
+
+            GenerateYamls();
+            GenerateItems();
+
+            return;
+        }
+
         if (currentVersion.Trim() == Version)
         {
             Console.WriteLine($"Archipelago {Version} est déjà installé.");
