@@ -1,0 +1,5 @@
+name: Scan Items
+description: Tool to scan item categories from YAML templates
+version: 1.0
+type: tool
+entry_point: scan_items

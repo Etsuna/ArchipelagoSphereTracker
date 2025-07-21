@@ -14,5 +14,4 @@ public static class Declare
     public const string DatabaseFile = "AST.db";
     public static HttpClient HttpClient = new HttpClient();
     public static string ProgramID { get; set; } = "";
-    public static bool IsBotMode { get; set; } = true;
 }

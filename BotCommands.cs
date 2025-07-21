@@ -217,94 +217,87 @@ public static class BotCommands
                 .WithRequired(true)
                 .WithAutocomplete(true))
             .AddOption(BuildListItemsOption()),
-    };
-
-        if (!Declare.IsBotMode)
-        {
-            commands.AddRange(
-            [
-            new SlashCommandBuilder()
+        new SlashCommandBuilder()
                 .WithName("list-yamls")
                 .WithDescription("Liste tous les yamls du channel"),
 
-            new SlashCommandBuilder()
-                .WithName("list-apworld")
-                .WithDescription("Liste tous les yamls du channel"),
+        new SlashCommandBuilder()
+            .WithName("list-apworld")
+            .WithDescription("Liste tous les yamls du channel"),
 
-            new SlashCommandBuilder()
-                .WithName("apworlds-info")
-                .WithDescription("Liste toutes les info des apworlds")
-                .AddOption(new SlashCommandOptionBuilder()
-                        .WithName("apworldsinfo")
-                        .WithDescription("Choisissez un APWorld pour avoir ses infos")
-                        .WithType(ApplicationCommandOptionType.String)
-                        .WithRequired(true)
-                        .WithAutocomplete(true)),
-
-            new SlashCommandBuilder()
-                .WithName("backup-yamls")
-                .WithDescription("backup tous les yamls du channel"),
-
-            new SlashCommandBuilder()
-                .WithName("backup-apworld")
-                .WithDescription("backup tous les yamls du channel"),
-
-            new SlashCommandBuilder()
-                .WithName("download-template")
-                .WithDescription("download-template")
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("template")
-                    .WithDescription("Choisissez un fichier YAML à télécharger")
+        new SlashCommandBuilder()
+            .WithName("apworlds-info")
+            .WithDescription("Liste toutes les info des apworlds")
+            .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("apworldsinfo")
+                    .WithDescription("Choisissez un APWorld pour avoir ses infos")
                     .WithType(ApplicationCommandOptionType.String)
                     .WithRequired(true)
                     .WithAutocomplete(true)),
 
-            new SlashCommandBuilder()
-                .WithName("delete-yaml")
-                .WithDescription("Supprime un fichier YAML spécifique du channel")
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("file")
-                    .WithDescription("Choisissez un fichier YAML à supprimer")
-                    .WithType(ApplicationCommandOptionType.String)
-                    .WithRequired(true)
-                    .WithAutocomplete(true)),
+        new SlashCommandBuilder()
+            .WithName("backup-yamls")
+            .WithDescription("backup tous les yamls du channel"),
 
-            new SlashCommandBuilder()
-                .WithName("clean-yamls")
-                .WithDescription("Clean tous les yamls du channel"),
+        new SlashCommandBuilder()
+            .WithName("backup-apworld")
+            .WithDescription("backup tous les yamls du channel"),
 
-            new SlashCommandBuilder()
-                .WithName("send-yaml")
-                .WithDescription("Envoyer ou remplacer le yaml sur le server pour la génération")
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("fichier")
-                    .WithDescription("Téléchargez un fichier YAML")
-                    .WithType(ApplicationCommandOptionType.Attachment)
-                    .WithRequired(true)),
+        new SlashCommandBuilder()
+            .WithName("download-template")
+            .WithDescription("download-template")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("template")
+                .WithDescription("Choisissez un fichier YAML à télécharger")
+                .WithType(ApplicationCommandOptionType.String)
+                .WithRequired(true)
+                .WithAutocomplete(true)),
 
-            new SlashCommandBuilder()
-                .WithName("generate-with-zip")
-                .WithDescription("Génère un multiworld à partir d'un fichier ZIP")
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("fichier")
-                    .WithDescription("Téléchargez un fichier ZIP contenant les fichiers YML")
-                    .WithType(ApplicationCommandOptionType.Attachment)
-                    .WithRequired(true)),
+        new SlashCommandBuilder()
+            .WithName("delete-yaml")
+            .WithDescription("Supprime un fichier YAML spécifique du channel")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("file")
+                .WithDescription("Choisissez un fichier YAML à supprimer")
+                .WithType(ApplicationCommandOptionType.String)
+                .WithRequired(true)
+                .WithAutocomplete(true)),
 
-            new SlashCommandBuilder()
-                .WithName("send-apworld")
-                .WithDescription("Ajouter ou remplacer un apworld au server")
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("fichier")
-                    .WithDescription("Téléchargez un fichier apworld")
-                    .WithType(ApplicationCommandOptionType.Attachment)
-                    .WithRequired(true)),
+        new SlashCommandBuilder()
+            .WithName("clean-yamls")
+            .WithDescription("Clean tous les yamls du channel"),
 
-            new SlashCommandBuilder()
-                .WithName("generate")
-                .WithDescription("Génère un multiworld à partir des yamls déjà présent sur le server")
-            ]);
-        }
+        new SlashCommandBuilder()
+            .WithName("send-yaml")
+            .WithDescription("Envoyer ou remplacer le yaml sur le server pour la génération")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("fichier")
+                .WithDescription("Téléchargez un fichier YAML")
+                .WithType(ApplicationCommandOptionType.Attachment)
+                .WithRequired(true)),
+
+        new SlashCommandBuilder()
+            .WithName("generate-with-zip")
+            .WithDescription("Génère un multiworld à partir d'un fichier ZIP")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("fichier")
+                .WithDescription("Téléchargez un fichier ZIP contenant les fichiers YML")
+                .WithType(ApplicationCommandOptionType.Attachment)
+                .WithRequired(true)),
+
+        new SlashCommandBuilder()
+            .WithName("send-apworld")
+            .WithDescription("Ajouter ou remplacer un apworld au server")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("fichier")
+                .WithDescription("Téléchargez un fichier apworld")
+                .WithType(ApplicationCommandOptionType.Attachment)
+                .WithRequired(true)),
+
+        new SlashCommandBuilder()
+            .WithName("generate")
+            .WithDescription("Génère un multiworld à partir des yamls déjà présent sur le server")
+    };
 
         var builtCommands = commands.Select(cmd => cmd.Build()).ToArray();
 
@@ -1951,7 +1944,7 @@ public static class BotCommands
                             await response.Content.CopyToAsync(fs);
                         }
                         Program.GenerateYamls();
-                        Program.GenerateItemsTableClass();
+                        Program.GenerateItems();
                         message = $"Fichier `{attachment.Filename}` envoyé.";
                         break;
 
@@ -1959,13 +1952,7 @@ public static class BotCommands
                         var basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
                         playersFolderChannel = Path.Combine(basePath, "Players", channelId, "yaml");
                         var outputFolder = Path.Combine(basePath, "output", channelId, "yaml");
-                        var venvPath = Path.Combine(basePath, "venv");
-                        var pythonScript = Path.Combine(basePath, "Generate.py");
-                        var requirementsFile = Path.Combine(basePath, "requirements.txt");
-
-                        var pythonExecutable = isWindows
-                            ? Path.Combine(venvPath, "Scripts", "python.exe")
-                            : Path.Combine(venvPath, "bin", "python3");
+                        
 
                         if (Directory.Exists(outputFolder))
                         {
@@ -1982,14 +1969,20 @@ public static class BotCommands
                             break;
                         }
 
-                        var forceYesCommand = isWindows
-                        ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{pythonScript}\" --player_files_path \"{playersFolderChannel}\" --outputpath \"{outputFolder}\""
-                        : $"bash -c 'yes | \"{pythonExecutable}\" \"{pythonScript}\" --player_files_path \"{playersFolderChannel}\" --outputpath \"{outputFolder}\"'";
+                        string launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                        ? "ArchipelagoGenerate.exe"
+                        : "ArchipelagoGenerate";
+
+                        string launcherPath = Path.Combine(Program.ExtractPath, launcher);
+
+                        var arguments = $"--player_files_path \"{playersFolderChannel}\" --outputpath \"{outputFolder}\"";
+
+                        Console.WriteLine($"🟢 **Log** : Lancement du processus avec les arguments : {launcherPath} {arguments}");
 
                         ProcessStartInfo startInfo = new ProcessStartInfo
                         {
-                            FileName = isWindows ? "cmd.exe" : "/bin/bash",
-                            Arguments = isWindows ? $"/c {forceYesCommand}" : $"-c \"{forceYesCommand}\"",
+                            FileName = launcherPath,
+                            Arguments = arguments,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
                             UseShellExecute = false,
@@ -2060,13 +2053,16 @@ public static class BotCommands
                                 if (zipFile != null)
                                 {
                                     var zipFileName = Path.GetFileName(zipFile);
+                                    var zipFilePath = Path.GetFullPath(zipFile);
+
+                                    ZipFile.ExtractToDirectory(zipFilePath, outputFolder);
                                     await command.FollowupWithFileAsync(zipFile, zipFileName);
                                     Directory.Delete(playersFolderChannel, true);
                                     Directory.Delete(outputFolder, true);
                                 }
                                 else
                                 {
-                                    await command.FollowupAsync("❌ Aucun fichier ZIP trouvé.");
+                                    await command.FollowupAsync("❌ Aucun fichier ZIP généré trouvé.");
                                 }
                             }
                             catch (Exception ex)
@@ -2088,15 +2084,9 @@ public static class BotCommands
                         basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
                         playersFolderChannel = Path.Combine(basePath, "Players", channelId, "zip");
                         outputFolder = Path.Combine(basePath, "output", channelId, "zip");
-                        venvPath = Path.Combine(basePath, "venv");
-                        pythonScript = Path.Combine(basePath, "Generate.py");
-                        requirementsFile = Path.Combine(basePath, "requirements.txt");
+                        
                         filePath = Path.Combine(playersFolderChannel, attachment.Filename);
-
-                        pythonExecutable = isWindows
-                            ? Path.Combine(venvPath, "Scripts", "python.exe")
-                            : Path.Combine(venvPath, "bin", "python3");
-
+                                                
                         if (Directory.Exists(playersFolderChannel))
                         {
                             Directory.Delete(playersFolderChannel, true);
@@ -2136,11 +2126,17 @@ public static class BotCommands
                             break;
                         }
 
-                        var arguments = $"\"{pythonScript}\" --player_files_path \"{playersFolderChannel}\" --outputpath \"{outputFolder}\"";
+                        launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                        ? "ArchipelagoGenerate.exe"
+                        : "ArchipelagoGenerate";
+
+                        launcherPath = Path.Combine(Program.ExtractPath, launcher);
+
+                        arguments = $"--player_files_path \"{playersFolderChannel}\" --outputpath \"{outputFolder}\"";
 
                         ProcessStartInfo startInfoWithZip = new ProcessStartInfo
                         {
-                            FileName = pythonExecutable,
+                            FileName = launcherPath,
                             Arguments = arguments,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
@@ -2212,6 +2208,9 @@ public static class BotCommands
                                 if (zipFile != null)
                                 {
                                     var zipFileName = Path.GetFileName(zipFile);
+                                    var zipFilePath = Path.GetFullPath(zipFile);
+
+                                    ZipFile.ExtractToDirectory(zipFilePath, outputFolder);
                                     await command.FollowupWithFileAsync(zipFile, zipFileName);
                                     Directory.Delete(playersFolderChannel, true);
                                     Directory.Delete(outputFolder, true);

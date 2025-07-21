@@ -27,33 +27,14 @@ Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : http
 * Lister les Appworlds présent dans le server.
 * Gestion automatique de la compatibilité Windows et Linux pour la generation des Multiworld.
 
+Pour plus d'info, voir le [Wiki](https://github.com/Etsuna/ArchipelagoSphereTracker/wiki)
+
 ## Jeux Pris en Charge
 Tous les jeux pris en charge par le Randomizer MultiWorld [Archipelago](https://github.com/ArchipelagoMW/Archipelago) sont compatibles et ont une compatibilité MultiWorld complète entre eux.
 
-## Prérequis sans l'installation des commands d'Archipelago
+## Prérequis
 ```
 Aucun prérequis nécessaire.
-```
-
-## Prérequis pour l'installation des commands d'Archipelago (Génération de multiworld, envoi de yamls/apworlds, etc)
-```
-Linux: 
-- python3
-- python3-pip
-- python3-venv
-- git
-- curl
-- wget
-
-Windows:
-- Python 3.13
-- Git (installation par défaut)
-- Installer Visual Studio Build Tools:
-    https://visualstudio.microsoft.com/fr/visual-cpp-build-tools/
-    Selectionnez Composants Individuels: 
-    MSVC v143 - VS 2022 C++ X64/X86 Build tools
-    Windows 11 SDK ou Kit SDK Windows 10
-    Outils C++ Cmake pour Windows
 ```
 
 ## Configuration
@@ -70,8 +51,8 @@ Si vous souhaitez créer votre propre bot Discord en utilisant le code de ce dé
 Les permissions suivantes seront accordées à ArchipelagoSphereTracker :
 * Voir les salons  
 * Envoyer des messages
-* Creer des fils publics
-* Creer des fils privés  
+* Créer des fils publics
+* Créer des fils privés  
 * Envoyer des messages dans les threads  
 * Gérer les messages
 * Gérer les fils  
@@ -80,42 +61,16 @@ Les permissions suivantes seront accordées à ArchipelagoSphereTracker :
 * Ajouter des réactions  
 * Lire l’historique des messages  
 
-## Execution sans l'intégration d'Archipelago
-```
-Téléchargez la version Windows "ast-win-x64-vX.X.X.zip" ou Linux "ast-linux-x64-vX.X.X.tar.gz" depuis la page des releases.
-Décompressez dans un dossier
-Ajoutez dans la même répertoire le fichier .env correctement configuré
-Executez le programme ArchipelagoSphereTracker
-```
-
 ## Execution avec l'intégration d'Archipelago (Génération de multiworld, envoi de yamls/apworlds, etc)
 ```
 Téléchargez la version Windows "ast-win-x64-vX.X.X.zip" ou Linux "ast-linux-x64-vX.X.X.tar.gz" depuis la page des releases.
 Décompressez dans un dossier
 Ajoutez dans la même répertoire le fichier .env correctement configuré
-Windows: Executez le programme ArchipelagoSphereTracker.exe archipelago
-Linux: Executez le programme ./ArchipelagoSphereTracker archipelago
+Windows: Executez le programme ArchipelagoSphereTracker.exe
+Linux: Executez le programme ./ArchipelagoSphereTracker
 ```
 
-## Commandes disponible
-```
-Windows Commands / Linux Commands
-
-ArchipelagoSphereTracker.exe / ArchipelagoSphereTracker
-    Lance le programme en mode Bot Only.
-
-ArchipelagoSphereTracker.exe help / ArchipelagoSphereTracker help
-    Affiche toutes les commandes disponibles.
-
-ArchipelagoSphereTracker.exe archipelago  / ArchipelagoSphereTracker archipelago
-    Lance le programme avec l’intégration complète d’Archipelago 
-    (voir les prérequis nécessaires).
-
-ArchipelagoSphereTracker.exe install / ArchipelagoSphereTracker install
-    Installe les dépendances et Archipelago pour le bot, puis quitte le programme après l’installation.
-```
-
-## Installation avec Dotnet
+## Installation avec Dotnet 8
 ```
 # Clonez le dépôt
 git clone https://github.com/Etsuna/ArchipelagoSphereTracker.git
@@ -132,8 +87,13 @@ dotnet restore
 # Compilez le projet
 dotnet build --configuration Release
 
+# Publishez le projet
+Windows : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r win-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+linux : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+
 # Lancez le bot
-Allez dans le dossier .\bin\Release\net8.0\
+Allez dans le dossier .\bin\Release\net8.0\linux-x64\publish\ ou .\bin\Release\net8.0\win-x64\publish\ selon votre OS
+Copiez le fichier .env dans ce dossier
 Windows: executez ArchipelagoSphereTracker.exe
 Linux: executez ./ArchipelagoSphereTracker
 ```
@@ -153,7 +113,8 @@ Ce qui n’est pas collecté :
 ## Pourquoi cette télémétrie ?
 
 Elle permet de mieux comprendre l’adoption du programme, d’évaluer son utilisation, et d’améliorer son développement, tout en respectant la vie privée des utilisateurs.
-Fonctionnement technique
+
+## Fonctionnement technique
 
 * La télémétrie est envoyée automatiquement une fois par jour ou a chaque fois qu'une URL d'un Room est ajoutée ou supprimée depuis chaque instance.
 * Les données sont transmises de façon sécurisée via HTTPS vers un serveur dédié.

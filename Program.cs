@@ -5,25 +5,36 @@ using DotNetEnv;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
+using System.Formats.Tar;
+using System.Reflection;
 
 class Program
 {
     public static string Version = "0.6.2";
-    public static string BotVersion = "2.6.2";
+    public static string BotVersion = "3.0.0";
+
     public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
-    public static string ExternalFolder = Path.Combine(BasePath, "extern");
-    public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
-    public static string ExtractPath = Path.Combine(ExternalFolder, "Archipelago");
-    public static string DownloadUrl = $"https://github.com/ArchipelagoMW/Archipelago/archive/refs/tags/{Version}.zip";
+
+    public static string DownloadWinUrl = $"https://github.com/ArchipelagoMW/Archipelago/releases/download/{Version}/Setup.Archipelago.{Version}.exe";
+    public static string DownloadLinuxUrl = $"https://github.com/ArchipelagoMW/Archipelago/releases/download/{Version}/Archipelago_{Version}_linux-x86_64.tar.gz";
+    public static string DownloadInnoExtractor = $"https://constexpr.org/innoextract/files/innoextract-1.9-windows.zip";
+
     public static string ArchivePath = Path.Combine(BasePath, "archive");
     public static string TempExtractPath = Path.Combine(BasePath, "tempExtract");
-    public static string GenerateTemplatesPath = Path.Combine(ExtractPath, "generateTemplates.py");
-    public static string GenerateItemsTablePath = Path.Combine(ExtractPath, "generateItemsTable.py");
     public static string BddPath = Path.Combine(BasePath, "AST.db");
+    public static string ExternalFolder = Path.Combine(BasePath, "extern");
+    public static string ScanItemsPath = "ArchipelagoSphereTracker.apworld.scan_items.apworld";
+    public static string GenerateTemplatesPath = "ArchipelagoSphereTracker.apworld.generate_templates.apworld";
+
+    public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
+    public static string ExtractPath = Path.Combine(ExternalFolder, "Archipelago");
+    public static string BackupPath = Path.Combine(ExternalFolder, $"backup_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}");
+
+    public static string ItemCategoryPath = Path.Combine(ExtractPath, "ItemCategory");
     public static string PlayersPath = Path.Combine(ExtractPath, "Players");
     public static string CustomPath = Path.Combine(ExtractPath, "custom_worlds");
-    public static string WorldsPath = Path.Combine(ExtractPath, "worlds");
-    public static string BackupPath = Path.Combine(ExternalFolder,$"backup_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}");
+
     public static string RomBackupPath = Path.Combine(BackupPath, "rom_backup");
     public static string ApworldsBackupPath = Path.Combine(BackupPath, "apworlds_backup");
     public static string PlayersBackup = Path.Combine(BackupPath, "players_backup");
@@ -38,65 +49,22 @@ class Program
 
         DatabaseInitializer.InitializeDatabase();
 
-        if (args.Length > 0 && args[0].ToLower() == "help")
+        if (currentVersion.Trim() == Version)
         {
-            Console.WriteLine(@"
-╔══════════════════════════════════════════════════════════════╗
-║               ArchipelagoSphereTracker - Help                ║
-╠══════════════════════════════════════════════════════════════╣
-║ Commandes disponibles :                                      ║
-║                                                              ║
-║ ArchipelagoSphereTracker.exe                                 ║
-║    ➜ Lance le bot Discord en mode simple (mode par défaut)   ║
-║                                                              ║
-║ ArchipelagoSphereTracker.exe archipelago                     ║
-║    ➜ Active toutes les fonctionnalités Archipelago           ║
-║      (Génération de multiworld, envoi de yamls/apworlds, etc)║
-║                                                              ║
-║ ArchipelagoSphereTracker.exe install                         ║
-║    ➜ Lance le processus d'installation :                     ║
-║      * Sauvegarde les fichiers                               ║
-║      * Installe les composants nécessaires                   ║
-║      * Restaure la sauvegarde                                ║
-║                                                              ║
-║ ArchipelagoSphereTracker.exe help                            ║
-║    ➜ Affiche cette aide                                      ║
-╚══════════════════════════════════════════════════════════════╝
-");
-            return;
+            Console.WriteLine($"Archipelago {Version} est déjà installé.");
         }
-
-        if (args.Length > 0 && args[0].ToLower() == "install")
+        else
         {
-            Console.WriteLine("Installation Mode Only");
             await Backup();
             await Install(currentVersion, isWindows, isLinux);
             await RestoreBackup();
-            return;
         }
 
-        if (args.Length > 0 && args[0].ToLower() == "archipelago")
-        {
-            Console.WriteLine("Archipelago Mode");
-            Declare.IsBotMode = false;
-        }
+        GenerateYamls();
+        GenerateItems();
 
-        if (!Declare.IsBotMode)
-        {
-            if (currentVersion.Trim() == Version)
-            {
-                Console.WriteLine($"Archipelago {Version} est déjà installé.");
-            }
-            else
-            {
-                await Backup();
-                await Install(currentVersion, isWindows, isLinux);
-                await RestoreBackup();
-            }
-        }
+        string version = $"AST v{BotVersion} - Archipelago v{Version}";
 
-        string version = Declare.IsBotMode ? $"AST v{BotVersion}" : $"AST v{BotVersion} - Archipelago v{Version}";
-        
         Console.WriteLine($"Starting bot... {version}");
 
         var config = new DiscordSocketConfig
@@ -286,8 +254,6 @@ class Program
                     Console.WriteLine($"Erreur sur {fichier} : {ex.Message}");
                 }
             }
-
-            GenerateYamls();
         }
 
         if (Directory.Exists(PlayersBackup))
@@ -318,7 +284,7 @@ class Program
         Console.WriteLine($"Nouvelle version détectée : {Version} (ancienne : {currentVersion})");
         Console.WriteLine($"{BasePath.ToString()}");
 
-        if(Directory.Exists(ExtractPath))
+        if (Directory.Exists(ExtractPath))
         {
             Console.WriteLine($"Le dossier {ExtractPath} existe déjà, on va le supprimer.");
             Directory.Delete(ExtractPath, true);
@@ -329,299 +295,36 @@ class Program
             Directory.CreateDirectory(ExternalFolder);
         }
 
-        var venvPath = Path.Combine(ExtractPath, "venv");
-        var pythonExecutable = isWindows
-            ? Path.Combine(venvPath, "Scripts", "python.exe")
-            : Path.Combine(venvPath, "bin", "python3");
-
-        Console.WriteLine("Arrêt des processus Python en cours...");
-
-        var killPythonProcess = new ProcessStartInfo
+        if(isWindows)
         {
-            FileName = isWindows ? "powershell" : "bash",
-            Arguments = isWindows
-                ? $"-Command \"Get-WmiObject Win32_Process | Where-Object {{$_.ExecutablePath -like '*{venvPath}*'}} | ForEach-Object {{$_.Terminate()}}\""
-                : $"-c \"pkill -f '{venvPath}'\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+            if (Directory.Exists(TempExtractPath))
+                Directory.Delete(TempExtractPath, true);
 
-        using (var process = Process.Start(killPythonProcess))
-        {
-            if (process != null)
-            {
-                process.WaitForExit();
-                Console.WriteLine("✅ Processus Python arrêtés !");
-            }
-            else
-            {
-                Console.WriteLine("❌ ERREUR : Impossible d'arrêter les processus Python.");
-            }
+            await InstallInnoExtractor();
+            await DownloadArchipelagoForWindows();
+            await ExtractArchipelagoForWindows();
+            MoveAppFileToArchipelagoFolder();
+            await InstallVcRedist();
         }
-
-        if (Directory.Exists(venvPath))
-        {
-            Console.WriteLine("Suppression de l'ancien venv...");
-            Directory.Delete(venvPath, true);
-        }
-
-        var pyxbldPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".pyxbld");
-
-        if (Directory.Exists(pyxbldPath))
-        {
-            Directory.Delete(pyxbldPath, true);
-            Console.WriteLine($"🧹 Dossier {pyxbldPath} supprimé.");
-        }
-        else
-        {
-            Console.WriteLine("Aucun dossier .pyxbld à supprimer.");
-        }
-
-        Console.WriteLine($"Téléchargement de {DownloadUrl}...");
-        HttpResponseMessage response = await Declare.HttpClient.GetAsync(DownloadUrl);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            Console.WriteLine($"Erreur : Impossible de télécharger Archipelago (code {response.StatusCode}).");
-            return;
-        }
-
-        byte[] data = await response.Content.ReadAsByteArrayAsync();
-        await File.WriteAllBytesAsync(ArchivePath, data);
-
-        if (Directory.Exists(TempExtractPath))
-            Directory.Delete(TempExtractPath, true);
-
-        Console.WriteLine("Extraction temporaire...");
-        ZipFile.ExtractToDirectory(ArchivePath, TempExtractPath);
-
-        string? extractedMainFolder = Directory.GetDirectories(TempExtractPath).FirstOrDefault();
-        if (string.IsNullOrEmpty(extractedMainFolder))
-        {
-            Console.WriteLine("Erreur : Impossible de trouver le dossier extrait !");
-            return;
-        }
-
-        Console.WriteLine("Déplacement des fichiers...");
-        MoveFilesRecursively(extractedMainFolder, ExtractPath);
-
-        Directory.Delete(TempExtractPath, true);
-        File.Delete(ArchivePath);
 
         if (isLinux)
         {
-            InstallLinuxBuildTools();
+            if (Directory.Exists(TempExtractPath))
+                Directory.Delete(TempExtractPath, true);
+
+            if (!Directory.Exists(TempExtractPath))
+            {
+                Directory.CreateDirectory(TempExtractPath);
+            }
+
+            await DownloadAndExtractArchipelagoForLinux();
         }
 
-        var venvCreateProcess = new ProcessStartInfo
+        if (Path.Exists(TempExtractPath))
         {
-            FileName = isWindows ? "python" : "python3",
-            Arguments = $"-m venv \"{venvPath}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using (var process = Process.Start(venvCreateProcess))
-        {
-            if (process != null)
-            {
-                Console.WriteLine("Création du virtualenv...");
-                process.WaitForExit();
-            }
-            else
-            {
-                Console.WriteLine("❌ ERREUR : Impossible de créer le virtualenv.");
-                return;
-            }
+            Console.WriteLine($"Clean {TempExtractPath}");
+            Directory.Delete(TempExtractPath, true);
         }
-
-        if (!File.Exists(pythonExecutable))
-        {
-            Console.WriteLine($"❌ ERREUR : Python introuvable dans le venv : {pythonExecutable}");
-            return;
-        }
-        else
-        {
-            Console.WriteLine($"✅ Virtualenv créé avec succès : {pythonExecutable}");
-        }
-
-        Console.WriteLine("Mise à jour de pip...");
-        var pipUpdateProcess = new ProcessStartInfo
-        {
-            FileName = pythonExecutable,
-            Arguments = "-m pip install --upgrade pip",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using (var process = Process.Start(pipUpdateProcess))
-        {
-            if (process != null)
-            {
-                process.WaitForExit();
-                if (process.ExitCode != 0)
-                {
-                    Console.WriteLine($"❌ ERREUR : Échec de la mise à jour de pip (code {process.ExitCode})");
-                }
-                else
-                {
-                    Console.WriteLine("✅ Pip mis à jour avec succès !");
-                }
-            }
-            else
-            {
-                Console.WriteLine("❌ ERREUR : Impossible de mettre à jour pip.");
-                return;
-            }
-        }
-
-        Console.WriteLine("Mise à jour de setuptools...");
-        var setuptoolsUpdateProcess = new ProcessStartInfo
-        {
-            FileName = pythonExecutable,
-            Arguments = "-m pip install --upgrade setuptools",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using (var process = Process.Start(setuptoolsUpdateProcess))
-        {
-            if (process != null)
-            {
-                process.WaitForExit();
-                if (process.ExitCode != 0)
-                {
-                    Console.WriteLine($"❌ ERREUR : Échec de la mise à jour de setuptools (code {process.ExitCode})");
-                }
-                else
-                {
-                    Console.WriteLine("✅ Setuptools mis à jour avec succès !");
-                }
-            }
-            else
-            {
-                Console.WriteLine("❌ ERREUR : Impossible de mettre à jour setuptools.");
-                return;
-            }
-        }
-
-        Console.WriteLine("Installation de wheel...");
-        var wheelProcess = new ProcessStartInfo
-        {
-            FileName = pythonExecutable,
-            Arguments = "-m pip install --upgrade wheel",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        using (var process = Process.Start(wheelProcess))
-        {
-            if (process != null)
-            {
-                process.WaitForExit();
-                if (process.ExitCode != 0)
-                {
-                    Console.WriteLine("❌ ERREUR : Échec de l'installation de wheel.");
-                    return;
-                }
-                else
-                {
-                    Console.WriteLine("✅ wheel installé avec succès !");
-                }
-            }
-            else
-            {
-                Console.WriteLine("❌ ERREUR : Impossible d'installer wheel.");
-                return;
-            }
-        }
-
-        Console.WriteLine("Installation de Cython...");
-        var CythonProcess = new ProcessStartInfo
-        {
-            FileName = pythonExecutable,
-            Arguments = "-m pip install cython",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using (var process = Process.Start(CythonProcess))
-        {
-            if (process != null)
-            {
-                process.WaitForExit();
-                if (process.ExitCode != 0)
-                {
-                    Console.WriteLine($"❌ ERREUR : Échec de l'instalation de Cython (code {process.ExitCode})");
-                }
-                else
-                {
-                    Console.WriteLine("✅ Cython installé avec succès !");
-                }
-            }
-            else
-            {
-                Console.WriteLine("❌ ERREUR : Impossible d'installer Cython.");
-                return;
-            }
-
-        }
-
-        var allRequirements = Directory.GetFiles(ExtractPath, "requirements.txt", SearchOption.AllDirectories);
-
-        foreach (var requirement in allRequirements)
-        {
-            Console.WriteLine($"Installation des dépendances : {requirement}...");
-
-            ProcessStartInfo pipInstallProcess;
-
-            pipInstallProcess = new ProcessStartInfo
-            {
-                FileName = pythonExecutable,
-                Arguments = $"-m pip install --quiet --no-input -r \"{requirement}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using (var process = Process.Start(pipInstallProcess))
-            {
-
-                if (process != null)
-                {
-                    process.WaitForExit();
-
-                    if (process.ExitCode != 0)
-                    {
-                        Console.WriteLine($"❌ ERREUR : pip install a échoué pour {requirement} (code {process.ExitCode})");
-                    }
-                    else
-                    {
-                        Console.WriteLine("✅ Dépendances installées avec succès !");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"❌ ERREUR : Impossible d'installer les dépendances pour {requirement}.");
-                    return;
-                }
-            }
-        }
-
-        GenerateYamls();
-        GenerateItemsTableClass();
 
         Console.WriteLine("Importation des ApWorlds dans la BDD...");
         await ApworldListDatabase.Import();
@@ -629,6 +332,199 @@ class Program
         await File.WriteAllTextAsync(VersionFile, Version);
 
         Console.WriteLine("Mise à jour terminée !");
+
+        static async Task InstallInnoExtractor()
+        {
+            Console.WriteLine($"Téléchargement de {DownloadInnoExtractor}...");
+            HttpResponseMessage responseDownloadInnoExtractor = await Declare.HttpClient.GetAsync(DownloadInnoExtractor);
+
+            if (!responseDownloadInnoExtractor.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Erreur : Impossible de télécharger Archipelago (code {responseDownloadInnoExtractor.StatusCode}).");
+                return;
+            }
+
+            byte[] dataDownloadInnoExtractor = await responseDownloadInnoExtractor.Content.ReadAsByteArrayAsync();
+            await File.WriteAllBytesAsync("innoextract-1.9-windows.zip", dataDownloadInnoExtractor);
+
+            Console.WriteLine("Extraction temporaire...");
+            ZipFile.ExtractToDirectory($"innoextract-1.9-windows.zip", TempExtractPath);
+
+            string? extractedMainFolder = Directory.GetDirectories(TempExtractPath).FirstOrDefault();
+            if (string.IsNullOrEmpty(extractedMainFolder))
+            {
+                Console.WriteLine("Erreur : Impossible de trouver le dossier extrait !");
+                return;
+            }
+        }
+
+        static async Task DownloadArchipelagoForWindows()
+        {
+            Console.WriteLine($"Téléchargement de {DownloadWinUrl}...");
+            HttpResponseMessage responseDownloadWinUrl = await Declare.HttpClient.GetAsync(DownloadWinUrl);
+
+            if (!responseDownloadWinUrl.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Erreur : Impossible de télécharger Archipelago (code {responseDownloadWinUrl.StatusCode}).");
+                return;
+            }
+
+            byte[] dataDownloadWinUrl = await responseDownloadWinUrl.Content.ReadAsByteArrayAsync();
+            await File.WriteAllBytesAsync(Path.Combine(TempExtractPath, $"Setup.Archipelago.{Version}.exe"), dataDownloadWinUrl);
+        }
+
+        static async Task ExtractArchipelagoForWindows()
+        {
+            Console.WriteLine("Extraction de l'installeur Archipelago...");
+            var innoExtractPath = Path.Combine(TempExtractPath, "innoextract.exe");
+            var archipelagoInstallerPath = Path.Combine(TempExtractPath, $"Setup.Archipelago.{Version}.exe");
+
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = innoExtractPath,
+                Arguments = $"--extract --output-dir \"{ExtractPath}\" \"{archipelagoInstallerPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            try
+            {
+                using Process? proc = Process.Start(psi);
+                if (proc == null)
+                {
+                    Console.WriteLine("❌ Impossible de démarrer le processus innoextract.");
+                    return;
+                }
+                string output = await proc.StandardOutput.ReadToEndAsync();
+                string error = await proc.StandardError.ReadToEndAsync();
+                await proc.WaitForExitAsync();
+
+                Console.WriteLine(output);
+
+                if (proc.ExitCode != 0)
+                {
+                    Console.WriteLine($"❌ Erreur lors de l'extraction (code {proc.ExitCode}) :");
+                    Console.WriteLine(error);
+                }
+                else
+                {
+                    Console.WriteLine("✅ Extraction réussie.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception lors de l'exécution de innoextract : {ex.Message}");
+            }
+        }
+
+        static void MoveAppFileToArchipelagoFolder()
+        {
+            Console.WriteLine("Déplacement des fichiers de l'installeur Archipelago...");
+            string appFolder = Path.Combine(ExtractPath, "app");
+
+            if (Directory.Exists(appFolder))
+            {
+                foreach (string file in Directory.GetFiles(appFolder, "*", SearchOption.AllDirectories))
+                {
+                    string relativePath = Path.GetRelativePath(appFolder, file);
+                    string destinationPath = Path.Combine(ExtractPath, relativePath);
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
+                    File.Move(file, destinationPath, overwrite: true);
+                }
+
+                Directory.Delete(appFolder, recursive: true);
+
+                Console.WriteLine("✅ Fichiers déplacés avec succès depuis 'app\\' vers le dossier racine.");
+            }
+            else
+            {
+                Console.WriteLine("⚠️ Dossier 'app\\' non trouvé après extraction.");
+            }
+        }
+
+        async Task InstallVcRedist()
+        {
+            if (!IsVcRedistInstalled())
+            {
+                Console.WriteLine("Installation de vc_redist.x64.exe...");
+
+                string vcRedistPath = Path.Combine(ExtractPath, "tmp", "vc_redist.x64.exe");
+
+                if (File.Exists(vcRedistPath))
+                {
+                    var psivc_redist = new ProcessStartInfo
+                    {
+                        FileName = vcRedistPath,
+                        Arguments = "/install /quiet /norestart",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                    };
+
+                    try
+                    {
+                        using Process process = Process.Start(psivc_redist)!;
+                        await process.WaitForExitAsync();
+
+                        if (process.ExitCode == 0)
+                        {
+                            Console.WriteLine("✅ VC++ Redistributable installé avec succès (mode silencieux).");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"❌ Erreur d'installation VC++ (code {process.ExitCode}).");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"❌ Exception lors de l'installation VC++ : {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ Le fichier vc_redist.x64.exe est introuvable.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("✅ VC++ Redistributable déjà installé, aucune action nécessaire.");
+            }
+        }
+
+        bool IsVcRedistInstalled()
+        {
+            const string keyPath = @"SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64";
+
+            using RegistryKey? key = Registry.LocalMachine.OpenSubKey(keyPath);
+            if (key == null) return false;
+
+            object? value = key.GetValue("Installed");
+            return value is int installed && installed == 1;
+        }
+
+        static async Task DownloadAndExtractArchipelagoForLinux()
+        {
+            Console.WriteLine($"Téléchargement de {DownloadLinuxUrl}...");
+            HttpResponseMessage responseDownloadWinUrl = await Declare.HttpClient.GetAsync(DownloadLinuxUrl);
+
+            if (!responseDownloadWinUrl.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Erreur : Impossible de télécharger Archipelago (code {responseDownloadWinUrl.StatusCode}).");
+                return;
+            }
+
+            byte[] dataDownloadWinUrl = await responseDownloadWinUrl.Content.ReadAsByteArrayAsync();
+
+            var sourceTar = Path.Combine(TempExtractPath, $"Archipelago_{Version}_linux-x86_64.tar.gz");
+            await File.WriteAllBytesAsync(Path.Combine(sourceTar), dataDownloadWinUrl);
+
+            using FileStream fs = new(sourceTar, FileMode.Open, FileAccess.Read);
+            using GZipStream gz = new(fs, CompressionMode.Decompress, leaveOpen: true);
+
+            TarFile.ExtractToDirectory(gz, ExternalFolder, overwriteFiles: false);
+        }
     }
 
     private static async Task OnGuildJoined(SocketGuild guild)
@@ -638,123 +534,197 @@ class Program
 
     public static void GenerateYamls()
     {
-        var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-        var venvPath = Path.Combine(ExtractPath, "venv");
-        var pythonExecutable = isWindows
-                ? Path.Combine(venvPath, "Scripts", "python.exe")
-                : Path.Combine(venvPath, "bin", "python3");
+        Console.WriteLine("📦 Génération des templates YAML...");
 
-        Console.WriteLine("Génération des templates YAML...");
-        if (File.Exists(GenerateTemplatesPath))
+        try
         {
-            File.Delete(GenerateTemplatesPath);
-        }
-
-        File.WriteAllText(GenerateTemplatesPath, GenerateTemplates.pythonCode);
-
-        Console.WriteLine($"Fichier Python créé à l'emplacement : {GenerateTemplatesPath}");
-
-        var generateYamlCommand = isWindows
-       ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\""
-       : $"bash -c 'yes | \"{pythonExecutable}\" \"{GenerateTemplatesPath}\"'";
-
-        ProcessStartInfo generateYamlProcess = new ProcessStartInfo
-        {
-            FileName = isWindows ? "cmd.exe" : "/bin/bash",
-            Arguments = isWindows ? $"/c {generateYamlCommand}" : $"-c \"{generateYamlCommand}\"",
-            WorkingDirectory = ExtractPath,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using (var process = Process.Start(generateYamlProcess))
-        {
-            if (process != null)
+            if (!Directory.Exists(CustomPath))
             {
-                process.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
-                process.ErrorDataReceived += (sender, args) => Console.WriteLine("Warning : " + args.Data);
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                process.WaitForExit();
+                Directory.CreateDirectory(CustomPath);
+            }
 
-                if (process.ExitCode != 0)
-                {
-                    Console.WriteLine($"❌ ERREUR : Échec de la génération des YAML (code {process.ExitCode})");
-                }
-                else
-                {
-                    Console.WriteLine("✅ YAML générés avec succès !");
-                }
+            string destinationPath = Path.Combine(CustomPath, "generate_templates.apworld");
+
+            using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GenerateTemplatesPath);
+            if (stream == null)
+            {
+                Console.WriteLine("❌ Impossible de trouver la ressource embarquée : " + GenerateTemplatesPath);
+                return;
+            }
+
+            using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                stream.CopyTo(fileStream);
+                fileStream.Flush(true);
+            }
+
+            if (!File.Exists(destinationPath))
+            {
+                Console.WriteLine("❌ Le fichier 'generate_templates.apworld' n’a pas été écrit correctement.");
+                return;
+            }
+
+            Console.WriteLine($"✅ Fichier copié vers : {destinationPath}");
+
+            string launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "ArchipelagoLauncher.exe"
+                : "ArchipelagoLauncher";
+
+            string launcherPath = Path.Combine(ExtractPath, launcher);
+
+            if (!File.Exists(launcherPath))
+            {
+                Console.WriteLine($"❌ Launcher introuvable : {launcherPath}");
+                return;
+            }
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = launcherPath,
+                Arguments = "\"Generate Templates\"",
+                WorkingDirectory = ExtractPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process == null)
+            {
+                Console.WriteLine("❌ ERREUR : Impossible de démarrer le processus de génération.");
+                return;
+            }
+
+            process.OutputDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data)) Console.WriteLine(e.Data);
+            };
+            process.ErrorDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data)) Console.WriteLine("⚠️ " + e.Data);
+            };
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            process.WaitForExit();
+
+            if (process.ExitCode == 0)
+            {
+                Console.WriteLine("✅ YAML générés avec succès !");
             }
             else
             {
-                Console.WriteLine("❌ ERREUR : Impossible de générer les YAML.");
-                return;
+                Console.WriteLine($"❌ ERREUR : Échec de la génération des YAML (code {process.ExitCode})");
             }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception : {ex.GetType().Name} - {ex.Message}");
         }
     }
 
-    public static void GenerateItemsTableClass()
+
+    public static void GenerateItems()
     {
-        var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-        var venvPath = Path.Combine(ExtractPath, "venv");
-        var pythonExecutable = isWindows
-                ? Path.Combine(venvPath, "Scripts", "python.exe")
-                : Path.Combine(venvPath, "bin", "python3");
+        Console.WriteLine("📦 Génération des templates Items Category Json...");
 
-        Console.WriteLine("Génération des templates Tables D'items...");
-        if (File.Exists(GenerateItemsTablePath))
+        try
         {
-            File.Delete(GenerateItemsTablePath);
-        }
-
-        File.WriteAllText(GenerateItemsTablePath, GenerateItemsTable.pythonCode.Replace("{WORLDS_PATH}", ExtractPath).Replace("{BDD_PATH}", BddPath));
-
-        Console.WriteLine($"Fichier Python créé à l'emplacement : {GenerateItemsTablePath}");
-
-        var generateItemsTableCommand = isWindows
-    ? $"cmd /c echo yes | \"{pythonExecutable}\" \"{GenerateItemsTablePath}\""
-    : $"bash -c 'yes | \"{pythonExecutable}\" \"{GenerateItemsTablePath}\"'";
-
-        ProcessStartInfo generateItemsTableProcess = new ProcessStartInfo
-        {
-            FileName = isWindows ? "cmd.exe" : "/bin/bash",
-            Arguments = isWindows ? $"/c {generateItemsTableCommand}" : $"-c \"{generateItemsTableCommand}\"",
-            WorkingDirectory = ExtractPath,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using (var process = Process.Start(generateItemsTableProcess))
-        {
-            if (process != null)
+            if (!Directory.Exists(CustomPath))
             {
-                process.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
-                process.ErrorDataReceived += (sender, args) => Console.WriteLine("Warning : " + args.Data);
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                process.WaitForExit();
+                Directory.CreateDirectory(CustomPath);
+            }
 
-                if (process.ExitCode != 0)
-                {
-                    Console.WriteLine($"❌ ERREUR : Échec de la génération des Tables D'items (code {process.ExitCode})");
-                }
-                else
-                {
-                    Console.WriteLine("✅ Tables D'items générés avec succès !");
-                }
+            string destinationPath = Path.Combine(CustomPath, "scan_items.apworld");
+
+            using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(ScanItemsPath);
+            if (stream == null)
+            {
+                Console.WriteLine("❌ Impossible de trouver la ressource embarquée : " + ScanItemsPath);
+                return;
+            }
+
+            using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                stream.CopyTo(fileStream);
+                fileStream.Flush(true);
+            }
+
+            if (!File.Exists(destinationPath))
+            {
+                Console.WriteLine("❌ Le fichier n’a pas été écrit correctement sur le disque.");
+                return;
+            }
+
+            Console.WriteLine($"✅ Fichier copié vers : {destinationPath}");
+
+            string launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "ArchipelagoLauncher.exe"
+                : "ArchipelagoLauncher";
+
+            string launcherPath = Path.Combine(ExtractPath, launcher);
+
+            if (!File.Exists(launcherPath))
+            {
+                Console.WriteLine($"❌ Launcher introuvable : {launcherPath}");
+                return;
+            }
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = launcherPath,
+                Arguments = "\"Scan Items\"",
+                WorkingDirectory = ExtractPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process == null)
+            {
+                Console.WriteLine("❌ ERREUR : Impossible de démarrer le processus.");
+                return;
+            }
+
+            process.OutputDataReceived += (s, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) Console.WriteLine(e.Data); };
+            process.ErrorDataReceived += (s, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) Console.WriteLine("⚠️ " + e.Data); };
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            process.WaitForExit();
+
+            if (process.ExitCode == 0)
+            {
+                Console.WriteLine("✅ YAML générés avec succès !");
             }
             else
             {
-                Console.WriteLine("❌ ERREUR : Impossible de générer les Tables D'items.");
-                return;
+                Console.WriteLine($"❌ ERREUR : Échec de la génération des YAML (code {process.ExitCode})");
+            }
+
+            var jsonFile = Directory.GetFiles(ItemCategoryPath, "*.json", SearchOption.TopDirectoryOnly)
+                .FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(jsonFile) && File.Exists(jsonFile))
+            {
+                ItemsCommands.SyncItemsFromJsonAsync(jsonFile).GetAwaiter().GetResult();
+            }
+            else
+            {
+                Console.WriteLine("⚠️ Aucun fichier JSON trouvé pour la synchronisation.");
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception : {ex.GetType().Name} - {ex.Message}");
+        }
     }
+
 
     static Task LogAsync(LogMessage log)
     {
@@ -767,55 +737,5 @@ class Program
         await BotCommands.RegisterCommandsAsync();
         Console.WriteLine("Bot is connected!");
         TrackingDataManager.StartTracking();
-    }
-
-    static void MoveFilesRecursively(string sourcePath, string targetPath)
-    {
-        foreach (var directory in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
-        {
-            Directory.CreateDirectory(directory.Replace(sourcePath, targetPath));
-        }
-
-        foreach (var file in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-        {
-            File.Move(file, file.Replace(sourcePath, targetPath), true);
-        }
-    }
-
-    private static void InstallLinuxBuildTools()
-    {
-        Console.WriteLine("⚠️ Les outils nécessaires ne sont pas installés. Installation de build-essential et python3-dev...");
-
-        var installProcess = new ProcessStartInfo
-        {
-            FileName = "bash",
-            Arguments = "-c \"sudo apt-get install -y build-essential python3-dev python3-pip\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using (var process = Process.Start(installProcess))
-        {
-            if (process != null)
-            {
-                process.WaitForExit();
-
-                if (process.ExitCode != 0)
-                {
-                    Console.WriteLine("❌ ERREUR : L'installation des outils de compilation a échoué.");
-                }
-                else
-                {
-                    Console.WriteLine("✅ Outils de compilation installés avec succès !");
-                }
-            }
-            else
-            {
-                Console.WriteLine("❌ ERREUR : Impossible d'installer les outils de compilation.");
-            }
-
-        }
     }
 }
