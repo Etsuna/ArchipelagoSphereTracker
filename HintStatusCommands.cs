@@ -248,7 +248,7 @@ public static class HintStatusCommands
                     using (var deleteCommand = new SQLiteCommand(connection))
                     {
                         deleteCommand.CommandText = @"
-                        DELETE FROM GameStatusTable
+                        DELETE FROM HintStatusTable
                         WHERE GuildId = @GuildId
                           AND ChannelId = @ChannelId
                           AND Receiver = @Receiver";

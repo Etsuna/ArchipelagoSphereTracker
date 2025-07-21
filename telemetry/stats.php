@@ -1,58 +1,67 @@
 <?php
-$dir = __DIR__ . '/telemetry';
-$files = glob($dir . '/*.json');
-sort($files); // plus anciens d'abord
+/* --------------------------------------------------------------------
+ *  Lecture du nouveau fichier unique : telemetry_data.jsonl
+ *  (une ligne = un objet JSON)
+ * ------------------------------------------------------------------*/
+$logFile = __DIR__ . '/telemetry_data.jsonl';
 
-$dates = [];
-$dataByDate = [];
-$programIds = [];
-$latestPerProgram = [];
+$dates            = [];  // liste chronologique YYYY-MM-DD
+$dataByDate       = [];  // [date][programId] => [guilds, channels]
+$programIds       = [];  // set des IDs uniques
+$latestPerProgram = [];  // dernière valeur connue par programme
 
-foreach ($files as $file) {
-    $jsonContent = file_get_contents($file);
-    $entries = json_decode($jsonContent, true);
-    if (!is_array($entries)) continue;
+if (file_exists($logFile)) {
+    // Charge toutes les lignes non vides
+    $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-    $date = basename($file, '.json');
-    $dates[] = $date;
+    foreach ($lines as $line) {
+        $entry = json_decode($line, true);
+        if (!is_array($entry) || !isset($entry['id'], $entry['timestamp'])) {
+            continue; // ligne corrompue ou champs manquants
+        }
 
-    foreach ($entries as $entry) {
-        if (!isset($entry['id'])) continue;
+        // --- Extraction / normalisation des champs ---
+        $id          = $entry['id'];
+        $date        = substr($entry['timestamp'], 0, 10);        // YYYY-MM-DD
+        $guilds      = isset($entry['guilds'])   ? (int)$entry['guilds']   : 0;
+        $channels    = isset($entry['channels']) ? (int)$entry['channels'] : 0;
+        $astversion  = !empty($entry['astversion']) ? $entry['astversion'] : '—';
+        $version     = !empty($entry['version'])    ? $entry['version']    : '—';
 
-        $id = $entry['id'];
-        $programIds[$id] = true;
-
-        $guildsCount = isset($entry['guilds']) ? (int)$entry['guilds'] : 0;
-        $channelsCount = isset($entry['channels']) ? (int)$entry['channels'] : 0;
-        $astversion = isset($entry['astversion']) && $entry['astversion'] !== '' ? $entry['astversion'] : '—';
-        $version = isset($entry['version']) && $entry['version'] !== '' ? $entry['version'] : '—';
+        // --- Indexation ---
+        $dates[$date]      = true;
+        $programIds[$id]   = true;
 
         if (!isset($dataByDate[$date])) {
             $dataByDate[$date] = [];
         }
         $dataByDate[$date][$id] = [
-            'guilds' => $guildsCount,
-            'channels' => $channelsCount
+            'guilds'   => $guilds,
+            'channels' => $channels
         ];
 
-        // Enregistre la dernière donnée connue (on suppose que les fichiers sont triés du plus ancien au plus récent)
+        // --- Dernière valeur retenue pour ce programme ---
         $latestPerProgram[$id] = [
-            'guilds' => $guildsCount,
-            'channels' => $channelsCount,
-            'date' => $date,
+            'guilds'     => $guilds,
+            'channels'   => $channels,
+            'date'       => $date,
             'astversion' => $astversion,
-            'version' => $version
-            
+            'version'    => $version
         ];
     }
 }
 
-$programIds = array_keys($programIds);
-sort($programIds);
-$totalPrograms = count($programIds);
+/* --------------------------------------------------------------------
+ *  Conversions finales (tri & totaux) — identiques à l’ancienne logique
+ * ------------------------------------------------------------------*/
+$dates       = array_keys($dates);
+sort($dates);
 
-// Calculs finaux à partir des dernières valeurs
-$totalGuilds = array_sum(array_column($latestPerProgram, 'guilds'));
+$programIds  = array_keys($programIds);
+sort($programIds);
+
+$totalPrograms = count($programIds);
+$totalGuilds   = array_sum(array_column($latestPerProgram, 'guilds'));
 $totalChannels = array_sum(array_column($latestPerProgram, 'channels'));
 ?>
 <!DOCTYPE html>

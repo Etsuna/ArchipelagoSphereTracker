@@ -1,4 +1,5 @@
 ﻿using System.Data.SQLite;
+using System.IO;
 
 public class DatabaseInitializer
 {
@@ -16,9 +17,11 @@ public class DatabaseInitializer
 
         using var command = new SQLiteCommand(connection);
 
+        // Activer les clés étrangères
         command.CommandText = "PRAGMA foreign_keys = ON;";
         command.ExecuteNonQuery();
 
+        // Création des tables
         command.CommandText = @"
 -- ==========================
 -- 🎯 ChannelsAndUrlsTable
@@ -131,7 +134,7 @@ CREATE TABLE IF NOT EXISTS HintStatusTable (
 );
 
 -- ==========================
--- 🎯 ApWorldList
+-- 🎯 ApWorldListTable
 -- ==========================
 CREATE TABLE IF NOT EXISTS ApWorldListTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -148,17 +151,6 @@ CREATE TABLE IF NOT EXISTS ApWorldItemTable (
 );
 
 -- ==========================
--- 🎯 ItemsTable
--- ==========================
-CREATE TABLE IF NOT EXISTS ItemsTable (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GameName TEXT NOT NULL,
-    Category TEXT NOT NULL,
-    ItemName TEXT NOT NULL,
-    UNIQUE(GameName, Category, ItemName)
-);
-
--- ==========================
 -- 🎯 ProgramIdTable
 -- ==========================
 CREATE TABLE IF NOT EXISTS ProgramIdTable (
@@ -172,6 +164,10 @@ CREATE TABLE IF NOT EXISTS TelemetryTable (
     Date TEXT PRIMARY KEY
 );
 ";
+        command.ExecuteNonQuery();
+
+        // Compactage de la base après initialisation
+        command.CommandText = "VACUUM;";
         command.ExecuteNonQuery();
     }
 }

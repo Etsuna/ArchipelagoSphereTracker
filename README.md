@@ -24,7 +24,7 @@ Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : http
 * Générer à partir du dossier du server un Multiworld.
 * Générer à partir du server une fichier Zip contenant tous les Yamls compris dans le Zip.
 * Lister les Yamls filtré par le channel.
-* Lister les Appworlds présent dans le server.
+* Lister les Apworlds présent dans le server.
 * Gestion automatique de la compatibilité Windows et Linux pour la generation des Multiworld.
 
 Pour plus d'info, voir le [Wiki](https://github.com/Etsuna/ArchipelagoSphereTracker/wiki)
@@ -34,7 +34,8 @@ Tous les jeux pris en charge par le Randomizer MultiWorld [Archipelago](https://
 
 ## Prérequis
 ```
-Aucun prérequis nécessaire.
+Aucun prérequis n’est nécessaire pour utiliser la version précompilée.
+Dotnet 8 est requis uniquement si vous souhaitez compiler le projet vous-même.
 ```
 
 ## Configuration
@@ -44,6 +45,7 @@ Un fichier `.env` est nécessaire dans le répertoire principal du dépôt.
 ```
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
 APP_ID=YOUR_DISCORD_BOT_APP_ID
+TELEMETRY=true/false       si non défini, la télémétrie est activée par défaut.
 ```
 
 Si vous souhaitez créer votre propre bot Discord en utilisant le code de ce dépôt, votre bot aura besoin des permissions définies par l'entier `395137117248`.
@@ -94,12 +96,13 @@ linux : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-x64 /
 # Lancez le bot
 Allez dans le dossier .\bin\Release\net8.0\linux-x64\publish\ ou .\bin\Release\net8.0\win-x64\publish\ selon votre OS
 Copiez le fichier .env dans ce dossier
-Windows: executez ArchipelagoSphereTracker.exe
-Linux: executez ./ArchipelagoSphereTracker
+Windows: exécutez ArchipelagoSphereTracker.exe
+Linux: exécutez ./ArchipelagoSphereTracker
 ```
 
 ## Télémétrie
 Une fonctionnalité de télémétrie a été ajoutée pour collecter des statistiques d’usage anonymes du programme.
+Elle peut être désactivée en ajoutant dans le `.env` le paramètre `TELEMETRY=false`.
 
 Que collecte la télémétrie ?
 * Le nombre total de serveurs Discord (guilds) où le programme est actif
@@ -116,7 +119,7 @@ Elle permet de mieux comprendre l’adoption du programme, d’évaluer son util
 
 ## Fonctionnement technique
 
-* La télémétrie est envoyée automatiquement une fois par jour ou a chaque fois qu'une URL d'un Room est ajoutée ou supprimée depuis chaque instance.
+* La télémétrie est envoyée automatiquement une fois par jour ou à chaque fois qu'une URL d'un Room est ajoutée ou supprimée depuis chaque instance.
 * Les données sont transmises de façon sécurisée via HTTPS vers un serveur dédié.
 * Chaque instance génère localement un identifiant unique non personnel utilisé pour compter les programmes distincts.
 * Un mécanisme évite les envois multiples par jour depuis une même instance.

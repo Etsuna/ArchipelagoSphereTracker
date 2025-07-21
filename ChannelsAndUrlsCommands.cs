@@ -1,4 +1,5 @@
 ﻿using System.Data.SQLite;
+using System.Text.RegularExpressions;
 
 public static class ChannelsAndUrlsCommands
 {
@@ -139,17 +140,23 @@ public static class ChannelsAndUrlsCommands
         using var connection = CreateConnection();
         await connection.OpenAsync();
 
+        // Extraire le nom réel si l'alias est de la forme "NomAffiché (NomRéel)"
+        var match = Regex.Match(alias, @"\(([^)]+)\)$");
+        string realAlias = match.Success ? match.Groups[1].Value.Trim() : alias;
+
         long guildChannelId = await DatabaseCommands.GetGuildChannelIdAsync(guildId, channelId, "ChannelsAndUrlsTable");
 
         using var command = new SQLiteCommand(connection)
         {
-            CommandText = @"SELECT GameName, Patch 
-                            FROM UrlAndChannelPatchTable
-                            WHERE ChannelsAndUrlsTableId = @ChannelsAndUrlsTableId AND Alias = @Alias"
+            CommandText = @"
+            SELECT GameName, Patch 
+            FROM UrlAndChannelPatchTable
+            WHERE ChannelsAndUrlsTableId = @ChannelsAndUrlsTableId
+              AND Alias = @Alias"
         };
 
         command.Parameters.AddWithValue("@ChannelsAndUrlsTableId", guildChannelId);
-        command.Parameters.AddWithValue("@Alias", alias);
+        command.Parameters.AddWithValue("@Alias", realAlias);
 
         using var reader = await command.ExecuteReaderAsync();
         if (await reader.ReadAsync())
@@ -159,6 +166,7 @@ public static class ChannelsAndUrlsCommands
 
         return "Aucun enregistrement trouvé.";
     }
+
 
     // ==============================
     // 🎯 GET ALL PATCHES FOR CHANNEL

@@ -6,6 +6,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -1835,17 +1836,26 @@ public static class BotCommands
 
                     case "list-apworld":
                         string apworldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
+
                         if (Directory.Exists(apworldPath))
                         {
-                            var listAppworld = Directory.EnumerateFiles(apworldPath, "*.apworld").OrderBy(path => Path.GetFileName(path));
+                            var excludedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                                {
+                                    "scan_items.apworld",
+                                    "generate_templates.apworld"
+                                };
 
-                            if (listAppworld.Any())
+                            var listApworld = Directory
+                                .EnumerateFiles(apworldPath, "*.apworld")
+                                .Where(path => !excludedFiles.Contains(Path.GetFileName(path)))
+                                .OrderBy(path => Path.GetFileName(path));
+
+                            if (listApworld.Any())
                             {
                                 var sb = new StringBuilder("Liste de apworld\n");
-                                foreach (var apworld in listAppworld)
+                                foreach (var apworld in listApworld)
                                 {
-                                    var apworldFileName = Path.GetFileName(apworld);
-                                    sb.AppendLine($"`{apworldFileName}`");
+                                    sb.AppendLine($"`{Path.GetFileName(apworld)}`");
                                 }
                                 message += sb.ToString();
                             }
@@ -1854,6 +1864,11 @@ public static class BotCommands
                                 message += "❌ Aucun fichier apworld trouvé !";
                             }
                         }
+                        else
+                        {
+                            message += "❌ Dossier custom_worlds introuvable.";
+                        }
+
                         break;
 
                     case "apworlds-info":
@@ -1952,7 +1967,7 @@ public static class BotCommands
                         var basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
                         playersFolderChannel = Path.Combine(basePath, "Players", channelId, "yaml");
                         var outputFolder = Path.Combine(basePath, "output", channelId, "yaml");
-                        
+
 
                         if (Directory.Exists(outputFolder))
                         {
@@ -2084,9 +2099,9 @@ public static class BotCommands
                         basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
                         playersFolderChannel = Path.Combine(basePath, "Players", channelId, "zip");
                         outputFolder = Path.Combine(basePath, "output", channelId, "zip");
-                        
+
                         filePath = Path.Combine(playersFolderChannel, attachment.Filename);
-                                                
+
                         if (Directory.Exists(playersFolderChannel))
                         {
                             Directory.Delete(playersFolderChannel, true);

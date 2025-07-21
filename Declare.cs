@@ -5,6 +5,7 @@ public static class Declare
 {
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool IsDev = (Environment.GetEnvironmentVariable("IS_DEV") ?? "false").ToLower() == "true";
+    public static readonly bool TelemetryEnabled = (Environment.GetEnvironmentVariable("TELEMETRY") ?? "true").ToLower() == "true";
 
     public static CancellationTokenSource Cts = new CancellationTokenSource();
     public static DiscordSocketClient Client = new DiscordSocketClient();

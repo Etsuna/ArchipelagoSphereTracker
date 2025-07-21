@@ -14,6 +14,11 @@ public static class Telemetry
 
     public static async Task SendDailyTelemetryAsync(string programId, bool check = true)
     {
+        if(!Declare.TelemetryEnabled)
+        {
+            return;
+        }
+
         try
         {
             if (await TelemetryCommands.HasTelemetryBeenSentTodayAsync() && check)
@@ -34,6 +39,9 @@ public static class Telemetry
             string json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
+            httpClient.DefaultRequestHeaders.UserAgent.Clear();
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd($"ArchipelagoSphereTracker/{Program.BotVersion}");
+
             var url = GetDecodedUrl();
             var response = await httpClient.PostAsync(url, content);
 
@@ -47,4 +55,5 @@ public static class Telemetry
             // silencieux pour ne pas déranger l'utilisateur
         }
     }
+
 }
