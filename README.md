@@ -71,6 +71,7 @@ Les permissions suivantes seront accordées à ArchipelagoSphereTracker :
 Téléchargez la version Windows "ast-win-x64-vX.X.X.zip" ou Linux "ast-linux-x64-vX.X.X.tar.gz" depuis la page des releases.
 Décompressez dans un dossier
 Ajoutez dans la même répertoire le fichier .env correctement configuré
+Ajoutez dans le dossier ./extern/Archipelago/ les roms necessaires si besoin
 Windows: Executez le programme ArchipelagoSphereTracker.exe
 Linux: Executez le programme ./ArchipelagoSphereTracker
 ```
@@ -203,6 +204,7 @@ The following permissions will be used by ArchipelagoSphereTracker:
 Download the Windows version "ast-win-x64-vX.X.X.zip" or Linux version "ast-linux-x64-vX.X.X.tar.gz" from the release page.
 Unzip into a folder
 Add a properly configured .env file to the same folder
+Add the necessary ROMs in the ./extern/Archipelago/ folder if needed.
 Windows: Run ArchipelagoSphereTracker.exe
 Linux: Run ./ArchipelagoSphereTracker
 ```
