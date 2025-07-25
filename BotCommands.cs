@@ -224,7 +224,7 @@ public static class BotCommands
 
         new SlashCommandBuilder()
             .WithName("list-apworld")
-            .WithDescription("Liste tous les yamls du channel"),
+            .WithDescription("Liste tous les apworlds du channel"),
 
         new SlashCommandBuilder()
             .WithName("apworlds-info")
@@ -297,7 +297,11 @@ public static class BotCommands
 
         new SlashCommandBuilder()
             .WithName("generate")
-            .WithDescription("Génère un multiworld à partir des yamls déjà présent sur le server")
+            .WithDescription("Génère un multiworld à partir des yamls déjà présent sur le server"),
+
+        new SlashCommandBuilder()
+        .WithName("test-generate")
+        .WithDescription("Test la Génèration un multiworld à partir des yamls déjà présent sur le server")
     };
 
         var builtCommands = commands.Select(cmd => cmd.Build()).ToArray();
@@ -2086,6 +2090,105 @@ public static class BotCommands
                             }
                         });
 
+                        break;
+
+                    case "test-generate":
+                        basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
+                        playersFolderChannel = Path.Combine(basePath, "Players", channelId, "yaml");
+
+                        Directory.CreateDirectory(playersFolderChannel);
+
+                        ymlFiles = Directory.GetFiles(playersFolderChannel, "*.yaml");
+
+                        if (ymlFiles.Length == 0)
+                        {
+                            message = "❌ Aucun fichier YAML trouvé !";
+                            break;
+                        }
+
+                        launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                        ? "ArchipelagoGenerate.exe"
+                        : "ArchipelagoGenerate";
+
+                        launcherPath = Path.Combine(Program.ExtractPath, launcher);
+
+                        arguments = $"--player_files_path \"{playersFolderChannel}\" --skip_output";
+
+                        Console.WriteLine($"🟢 **Log** : Lancement du processus avec les arguments : {launcherPath} {arguments}");
+
+                        ProcessStartInfo startInfoTestGeneration = new ProcessStartInfo
+                        {
+                            FileName = launcherPath,
+                            Arguments = arguments,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                bool errorDetected = false;
+                                StringBuilder errorMessage = new StringBuilder();
+
+                                using (Process process = new Process { StartInfo = startInfoTestGeneration })
+                                {
+                                    process.OutputDataReceived += (sender, e) =>
+                                    {
+                                        if (!string.IsNullOrEmpty(e.Data))
+                                        {
+                                            Console.WriteLine($"🟢 **Log** : {e.Data}\n");
+                                            if (e.Data.Contains("Opening file input dialog"))
+                                            {
+                                                errorMessage.AppendLine($"❌ **Erreur** : {e.Data}");
+                                                errorDetected = true;
+                                                if (!process.HasExited) process.Kill();
+                                            }
+                                        }
+                                    };
+
+                                    process.ErrorDataReceived += (sender, e) =>
+                                    {
+                                        if (!string.IsNullOrEmpty(e.Data))
+                                        {
+                                            errorMessage.AppendLine($"❌ **Erreur** : {e.Data}");
+                                            if (e.Data.Contains("ValueError") || e.Data.Contains("Exception") || e.Data.Contains("FileNotFoundError"))
+                                            {
+                                                errorDetected = true;
+                                                if (!process.HasExited) process.Kill();
+                                            }
+                                        }
+                                    };
+
+                                    process.Start();
+                                    process.BeginOutputReadLine();
+                                    process.BeginErrorReadLine();
+
+                                    if (!process.WaitForExit(600000) && !errorDetected)
+                                    {
+                                        if (!process.HasExited) process.Kill();
+                                        errorMessage.AppendLine("⏳ **Timeout** : Processus arrêté après 10min.");
+                                        errorDetected = true;
+                                    }
+                                }
+
+                                if (errorDetected)
+                                {
+                                    await command.FollowupAsync(errorMessage.ToString());
+                                    return;
+                                }
+                                else
+                                {
+                                    await command.FollowupAsync("✅ Génération de test réussie !");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                await command.FollowupAsync($"🚨 **Erreur Critique** : {ex.Message}");
+                            }
+                        });
                         break;
 
                     case "generate-with-zip":
