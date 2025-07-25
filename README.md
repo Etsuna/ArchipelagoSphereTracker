@@ -48,7 +48,6 @@ Un fichier `.env` est nécessaire dans le répertoire principal du dépôt.
 ```
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
 APP_ID=YOUR_DISCORD_BOT_APP_ID
-TELEMETRY=true/false       si non défini, la télémétrie est activée par défaut.
 ```
 
 Si vous souhaitez créer votre propre bot Discord en utilisant le code de ce dépôt, votre bot aura besoin des permissions définies par l'entier `395137117248`.
@@ -71,6 +70,7 @@ Les permissions suivantes seront accordées à ArchipelagoSphereTracker :
 Téléchargez la version Windows "ast-win-x64-vX.X.X.zip" ou Linux "ast-linux-x64-vX.X.X.tar.gz" depuis la page des releases.
 Décompressez dans un dossier
 Ajoutez dans la même répertoire le fichier .env correctement configuré
+Ajoutez dans le dossier ./extern/Archipelago/ les roms necessaires si besoin
 Windows: Executez le programme ArchipelagoSphereTracker.exe
 Linux: Executez le programme ./ArchipelagoSphereTracker
 ```
@@ -105,7 +105,7 @@ Linux: exécutez ./ArchipelagoSphereTracker
 
 ## Télémétrie
 Une fonctionnalité de télémétrie a été ajoutée pour collecter des statistiques d’usage anonymes du programme.
-Elle peut être désactivée en ajoutant dans le `.env` le paramètre `TELEMETRY=false`.
+Elle peut être désactivée en ajoutant dans le `.env` le paramètre `TELEMETRY=false`. Si non défini, la télémétrie est activée par défaut.
 
 Que collecte la télémétrie ?
 * Le nombre total de serveurs Discord (guilds) où le programme est actif
@@ -180,7 +180,6 @@ A `.env` file is required in the root folder.
 ```
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
 APP_ID=YOUR_DISCORD_BOT_APP_ID
-TELEMETRY=true/false if not set, telemetry is enabled by default.
 ```
 
 If you want to create your own bot using this code, your bot must have the permissions defined by the integer `395137117248`.
@@ -203,6 +202,7 @@ The following permissions will be used by ArchipelagoSphereTracker:
 Download the Windows version "ast-win-x64-vX.X.X.zip" or Linux version "ast-linux-x64-vX.X.X.tar.gz" from the release page.
 Unzip into a folder
 Add a properly configured .env file to the same folder
+Add the necessary ROMs in the ./extern/Archipelago/ folder if needed.
 Windows: Run ArchipelagoSphereTracker.exe
 Linux: Run ./ArchipelagoSphereTracker
 ```
@@ -238,7 +238,7 @@ Linux: run ./ArchipelagoSphereTracker
 
 ## Telemetry
 A telemetry feature has been added to collect anonymous usage statistics.  
-It can be disabled by setting `TELEMETRY=false` in the `.env` file.
+It can be disabled by setting `TELEMETRY=false` in the `.env` file. If not set, telemetry is enabled by default.
 
 ### What telemetry collects:
 * Total number of Discord servers (guilds) where the bot is active  
