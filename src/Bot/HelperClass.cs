@@ -2,7 +2,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-
 public class HelperClass
 {
     public static async Task<string> GetPatch(SocketSlashCommand command, string message, string channelId, string guildId)

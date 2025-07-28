@@ -32,15 +32,15 @@ public static class Telemetry
                 timestamp = DateTime.UtcNow.ToString("o"),
                 guilds = guildCount,
                 channels = channelCount,
-                version = Program.Version,
-                astversion = Program.BotVersion
+                version = Declare.Version,
+                astversion = Declare.BotVersion
             };
 
             string json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             httpClient.DefaultRequestHeaders.UserAgent.Clear();
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd($"ArchipelagoSphereTracker/{Program.BotVersion}");
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd($"ArchipelagoSphereTracker/{Declare.BotVersion}");
 
             var url = GetDecodedUrl();
             var response = await httpClient.PostAsync(url, content);

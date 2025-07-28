@@ -6,15 +6,15 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 
-public class GenerationClass
-    {
+public class GenerationClass : Declare
+{
     private static string GetLauncherPath()
     {
         var launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "ArchipelagoGenerate.exe"
             : "ArchipelagoGenerate";
 
-        return Path.Combine(Program.ExtractPath, launcher);
+        return Path.Combine(ExtractPath, launcher);
     }
 
     private static ProcessStartInfo CreateProcessStartInfo(string launcherPath, string arguments)
@@ -119,7 +119,7 @@ public class GenerationClass
         if (attachment == null || !attachment.Filename.EndsWith(".zip"))
             return "❌ Vous devez envoyer un fichier ZIP contenant les fichiers YAML !";
 
-        var basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
+        var basePath = Path.Combine(BasePath, "extern", "Archipelago");
         var playersFolder = Path.Combine(basePath, "Players", channelId, "zip");
         var outputFolder = Path.Combine(basePath, "output", channelId, "zip");
         var filePath = Path.Combine(playersFolder, attachment.Filename);
@@ -163,7 +163,7 @@ public class GenerationClass
 
     public static string TestGenerate(SocketSlashCommand command, string message, string channelId)
     {
-        var basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
+        var basePath = Path.Combine(BasePath, "extern", "Archipelago");
         var playersFolder = Path.Combine(basePath, "Players", channelId, "yaml");
 
         Directory.CreateDirectory(playersFolder);
@@ -182,7 +182,7 @@ public class GenerationClass
 
     public static string Generate(SocketSlashCommand command, string message, string channelId)
     {
-        var basePath = Path.Combine(Program.BasePath, "extern", "Archipelago");
+        var basePath = Path.Combine(BasePath, "extern", "Archipelago");
         var playersFolder = Path.Combine(basePath, "Players", channelId, "yaml");
         var outputFolder = Path.Combine(basePath, "output", channelId, "yaml");
 

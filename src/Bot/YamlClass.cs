@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using System.IO.Compression;
 using System.Text;
 
-public class YamlClass
+public class YamlClass : Declare
 {
     public static async Task<string> DownloadTemplate(SocketSlashCommand command, string message)
     {
@@ -14,7 +14,7 @@ public class YamlClass
             return "❌ Aucun fichier sélectionné.";
         }
 
-        string templatePath = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", "Templates", yamlFile);
+        string templatePath = Path.Combine(BasePath, "extern", "Archipelago", "Players", "Templates", yamlFile);
 
         if (File.Exists(templatePath))
         {
@@ -36,7 +36,7 @@ public class YamlClass
             return "❌ Vous devez envoyer un fichier YAML !";
         }
 
-        var playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
 
         if (!Directory.Exists(playersFolderChannel))
         {
@@ -70,7 +70,7 @@ public class YamlClass
     public static string CleanYamls(string channelId)
     {
         string message;
-        var playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId);
+        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId);
         if (Directory.Exists(playersFolderChannel))
         {
             try
@@ -94,7 +94,7 @@ public class YamlClass
     public static string DeleteYaml(SocketSlashCommand command, string message, string channelId)
     {
         var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
-        var playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
 
         if (!string.IsNullOrEmpty(fileSelected))
         {
@@ -127,10 +127,10 @@ public class YamlClass
 
     public static async Task<string> BackupYamls(SocketSlashCommand command, string message, string channelId)
     {
-        var playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
         if (Directory.Exists(playersFolderChannel))
         {
-            var backupFolder = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "backup");
+            var backupFolder = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "backup");
             if (!Directory.Exists(backupFolder))
             {
                 Directory.CreateDirectory(backupFolder);
@@ -167,7 +167,7 @@ public class YamlClass
 
     public static string ListYamls(string channelId)
     {
-        var playersFolderChannel = Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
 
         if (!Directory.Exists(playersFolderChannel))
             return "❌ Aucun fichier YAML trouvé !";

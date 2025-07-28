@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using System.IO.Compression;
 using System.Text;
 
-public class ApworldClass
+public class ApworldClass : Declare
 {
     public static async Task<string> SendApworld(SocketSlashCommand command, string message)
     {
@@ -13,7 +13,7 @@ public class ApworldClass
             return "❌ Vous devez envoyer un fichier APWORLD !";
         }
 
-        var customWorldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
+        var customWorldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
 
         Directory.CreateDirectory(customWorldPath);
 
@@ -24,23 +24,23 @@ public class ApworldClass
             File.Delete(filePath);
         }
 
-        using (var response = await Declare.HttpClient.GetAsync(attachment.Url))
+        using (var response = await HttpClient.GetAsync(attachment.Url))
         using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
         {
             await response.Content.CopyToAsync(fs);
         }
-        Program.GenerateYamls();
-        Program.GenerateItems();
+        CustomApworldClass.GenerateYamls();
+        CustomApworldClass.GenerateItems();
         message = $"Fichier `{attachment.Filename}` envoyé.";
         return message;
     }
 
     public static async Task<string> BackupApworld(SocketSlashCommand command, string message)
     {
-        var apworldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
+        var apworldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
         if (Directory.Exists(apworldPath))
         {
-            var backupFolder = Path.Combine(Program.BasePath, "extern", "Archipelago", "backup");
+            var backupFolder = Path.Combine(BasePath, "extern", "Archipelago", "backup");
             if (!Directory.Exists(backupFolder))
             {
                 Directory.CreateDirectory(backupFolder);
@@ -95,7 +95,7 @@ public class ApworldClass
 
     public static string ListApworld(string message)
     {
-        string apworldPath = Path.Combine(Program.BasePath, "extern", "Archipelago", "custom_worlds");
+        string apworldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
 
         if (Directory.Exists(apworldPath))
         {

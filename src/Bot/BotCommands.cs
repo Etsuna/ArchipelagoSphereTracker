@@ -3,8 +3,6 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System.Data;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
 
 public static class BotCommands
@@ -230,8 +228,8 @@ public static class BotCommands
         await interaction.RespondAsync(results);
     }
 
-    private static string YamlPath(string channelId) => Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
-    private static string TemplatePath() => Path.Combine(Program.BasePath, "extern", "Archipelago", "Players", "Templates");
+    private static string YamlPath(string channelId) => Path.Combine(Declare.BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+    private static string TemplatePath() => Path.Combine(Declare.BasePath, "extern", "Archipelago", "Players", "Templates");
 
     private static AutocompleteResult[] FilterWithPagination(List<string> all, string input)
     {
