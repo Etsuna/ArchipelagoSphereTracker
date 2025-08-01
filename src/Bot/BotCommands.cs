@@ -138,7 +138,7 @@ public static class BotCommands
             "status-games-list" => await HelperClass.StatusGameList(message, channelId, guildId),
             "info" => await HelperClass.Info(message, channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, message, channelId, guildId),
-            _ => "Commande inconnue."
+            _ => "Cette commande doit être exécutée dans un Thread."
         };
     }
 
