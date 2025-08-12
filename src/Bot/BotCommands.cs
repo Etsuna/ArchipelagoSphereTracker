@@ -138,7 +138,7 @@ public static class BotCommands
             "status-games-list" => await HelperClass.StatusGameList(message, channelId, guildId),
             "info" => await HelperClass.Info(message, channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, message, channelId, guildId),
-            _ => "Cette commande doit être exécutée dans un Thread."
+            _ => "Cette commande doit être exécutée dans un channel."
         };
     }
 
@@ -160,7 +160,7 @@ public static class BotCommands
             "generate" => GenerationClass.Generate(command, "", channelId),
             "test-generate" => GenerationClass.TestGenerate(command, "", channelId),
             "generate-with-zip" => await GenerationClass.GenerateWithZip(command, "", channelId),
-            _ => "Cette commande doit être exécutée dans un channel."
+            _ => "Cette commande doit être exécutée dans un thread."
         };
     }
 

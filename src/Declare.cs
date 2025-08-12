@@ -3,8 +3,8 @@ using Discord.Commands;
 
 public class Declare
 {
-    public static string Version = "0.6.2";
-    public static string BotVersion = "3.2.1";
+    public static string Version = "0.6.3";
+    public static string BotVersion = "3.3.0";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool IsDev = (Environment.GetEnvironmentVariable("IS_DEV") ?? "false").ToLower() == "true";
