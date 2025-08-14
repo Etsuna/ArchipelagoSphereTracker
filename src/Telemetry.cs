@@ -52,7 +52,6 @@ public static class Telemetry
         }
         catch
         {
-            // silencieux pour ne pas déranger l'utilisateur
         }
     }
 

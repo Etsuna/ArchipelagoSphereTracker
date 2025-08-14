@@ -44,7 +44,7 @@ public static class TrackingDataManager
 
                                 if (channelCheck != null)
                                 {
-                                    Console.WriteLine($"Le salon existe toujours : {channelCheck.Name}");
+                                    Console.WriteLine($"The channel still exists: {channelCheck.Name}");
 
                                     if (guildCheck.GetChannel(ulong.Parse(channel)) is SocketThreadChannel thread)
                                     {
@@ -54,7 +54,7 @@ public static class TrackingDataManager
                                         DateTimeOffset lastActivity = lastMessage?.Timestamp ?? SnowflakeUtils.FromSnowflake(thread.Id);
                                         if (lastMessage == null)
                                         {
-                                            Console.WriteLine($"Aucun message trouvé, on utilise la date de création du fil : {lastActivity}");
+                                            Console.WriteLine($"No message found, using the thread creation date: {lastActivity}");
                                         }
 
                                         double daysInactive = (DateTimeOffset.UtcNow - lastActivity).TotalDays;
@@ -63,7 +63,7 @@ public static class TrackingDataManager
                                         {
                                             if (Declare.WarnedThreads.Contains(thread.Id.ToString()))
                                             {
-                                                await BotCommands.SendMessageAsync($"Nouveau message sur le thread {thread.Name}, suppression automatique annulée.", thread.Id.ToString());
+                                                await BotCommands.SendMessageAsync($"New message on the thread {thread.Name}, automatic deletion canceled.", thread.Id.ToString());
                                                 Declare.WarnedThreads.Remove(thread.Id.ToString());
                                             }
                                         }
@@ -79,7 +79,7 @@ public static class TrackingDataManager
                                                 string formattedDeletionDate = localDeletionDate.ToString("dddd d MMMM yyyy à HH'h'mm", CultureInfo.GetCultureInfo("fr-FR"));
 
                                                 await BotCommands.SendMessageAsync(
-                                                    $"Aucun message depuis 6 jours. Si aucun message n'est posté avant le {formattedDeletionDate} sur le thread {thread.Name}, il sera supprimé.\nPensez à supprimer le thread quand vous n'en avez plus besoin !",
+                                                    $"No message for 6 days. If no message is posted before {formattedDeletionDate} on the thread {thread.Name}, it will be deleted.\nRemember to delete the thread or delete the URL when you no longer need it!",
                                                     thread.ParentChannel.Id.ToString());
 
                                                 Declare.WarnedThreads.Add(thread.Id.ToString());
@@ -87,46 +87,46 @@ public static class TrackingDataManager
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"Dernière activité : {lastActivity}");
-                                            Console.WriteLine("Aucune activité depuis 7 jours, suppression du thread...");
+                                            Console.WriteLine($"Last activity : {lastActivity}");
+                                            Console.WriteLine("No activity for 7 days, deleting the thread...");
                                             await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
                                             await thread.DeleteAsync();
-                                            Console.WriteLine("Thread supprimé.");
+                                            Console.WriteLine("Thread deleted.");
 
                                             Declare.WarnedThreads.Remove(thread.Id.ToString());
                                             continue;
                                         }
                                     }
 
-                                    Console.WriteLine($"Set des Alias et GameStatus pour le salon {channelCheck.Name}...");
+                                    Console.WriteLine($"Setting Aliases and GameStatus for the channel {channelCheck.Name}...");
                                     await SetAliasAndGameStatusAsync(guild, channel, urlTracker, silent);
-                                    Console.WriteLine($"Vérification du GameStatus pour le salon {channelCheck.Name}...");
+                                    Console.WriteLine($"Checking GameStatus for the channel {channelCheck.Name}...");
                                     await CheckGameStatusAsync(guild, channel, urlTracker, silent);
-                                    Console.WriteLine($"Vérification des Items pour le salon {channelCheck.Name}...");
+                                    Console.WriteLine($"Checking Items for the channel {channelCheck.Name}...");
                                     await GetTableDataAsync(guild, channel, urlSphereTracker, silent);
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"Le salon n'existe plus, Suppression des informations Channel:{channel}.");
+                                    Console.WriteLine($"The channel no longer exists, deleting Channel information: {channel}.");
                                     await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
-                                    Console.WriteLine($"Suppression effectuée");
+                                    Console.WriteLine($"Deletion completed.");
                                 }
                             }
                         }
                         else
                         {
-                            Console.WriteLine($"Serveur introuvable {guild}, Suppression des informations.");
+                            Console.WriteLine($"Server not found {guild}, deleting the information.");
                             await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guild);
-                            Console.WriteLine($"Suppression effectuée");
+                            Console.WriteLine($"Deletion completed.");
                         }
                     }
-                    Console.WriteLine("Attente de 5 minutes avant la prochaine vérification...");
+                    Console.WriteLine("Waiting 5 minutes before the next check...");
                     await Task.Delay(300000, token);
                 }
             }
             catch (TaskCanceledException)
             {
-                Console.WriteLine("Suivi annulé.");
+                Console.WriteLine("Tracking canceled.");
             }
         }, token);
 

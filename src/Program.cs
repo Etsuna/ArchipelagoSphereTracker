@@ -31,7 +31,7 @@ class Program
 
         if (currentVersion.Trim() == Declare.Version)
         {
-            Console.WriteLine($"Archipelago {Declare.Version} est déjà installé.");
+            Console.WriteLine($"Archipelago {Declare.Version} is already installed.");
         }
         else
         {

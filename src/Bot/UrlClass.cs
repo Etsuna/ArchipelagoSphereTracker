@@ -30,11 +30,11 @@ public class UrlClass
             if (portMatch.Success)
             {
                 port = portMatch.Groups[1].Value;
-                Console.WriteLine($"Port trouvé : {port}");
+                Console.WriteLine($"Port found : {port}");
             }
             else
             {
-                Console.WriteLine("Port non trouvé.");
+                Console.WriteLine("Port not found.");
                 return (false, pageContent);
             }
 
@@ -72,132 +72,126 @@ public class UrlClass
             return null;
         }
 
-        if (guildUser != null && !guildUser.GuildPermissions.Administrator)
+
+        if (await CanAddUrlAsync(guildId, channelId))
         {
-            message = "Seuls les administrateurs sont autorisés à ajouter une URL.";
-        }
-        else
-        {
-            if (await CanAddUrlAsync(guildId, channelId))
+            var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
+
+            if (string.IsNullOrEmpty(newUrl))
             {
-                var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
-
-                if (string.IsNullOrEmpty(newUrl))
-                {
-                    message = "URL vide non autorisée.";
-                }
-                else if (!IsValidUrl(newUrl))
-                {
-                    message = $"Le lien est incorrect, utilisez l'url de la room.";
-                }
-                else
-                {
-                    var (isValid, pageContent) = await IsAllUrlIsValidAsync(newUrl);
-
-                    if (!isValid)
-                    {
-                        message = $"Sphere_Tracker, Tracker ou le port ne sont pas trouvés. Ajout annulé.";
-                    }
-                    else
-                    {
-                        string? threadTitle = command.Data.Options.ElementAt(1).Value.ToString();
-                        string? threadType = command.Data.Options.ElementAt(2).Value.ToString();
-
-                        ThreadType type = threadType switch
-                        {
-                            "Private" => ThreadType.PrivateThread,
-                            "Public" => ThreadType.PublicThread,
-                            _ => ThreadType.PrivateThread
-                        };
-
-                        var thread = await channel.CreateThreadAsync(
-                            threadTitle,
-                            autoArchiveDuration: ThreadArchiveDuration.OneWeek,
-                            type: type
-                        );
-
-                        await thread.SendMessageAsync($"Le thread a été créé: {thread.Name}, Attendez que le bot soit Ready.");
-
-                        channelId = thread.Id.ToString();
-
-                        if (type == ThreadType.PrivateThread)
-                        {
-                            IGuildUser? user = command.User as IGuildUser;
-                            if (user == null)
-                            {
-                                message = "Utilisateur introuvable pour le thread privé.";
-                            }
-                            else
-                            {
-                                await thread.AddUserAsync(user);
-                            }
-                        }
-                        else
-                        {
-                            await foreach (var memberBatch in channel.GetUsersAsync())
-                            {
-                                foreach (var member in memberBatch)
-                                {
-                                    await thread.AddUserAsync(member);
-                                }
-                            }
-                        }
-
-                        var rowsMatch = Regex.Matches(pageContent, @"<tr[^>]*>.*?</tr>", RegexOptions.Singleline);
-                        var patchLinkList = new List<Patch>();
-
-                        foreach (Match rowMatch in rowsMatch)
-                        {
-                            var columnsMatch = Regex.Matches(rowMatch.Value, @"<td[^>]*>(.*?)</td>", RegexOptions.Singleline);
-                            if (columnsMatch.Count >= 4)
-                            {
-                                string gameAliasHtml = WebUtility.HtmlDecode(columnsMatch[1].Groups[1].Value.Trim());
-                                var gameAliasMatch = Regex.Match(gameAliasHtml, @">([^<]+)<");
-                                string gameAlias = gameAliasMatch.Success ? gameAliasMatch.Groups[1].Value : gameAliasHtml;
-
-                                string gameName = WebUtility.HtmlDecode(columnsMatch[2].Groups[1].Value.Trim());
-
-                                string downloadLinkHtml = WebUtility.HtmlDecode(columnsMatch[3].Groups[1].Value.Trim());
-                                var downloadLinkMatch = Regex.Match(downloadLinkHtml, @"href=\""(.*?)\""");
-                                string downloadLink = downloadLinkMatch.Success ? downloadLinkMatch.Groups[1].Value.Trim() : "Aucun fichier";
-
-                                if (string.IsNullOrEmpty(downloadLink) || downloadLink.Equals("Aucun fichier"))
-                                {
-                                    continue;
-                                }
-
-                                Console.WriteLine($"Nom: {gameAlias} | Téléchargement: {downloadLink}");
-
-                                var patchLink = new Patch
-                                {
-                                    GameAlias = gameAlias,
-                                    GameName = gameName,
-                                    PatchLink = baseUrl + downloadLink
-                                };
-
-                                patchLinkList.Add(patchLink);
-                            }
-                        }
-
-                        if (!string.IsNullOrEmpty(trackerUrl) && !string.IsNullOrEmpty(sphereTrackerUrl))
-                        {
-                            await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, newUrl, trackerUrl, sphereTrackerUrl, silent);
-                            await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
-                            await TrackingDataManager.SetAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
-                            await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
-                            await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
-                            await BotCommands.SendMessageAsync("BOT Ready!", channelId);
-                            await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
-                        }
-
-                        message = $"URL définie sur {newUrl}. Messages configurés pour ce canal. Attendez que le programme récupère tous les aliases.";
-                    }
-                }
+                message = "Empty URL not allowed.";
+            }
+            else if (!IsValidUrl(newUrl))
+            {
+                message = $"The link is incorrect; use the room URL.";
             }
             else
             {
-                message = "URL déjà définie sur ce channel. Supprimez l'url avant d'ajouter une nouvelle url.";
+                var (isValid, pageContent) = await IsAllUrlIsValidAsync(newUrl);
+
+                if (!isValid)
+                {
+                    message = $"Sphere_Tracker, Tracker, or the port not found. Addition canceled.";
+                }
+                else
+                {
+                    string? threadTitle = command.Data.Options.ElementAt(1).Value.ToString();
+                    string? threadType = command.Data.Options.ElementAt(2).Value.ToString();
+
+                    ThreadType type = threadType switch
+                    {
+                        "Private" => ThreadType.PrivateThread,
+                        "Public" => ThreadType.PublicThread,
+                        _ => ThreadType.PrivateThread
+                    };
+
+                    var thread = await channel.CreateThreadAsync(
+                        threadTitle,
+                        autoArchiveDuration: ThreadArchiveDuration.OneWeek,
+                        type: type
+                    );
+
+                    await thread.SendMessageAsync($"The thread has been created: {thread.Name}, wait for the bot to be ready.");
+
+                    channelId = thread.Id.ToString();
+
+                    if (type == ThreadType.PrivateThread)
+                    {
+                        IGuildUser? user = command.User as IGuildUser;
+                        if (user == null)
+                        {
+                            message = "User not found for the private thread.";
+                        }
+                        else
+                        {
+                            await thread.AddUserAsync(user);
+                        }
+                    }
+                    else
+                    {
+                        await foreach (var memberBatch in channel.GetUsersAsync())
+                        {
+                            foreach (var member in memberBatch)
+                            {
+                                await thread.AddUserAsync(member);
+                            }
+                        }
+                    }
+
+                    var rowsMatch = Regex.Matches(pageContent, @"<tr[^>]*>.*?</tr>", RegexOptions.Singleline);
+                    var patchLinkList = new List<Patch>();
+
+                    foreach (Match rowMatch in rowsMatch)
+                    {
+                        var columnsMatch = Regex.Matches(rowMatch.Value, @"<td[^>]*>(.*?)</td>", RegexOptions.Singleline);
+                        if (columnsMatch.Count >= 4)
+                        {
+                            string gameAliasHtml = WebUtility.HtmlDecode(columnsMatch[1].Groups[1].Value.Trim());
+                            var gameAliasMatch = Regex.Match(gameAliasHtml, @">([^<]+)<");
+                            string gameAlias = gameAliasMatch.Success ? gameAliasMatch.Groups[1].Value : gameAliasHtml;
+
+                            string gameName = WebUtility.HtmlDecode(columnsMatch[2].Groups[1].Value.Trim());
+
+                            string downloadLinkHtml = WebUtility.HtmlDecode(columnsMatch[3].Groups[1].Value.Trim());
+                            var downloadLinkMatch = Regex.Match(downloadLinkHtml, @"href=\""(.*?)\""");
+                            string downloadLink = downloadLinkMatch.Success ? downloadLinkMatch.Groups[1].Value.Trim() : "No File";
+
+                            if (string.IsNullOrEmpty(downloadLink) || downloadLink.Equals("No File"))
+                            {
+                                continue;
+                            }
+
+                            Console.WriteLine($"Name: {gameAlias} | Download: {downloadLink}");
+
+                            var patchLink = new Patch
+                            {
+                                GameAlias = gameAlias,
+                                GameName = gameName,
+                                PatchLink = baseUrl + downloadLink
+                            };
+
+                            patchLinkList.Add(patchLink);
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(trackerUrl) && !string.IsNullOrEmpty(sphereTrackerUrl))
+                    {
+                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, newUrl, trackerUrl, sphereTrackerUrl, silent);
+                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
+                        await TrackingDataManager.SetAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
+                        await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
+                        await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
+                        await BotCommands.SendMessageAsync("BOT Ready!", channelId);
+                        await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
+                    }
+
+                    message = $"URL set to {newUrl}. Messages configured for this channel. Please wait while the program retrieves all aliases.";
+                }
             }
+        }
+        else
+        {
+            message = "URL already set for this channel. Remove the URL before adding a new one.";
         }
 
         return message;
@@ -205,19 +199,9 @@ public class UrlClass
 
     public static async Task<string> DeleteUrl(IGuildUser? guildUser, string message, string channelId, string guildId)
     {
-        if (guildUser != null && !guildUser.GuildPermissions.Administrator)
-        {
-            message = "Seuls les administrateurs sont autorisés à supprimer une URL.";
-        }
-        else
-        {
-            message = await DeleteChannelAndUrl(channelId, guildId);
-        }
-
+        message = await DeleteChannelAndUrl(channelId, guildId);
         return message;
     }
-
-
 
     public static async Task<string> DeleteChannelAndUrl(string? channelId, string guildId)
     {
@@ -232,7 +216,7 @@ public class UrlClass
             await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId);
         }
 
-        message = "URL Supprimée.";
+        message = "URL deleted.";
         await BotCommands.RegisterCommandsAsync();
         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
         return message;

@@ -26,7 +26,7 @@ public static class TelemetryCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la vérification télémétrie : {ex.Message}");
+            Console.WriteLine($"Error while checking telemetry: {ex.Message}");
             return false;
         }
     }
@@ -58,7 +58,7 @@ public static class TelemetryCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la sauvegarde télémétrie : {ex.Message}");
+            Console.WriteLine($"Error while saving telemetry: {ex.Message}");
         }
     }
 }

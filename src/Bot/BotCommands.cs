@@ -49,7 +49,7 @@ public static class BotCommands
             var result = await Declare.CommandService.ExecuteAsync(context, message.Content[argPos..], Declare.Services);
 
             if (!result.IsSuccess)
-                Console.WriteLine($"Commande échouée: {result.ErrorReason}");
+                Console.WriteLine($"Command failed: {result.ErrorReason}");
         }
     }
 
@@ -61,11 +61,11 @@ public static class BotCommands
 
             if (Declare.Client.GetChannel(channelId) is not IMessageChannel channel)
             {
-                Console.WriteLine($"Canal introuvable ({channelIdStr})");
+                Console.WriteLine($"Channel not found ({channelIdStr})");
                 foreach (var guild in Declare.Client.Guilds)
                 {
                     foreach (var textChannel in guild.TextChannels)
-                        Console.WriteLine($"Canal : {textChannel.Name} (ID: {textChannel.Id})");
+                        Console.WriteLine($"Channel : {textChannel.Name} (ID: {textChannel.Id})");
                 }
                 return;
             }
@@ -74,7 +74,7 @@ public static class BotCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur d'envoi : {ex.Message}");
+            Console.WriteLine($"Sending error: {ex.Message}");
         }
     }
 
@@ -96,7 +96,7 @@ public static class BotCommands
 
         if (string.IsNullOrWhiteSpace(guildId) || string.IsNullOrWhiteSpace(channelId))
         {
-            await command.RespondAsync("Cette commande ne peut être exécutée en dehors d'un serveur.");
+            await command.RespondAsync("This command can’t be executed outside of a server.");
             return;
         }
 
@@ -138,7 +138,7 @@ public static class BotCommands
             "status-games-list" => await HelperClass.StatusGameList(message, channelId, guildId),
             "info" => await HelperClass.Info(message, channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, message, channelId, guildId),
-            _ => "Cette commande doit être exécutée dans un channel."
+            _ => "This command must be executed in a channel."
         };
     }
 
@@ -160,7 +160,7 @@ public static class BotCommands
             "generate" => GenerationClass.Generate(command, "", channelId),
             "test-generate" => GenerationClass.TestGenerate(command, "", channelId),
             "generate-with-zip" => await GenerationClass.GenerateWithZip(command, "", channelId),
-            _ => "Cette commande doit être exécutée dans un thread."
+            _ => "This command must be executed in a thread."
         };
     }
 

@@ -47,7 +47,7 @@ public static class GameStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des informations de statut du jeu : {ex.Message}");
+            Console.WriteLine($"Error while retrieving game status information: {ex.Message}");
         }
 
         return gameStatuses;
@@ -108,7 +108,7 @@ public static class GameStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des GameStatus multiples : {ex.Message}");
+            Console.WriteLine($"Error while retrieving multiple GameStatus entries: {ex.Message}");
         }
 
         return statuses;
@@ -155,7 +155,7 @@ public static class GameStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des jeux existants : {ex.Message}");
+            Console.WriteLine($"Error while retrieving existing games: {ex.Message}");
         }
 
         return existingGames;
@@ -208,7 +208,7 @@ public static class GameStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'ajout ou remplacement des GameStatus : {ex.Message}");
+            Console.WriteLine($"Error while adding or replacing GameStatus: {ex.Message}");
         }
     }
 
@@ -260,7 +260,7 @@ public static class GameStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la mise à jour des GameStatus : {ex.Message}");
+            Console.WriteLine($"Error while updating GameStatus: {ex.Message}");
         }
     }
 
@@ -325,7 +325,7 @@ public static class GameStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la suppression des GameStatus : {ex.Message}");
+            Console.WriteLine($"Error while deleting GameStatus: {ex.Message}");
         }
     }
 }

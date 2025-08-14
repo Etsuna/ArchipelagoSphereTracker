@@ -10,7 +10,7 @@ public class ApworldClass : Declare
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         if (attachment == null || !attachment.Filename.EndsWith(".apworld"))
         {
-            return "❌ Vous devez envoyer un fichier APWORLD !";
+            return "❌ You must send an APWORLD file!";
         }
 
         var customWorldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
@@ -31,7 +31,7 @@ public class ApworldClass : Declare
         }
         CustomApworldClass.GenerateYamls();
         CustomApworldClass.GenerateItems();
-        message = $"Fichier `{attachment.Filename}` envoyé.";
+        message = $"File {attachment.Filename} sent.";
         return message;
     }
 
@@ -69,7 +69,7 @@ public class ApworldClass : Declare
         }
         else
         {
-            message += "❌ Aucun fichier APWORLD trouvé !";
+            message += "❌ No APWORLD file found!";
         }
 
         return message;
@@ -81,14 +81,14 @@ public class ApworldClass : Declare
 
         if (infoSelected == null)
         {
-            return "❌ Aucun fichier sélectionné.";
+            return "❌ No file selected.";
         }
 
         message = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected);
 
         if (string.IsNullOrWhiteSpace(message))
         {
-            return "❌ Aucun fichier sélectionné.";
+            return "❌ No file selected.";
         }
         return message;
     }
@@ -112,7 +112,7 @@ public class ApworldClass : Declare
 
             if (listApworld.Any())
             {
-                var sb = new StringBuilder("Liste de apworld\n");
+                var sb = new StringBuilder("List of apworld\n");
                 foreach (var apworld in listApworld)
                 {
                     sb.AppendLine($"`{Path.GetFileName(apworld)}`");
@@ -121,12 +121,12 @@ public class ApworldClass : Declare
             }
             else
             {
-                message += "❌ Aucun fichier apworld trouvé !";
+                message += "❌ No APWORLD file found. !";
             }
         }
         else
         {
-            message += "❌ Dossier custom_worlds introuvable.";
+            message += "❌ custom_worlds folder not found.";
         }
 
         return message;

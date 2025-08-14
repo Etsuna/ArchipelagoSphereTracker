@@ -7,12 +7,12 @@ public class InstallClass : Declare
 {
     public static async Task Install(string currentVersion, bool isWindows, bool isLinux)
     {
-        Console.WriteLine($"Nouvelle version détectée : {Version} (ancienne : {currentVersion})");
+        Console.WriteLine($"New version detected: {Version} (previous: {currentVersion})");
         Console.WriteLine($"{BasePath.ToString()}");
 
         if (Directory.Exists(ExtractPath))
         {
-            Console.WriteLine($"Le dossier {ExtractPath} existe déjà, on va le supprimer.");
+            Console.WriteLine($"The folder {ExtractPath} already exists, it will be deleted.");
             Directory.Delete(ExtractPath, true);
         }
 
@@ -52,46 +52,46 @@ public class InstallClass : Declare
             Directory.Delete(TempExtractPath, true);
         }
 
-        Console.WriteLine("Importation des ApWorlds dans la BDD...");
+        Console.WriteLine("Importing ApWorlds into the database...");
         await ApworldListDatabase.Import();
 
         await File.WriteAllTextAsync(VersionFile, Version);
 
-        Console.WriteLine("Mise à jour terminée !");
+        Console.WriteLine("Update completed!");
 
         static async Task InstallInnoExtractor()
         {
-            Console.WriteLine($"Téléchargement de {DownloadInnoExtractor}...");
+            Console.WriteLine($"Downloading {DownloadInnoExtractor}...");
             HttpResponseMessage responseDownloadInnoExtractor = await Declare.HttpClient.GetAsync(DownloadInnoExtractor);
 
             if (!responseDownloadInnoExtractor.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Erreur : Impossible de télécharger Archipelago (code {responseDownloadInnoExtractor.StatusCode}).");
+                Console.WriteLine($"Error: Unable to download Archipelago (code {responseDownloadInnoExtractor.StatusCode}).");
                 return;
             }
 
             byte[] dataDownloadInnoExtractor = await responseDownloadInnoExtractor.Content.ReadAsByteArrayAsync();
             await File.WriteAllBytesAsync("innoextract-1.9-windows.zip", dataDownloadInnoExtractor);
 
-            Console.WriteLine("Extraction temporaire...");
+            Console.WriteLine("Temporary extraction...");
             ZipFile.ExtractToDirectory($"innoextract-1.9-windows.zip", TempExtractPath);
 
             string? extractedMainFolder = Directory.GetDirectories(TempExtractPath).FirstOrDefault();
             if (string.IsNullOrEmpty(extractedMainFolder))
             {
-                Console.WriteLine("Erreur : Impossible de trouver le dossier extrait !");
+                Console.WriteLine("Error: Unable to find the extracted folder!");
                 return;
             }
         }
 
         static async Task DownloadArchipelagoForWindows()
         {
-            Console.WriteLine($"Téléchargement de {DownloadWinUrl}...");
+            Console.WriteLine($"Downloading {DownloadWinUrl}...");
             HttpResponseMessage responseDownloadWinUrl = await Declare.HttpClient.GetAsync(DownloadWinUrl);
 
             if (!responseDownloadWinUrl.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Erreur : Impossible de télécharger Archipelago (code {responseDownloadWinUrl.StatusCode}).");
+                Console.WriteLine($"Error: Unable to download Archipelago (code {responseDownloadWinUrl.StatusCode}).");
                 return;
             }
 
@@ -101,7 +101,7 @@ public class InstallClass : Declare
 
         static async Task ExtractArchipelagoForWindows()
         {
-            Console.WriteLine("Extraction de l'installeur Archipelago...");
+            Console.WriteLine("Extracting Archipelago installer...");
             var innoExtractPath = Path.Combine(TempExtractPath, "innoextract.exe");
             var archipelagoInstallerPath = Path.Combine(TempExtractPath, $"Setup.Archipelago.{Version}.exe");
 
@@ -120,7 +120,7 @@ public class InstallClass : Declare
                 using Process? proc = Process.Start(psi);
                 if (proc == null)
                 {
-                    Console.WriteLine("❌ Impossible de démarrer le processus innoextract.");
+                    Console.WriteLine("❌ Unable to start the innoextract process.");
                     return;
                 }
                 string output = await proc.StandardOutput.ReadToEndAsync();
@@ -131,23 +131,23 @@ public class InstallClass : Declare
 
                 if (proc.ExitCode != 0)
                 {
-                    Console.WriteLine($"❌ Erreur lors de l'extraction (code {proc.ExitCode}) :");
+                    Console.WriteLine($"❌ Error during extraction (code {proc.ExitCode}):");
                     Console.WriteLine(error);
                 }
                 else
                 {
-                    Console.WriteLine("✅ Extraction réussie.");
+                    Console.WriteLine("✅ Extraction successful.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Exception lors de l'exécution de innoextract : {ex.Message}");
+                Console.WriteLine($"❌ Exception while running innoextract: {ex.Message}");
             }
         }
 
         static void MoveAppFileToArchipelagoFolder()
         {
-            Console.WriteLine("Déplacement des fichiers de l'installeur Archipelago...");
+            Console.WriteLine("Moving Archipelago installer files...");
             string appFolder = Path.Combine(ExtractPath, "app");
 
             if (Directory.Exists(appFolder))
@@ -163,11 +163,11 @@ public class InstallClass : Declare
 
                 Directory.Delete(appFolder, recursive: true);
 
-                Console.WriteLine("✅ Fichiers déplacés avec succès depuis 'app\\' vers le dossier racine.");
+                Console.WriteLine("✅ Files successfully moved from 'app\\' to the root folder.");
             }
             else
             {
-                Console.WriteLine("⚠️ Dossier 'app\\' non trouvé après extraction.");
+                Console.WriteLine("⚠️ Folder 'app\\' not found after extraction.");
             }
         }
 
@@ -175,7 +175,7 @@ public class InstallClass : Declare
         {
             if (!IsVcRedistInstalled())
             {
-                Console.WriteLine("Installation de vc_redist.x64.exe...");
+                Console.WriteLine("Installing vc_redist.x64.exe...");
 
                 string vcRedistPath = Path.Combine(ExtractPath, "tmp", "vc_redist.x64.exe");
 
@@ -196,26 +196,26 @@ public class InstallClass : Declare
 
                         if (process.ExitCode == 0)
                         {
-                            Console.WriteLine("✅ VC++ Redistributable installé avec succès (mode silencieux).");
+                            Console.WriteLine("✅ VC++ Redistributable installed successfully (silent mode).");
                         }
                         else
                         {
-                            Console.WriteLine($"❌ Erreur d'installation VC++ (code {process.ExitCode}).");
+                            Console.WriteLine($"❌ VC++ installation error (code {process.ExitCode}).");
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"❌ Exception lors de l'installation VC++ : {ex.Message}");
+                        Console.WriteLine($"❌ Exception during VC++ installation: {ex.Message}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine("⚠️ Le fichier vc_redist.x64.exe est introuvable.");
+                    Console.WriteLine("⚠️ The file vc_redist.x64.exe was not found.");
                 }
             }
             else
             {
-                Console.WriteLine("✅ VC++ Redistributable déjà installé, aucune action nécessaire.");
+                Console.WriteLine("✅ VC++ Redistributable already installed, no action needed.");
             }
         }
 
@@ -232,12 +232,12 @@ public class InstallClass : Declare
 
         static async Task DownloadAndExtractArchipelagoForLinux()
         {
-            Console.WriteLine($"Téléchargement de {DownloadLinuxUrl}...");
+            Console.WriteLine($"Downloading {DownloadLinuxUrl}...");
             HttpResponseMessage responseDownloadWinUrl = await Declare.HttpClient.GetAsync(DownloadLinuxUrl);
 
             if (!responseDownloadWinUrl.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Erreur : Impossible de télécharger Archipelago (code {responseDownloadWinUrl.StatusCode}).");
+                Console.WriteLine($"Error: Unable to download Archipelago (code {responseDownloadWinUrl.StatusCode}).");
                 return;
             }
 
@@ -257,6 +257,6 @@ public class InstallClass : Declare
         GC.Collect();
 
         var proc = Process.GetCurrentProcess();
-        Console.WriteLine($"💾 RAM après nettoyage : {proc.WorkingSet64 / 1024 / 1024} Mo");
+        Console.WriteLine($"💾 RAM after cleanup: {proc.WorkingSet64 / 1024 / 1024} MB");
     }
 }

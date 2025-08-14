@@ -31,7 +31,7 @@ public static class AliasChoicesCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération du Game pour l'alias : {ex.Message}");
+            Console.WriteLine($"Error while retrieving the Game for the alias: {ex.Message}");
             return null;
         }
     }
@@ -72,7 +72,7 @@ public static class AliasChoicesCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'ajout ou remplacement du choix d'alias : {ex.Message}");
+            Console.WriteLine($"Error while adding or replacing the alias choice: {ex.Message}");
         }
     }
 
@@ -113,7 +113,7 @@ public static class AliasChoicesCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des alias : {ex.Message}");
+            Console.WriteLine($"Error while retrieving aliases: {ex.Message}");
         }
 
         return aliases;

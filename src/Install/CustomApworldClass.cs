@@ -6,7 +6,7 @@ public class CustomApworldClass : Declare
 {
     public static void GenerateYamls()
     {
-        Console.WriteLine("📦 Génération des templates YAML...");
+        Console.WriteLine("📦 Generating YAML templates...");
 
         try
         {
@@ -20,7 +20,7 @@ public class CustomApworldClass : Declare
             using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GenerateTemplatesPath);
             if (stream == null)
             {
-                Console.WriteLine("❌ Impossible de trouver la ressource embarquée : " + GenerateTemplatesPath);
+                Console.WriteLine("❌ Unable to find the embedded resource:" + GenerateTemplatesPath);
                 return;
             }
 
@@ -32,11 +32,11 @@ public class CustomApworldClass : Declare
 
             if (!File.Exists(destinationPath))
             {
-                Console.WriteLine("❌ Le fichier 'generate_templates.apworld' n’a pas été écrit correctement.");
+                Console.WriteLine("❌ The file 'generate_templates.apworld' was not written correctly.");
                 return;
             }
 
-            Console.WriteLine($"✅ Fichier copié vers : {destinationPath}");
+            Console.WriteLine($"✅ File copied to: {destinationPath}");
 
             string launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? "ArchipelagoLauncher.exe"
@@ -46,7 +46,7 @@ public class CustomApworldClass : Declare
 
             if (!File.Exists(launcherPath))
             {
-                Console.WriteLine($"❌ Launcher introuvable : {launcherPath}");
+                Console.WriteLine($"❌ Launcher not found: {launcherPath}");
                 return;
             }
 
@@ -64,7 +64,7 @@ public class CustomApworldClass : Declare
             using var process = Process.Start(psi);
             if (process == null)
             {
-                Console.WriteLine("❌ ERREUR : Impossible de démarrer le processus de génération.");
+                Console.WriteLine("❌ ERROR: Failed to start the build process.");
                 return;
             }
 
@@ -84,11 +84,11 @@ public class CustomApworldClass : Declare
 
             if (process.ExitCode == 0)
             {
-                Console.WriteLine("✅ YAML générés avec succès !");
+                Console.WriteLine("✅ YAML generated successfully!");
             }
             else
             {
-                Console.WriteLine($"❌ ERREUR : Échec de la génération des YAML (code {process.ExitCode})");
+                Console.WriteLine($"❌ ERROR: YAML generation failed (code {process.ExitCode})");
             }
         }
         catch (Exception ex)
@@ -100,7 +100,7 @@ public class CustomApworldClass : Declare
 
     public static void GenerateItems()
     {
-        Console.WriteLine("📦 Génération des templates Items Category Json...");
+        Console.WriteLine("📦 Generating Items Category JSON templates...");
 
         try
         {
@@ -114,7 +114,7 @@ public class CustomApworldClass : Declare
             using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(ScanItemsPath);
             if (stream == null)
             {
-                Console.WriteLine("❌ Impossible de trouver la ressource embarquée : " + ScanItemsPath);
+                Console.WriteLine("❌ Unable to find the embedded resource:" + ScanItemsPath);
                 return;
             }
 
@@ -126,11 +126,11 @@ public class CustomApworldClass : Declare
 
             if (!File.Exists(destinationPath))
             {
-                Console.WriteLine("❌ Le fichier n’a pas été écrit correctement sur le disque.");
+                Console.WriteLine("❌ The file was not written correctly to disk.");
                 return;
             }
 
-            Console.WriteLine($"✅ Fichier copié vers : {destinationPath}");
+            Console.WriteLine($"✅ File copied to: {destinationPath}");
 
             string launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? "ArchipelagoLauncher.exe"
@@ -140,7 +140,7 @@ public class CustomApworldClass : Declare
 
             if (!File.Exists(launcherPath))
             {
-                Console.WriteLine($"❌ Launcher introuvable : {launcherPath}");
+                Console.WriteLine($"❌ Launcher not found: {launcherPath}");
                 return;
             }
 
@@ -158,7 +158,7 @@ public class CustomApworldClass : Declare
             using var process = Process.Start(psi);
             if (process == null)
             {
-                Console.WriteLine("❌ ERREUR : Impossible de démarrer le processus.");
+                Console.WriteLine("❌ ERROR: Unable to start the process.");
                 return;
             }
 
@@ -172,11 +172,11 @@ public class CustomApworldClass : Declare
 
             if (process.ExitCode == 0)
             {
-                Console.WriteLine("✅ YAML générés avec succès !");
+                Console.WriteLine("✅ YAML generated successfully!");
             }
             else
             {
-                Console.WriteLine($"❌ ERREUR : Échec de la génération des YAML (code {process.ExitCode})");
+                Console.WriteLine($"❌ ERROR: YAML generation failed (code {process.ExitCode})");
             }
 
             var jsonFile = Directory.GetFiles(ItemCategoryPath, "*.json", SearchOption.TopDirectoryOnly)
@@ -188,7 +188,7 @@ public class CustomApworldClass : Declare
             }
             else
             {
-                Console.WriteLine("⚠️ Aucun fichier JSON trouvé pour la synchronisation.");
+                Console.WriteLine("⚠️ No JSON file found for synchronization.");
             }
         }
         catch (Exception ex)

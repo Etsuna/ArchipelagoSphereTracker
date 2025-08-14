@@ -11,14 +11,14 @@ public class AliasClass
 
         if (string.IsNullOrWhiteSpace(alias))
         {
-            return "L'alias ne peut pas être vide.";
+            return "The alias cannot be empty.";
         }
 
         var getReceiverAlias = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
 
         if (getReceiverAlias.Contains(userId))
         {
-            return $"L'alias '{alias}' est déjà enregistré pour <@{userId}>.";
+            return $"The alias '{alias}' is already registered for <@{userId}>.";
         }
 
         await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, skipUselessMention);
@@ -35,7 +35,7 @@ public class AliasClass
             await RecapListCommands.AddOrEditRecapListItemsAsync(guildId, channelId, alias, getAliasItems);
         }
 
-        message = $"Alias ajouté : {alias} est maintenant associé à <@{userId}> et son récap généré.";
+        message = $"Alias added: {alias} is now associated with <@{userId}> and its recap has been generated.";
         return message;
     }
 
@@ -50,7 +50,7 @@ public class AliasClass
 
         if (!await HasValidChannelDataAsync(guildId, channelId))
         {
-            message = "Pas d'URL Enregistrée pour ce channel ou aucun Alias enregistré.";
+            message = "No URL registered for this channel or no alias recorded.";
         }
         else
         {
@@ -58,7 +58,7 @@ public class AliasClass
 
             if (getReceiverAliases.Count == 0)
             {
-                message = "Aucun Alias est enregistré.";
+                message = "No alias is registered.";
             }
             else if (alias != null)
             {
@@ -66,7 +66,7 @@ public class AliasClass
 
                 if (getUserId != null)
                 {
-                    message = $"Aucun alias trouvé pour '{alias}'.";
+                    message = $"No alias found for '{alias}'.";
                     foreach (var value in getUserId.Select(x => x.UserId))
                     {
                         if (value == command.User.Id.ToString() || (guildUser != null && guildUser.GuildPermissions.Administrator))
@@ -74,20 +74,20 @@ public class AliasClass
                             await ReceiverAliasesCommands.DeleteReceiverAlias(guildId, channelId, alias);
 
                             message = value == command.User.Id.ToString()
-                                ? $"Alias '{alias}' supprimé."
-                                : $"ADMIN : Alias '{alias}' supprimé.";
+                                ? $"Alias '{alias}' deleted."
+                                : $"ADMIN : Alias '{alias}' deleted.";
 
                             await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, value, alias);
                         }
                         else
                         {
-                            message = $"Vous n'êtes pas le détenteur de cet alias : '{alias}'. Suppression non effectuée.";
+                            message = $"You are not the owner of this alias: '{alias}'. Deletion not performed.";
                         }
                     }
                 }
                 else
                 {
-                    message = $"Aucun alias trouvé pour '{alias}'.";
+                    message = $"No alias found for '{alias}'.";
                 }
             }
         }
@@ -102,15 +102,15 @@ public class AliasClass
 
         if (!checkChannel)
         {
-            message = "Pas d'URL Enregistrée pour ce channel.";
+            message = "No URL registered for this channel.";
         }
         else if (getReceiverAliases.Count == 0)
         {
-            message = "Aucun Alias est enregistré.";
+            message = "No alias is registered.";
         }
         else
         {
-            var sb = new StringBuilder("Voici le tableau des utilisateurs :\n");
+            var sb = new StringBuilder("Here is the users table:");
             foreach (var getReceiverAliase in getReceiverAliases)
             {
                 var getUserIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guildId, channelId, getReceiverAliase);

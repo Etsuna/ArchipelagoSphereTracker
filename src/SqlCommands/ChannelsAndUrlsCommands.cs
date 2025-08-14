@@ -36,11 +36,11 @@ public static class ChannelsAndUrlsCommands
             command.Parameters.AddWithValue("@Silent", silent);
 
             await command.ExecuteNonQueryAsync();
-            Console.WriteLine("URL et autres informations ajoutées ou mises à jour avec succès.");
+            Console.WriteLine("URL and other information successfully added or updated.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'ajout ou mise à jour de l'URL: {ex.Message}");
+            Console.WriteLine($"Error while adding or updating the URL: {ex.Message}");
         }
     }
 
@@ -55,7 +55,7 @@ public static class ChannelsAndUrlsCommands
 
             if (guildChannelId == -1)
             {
-                Console.WriteLine("Erreur : Aucun enregistrement Guild/Channel trouvé. Impossible d'ajouter le patch.");
+                Console.WriteLine("Error: No Guild/Channel record found. Unable to add the patch.");
                 return;
             }
 
@@ -88,7 +88,7 @@ public static class ChannelsAndUrlsCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'ajout ou mise à jour de l'alias : {ex.Message}");
+            Console.WriteLine($"Error while adding or updating the alias: {ex.Message}");
         }
     }
 
@@ -127,7 +127,7 @@ public static class ChannelsAndUrlsCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des URLs du tracker : {ex.Message}");
+            Console.WriteLine($"Error while retrieving tracker URLs: {ex.Message}");
             return (string.Empty, string.Empty, string.Empty, false);
         }
     }
@@ -164,7 +164,7 @@ public static class ChannelsAndUrlsCommands
             return $"{reader["GameName"]?.ToString() ?? string.Empty} : {reader["Patch"]?.ToString() ?? string.Empty}";
         }
 
-        return "Aucun enregistrement trouvé.";
+        return "No record found.";
     }
 
 
@@ -181,7 +181,7 @@ public static class ChannelsAndUrlsCommands
             long guildChannelId = await DatabaseCommands.GetGuildChannelIdAsync(guildId, channelId, "ChannelsAndUrlsTable");
             if (guildChannelId == -1)
             {
-                Console.WriteLine("Aucun ID de canal trouvé pour ce GuildId et ChannelId.");
+                Console.WriteLine("No channel ID found for this GuildId and ChannelId.");
                 return;
             }
 
@@ -199,12 +199,12 @@ public static class ChannelsAndUrlsCommands
                 string gameName = reader["GameName"]?.ToString() ?? "Non spécifié";
                 string patch = reader["Patch"]?.ToString() ?? "Non spécifié";
 
-                await BotCommands.SendMessageAsync($"Patch pour {alias}, {gameName} : {patch}", channelId);
+                await BotCommands.SendMessageAsync($"Patch for {alias}, {gameName} : {patch}", channelId);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'envoi des patchs : {ex.Message}");
+            Console.WriteLine($"Error while sending patches: {ex.Message}");
         }
     }
 }

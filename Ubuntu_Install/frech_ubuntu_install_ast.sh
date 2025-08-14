@@ -5,13 +5,13 @@ set -e  # Quitte en cas d'erreur
 IS_WSL=false
 if grep -qi microsoft /proc/sys/kernel/osrelease; then
   IS_WSL=true
-  echo "⚠️ Environnement WSL détecté : certaines opérations seront ignorées (swap, systemd, cron…)."
+  echo "⚠️ WSL environment detected: some operations will be skipped (swap, systemd, cron…)."
 fi
 
 ### 2) Swap 2Go (sauf si WSL)
 if [ "$IS_WSL" = false ]; then
   if ! grep -q "/swapfile" /etc/fstab; then
-    echo "💾 Ajout d’un swap 2Go"
+    echo "💾 Added a 2GB swap"
     if [ ! -f /swapfile ]; then
       sudo fallocate -l 2G /swapfile
       sudo chmod 600 /swapfile
@@ -24,10 +24,10 @@ if [ "$IS_WSL" = false ]; then
 
     echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
   else
-    echo "ℹ️ Swap déjà configuré, rien à faire."
+    echo "ℹ️ Swap already configured, nothing to do."
   fi
 else
-  echo "⏭️ Swap ignoré sous WSL"
+  echo "⏭️ Swap ignored under WSL"
 fi
 
 ### 3) Dossier de travail
@@ -36,11 +36,11 @@ mkdir -p "$APPDIR"
 cd "$APPDIR"
 
 ### 4) Télécharger la dernière release Linux x64
-echo "🌐 Récupération de la dernière release…"
+echo "🌐 Fetching the latest release…"
 LATEST_URL=$(curl -s https://api.github.com/repos/Etsuna/ArchipelagoSphereTracker/releases/latest |
              grep "browser_download_url.*linux-x64.*\.tar\.gz" |
              cut -d '"' -f 4)
-[ -z "$LATEST_URL" ] && { echo "❌ Release introuvable"; exit 1; }
+[ -z "$LATEST_URL" ] && { echo "❌ Release not found"; exit 1; }
 
 FILENAME=$(basename "$LATEST_URL")
 wget -q --show-progress "$LATEST_URL"
@@ -54,7 +54,7 @@ cat > .env <<EOF
 DISCORD_TOKEN=$DISCORD_TOKEN
 APP_ID=$APP_ID
 EOF
-echo "✅ .env créé"
+echo "✅ .env file created"
 
 ### 6) Installation interne
 ./ArchipelagoSphereTracker install
@@ -79,36 +79,36 @@ SERVICE
 
   sudo systemctl daemon-reload
   sudo systemctl enable --now archipelagospheretracker.service
-  echo "🚀 Service systemd actif! (sudo systemctl status archipelagospheretracker)"
+  echo "🚀 systemd service active! (sudo systemctl status archipelagospheretracker)"
 else
-  echo "⚠️ systemd non pris en charge sous WSL. Service non installé."
+  echo "⚠️ systemd not supported under WSL. Service not installed."
 fi
 
 ### 8) Script update_and_restart.sh
 cat > update_and_restart.sh <<'UPD'
 #!/bin/bash
-# Arrêter le service
+# Stop the service
 sudo systemctl stop archipelagospheretracker.service
-# S’assurer que le binaire est exécutable
+# Ensure the binary is executable
 chmod +x "$(dirname "$0")/ArchipelagoSphereTracker"
-# Redémarrer le service
+# Restart the service
 sudo systemctl start archipelagospheretracker.service
-echo "✅ Mise à jour et redémarrage terminés."
+echo "✅ Update and restart completed."
 UPD
 chmod +x update_and_restart.sh
-echo "🛠  Script update_and_restart.sh créé"
+echo "🛠 update_and_restart.sh script created"
 
 ### 9) Tâche cron : reboot quotidien (si pas WSL)
 if [ "$IS_WSL" = false ]; then
   if ! sudo crontab -l 2>/dev/null | grep -q "/usr/sbin/reboot"; then
     (sudo crontab -l 2>/dev/null; echo "0 0 * * * /usr/sbin/reboot") | sudo crontab -
-    echo "⏰ Cron: reboot quotidien ajouté"
+    echo "⏰ Cron: daily reboot added"
   else
-    echo "⏰ Cron reboot déjà présent"
+    echo "⏰ Cron reboot already present"
   fi
   sudo systemctl enable --now cron
 else
-  echo "⏭️ Cron ignoré sous WSL"
+  echo "⏭️ Cron ignored under WSL"
 fi
 
-echo "✅ Installation complète !"
+echo "✅ Installation complete!"

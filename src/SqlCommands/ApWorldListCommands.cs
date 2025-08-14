@@ -19,7 +19,7 @@ public static class ApWorldListCommands
                     var result = await command.ExecuteScalarAsync();
                     if (result == null)
                     {
-                        return $"Title '{title}' non trouvé.";
+                        return $"Title '{title}' not found.";
                     }
 
                     int apWorldListTableId = Convert.ToInt32(result);
@@ -52,7 +52,7 @@ public static class ApWorldListCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des items : {ex.Message}");
+            Console.WriteLine($"Error while retrieving items: {ex.Message}");
             return null;
         }
     }
@@ -79,7 +79,7 @@ public static class ApWorldListCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des titres : {ex.Message}");
+            Console.WriteLine($"Error while retrieving titles: {ex.Message}");
             return new List<string>();
         }
     }

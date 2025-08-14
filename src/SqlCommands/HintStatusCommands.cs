@@ -197,7 +197,7 @@ public static class HintStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'ajout ou remplacement du statut d'indice : {ex.Message}");
+            Console.WriteLine($"Error while adding or replacing hint status: {ex.Message}");
         }
     }
 
@@ -262,7 +262,7 @@ public static class HintStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la suppression des HintStatus : {ex.Message}");
+            Console.WriteLine($"Error while deleting HintStatus: {ex.Message}");
         }
     }
 
@@ -327,7 +327,7 @@ public static class HintStatusCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la suppression des HintStatus : {ex.Message}");
+            Console.WriteLine($"Error while deleting HintStatus: {ex.Message}");
         }
     }
 }

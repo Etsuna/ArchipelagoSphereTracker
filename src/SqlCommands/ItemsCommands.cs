@@ -26,7 +26,7 @@ public static class ItemsCommands
                     }
                     else
                     {
-                        Console.WriteLine($"Aucun résultat trouvé pour le jeu '{gameName}' et l'élément '{itemName}'.");
+                        Console.WriteLine($"No result found for the game '{gameName}' and the item '{itemName}'.");
                         return false;
                     }
                 }
@@ -34,7 +34,7 @@ public static class ItemsCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la vérification de la catégorie : {ex.Message}");
+            Console.WriteLine($"Error while checking the category: {ex.Message}");
             return false;
         }
     }
@@ -98,13 +98,12 @@ public static class ItemsCommands
             }
 
             transaction.Commit();
-            Console.WriteLine("✅ Synchronisation terminée avec succès.");
+            Console.WriteLine("✅ Synchronization completed successfully.");
         }
         catch (Exception ex)
         {
-            string error = $"❌ Erreur lors de la synchronisation : {ex.Message}";
+            string error = $"❌ Error during synchronization: {ex.Message}";
             Console.WriteLine(error);
         }
     }
-
 }

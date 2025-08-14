@@ -34,7 +34,7 @@ public static class DatabaseCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des guildes : {ex.Message}");
+            Console.WriteLine($"Error while retrieving guilds: {ex.Message}");
         }
 
         return guilds;
@@ -76,7 +76,7 @@ public static class DatabaseCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur dans GetOrCreateProgramIdAsync : {ex.Message}");
+            Console.WriteLine($"Error in GetOrCreateProgramIdAsync: {ex.Message}");
             return Guid.NewGuid().ToString();
         }
     }
@@ -110,7 +110,7 @@ public static class DatabaseCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des canaux : {ex.Message}");
+            Console.WriteLine($"Error while retrieving channels: {ex.Message}");
         }
 
         return channels;
@@ -149,7 +149,7 @@ public static class DatabaseCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des counts : {ex.Message}");
+            Console.WriteLine($"Error while retrieving counts: {ex.Message}");
         }
 
         return (guildCount, channelCount);
@@ -179,7 +179,7 @@ public static class DatabaseCommands
                     }
                     else
                     {
-                        Console.WriteLine("Aucun enregistrement trouvé pour le GuildId et ChannelId spécifiés.");
+                        Console.WriteLine("No record found for the specified GuildId and ChannelId.");
                         return -1;
                     }
                 }
@@ -187,7 +187,7 @@ public static class DatabaseCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération de l'ID du canal : {ex.Message}");
+            Console.WriteLine($"Error while retrieving the channel ID: {ex.Message}");
             return -1;
         }
     }
@@ -224,7 +224,7 @@ public static class DatabaseCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la récupération des IDs : {ex.Message}");
+            Console.WriteLine($"Error while retrieving IDs: {ex.Message}");
             return new List<long>();
         }
     }
@@ -255,7 +255,7 @@ public static class DatabaseCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la vérification de l'existence du canal: {ex.Message}");
+            Console.WriteLine($"Error while checking the existence of the channel: {ex.Message}");
             return false;
         }
     }
@@ -370,11 +370,11 @@ public static class DatabaseCommands
                     }
 
                     await transaction.CommitAsync();
-                    Console.WriteLine("Suppression réussie !");
+                    Console.WriteLine("Deletion successful!");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+                    Console.WriteLine($"Error while deleting: {ex.Message}");
                     await transaction.RollbackAsync();
                 }
             }
@@ -482,11 +482,11 @@ public static class DatabaseCommands
                     }
 
                     await transaction.CommitAsync();
-                    Console.WriteLine("Suppression par GuildId réussie !");
+                    Console.WriteLine("Deletion by GuildId successful!");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Erreur lors de la suppression par GuildId : {ex.Message}");
+                    Console.WriteLine($"Error while deleting by GuildId: {ex.Message}");
                     await transaction.RollbackAsync();
                 }
             }

@@ -44,7 +44,7 @@ public class GenerationClass : Declare
                     Console.WriteLine($"🟢 **Log** : {e.Data}");
                     if (e.Data.Contains("Opening file input dialog"))
                     {
-                        errorMessage.AppendLine($"❌ **Erreur** : {e.Data}");
+                        errorMessage.AppendLine($"❌ **Error** : {e.Data}");
                         errorDetected = true;
                         if (!process.HasExited) process.Kill();
                     }
@@ -55,7 +55,7 @@ public class GenerationClass : Declare
             {
                 if (!string.IsNullOrEmpty(e.Data))
                 {
-                    errorMessage.AppendLine($"❌ **Erreur** : {e.Data}");
+                    errorMessage.AppendLine($"❌ **Error** : {e.Data}");
                     if (e.Data.Contains("ValueError") || e.Data.Contains("Exception") || e.Data.Contains("FileNotFoundError"))
                     {
                         errorDetected = true;
@@ -71,7 +71,7 @@ public class GenerationClass : Declare
             if (!process.WaitForExit(600000) && !errorDetected)
             {
                 if (!process.HasExited) process.Kill();
-                errorMessage.AppendLine("⏳ **Timeout** : Processus arrêté après 10min.");
+                errorMessage.AppendLine("⏳ Timeout: Process stopped after 10 minutes.");
                 errorDetected = true;
             }
         }
@@ -86,7 +86,7 @@ public class GenerationClass : Declare
         {
             if (!Directory.Exists(outputFolder))
             {
-                await command.FollowupAsync($"❌ Le dossier de sortie {outputFolder} n'existe pas.");
+                await command.FollowupAsync($"❌ The output folder {outputFolder} does not exist.");
                 return;
             }
 
@@ -101,7 +101,7 @@ public class GenerationClass : Declare
             }
             else
             {
-                await command.FollowupAsync("❌ Aucun fichier ZIP trouvé.");
+                await command.FollowupAsync("❌ No ZIP file found.");
             }
 
             if (playersFolder != null) Directory.Delete(playersFolder, true);
@@ -109,7 +109,7 @@ public class GenerationClass : Declare
         }
         else
         {
-            await command.FollowupAsync("✅ Génération de test réussie !");
+            await command.FollowupAsync("✅ Test generation successful!");
         }
     }
 
@@ -117,7 +117,7 @@ public class GenerationClass : Declare
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         if (attachment == null || !attachment.Filename.EndsWith(".zip"))
-            return "❌ Vous devez envoyer un fichier ZIP contenant les fichiers YAML !";
+            return "❌ You must send a ZIP file containing the YAML files!";
 
         var basePath = Path.Combine(BasePath, "extern", "Archipelago");
         var playersFolder = Path.Combine(basePath, "Players", channelId, "zip");
@@ -140,7 +140,7 @@ public class GenerationClass : Declare
             if (!file.EndsWith(".yaml"))
             {
                 var fileName = Path.GetFileName(file);
-                await command.FollowupAsync($"ℹ️ **Info** : `{fileName}` n'est pas un fichier YAML. Il a été supprimé avant la génération\n");
+                await command.FollowupAsync($"ℹ️ Info: {fileName} is not a YAML file. It was deleted before generation.");
                 File.Delete(file);
             }
         }
@@ -149,7 +149,7 @@ public class GenerationClass : Declare
 
         if (!Directory.GetFiles(playersFolder, "*.yaml").Any())
         {
-            await command.FollowupAsync("❌ Aucun fichier YAML trouvé dans l'archive !");
+            await command.FollowupAsync("❌ No YAML file found in the archive!");
         }
 
         var launcherPath = GetLauncherPath();
@@ -169,7 +169,7 @@ public class GenerationClass : Declare
         Directory.CreateDirectory(playersFolder);
 
         if (!Directory.GetFiles(playersFolder, "*.yaml").Any())
-            return "❌ Aucun fichier YAML trouvé !";
+            return "❌ No YAML file found!";
 
         var launcherPath = GetLauncherPath();
         var arguments = $"--player_files_path \"{playersFolder}\" --skip_output";
@@ -191,7 +191,7 @@ public class GenerationClass : Declare
         Directory.CreateDirectory(playersFolder);
 
         if (!Directory.GetFiles(playersFolder, "*.yaml").Any())
-            return "❌ Aucun fichier YAML trouvé !";
+            return "❌ No YAML file found!";
 
         var launcherPath = GetLauncherPath();
         var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";

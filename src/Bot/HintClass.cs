@@ -14,7 +14,7 @@ public class HintClass
     {
         if (string.IsNullOrEmpty(realAlias))
         {
-            return "Alias non spécifié.";
+            return "Alias not specified.";
         }
 
         var hints = await fetchHintsFunc(guildId, channelId, realAlias);
@@ -29,7 +29,7 @@ public class HintClass
         }
         else
         {
-            message = "Pas d'URL Enregistrée pour ce channel ou Aucun hint.";
+            message = "No URL registered for this channel. ou Aucun hint.";
         }
 
         return message;

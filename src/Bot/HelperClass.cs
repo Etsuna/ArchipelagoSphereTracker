@@ -10,7 +10,7 @@ public class HelperClass
 
         if (string.IsNullOrWhiteSpace(userId))
         {
-            return "Receiver ID non spécifié.";
+            return "Receiver ID not specified.";
 
         }
 
@@ -18,11 +18,11 @@ public class HelperClass
 
         if (!string.IsNullOrEmpty(getNameAndPatch))
         {
-            message += $"Patch Pour {userId}, {getNameAndPatch}\n\n";
+            message += $"Patch for {userId}, {getNameAndPatch}";
         }
         else
         {
-            message = "Pas de patch pour ce user.";
+            message = "No patch for this user.";
         }
 
         return message;
@@ -53,12 +53,12 @@ public class HelperClass
             }
             else
             {
-                message += "Port non trouvé.\n";
+                message += "Port not found.\n";
             }
         }
         else
         {
-            message = "Pas d'URL Enregistrée pour ce channel.";
+            message = "No URL registered for this channel.";
         }
 
         return message;
@@ -78,7 +78,7 @@ public class HelperClass
 
             if (getReceiverAliases.Count == 0)
             {
-                message += "Aucun Alias est enregistré.";
+                message += "No alias is registered.";
             }
             else
             {
@@ -86,7 +86,7 @@ public class HelperClass
 
                 if (getReceiverAliases.Count == 0)
                 {
-                    message += "Aucun Alias est enregistré.";
+                    message += "No alias is registered.";
                 }
                 else
                 {
@@ -128,7 +128,7 @@ public class HelperClass
             }
             else
             {
-                message = "Pas d'URL Enregistrée pour ce channel.";
+                message = "No URL registered for this channel.";
             }
         }
 
@@ -165,7 +165,7 @@ public class HelperClass
         {
             if (string.IsNullOrWhiteSpace(alias))
             {
-                return "Erreur d'Alias.";
+                return "Alias error.";
             }
 
             var getGameStatusTextsAsync = await DisplayItemCommands.GetUserItemsGroupedAsync(guildId, channelId, alias);
@@ -176,16 +176,16 @@ public class HelperClass
 
             if (filteredItems.Any())
             {
-                message = $"Items pour {userId} :\n{BuildItemMessage(filteredItems, listByLine)}";
+                message = $"Items for {userId} :\n{BuildItemMessage(filteredItems, listByLine)}";
             }
             else
             {
-                await command.FollowupAsync("Pas d'items");
+                await command.FollowupAsync("No items");
             }
         }
         else
         {
-            await command.FollowupAsync("Pas d'URL Enregistrée pour ce channel");
+            await command.FollowupAsync("No URL registered for this channel.");
         }
 
         return message;

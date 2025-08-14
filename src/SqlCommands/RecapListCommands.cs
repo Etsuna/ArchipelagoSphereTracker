@@ -27,7 +27,7 @@ public static class RecapListCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'ajout ou mise à jour du RecapList: {ex.Message}");
+            Console.WriteLine($"Error while adding or updating the RecapList: {ex.Message}");
         }
     }
 
@@ -80,7 +80,7 @@ public static class RecapListCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'ajout ou mise à jour des éléments du RecapList : {ex.Message}");
+            Console.WriteLine($"Error while adding or updating RecapList items: {ex.Message}");
         }
     }
 
@@ -98,7 +98,7 @@ public static class RecapListCommands
 
                 if (getIds == null || getIds.Count == 0)
                 {
-                    Console.WriteLine("Erreur : Aucun enregistrement Guild/Channel trouvé. Impossible d'ajouter les items.");
+                    Console.WriteLine("Error: No Guild/Channel record found. Unable to add the items.");
                     return;
                 }
 
@@ -130,7 +130,7 @@ public static class RecapListCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'ajout ou mise à jour des éléments du RecapList : {ex.Message}");
+            Console.WriteLine($"Error while adding or updating RecapList items: {ex.Message}");
         }
     }
 
@@ -160,7 +160,7 @@ public static class RecapListCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la vérification de l'existence du RecapList: {ex.Message}");
+            Console.WriteLine($"Error while checking the existence of the RecapList: {ex.Message}");
             return false;
         }
     }
@@ -189,7 +189,7 @@ public static class RecapListCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de la vérification de l'existence du RecapList: {ex.Message}");
+            Console.WriteLine($"Error while checking the existence of the RecapList: {ex.Message}");
             return false;
         }
     }
@@ -229,7 +229,7 @@ public static class RecapListCommands
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+                    Console.WriteLine($"Error while deleting: {ex.Message}");
                     throw;
                 }
             }
@@ -273,7 +273,7 @@ public static class RecapListCommands
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+                    Console.WriteLine($"Error while deleting: {ex.Message}");
                     throw;
                 }
             }
@@ -329,11 +329,10 @@ public static class RecapListCommands
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+                    Console.WriteLine($"Error while deleting: {ex.Message}");
                     throw;
                 }
             }
         }
     }
-
 }

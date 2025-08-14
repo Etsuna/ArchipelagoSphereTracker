@@ -18,36 +18,36 @@ public class RecapAndCleanClass
         var userId = command.User.Id.ToString();
 
         if (!await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "RecapListTable"))
-            return "Pas d'URL Enregistrée pour ce channel ou aucun alias enregistré.";
+            return "No URL registered for this channel or no alias recorded.";
 
         var userAliases = await ReceiverAliasesCommands.GetUserIds(guildId, channelId);
         if (!userAliases.Any(x => x.Contains(userId)))
-            return "Vous n'avez pas d'alias d'enregistré, utilisez la commande /add-alias pour générer automatiquement un fichier de recap.";
+            return "You don’t have any registered alias. Use the /add-alias command to automatically generate a recap file.";
 
         if (isAliasRequired && string.IsNullOrWhiteSpace(alias))
-            return "L'alias ne peut pas être vide.";
+            return "The alias cannot be empty.";
 
         var exists = includeAllAliases
             ? await RecapListCommands.CheckIfExistsWithoutAlias(guildId, channelId, userId)
             : await RecapListCommands.CheckIfExists(guildId, channelId, userId, alias!);
 
         if (!exists)
-            return "Il existe aucune liste.";
+            return "There is no list.";
 
         var aliasesWithItems = includeAllAliases
             ? await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId)
             : await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId, alias!);
 
         if (!aliasesWithItems.Any())
-            return $"L'utilisateur <@{userId}> n'existe pas.";
+            return $"The user <@{userId}> does not exist.";
 
         if (!includeAllAliases && !aliasesWithItems.ContainsKey(alias!))
-            return $"L'utilisateur <@{userId}> n'est pas enregistré avec l'alias: {alias}.";
+            return $"The user <@{userId}> is not registered with the alias: {alias}.";
 
         if (returnRecap)
         {
             if (buildMessage is null)
-                return "Erreur interne : buildMessage est null alors qu'un récapitulatif est demandé.";
+                return "Internal error: buildMessage is null even though a recap was requested.";
 
             message = buildMessage(aliasesWithItems, userId, alias!, includeAllAliases ? null : alias);
         }
@@ -63,8 +63,8 @@ public class RecapAndCleanClass
         if (!returnRecap)
         {
             message = includeAllAliases
-                ? $"Clean All pour <@{userId}> effectué"
-                : $"Clean pour Alias {alias} effectué";
+                ? $"Clean All for <@{userId}> completed."
+                : $"Clean for Alias {alias} completed";
         }
 
         return message;
@@ -96,7 +96,7 @@ public class RecapAndCleanClass
 
     public static string BuildRecapMessage(Dictionary<string, List<string>> data, string userId, string alias, string? filterAlias)
     {
-        var sb = new StringBuilder($"Détails pour <@{userId}> :\n");
+        var sb = new StringBuilder($"Details for <@{userId}>:");
 
         var toProcess = filterAlias != null
             ? data.Where(d => d.Key == filterAlias)
@@ -108,7 +108,7 @@ public class RecapAndCleanClass
                 ? string.Join(", ", sub.Value
                     .GroupBy(x => x)
                     .Select(g => g.Count() > 1 ? $"{g.Key} x {g.Count()}" : g.Key))
-                : "Aucun élément";
+                : "No item";
 
             sb.AppendLine($"**{sub.Key}** : {grouped}");
         }
