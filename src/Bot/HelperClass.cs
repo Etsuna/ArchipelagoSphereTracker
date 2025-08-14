@@ -18,7 +18,7 @@ public class HelperClass
 
         if (!string.IsNullOrEmpty(getNameAndPatch))
         {
-            message += $"Patch for {userId}, {getNameAndPatch}";
+            message += $"Patch for {userId}, {getNameAndPatch}\n\n";
         }
         else
         {

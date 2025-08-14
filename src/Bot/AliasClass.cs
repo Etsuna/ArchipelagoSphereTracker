@@ -110,7 +110,7 @@ public class AliasClass
         }
         else
         {
-            var sb = new StringBuilder("Here is the users table:");
+            var sb = new StringBuilder("Here is the users table:\n");
             foreach (var getReceiverAliase in getReceiverAliases)
             {
                 var getUserIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guildId, channelId, getReceiverAliase);

@@ -96,7 +96,7 @@ public class RecapAndCleanClass
 
     public static string BuildRecapMessage(Dictionary<string, List<string>> data, string userId, string alias, string? filterAlias)
     {
-        var sb = new StringBuilder($"Details for <@{userId}>:");
+        var sb = new StringBuilder($"Details for <@{userId}>:\n");
 
         var toProcess = filterAlias != null
             ? data.Where(d => d.Key == filterAlias)

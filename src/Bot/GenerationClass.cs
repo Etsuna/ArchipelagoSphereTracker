@@ -140,7 +140,7 @@ public class GenerationClass : Declare
             if (!file.EndsWith(".yaml"))
             {
                 var fileName = Path.GetFileName(file);
-                await command.FollowupAsync($"ℹ️ Info: {fileName} is not a YAML file. It was deleted before generation.");
+                await command.FollowupAsync($"ℹ️ Info: {fileName} is not a YAML file. It was deleted before generation.\n");
                 File.Delete(file);
             }
         }
