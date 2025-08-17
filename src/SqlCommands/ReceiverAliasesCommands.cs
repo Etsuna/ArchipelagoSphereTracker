@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using System.Data.SQLite;
 
 public static class ReceiverAliasesCommands
 {
@@ -265,7 +266,7 @@ public static class ReceiverAliasesCommands
                                     }
                                     else
                                     {
-                                        items.Add("No item.");
+                                        items.Add(Resource.GetUserAliasesWithItemsAsyncNoItem);
                                     }
                                 }
                             }
@@ -275,7 +276,7 @@ public static class ReceiverAliasesCommands
                         {
                             if (alias == null)
                             {
-                                Console.WriteLine($"No alias found for the user: {userId}");
+                                Console.WriteLine(string.Format(Resource.GetUserAliasesWithItemsAsyncNoAlias, userId));
                                 continue;
                             }
 
@@ -285,11 +286,11 @@ public static class ReceiverAliasesCommands
                         {
                             if (alias == null)
                             {
-                                Console.WriteLine($"No alias found for the user: {userId}");
+                                Console.WriteLine(string.Format(Resource.GetUserAliasesWithItemsAsyncNoAlias, userId));
                                 continue;
                             }
 
-                            aliasesWithItems[alias] = ["No item."];
+                            aliasesWithItems[alias] = [Resource.GetUserAliasesWithItemsAsyncNoItem];
                         }
                     }
                 }

@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord.WebSocket;
 using System.Text;
 
 public class RecapAndCleanClass
@@ -18,36 +19,36 @@ public class RecapAndCleanClass
         var userId = command.User.Id.ToString();
 
         if (!await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "RecapListTable"))
-            return "No URL registered for this channel or no alias recorded.";
+            return Resource.RACNoUrlOrAlias;
 
         var userAliases = await ReceiverAliasesCommands.GetUserIds(guildId, channelId);
         if (!userAliases.Any(x => x.Contains(userId)))
-            return "You don’t have any registered alias. Use the /add-alias command to automatically generate a recap file.";
+            return Resource.RACNoAliasRegistered;
 
         if (isAliasRequired && string.IsNullOrWhiteSpace(alias))
-            return "The alias cannot be empty.";
+            return Resource.AliasEmpty;
 
         var exists = includeAllAliases
             ? await RecapListCommands.CheckIfExistsWithoutAlias(guildId, channelId, userId)
             : await RecapListCommands.CheckIfExists(guildId, channelId, userId, alias!);
 
         if (!exists)
-            return "There is no list.";
+            return Resource.RACNoList;
 
         var aliasesWithItems = includeAllAliases
             ? await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId)
             : await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId, alias!);
 
         if (!aliasesWithItems.Any())
-            return $"The user <@{userId}> does not exist.";
+            return string.Format(Resource.RACUserNotExists, userId);
 
         if (!includeAllAliases && !aliasesWithItems.ContainsKey(alias!))
-            return $"The user <@{userId}> is not registered with the alias: {alias}.";
+            return string.Format(Resource.RACUserNoRegistredWithAlias, userId, alias);
 
         if (returnRecap)
         {
             if (buildMessage is null)
-                return "Internal error: buildMessage is null even though a recap was requested.";
+                return Resource.RACBuildMessageError;
 
             message = buildMessage(aliasesWithItems, userId, alias!, includeAllAliases ? null : alias);
         }
@@ -63,8 +64,8 @@ public class RecapAndCleanClass
         if (!returnRecap)
         {
             message = includeAllAliases
-                ? $"Clean All for <@{userId}> completed."
-                : $"Clean for Alias {alias} completed";
+                ? string.Format(Resource.RACCleanAll, userId)
+                : string.Format(Resource.RACClean, alias);
         }
 
         return message;
@@ -96,7 +97,8 @@ public class RecapAndCleanClass
 
     public static string BuildRecapMessage(Dictionary<string, List<string>> data, string userId, string alias, string? filterAlias)
     {
-        var sb = new StringBuilder($"Details for <@{userId}>:\n");
+        var sb = new StringBuilder(string.Format(Resource.RACDetailsForUser, userId));
+        sb.AppendLine();
 
         var toProcess = filterAlias != null
             ? data.Where(d => d.Key == filterAlias)
@@ -108,9 +110,9 @@ public class RecapAndCleanClass
                 ? string.Join(", ", sub.Value
                     .GroupBy(x => x)
                     .Select(g => g.Count() > 1 ? $"{g.Key} x {g.Count()}" : g.Key))
-                : "No item";
+                : Resource.HelperNoItems;
 
-            sb.AppendLine($"**{sub.Key}** : {grouped}");
+            sb.AppendLine(string.Format(Resource.RACBuildMessage, sub.Key, grouped));
         }
 
         return sb.ToString();

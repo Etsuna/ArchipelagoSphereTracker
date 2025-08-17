@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -6,7 +7,7 @@ public class CustomApworldClass : Declare
 {
     public static void GenerateYamls()
     {
-        Console.WriteLine("📦 Generating YAML templates...");
+        Console.WriteLine(Resource.CAGeneratingYamlTemplates);
 
         try
         {
@@ -20,7 +21,7 @@ public class CustomApworldClass : Declare
             using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GenerateTemplatesPath);
             if (stream == null)
             {
-                Console.WriteLine("❌ Unable to find the embedded resource:" + GenerateTemplatesPath);
+                Console.WriteLine(string.Format(Resource.CAEmbededError, GenerateTemplatesPath));
                 return;
             }
 
@@ -32,11 +33,11 @@ public class CustomApworldClass : Declare
 
             if (!File.Exists(destinationPath))
             {
-                Console.WriteLine("❌ The file 'generate_templates.apworld' was not written correctly.");
+                Console.WriteLine(Resource.CAGenerateTemplateApworldError);
                 return;
             }
 
-            Console.WriteLine($"✅ File copied to: {destinationPath}");
+            Console.WriteLine(string.Format(Resource.CAFileCopied, destinationPath));
 
             string launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? "ArchipelagoLauncher.exe"
@@ -46,7 +47,7 @@ public class CustomApworldClass : Declare
 
             if (!File.Exists(launcherPath))
             {
-                Console.WriteLine($"❌ Launcher not found: {launcherPath}");
+                Console.WriteLine(string.Format(Resource.CALauncherNotFound, launcherPath));
                 return;
             }
 
@@ -64,7 +65,7 @@ public class CustomApworldClass : Declare
             using var process = Process.Start(psi);
             if (process == null)
             {
-                Console.WriteLine("❌ ERROR: Failed to start the build process.");
+                Console.WriteLine(Resource.CAErrorProcess);
                 return;
             }
 
@@ -84,23 +85,23 @@ public class CustomApworldClass : Declare
 
             if (process.ExitCode == 0)
             {
-                Console.WriteLine("✅ YAML generated successfully!");
+                Console.WriteLine(Resource.CAYamlGeneratedSuccessfully);
             }
             else
             {
-                Console.WriteLine($"❌ ERROR: YAML generation failed (code {process.ExitCode})");
+                Console.WriteLine(string.Format(Resource.CAYamlGeneratedError, process.ExitCode));
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Exception : {ex.GetType().Name} - {ex.Message}");
+            Console.WriteLine(string.Format(Resource.CAException, ex.GetType().Name, ex.Message));
         }
     }
 
 
     public static void GenerateItems()
     {
-        Console.WriteLine("📦 Generating Items Category JSON templates...");
+        Console.WriteLine(Resource.CAGeneratedItemJson);
 
         try
         {
@@ -114,7 +115,7 @@ public class CustomApworldClass : Declare
             using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(ScanItemsPath);
             if (stream == null)
             {
-                Console.WriteLine("❌ Unable to find the embedded resource:" + ScanItemsPath);
+                Console.WriteLine(string.Format(Resource.CAEmbededError, ScanItemsPath));
                 return;
             }
 
@@ -126,11 +127,11 @@ public class CustomApworldClass : Declare
 
             if (!File.Exists(destinationPath))
             {
-                Console.WriteLine("❌ The file was not written correctly to disk.");
+                Console.WriteLine(Resource.CAScanItemsApworldError);
                 return;
             }
 
-            Console.WriteLine($"✅ File copied to: {destinationPath}");
+            Console.WriteLine(string.Format(Resource.CAFileCopied, destinationPath));
 
             string launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? "ArchipelagoLauncher.exe"
@@ -140,7 +141,7 @@ public class CustomApworldClass : Declare
 
             if (!File.Exists(launcherPath))
             {
-                Console.WriteLine($"❌ Launcher not found: {launcherPath}");
+                Console.WriteLine(string.Format(Resource.CALauncherNotFound, launcherPath));
                 return;
             }
 
@@ -158,7 +159,7 @@ public class CustomApworldClass : Declare
             using var process = Process.Start(psi);
             if (process == null)
             {
-                Console.WriteLine("❌ ERROR: Unable to start the process.");
+                Console.WriteLine(Resource.CAErrorProcess);
                 return;
             }
 
@@ -172,11 +173,11 @@ public class CustomApworldClass : Declare
 
             if (process.ExitCode == 0)
             {
-                Console.WriteLine("✅ YAML generated successfully!");
+                Console.WriteLine(Resource.CAYamlGeneratedSuccessfully);
             }
             else
             {
-                Console.WriteLine($"❌ ERROR: YAML generation failed (code {process.ExitCode})");
+                Console.WriteLine(string.Format(Resource.CAYamlGeneratedError, process.ExitCode));
             }
 
             var jsonFile = Directory.GetFiles(ItemCategoryPath, "*.json", SearchOption.TopDirectoryOnly)
@@ -188,12 +189,12 @@ public class CustomApworldClass : Declare
             }
             else
             {
-                Console.WriteLine("⚠️ No JSON file found for synchronization.");
+                Console.WriteLine(Resource.CAJsonNotfound);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Exception : {ex.GetType().Name} - {ex.Message}");
+            Console.WriteLine(string.Format(Resource.CAException, ex.GetType().Name, ex.Message));
         }
     }
 }

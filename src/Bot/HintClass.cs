@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using System.Text;
 
 public class HintClass
 {
@@ -14,7 +15,7 @@ public class HintClass
     {
         if (string.IsNullOrEmpty(realAlias))
         {
-            return "Alias not specified.";
+            return Resource.HintNoAlias;
         }
 
         var hints = await fetchHintsFunc(guildId, channelId, realAlias);
@@ -29,7 +30,7 @@ public class HintClass
         }
         else
         {
-            message = "No URL registered for this channel. ou Aucun hint.";
+            message = Resource.HintNoUrl;
         }
 
         return message;
@@ -45,8 +46,8 @@ public class HintClass
             guildId,
             HintStatusCommands.GetHintStatusForReceiver,
             (hint, alias) => hint.Receiver == alias,
-            "Item for {0} :",
-            "No hint found for this receiver"
+            Resource.HintItemFor,
+            Resource.HintNoHintFoundForReceiver
         );
     }
 
@@ -59,8 +60,8 @@ public class HintClass
             guildId,
             HintStatusCommands.GetHintStatusForFinder,
             (hint, alias) => hint.Finder == alias,
-            "Item from {0} :",
-            "No hint found for this finder"
+            Resource.HintItemFrom,
+            Resource.HintNoHintFoundFromFinder
         );
     }
 
@@ -71,7 +72,7 @@ public class HintClass
 
         foreach (var item in hints)
         {
-            messageBuilder.AppendLine($"{item.Receiver}'s {item.Item} is at {item.Location} in {item.Finder}'s World");
+            messageBuilder.AppendLine(string.Format(Resource.HintItem, item.Receiver, item.Item, item.Location, item.Finder));
         }
 
         return messageBuilder.ToString();

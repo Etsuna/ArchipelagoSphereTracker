@@ -1,10 +1,12 @@
-﻿public class BackupRestoreClass : Declare
+﻿using ArchipelagoSphereTracker.src.Resources;
+
+public class BackupRestoreClass : Declare
 {
     public static Task Backup()
     {
         if (!Directory.Exists(ExtractPath))
         {
-            Console.WriteLine("The external folder does not exist, unable to create a backup.");
+            Console.WriteLine(Resource.BRExternalFolderNotExists);
             return Task.CompletedTask;
         }
 
@@ -43,16 +45,16 @@
                 try
                 {
                     File.Move(fichier, cheminDestination, true);
-                    Console.WriteLine($"Moved: {nomFichier} → {cheminDestination}");
+                    Console.WriteLine(string.Format(Resource.BRMoved, nomFichier, cheminDestination));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error on {fichier}: {ex.Message}");
+                    Console.WriteLine(string.Format(Resource.BRError, fichier, ex.Message));
                 }
             }
         }
 
-        Console.WriteLine("Rom Backup completed.");
+        Console.WriteLine(Resource.BRRomBackupCompleted);
 
         if (Directory.Exists(CustomPath))
         {
@@ -70,15 +72,15 @@
                 try
                 {
                     File.Move(fichier, cheminDestination, true);
-                    Console.WriteLine($"Moved: {nomFichier} → {cheminDestination}");
+                    Console.WriteLine(string.Format(Resource.BRMoved, nomFichier, cheminDestination));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error on {fichier} : {ex.Message}");
+                    Console.WriteLine(string.Format(Resource.BRError, fichier, ex.Message));
                 }
             }
 
-            Console.WriteLine("Custom_Worlds Backup completed.");
+            Console.WriteLine(Resource.BRCustomWorldBackupCompleted);
         }
 
 
@@ -96,7 +98,7 @@
                 string nomFichier = Path.GetFileName(fichier);
                 string destination = Path.Combine(PlayersBackup, nomFichier);
                 File.Move(fichier, destination, overwrite: true);
-                Console.WriteLine($"File moved: {nomFichier}");
+                Console.WriteLine(string.Format(Resource.BRFileMoved, nomFichier));
             }
 
             foreach (var dossier in Directory.GetDirectories(PlayersPath, "*", SearchOption.TopDirectoryOnly))
@@ -111,7 +113,7 @@
                     Directory.Delete(destination, recursive: true);
 
                 Directory.Move(dossier, destination);
-                Console.WriteLine($"Folder moved: {nomDossier}");
+                Console.WriteLine(string.Format(Resource.BRFolderMoved, nomDossier));
             }
 
             Console.WriteLine("Players folder move completed.");
@@ -124,7 +126,7 @@
     {
         if (!Directory.Exists(BackupPath))
         {
-            Console.WriteLine("The backup folder does not exist, unable to restore.");
+            Console.WriteLine(Resource.BRBackupFolderNotExists);
             return Task.CompletedTask;
         }
 
@@ -137,11 +139,11 @@
                 try
                 {
                     File.Move(fichier, cheminDestination, true);
-                    Console.WriteLine($"Restored: {nomFichier} → {cheminDestination}");
+                    Console.WriteLine(string.Format(Resource.BRRestoreMoved, nomFichier, cheminDestination));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error on {fichier}: {ex.Message}");
+                    Console.WriteLine(string.Format(Resource.BRError, fichier, ex.Message));
                 }
             }
         }
@@ -160,11 +162,11 @@
                 try
                 {
                     File.Move(fichier, cheminDestination, true);
-                    Console.WriteLine($"Restored: {nomFichier} → {cheminDestination}");
+                    Console.WriteLine(string.Format(Resource.BRRestoreMoved, nomFichier, cheminDestination));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error on {fichier}: {ex.Message}");
+                    Console.WriteLine(string.Format(Resource.BRError, fichier, ex.Message));
                 }
             }
         }
@@ -176,7 +178,7 @@
                 string nomFichier = Path.GetFileName(fichier);
                 string destination = Path.Combine(PlayersPath, nomFichier);
                 File.Move(fichier, destination, overwrite: true);
-                Console.WriteLine($"File restored: {nomFichier}");
+                Console.WriteLine(string.Format(Resource.BRFileRestored, nomFichier));
             }
             foreach (var dossier in Directory.GetDirectories(PlayersBackup, "*", SearchOption.TopDirectoryOnly))
             {
@@ -185,10 +187,9 @@
                 if (Directory.Exists(destination))
                     Directory.Delete(destination, recursive: true);
                 Directory.Move(dossier, destination);
-                Console.WriteLine($"Folder restored: {nomDossier}");
+                Console.WriteLine(string.Format(Resource.BRFolderRestored, nomDossier));
             }
         }
-
         return Task.CompletedTask;
     }
 }

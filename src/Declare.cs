@@ -4,11 +4,13 @@ using Discord.Commands;
 public class Declare
 {
     public static string Version = "0.6.3";
-    public static string BotVersion = "3.4.1";
+    public static string BotVersion = "3.5.0";
+    public static string InnoExtractorVersion = "1.9";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool IsDev = (Environment.GetEnvironmentVariable("IS_DEV") ?? "false").ToLower() == "true";
     public static readonly bool TelemetryEnabled = (Environment.GetEnvironmentVariable("TELEMETRY") ?? "true").ToLower() == "true";
+    public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();
 
     public static CancellationTokenSource Cts = new CancellationTokenSource();
     public static DiscordSocketClient Client = new DiscordSocketClient();
@@ -23,7 +25,13 @@ public class Declare
 
     public static string DownloadWinUrl = $"https://github.com/ArchipelagoMW/Archipelago/releases/download/{Version}/Setup.Archipelago.{Version}.exe";
     public static string DownloadLinuxUrl = $"https://github.com/ArchipelagoMW/Archipelago/releases/download/{Version}/Archipelago_{Version}_linux-x86_64.tar.gz";
-    public static string DownloadInnoExtractor = $"https://constexpr.org/innoextract/files/innoextract-1.9-windows.zip";
+    public static string DownloadInnoExtractor = $"https://constexpr.org/innoextract/files/innoextract-{InnoExtractorVersion}-windows.zip";
+
+    public static string InnoExtractorZip = $"innoextract-{InnoExtractorVersion}-windows.zip";
+    public static string InnoExtractorExe = "innoextract.exe";
+    public static string ArchipelagoWindowsSetup = $"Setup.Archipelago.{Version}.exe";
+    public static string ArchipelagoLinuxTarGz = $"Archipelago_{Version}_linux-x86_64.tar.gz";
+    public static string VcRedistx64Setup = "vc_redistx64.exe";
 
     public static string ArchivePath = Path.Combine(BasePath, "archive");
     public static string TempExtractPath = Path.Combine(BasePath, "tempExtract");
@@ -39,6 +47,9 @@ public class Declare
     public static string ItemCategoryPath = Path.Combine(ExtractPath, "ItemCategory");
     public static string PlayersPath = Path.Combine(ExtractPath, "Players");
     public static string CustomPath = Path.Combine(ExtractPath, "custom_worlds");
+    public static string OutputPath = Path.Combine(ExtractPath, "output");
+    public static string TempPath = Path.Combine(ExtractPath, "tmp");
+    public static string AppPath = Path.Combine(ExtractPath, "app");
 
     public static string RomBackupPath = Path.Combine(BackupPath, "rom_backup");
     public static string ApworldsBackupPath = Path.Combine(BackupPath, "apworlds_backup");

@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using System.Data.SQLite;
 
 public static class DatabaseCommands
 {
@@ -370,7 +371,7 @@ public static class DatabaseCommands
                     }
 
                     await transaction.CommitAsync();
-                    Console.WriteLine("Deletion successful!");
+                    Console.WriteLine(Resource.DeleteChannelDataAsyncDeleteSuccessful);
                 }
                 catch (Exception ex)
                 {
@@ -482,7 +483,7 @@ public static class DatabaseCommands
                     }
 
                     await transaction.CommitAsync();
-                    Console.WriteLine("Deletion by GuildId successful!");
+                    Console.WriteLine(Resource.DeleteChannelDataByGuildIdAsyncDeletionGuildIdSuccessful);
                 }
                 catch (Exception ex)
                 {

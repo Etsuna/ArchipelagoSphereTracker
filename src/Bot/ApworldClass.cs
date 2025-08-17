@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord;
 using Discord.WebSocket;
 using System.IO.Compression;
 using System.Text;
@@ -10,7 +11,7 @@ public class ApworldClass : Declare
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         if (attachment == null || !attachment.Filename.EndsWith(".apworld"))
         {
-            return "❌ You must send an APWORLD file!";
+            return Resource.ApworldWrongFile;
         }
 
         var customWorldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
@@ -31,7 +32,7 @@ public class ApworldClass : Declare
         }
         CustomApworldClass.GenerateYamls();
         CustomApworldClass.GenerateItems();
-        message = $"File {attachment.Filename} sent.";
+        message = string.Format(Resource.ApworldFileSent, attachment.Filename);
         return message;
     }
 
@@ -69,7 +70,7 @@ public class ApworldClass : Declare
         }
         else
         {
-            message += "❌ No APWORLD file found!";
+            message += Resource.ApworldFileNotFound;
         }
 
         return message;
@@ -81,14 +82,14 @@ public class ApworldClass : Declare
 
         if (infoSelected == null)
         {
-            return "❌ No file selected.";
+            return Resource.NoFileSelected;
         }
 
         message = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected);
 
         if (string.IsNullOrWhiteSpace(message))
         {
-            return "❌ No file selected.";
+            return Resource.NoFileSelected;
         }
         return message;
     }
@@ -112,7 +113,8 @@ public class ApworldClass : Declare
 
             if (listApworld.Any())
             {
-                var sb = new StringBuilder("List of apworld\n");
+                var sb = new StringBuilder(Resource.ApworldList);
+                sb.AppendLine();
                 foreach (var apworld in listApworld)
                 {
                     sb.AppendLine($"`{Path.GetFileName(apworld)}`");
@@ -121,14 +123,13 @@ public class ApworldClass : Declare
             }
             else
             {
-                message += "❌ No APWORLD file found. !";
+                message += Resource.ApworldNotFound;
             }
         }
         else
         {
-            message += "❌ custom_worlds folder not found.";
+            message += Resource.ApworldCustomFolderNotFound;
         }
-
         return message;
     }
 }

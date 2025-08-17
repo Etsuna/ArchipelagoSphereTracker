@@ -5,6 +5,7 @@ using System.Net;
 using System.Web;
 using System.Text.RegularExpressions;
 using System.Text;
+using ArchipelagoSphereTracker.src.Resources;
 
 public static class TrackingDataManager
 {
@@ -44,7 +45,7 @@ public static class TrackingDataManager
 
                                 if (channelCheck != null)
                                 {
-                                    Console.WriteLine($"The channel still exists: {channelCheck.Name}");
+                                    Console.WriteLine(string.Format(Resource.TDMChannelStillExists, channelCheck.Name));
 
                                     if (guildCheck.GetChannel(ulong.Parse(channel)) is SocketThreadChannel thread)
                                     {
@@ -54,7 +55,7 @@ public static class TrackingDataManager
                                         DateTimeOffset lastActivity = lastMessage?.Timestamp ?? SnowflakeUtils.FromSnowflake(thread.Id);
                                         if (lastMessage == null)
                                         {
-                                            Console.WriteLine($"No message found, using the thread creation date: {lastActivity}");
+                                            Console.WriteLine(string.Format(Resource.TDMNoMessageFound, lastActivity));
                                         }
 
                                         double daysInactive = (DateTimeOffset.UtcNow - lastActivity).TotalDays;
@@ -63,7 +64,7 @@ public static class TrackingDataManager
                                         {
                                             if (Declare.WarnedThreads.Contains(thread.Id.ToString()))
                                             {
-                                                await BotCommands.SendMessageAsync($"New message on the thread {thread.Name}, automatic deletion canceled.", thread.Id.ToString());
+                                                await BotCommands.SendMessageAsync(string.Format(Resource.TDMNewMessageOnThread, thread.Name), thread.Id.ToString());
                                                 Declare.WarnedThreads.Remove(thread.Id.ToString());
                                             }
                                         }
@@ -78,58 +79,55 @@ public static class TrackingDataManager
 
                                                 string formattedDeletionDate = localDeletionDate.ToString("dddd d MMMM yyyy à HH'h'mm", CultureInfo.GetCultureInfo("fr-FR"));
 
-                                                await BotCommands.SendMessageAsync(
-                                                    $"No message for 6 days. If no message is posted before {formattedDeletionDate} on the thread {thread.Name}, it will be deleted.\nRemember to delete the thread or delete the URL when you no longer need it!",
-                                                    thread.ParentChannel.Id.ToString());
+                                                await BotCommands.SendMessageAsync(string.Format(Resource.TDMNoMessage6Days, formattedDeletionDate, thread.Name),thread.ParentChannel.Id.ToString());
 
                                                 Declare.WarnedThreads.Add(thread.Id.ToString());
                                             }
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"Last activity : {lastActivity}");
-                                            Console.WriteLine("No activity for 7 days, deleting the thread...");
+                                            Console.WriteLine(string.Format(Resource.TDMLastActivity, lastActivity));
+                                            Console.WriteLine(Resource.TDMNoActivity);
                                             await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
                                             await thread.DeleteAsync();
-                                            Console.WriteLine("Thread deleted.");
+                                            Console.WriteLine(Resource.TDMThreadDeleted);
 
                                             Declare.WarnedThreads.Remove(thread.Id.ToString());
                                             continue;
                                         }
                                     }
 
-                                    Console.WriteLine($"Setting Aliases and GameStatus for the channel {channelCheck.Name}...");
+                                    Console.WriteLine(string.Format(Resource.TDMSettingsAliasesGamesStatus, channelCheck.Name));
                                     await SetAliasAndGameStatusAsync(guild, channel, urlTracker, silent);
-                                    Console.WriteLine($"Checking GameStatus for the channel {channelCheck.Name}...");
+                                    Console.WriteLine(string.Format(Resource.TDMCheckingGameStatus, channelCheck.Name));
                                     await CheckGameStatusAsync(guild, channel, urlTracker, silent);
-                                    Console.WriteLine($"Checking Items for the channel {channelCheck.Name}...");
+                                    Console.WriteLine(string.Format(Resource.TDMCheckingItems, channelCheck.Name));
                                     await GetTableDataAsync(guild, channel, urlSphereTracker, silent);
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"The channel no longer exists, deleting Channel information: {channel}.");
+                                    Console.WriteLine(string.Format(Resource.TDMChannelNoLongerExists, channel));
                                     await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
-                                    Console.WriteLine($"Deletion completed.");
+                                    Console.WriteLine(Resource.TDMDeletionCompleted);
                                 }
                             }
                         }
                         else
                         {
-                            Console.WriteLine($"Server not found {guild}, deleting the information.");
+                            Console.WriteLine(string.Format(Resource.TDMServerNotFound, guild));
                             await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guild);
-                            Console.WriteLine($"Deletion completed.");
+                            Console.WriteLine(Resource.TDMDeletionCompleted);
                         }
                     }
-                    Console.WriteLine("Waiting 5 minutes before the next check...");
+                    Console.WriteLine(Resource.TDMWaitingCheck);
                     await Task.Delay(300000, token);
                 }
             }
             catch (TaskCanceledException)
             {
-                Console.WriteLine("Tracking canceled.");
+                Console.WriteLine(Resource.TDMTrackingCanceled);
             }
         }, token);
-
     }
 
     public static async Task GetTableDataAsync(string guild, string channel, string url, bool silent)
@@ -186,7 +184,6 @@ public static class TrackingDataManager
         }
     }
 
-
     private static IEnumerable<string> StreamHtmlRows(StreamReader reader)
     {
         var sb = new StringBuilder();
@@ -213,7 +210,6 @@ public static class TrackingDataManager
             }
         }
     }
-
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
     {
@@ -245,18 +241,18 @@ public static class TrackingDataManager
                     {
                         return string.Empty;
                     }
-                    return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
+                    return string.Format(Resource.TDPMessageItems, item.Finder, item.Item, mentions, item.Receiver, item.Location);
                 }
             }
 
-            return $"{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location})";
+            return string.Format(Resource.TDPMessageItems, item.Finder, item.Item, mentions, item.Receiver, item.Location);
         }
 
         if (silent)
         {
             return string.Empty;
         }
-        return $"{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location})";
+        return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
     }
 
     private static readonly Regex TableRegex = new(@"<table.*?>(.*?)</table>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -340,7 +336,7 @@ public static class TrackingDataManager
         if (newGameStatuses.Count > 0)
         {
             await GameStatusCommands.AddOrReplaceGameStatusAsync(guild, channel, newGameStatuses);
-            await BotCommands.SendMessageAsync("Aliases Updated!", channel);
+            await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channel);
         }
 
         if (!silent)
@@ -452,7 +448,7 @@ public static class TrackingDataManager
                     {
                         if (isChanged)
                         {
-                            await BotCommands.SendMessageAsync($"@everyone\n{newEntry.Name} has completed their goal for this game: {newEntry.Game}!", channel);
+                            await BotCommands.SendMessageAsync(string.Format(Resource.TDMGoalComplete, newEntry.Name, newEntry.Game), channel);
                         }
                     }
                 }

@@ -1,7 +1,9 @@
-﻿using Discord;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using DotNetEnv;
+using System.Globalization;
 using System.Runtime.InteropServices;
 
 class Program
@@ -14,11 +16,13 @@ class Program
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
+        Thread.CurrentThread.CurrentUICulture = new CultureInfo(Declare.Language);
+
         DatabaseInitializer.InitializeDatabase();
 
         if (args.Length > 0 && args[0].ToLower() == "install")
         {
-            Console.WriteLine("Installation Mode Only");
+            Console.WriteLine(Resource.ProgramInstallationMode);
             await BackupRestoreClass.Backup();
             await InstallClass.Install(currentVersion, isWindows, isLinux);
             await BackupRestoreClass.RestoreBackup();
@@ -31,7 +35,7 @@ class Program
 
         if (currentVersion.Trim() == Declare.Version)
         {
-            Console.WriteLine($"Archipelago {Declare.Version} is already installed.");
+            Console.WriteLine(string.Format(Resource.ProgramArchipelagoAlreadyInstalled, Declare.Version));
         }
         else
         {
@@ -45,13 +49,16 @@ class Program
 
         string version = $"AST v{Declare.BotVersion} - Archipelago v{Declare.Version}";
 
-        Console.WriteLine($"Starting bot... {version}");
+        Console.WriteLine(string.Format(Resource.ProgramStartingBot, version));
 
         var config = new DiscordSocketConfig
         {
-            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
-            UseInteractionSnowflakeDate = false,
-            ResponseInternalTimeCheck = false
+            GatewayIntents =
+            GatewayIntents.Guilds |
+            GatewayIntents.GuildMessages | 
+            GatewayIntents.MessageContent, 
+                UseInteractionSnowflakeDate = false,
+                ResponseInternalTimeCheck = false
         };
 
         Declare.Client = new DiscordSocketClient(config);
@@ -86,7 +93,7 @@ class Program
     static async Task ReadyAsync()
     {
         await BotCommands.RegisterCommandsAsync();
-        Console.WriteLine("Bot is connected!");
+        Console.WriteLine(Resource.ProgramBotIsConnected);
         TrackingDataManager.StartTracking();
     }
 }

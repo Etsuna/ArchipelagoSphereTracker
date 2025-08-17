@@ -1,0 +1,1020 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ProgramArchipelagoAlreadyInstalled" xml:space="preserve">
+    <value>Archipelago {0} is already installed.</value>
+    <comment>Archipelago {Declare.Version} is already installed.</comment>
+  </data>
+  <data name="ProgramBotIsConnected" xml:space="preserve">
+    <value>Bot is connected!</value>
+    <comment>Bot is connected!</comment>
+  </data>
+  <data name="ProgramInstallationMode" xml:space="preserve">
+    <value>Installation Mode</value>
+    <comment>Installation Mode</comment>
+  </data>
+  <data name="ProgramStartingBot" xml:space="preserve">
+    <value>Starting bot... {0}</value>
+    <comment>Starting bot... {version}</comment>
+  </data>
+  <data name="TDMNoMessageFound" xml:space="preserve">
+    <value>No message found, using the thread creation date: {0}</value>
+    <comment>No message found, using the thread creation date: {lastActivity}</comment>
+  </data>
+  <data name="TDMChannelStillExists" xml:space="preserve">
+    <value>The channel still exists: {0}</value>
+    <comment>The channel still exists: {channelCheck.Name}</comment>
+  </data>
+  <data name="TDMNewMessageOnThread" xml:space="preserve">
+    <value>New message on the thread {0}, automatic deletion canceled.</value>
+    <comment>New message on the thread {thread.Name}, automatic deletion canceled.</comment>
+  </data>
+  <data name="TDMNoMessage6Days" xml:space="preserve">
+    <value>No message for 6 days. If no message is posted before {0} on the thread {1}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</value>
+    <comment>No message for 6 days. If no message is posted before {formattedDeletionDate} on the thread {thread.Name}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</comment>
+  </data>
+  <data name="TDMLastActivity" xml:space="preserve">
+    <value>Last activity : {0}</value>
+    <comment>Last activity : {lastActivity}</comment>
+  </data>
+  <data name="TDMNoActivity" xml:space="preserve">
+    <value>No activity for 7 days, deleting the thread...</value>
+    <comment>No activity for 7 days, deleting the thread...</comment>
+  </data>
+  <data name="TDMThreadDeleted" xml:space="preserve">
+    <value>Thread deleted.</value>
+    <comment>Thread deleted.</comment>
+  </data>
+  <data name="TDMSettingsAliasesGamesStatus" xml:space="preserve">
+    <value>Setting Aliases and GameStatus for the channel {0}...</value>
+    <comment>Setting Aliases and GameStatus for the channel {channelCheck.Name}...</comment>
+  </data>
+  <data name="TDMCheckingGameStatus" xml:space="preserve">
+    <value>Checking GameStatus for the channel {0}...</value>
+    <comment>Checking GameStatus for the channel {channelCheck.Name}...</comment>
+  </data>
+  <data name="TDMCheckingItems" xml:space="preserve">
+    <value>Checking Items for the channel {0}...</value>
+    <comment>Checking Items for the channel {channelCheck.Name}...</comment>
+  </data>
+  <data name="TDMChannelNoLongerExists" xml:space="preserve">
+    <value>The channel no longer exists, deleting Channel information: {0}.</value>
+    <comment>The channel no longer exists, deleting Channel information: {channel}.</comment>
+  </data>
+  <data name="TDMDeletionCompleted" xml:space="preserve">
+    <value>Deletion completed.</value>
+    <comment>Deletion completed.</comment>
+  </data>
+  <data name="TDMServerNotFound" xml:space="preserve">
+    <value>Server not found {0}, deleting the information.</value>
+    <comment>Server not found {guild}, deleting the information.</comment>
+  </data>
+  <data name="TDMWaitingCheck" xml:space="preserve">
+    <value>Waiting 5 minutes before the next check...</value>
+    <comment>Waiting 5 minutes before the next check...</comment>
+  </data>
+  <data name="TDMTrackingCanceled" xml:space="preserve">
+    <value>Tracking canceled.</value>
+    <comment>Tracking canceled.</comment>
+  </data>
+  <data name="TDMGoalComplete" xml:space="preserve">
+    <value>@everyone {0} has completed their goal for this game: {1}!</value>
+    <comment>@everyone {newEntry.Name} has completed their goal for this game: {newEntry.Game}!</comment>
+  </data>
+  <data name="TDMAliasUpdated" xml:space="preserve">
+    <value>Aliases Updated!</value>
+    <comment>Aliases Updated!</comment>
+  </data>
+  <data name="TDPMessageItems" xml:space="preserve">
+    <value>{0} sent {1} to {2} {3} ({4})</value>
+    <comment>{item.Finder} sent {item.Item} to {mentions} {item.Receiver} ({item.Location}</comment>
+  </data>
+  <data name="TDPMEssageItemsNoMention" xml:space="preserve">
+    <value>{0} sent {1} to {2} ({3})</value>
+    <comment>{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location}</comment>
+  </data>
+  <data name="AliasEmpty" xml:space="preserve">
+    <value>The alias cannot be empty.</value>
+    <comment>The alias cannot be empty.</comment>
+  </data>
+  <data name="AliasAlreadyRegistered" xml:space="preserve">
+    <value>The alias '{0}' is already registered for &lt;@{1}&gt;.</value>
+    <comment>The alias '{alias}' is already registered for &lt;@{userId}&gt;.</comment>
+  </data>
+  <data name="AliasAdded" xml:space="preserve">
+    <value>Alias added: {0} is now associated with &lt;@{1}&gt; and its recap has been generated.</value>
+    <comment>Alias added: {alias} is now associated with &lt;@{userId}&gt; and its recap has been generated.</comment>
+  </data>
+  <data name="AliasOrUrlNotRegistered" xml:space="preserve">
+    <value>No URL registered for this channel or no alias recorded.</value>
+    <comment>No URL registered for this channel or no alias recorded.</comment>
+  </data>
+  <data name="AliasNotRegistered" xml:space="preserve">
+    <value>No alias is registered.</value>
+    <comment>No alias is registered.</comment>
+  </data>
+  <data name="AliasNotFound" xml:space="preserve">
+    <value>No alias found for '{0}'.</value>
+    <comment>No alias found for '{alias}'.</comment>
+  </data>
+  <data name="AliasDeleted" xml:space="preserve">
+    <value>Alias '{0}' deleted.</value>
+    <comment>Alias '{alias}' deleted.</comment>
+  </data>
+  <data name="AliasOtherOwner" xml:space="preserve">
+    <value>You are not the owner of this alias: '{0}'. Deletion not performed.</value>
+    <comment>You are not the owner of this alias: '{alias}'. Deletion not performed.</comment>
+  </data>
+  <data name="NoUrlRegistered" xml:space="preserve">
+    <value>No URL registered for this channel.</value>
+    <comment>No URL registered for this channel.</comment>
+  </data>
+  <data name="AliasTable" xml:space="preserve">
+    <value>Here is the users table:</value>
+    <comment>Here is the users table:</comment>
+  </data>
+  <data name="AliasTableValue" xml:space="preserve">
+    <value>| {0} | {1} | Filler Item Skip: {2}</value>
+    <comment>| {user.Username} | {getReceiverAliase} | Useless Item Skip: {value.IsEnabled.ToString()}</comment>
+  </data>
+  <data name="ApworldWrongFile" xml:space="preserve">
+    <value>❌ You must send an APWORLD file!</value>
+    <comment>❌ You must send an APWORLD file!</comment>
+  </data>
+  <data name="ApworldFileSent" xml:space="preserve">
+    <value>File {0} sent.</value>
+    <comment>File {attachment.Filename} sent.</comment>
+  </data>
+  <data name="ApworldFileNotFound" xml:space="preserve">
+    <value>❌ No APWORLD file found!</value>
+    <comment>❌ No APWORLD file found!</comment>
+  </data>
+  <data name="NoFileSelected" xml:space="preserve">
+    <value>❌ No file selected.</value>
+    <comment>❌ No file selected.</comment>
+  </data>
+  <data name="ApworldList" xml:space="preserve">
+    <value>List of apworld</value>
+    <comment>List of apworld</comment>
+  </data>
+  <data name="ApworldNotFound" xml:space="preserve">
+    <value>❌ No APWORLD file found!</value>
+    <comment>❌ No APWORLD file found!</comment>
+  </data>
+  <data name="ApworldCustomFolderNotFound" xml:space="preserve">
+    <value>❌ custom_worlds folder not found.</value>
+    <comment>❌ custom_worlds folder not found.</comment>
+  </data>
+  <data name="BotCommandFailed" xml:space="preserve">
+    <value>Command failed: {0}</value>
+    <comment>Command failed: {result.ErrorReason}</comment>
+  </data>
+  <data name="BotChannelNotFound" xml:space="preserve">
+    <value>Channel not found ({0})</value>
+    <comment>Channel not found ({channelIdStr})</comment>
+  </data>
+  <data name="BotChannelId" xml:space="preserve">
+    <value>Channel : {0} (ID: {1})</value>
+    <comment>Channel : {textChannel.Name} (ID: {textChannel.Id})</comment>
+  </data>
+  <data name="BotSendingError" xml:space="preserve">
+    <value>Sending error: {0}</value>
+    <comment>Sending error: {ex.Message}</comment>
+  </data>
+  <data name="BotCommandOutsideServer" xml:space="preserve">
+    <value>This command can’t be executed outside of a server.</value>
+    <comment>This command can’t be executed outside of a server.</comment>
+  </data>
+  <data name="BotCommandChannel" xml:space="preserve">
+    <value>This command must be executed in a channel.</value>
+    <comment>This command must be executed in a channel.</comment>
+  </data>
+  <data name="BotCommandThread" xml:space="preserve">
+    <value>This command must be executed in a thread</value>
+    <comment>This command must be executed in a thread</comment>
+  </data>
+  <data name="GenerationError" xml:space="preserve">
+    <value>❌ **Error** : {0}</value>
+    <comment>❌ **Error** : {e.Data}</comment>
+  </data>
+  <data name="GenerationTimeout" xml:space="preserve">
+    <value>⏳ Timeout: Process stopped after 10 minutes.</value>
+    <comment>⏳ Timeout: Process stopped after 10 minutes.</comment>
+  </data>
+  <data name="GenerationOutputFolderNotExists" xml:space="preserve">
+    <value>❌ The output folder {0} does not exist.</value>
+    <comment>❌ The output folder {outputFolder} does not exist.</comment>
+  </data>
+  <data name="GenerationZipNotFound" xml:space="preserve">
+    <value>❌ No ZIP file found.</value>
+    <comment>❌ No ZIP file found.</comment>
+  </data>
+  <data name="GenerationTestSuccessful" xml:space="preserve">
+    <value>✅ Test generation successful!</value>
+    <comment>✅ Test generation successful!</comment>
+  </data>
+  <data name="GenerationWrongZipFormat" xml:space="preserve">
+    <value>❌ You must send a ZIP file containing the YAML files!</value>
+    <comment>❌ You must send a ZIP file containing the YAML files!</comment>
+  </data>
+  <data name="GenerationNotAYamlFileIntoZip" xml:space="preserve">
+    <value>ℹ️ Info: {0} is not a YAML file. It was deleted before generation.</value>
+    <comment>ℹ️ Info: {fileName} is not a YAML file. It was deleted before generation.</comment>
+  </data>
+  <data name="GenerationNoYamlIntoZip" xml:space="preserve">
+    <value>❌ No YAML file found in the archive!</value>
+    <comment>❌ No YAML file found in the archive!</comment>
+  </data>
+  <data name="GenerationNoYaml" xml:space="preserve">
+    <value>❌ No YAML file found!</value>
+    <comment>❌ No YAML file found!</comment>
+  </data>
+  <data name="GenerationLog" xml:space="preserve">
+    <value>🟢 **Log** : {0}</value>
+    <comment>🟢 **Log** : {e.Data}</comment>
+  </data>
+  <data name="HelperNoId" xml:space="preserve">
+    <value>Receiver ID not specified.</value>
+    <comment>Receiver ID not specified.</comment>
+  </data>
+  <data name="HelperPatch" xml:space="preserve">
+    <value>Patch for {0}, {1}</value>
+    <comment>Patch for {userId}, {getNameAndPatch}</comment>
+  </data>
+  <data name="HelperNoPatch" xml:space="preserve">
+    <value>No patch for this user.</value>
+    <comment>No patch for this user.</comment>
+  </data>
+  <data name="HelperInfos" xml:space="preserve">
+    <value>Infos:</value>
+    <comment>Infos:</comment>
+  </data>
+  <data name="HelperRoom" xml:space="preserve">
+    <value>Room: {0}</value>
+    <comment>Room: {room}</comment>
+  </data>
+  <data name="HelperUrlTracker" xml:space="preserve">
+    <value>Tracker: {0}</value>
+    <comment>Tracker: {urlTracker}</comment>
+  </data>
+  <data name="HelperUrlSphereTracker" xml:space="preserve">
+    <value>SphereTracker: {0}</value>
+    <comment>SphereTracker: {urlSphereTracker}</comment>
+  </data>
+  <data name="HelperSilent" xml:space="preserve">
+    <value>Silent: {0}</value>
+    <comment>Silent: {silent}</comment>
+  </data>
+  <data name="HelperPort" xml:space="preserve">
+    <value>Port: {0}</value>
+    <comment>Port: {port}</comment>
+  </data>
+  <data name="HelperPortNotFound" xml:space="preserve">
+    <value>Port not found.</value>
+    <comment>Port not found.</comment>
+  </data>
+  <data name="HelperGameStatusWithSilent" xml:space="preserve">
+    <value>Status for all games, Thread is silent, Only for added aliases:</value>
+    <comment>Status for all games, Thread is silent, Only for added aliases:</comment>
+  </data>
+  <data name="HelperGameStatusInProgress" xml:space="preserve">
+    <value>**{0} - {1} - {2}%**</value>
+    <comment>**{game.Name} - {game.Game} - {game.Percent}%**</comment>
+  </data>
+  <data name="HelperGameStatusDone" xml:space="preserve">
+    <value>~~{0} - {1} - {2}%~~</value>
+    <comment>~~{game.Name} - {game.Game} - {game.Percent}%~~</comment>
+  </data>
+  <data name="HelperItemsFor" xml:space="preserve">
+    <value>Items for {0}:</value>
+    <comment>Items for {userId}:</comment>
+  </data>
+  <data name="HelperNoItems" xml:space="preserve">
+    <value>No items</value>
+    <comment>No items</comment>
+  </data>
+  <data name="RACNoUrlOrAlias" xml:space="preserve">
+    <value>No URL registered for this channel or no alias recorded.</value>
+    <comment>No URL registered for this channel or no alias recorded.</comment>
+  </data>
+  <data name="RACNoAliasRegistered" xml:space="preserve">
+    <value>You don’t have any registered alias. Use the /add-alias command to automatically generate a recap file.</value>
+    <comment>You don’t have any registered alias. Use the /add-alias command to automatically generate a recap file.</comment>
+  </data>
+  <data name="RACUserNotExists" xml:space="preserve">
+    <value>The user &lt;@{0}&gt; does not exist.</value>
+    <comment>The user &lt;@{userId}&gt; does not exist.</comment>
+  </data>
+  <data name="RACUserNoRegistredWithAlias" xml:space="preserve">
+    <value>The user &lt;@{0}&gt; is not registered with the alias: {1}.</value>
+    <comment>The user &lt;@{userId}&gt; is not registered with the alias: {alias}.</comment>
+  </data>
+  <data name="RACBuildMessageError" xml:space="preserve">
+    <value>Internal error: buildMessage is null even though a recap was requested.</value>
+    <comment>Internal error: buildMessage is null even though a recap was requested.</comment>
+  </data>
+  <data name="RACCleanAll" xml:space="preserve">
+    <value>Clean All for &lt;@{0}&gt; completed.</value>
+    <comment>Clean All for &lt;@{userId}&gt; completed.</comment>
+  </data>
+  <data name="RACClean" xml:space="preserve">
+    <value>Clean for Alias {0} completed</value>
+    <comment>Clean for Alias {alias} completed</comment>
+  </data>
+  <data name="RACDetailsForUser" xml:space="preserve">
+    <value>Details for &lt;@{0}&gt;</value>
+    <comment>Details for &lt;@{userId}&gt;</comment>
+  </data>
+  <data name="RACBuildMessage" xml:space="preserve">
+    <value>**{0}** : {1}</value>
+    <comment>**{sub.Key}** : {grouped}</comment>
+  </data>
+  <data name="RACNoList" xml:space="preserve">
+    <value>There is no list.</value>
+    <comment>There is no list.</comment>
+  </data>
+  <data name="SCDeleteAliasDescription" xml:space="preserve">
+    <value>Delete Alias</value>
+    <comment>Delete Alias</comment>
+  </data>
+  <data name="SCAddAliasDescription" xml:space="preserve">
+    <value>Add Alias</value>
+    <comment>Add Alias</comment>
+  </data>
+  <data name="SCAddAliasSkipMentionDescription" xml:space="preserve">
+    <value>Set if you want to skip useless mention (filler Items)</value>
+    <comment>Set if you want to skip useless mention (filler Items)</comment>
+  </data>
+  <data name="SCChooseAnAlias" xml:space="preserve">
+    <value>Choose an alias</value>
+    <comment>Choose an alias</comment>
+  </data>
+  <data name="SCAddUrlDescription" xml:space="preserve">
+    <value>Add a URL and create a thread.</value>
+    <comment>Add a URL and create a thread.</comment>
+  </data>
+  <data name="SCUrlToTrack" xml:space="preserve">
+    <value>The URL to track</value>
+    <comment>The URL to track</comment>
+  </data>
+  <data name="SCThreadNameDescription" xml:space="preserve">
+    <value>Name of the thread to create</value>
+    <comment>Name of the thread to create</comment>
+  </data>
+  <data name="SCThreadTypeDescription" xml:space="preserve">
+    <value>Specify if the thread is public or private</value>
+    <comment>Specify if the thread is public or private</comment>
+  </data>
+  <data name="SCThreadPublic" xml:space="preserve">
+    <value>Public</value>
+    <comment>Public</comment>
+  </data>
+  <data name="SCThreadPrivate" xml:space="preserve">
+    <value>Private</value>
+    <comment>Private</comment>
+  </data>
+  <data name="SCSilentOption" xml:space="preserve">
+    <value>silent</value>
+    <comment>silent</comment>
+  </data>
+  <data name="SCSilentDescription" xml:space="preserve">
+    <value>Only send message when an alias is set</value>
+    <comment>Only send message when an alias is set</comment>
+  </data>
+  <data name="SCThreadName" xml:space="preserve">
+    <value>thread-name</value>
+    <comment>thread-name</comment>
+  </data>
+  <data name="SCThreadType" xml:space="preserve">
+    <value>thread-type</value>
+    <comment>thread-type</comment>
+  </data>
+  <data name="SCAddAliasSkipMention" xml:space="preserve">
+    <value>filler_items_skip_mention</value>
+    <comment>filler_items_skip_mention</comment>
+  </data>
+  <data name="SCGetAliasesDescription" xml:space="preserve">
+    <value>List all Aliases</value>
+    <comment>List all Aliases</comment>
+  </data>
+  <data name="SCDeleteUrlDescription" xml:space="preserve">
+    <value>Delete Url, clean Aliases and Recap</value>
+    <comment>Delete Url, clean Aliases and Recap</comment>
+  </data>
+  <data name="SCStatusGameListDescription" xml:space="preserve">
+    <value>Status for all games</value>
+    <comment>Status for all games</comment>
+  </data>
+  <data name="SCRecapAllDescription" xml:space="preserve">
+    <value>Recap list of items for all games</value>
+    <comment>Recap list of items for all games</comment>
+  </data>
+  <data name="SCInfoDescription" xml:space="preserve">
+    <value>Get all infos for your Archipelago</value>
+    <comment>Get all infos for your Archipelago</comment>
+  </data>
+  <data name="SCGetPatchDescription" xml:space="preserve">
+    <value>Get patch for alias</value>
+    <comment>Get patch for alias</comment>
+  </data>
+  <data name="SCRecapDescription" xml:space="preserve">
+    <value>Recap list of items for a specific game</value>
+    <comment>Recap list of items for a specific game</comment>
+  </data>
+  <data name="RCRecapAndCleanDescription" xml:space="preserve">
+    <value>Recap and clean list of items for a specific game</value>
+    <comment>Recap and clean list of items for a specific game</comment>
+  </data>
+  <data name="SCCleanDescription" xml:space="preserve">
+    <value>Clean list of items for a specific game</value>
+    <comment>Clean list of items for a specific game</comment>
+  </data>
+  <data name="SCCleanAllDescription" xml:space="preserve">
+    <value>Clean all recap items</value>
+    <comment>Clean all recap items</comment>
+  </data>
+  <data name="SCGetHintFromFinderDescription" xml:space="preserve">
+    <value>Get a hint from finder</value>
+    <comment>Get a hint from finder</comment>
+  </data>
+  <data name="SCGetHintForReveiverDescription" xml:space="preserve">
+    <value>Get a hint for receiver</value>
+    <comment>Get a hint for receiver</comment>
+  </data>
+  <data name="SCListItemDescription" xml:space="preserve">
+    <value>List all items for alias</value>
+    <comment>List all items for alias</comment>
+  </data>
+  <data name="SCListByLineDescription" xml:space="preserve">
+    <value>Display items line by line (true) or comma separated (false)</value>
+    <comment>Display items line by line (true) or comma separated (false)</comment>
+  </data>
+  <data name="SCListYamlsDescription" xml:space="preserve">
+    <value>List all YAML files for the channel</value>
+    <comment>List all YAML files for the channel</comment>
+  </data>
+  <data name="SCListApworldDescription" xml:space="preserve">
+    <value>List all APWorlds</value>
+    <comment>List all APWorlds</comment>
+  </data>
+  <data name="SCApworldInfoDescription" xml:space="preserve">
+    <value>List info for specific APWorld</value>
+    <comment>List info for specific APWorld</comment>
+  </data>
+  <data name="SCApworldInfoChoiceDescription" xml:space="preserve">
+    <value>Choose an APWorld</value>
+    <comment>Choose an APWorld</comment>
+  </data>
+  <data name="SCBackupYamlDescription" xml:space="preserve">
+    <value>Backup all YAMLs for the channel</value>
+    <comment>Backup all YAMLs for the channel</comment>
+  </data>
+  <data name="SCBackupApworldDescription" xml:space="preserve">
+    <value>Backup all APWorlds for the channel</value>
+    <comment>Backup all APWorlds for the channel</comment>
+  </data>
+  <data name="SCDownloadYamlTemplateDescription" xml:space="preserve">
+    <value>Download a YAML template</value>
+    <comment>Download a YAML template</comment>
+  </data>
+  <data name="SCTemplateDescription" xml:space="preserve">
+    <value>Choose a YAML file to download</value>
+    <comment>Choose a YAML file to download</comment>
+  </data>
+  <data name="SCDeleteYamlDescription" xml:space="preserve">
+    <value>Delete a specific YAML file</value>
+    <comment>Delete a specific YAML file</comment>
+  </data>
+  <data name="SCDeleteYamlChooseDescription" xml:space="preserve">
+    <value>Choose a YAML file to delete</value>
+    <comment>Choose a YAML file to delete</comment>
+  </data>
+  <data name="SCCleanYamlDescription" xml:space="preserve">
+    <value>Clean all YAMLs in the channel</value>
+    <comment>Clean all YAMLs in the channel</comment>
+  </data>
+  <data name="SCSendYamlDescription" xml:space="preserve">
+    <value>Send or replace a YAML file for generation</value>
+    <comment>Send or replace a YAML file for generation</comment>
+  </data>
+  <data name="SCSendYamlChooseDescription" xml:space="preserve">
+    <value>Upload a YAML file</value>
+    <comment>Upload a YAML file</comment>
+  </data>
+  <data name="SCGenerateWithZipDescription" xml:space="preserve">
+    <value>Generate multiworld from a ZIP</value>
+    <comment>Generate multiworld from a ZIP</comment>
+  </data>
+  <data name="SCGenerateWithZipChooseDescription" xml:space="preserve">
+    <value>Upload a ZIP containing YAMLs</value>
+    <comment>Upload a ZIP containing YAMLs</comment>
+  </data>
+  <data name="SCSendApworldDescription" xml:space="preserve">
+    <value>Send or replace an APWorld file</value>
+    <comment>Send or replace an APWorld file</comment>
+  </data>
+  <data name="SCSendApworldChooseDescription" xml:space="preserve">
+    <value>Upload an APWorld file</value>
+    <comment>Upload an APWorld file</comment>
+  </data>
+  <data name="SCGenerateDescription" xml:space="preserve">
+    <value>Generate multiworld from existing YAMLs</value>
+    <comment>Generate multiworld from existing YAMLs</comment>
+  </data>
+  <data name="SCTestGenerateDescription" xml:space="preserve">
+    <value>Test generation of multiworld from existing YAMLs</value>
+    <comment>Test generation of multiworld from existing YAMLs</comment>
+  </data>
+  <data name="URLEmpty" xml:space="preserve">
+    <value>Empty URL not allowed.</value>
+    <comment>Empty URL not allowed.</comment>
+  </data>
+  <data name="URLNotValid" xml:space="preserve">
+    <value>The link is incorrect; use the room URL.</value>
+    <comment>The link is incorrect; use the room URL.</comment>
+  </data>
+  <data name="UrlCanceled" xml:space="preserve">
+    <value>Sphere_Tracker, Tracker, or the port not found. Addition canceled.</value>
+    <comment>Sphere_Tracker, Tracker, or the port not found. Addition canceled.</comment>
+  </data>
+  <data name="UrlThredCreated" xml:space="preserve">
+    <value>The thread has been created: {0}, wait for the bot to be ready.</value>
+    <comment>The thread has been created: {thread.Name}, wait for the bot to be ready.</comment>
+  </data>
+  <data name="UrlPrivateThreadUserNotFound" xml:space="preserve">
+    <value>User not found for the private thread.</value>
+    <comment>User not found for the private thread.</comment>
+  </data>
+  <data name="UrlGamePatch" xml:space="preserve">
+    <value>Name: {0} | Download: {1}</value>
+    <comment>Name: {gameAlias} | Download: {downloadLink}</comment>
+  </data>
+  <data name="URLBotReady" xml:space="preserve">
+    <value>BOT Ready, GL&amp;HF!</value>
+    <comment>BOT Ready!</comment>
+  </data>
+  <data name="URLSet" xml:space="preserve">
+    <value>URL set to {0}. Messages configured for this channel. Please wait while the program retrieves all aliases.</value>
+    <comment>URL set to {newUrl}. Messages configured for this channel. Please wait while the program retrieves all aliases.</comment>
+  </data>
+  <data name="URLAlreadySet" xml:space="preserve">
+    <value>URL already set for this channel. Remove the URL before adding a new one.</value>
+    <comment>URL already set for this channel. Remove the URL before adding a new one.</comment>
+  </data>
+  <data name="URLDeleted" xml:space="preserve">
+    <value>URL deleted.</value>
+    <comment>URL deleted.</comment>
+  </data>
+  <data name="YamlFileNotExists" xml:space="preserve">
+    <value>❌ The file does not exist!</value>
+    <comment>❌ The file does not exist!</comment>
+  </data>
+  <data name="YamlWrongFile" xml:space="preserve">
+    <value>❌ You must send a YAML file!</value>
+    <comment>❌ You must send a YAML file!</comment>
+  </data>
+  <data name="YamlFileSent" xml:space="preserve">
+    <value>File {0} sent.</value>
+    <comment>File {attachment.Filename} sent.</comment>
+  </data>
+  <data name="YamlFileDownloadFailed" xml:space="preserve">
+    <value>❌ File download failed.</value>
+    <comment>❌ File download failed.</comment>
+  </data>
+  <data name="YamlDeleteAllFiles" xml:space="preserve">
+    <value>All YAML files have been deleted.</value>
+    <comment>All YAML files have been deleted.</comment>
+  </data>
+  <data name="YamlDeleteAllFilesError" xml:space="preserve">
+    <value>Error while deleting the files: {0}</value>
+    <comment>Error while deleting the files: {ex.Message}</comment>
+  </data>
+  <data name="YamlNotFound" xml:space="preserve">
+    <value>No YAML file found.</value>
+    <comment>No YAML file found.</comment>
+  </data>
+  <data name="YamlFileDeleted" xml:space="preserve">
+    <value>✅ The file {0} has been successfully deleted.</value>
+    <comment>✅ The file {fileSelected} has been successfully deleted.</comment>
+  </data>
+  <data name="YamlFileDeletedError" xml:space="preserve">
+    <value>❌ Error while deleting the file {0}: {1}</value>
+    <comment>❌ Error while deleting the file {fileSelected}: {ex.Message}</comment>
+  </data>
+  <data name="YamlDeleteFileNotExists" xml:space="preserve">
+    <value>❌ The file {0} does not exist.</value>
+    <comment>❌ The file {fileSelected} does not exist.</comment>
+  </data>
+  <data name="YamlNoYaml" xml:space="preserve">
+    <value>❌ No YAML file found!</value>
+    <comment>❌ No YAML file found!</comment>
+  </data>
+  <data name="YamlList" xml:space="preserve">
+    <value>List of Yamls:</value>
+    <comment>List of Yamls:</comment>
+  </data>
+  <data name="BRExternalFolderNotExists" xml:space="preserve">
+    <value>The external folder does not exist, unable to create a backup.</value>
+    <comment>The external folder does not exist, unable to create a backup.</comment>
+  </data>
+  <data name="BRMoved" xml:space="preserve">
+    <value>Moved: {0} → {1}</value>
+    <comment>Moved: {nomFichier} → {cheminDestination}</comment>
+  </data>
+  <data name="BRError" xml:space="preserve">
+    <value>Error on {0}: {1}</value>
+    <comment>Error on {fichier}: {ex.Message}</comment>
+  </data>
+  <data name="BRRomBackupCompleted" xml:space="preserve">
+    <value>Rom Backup completed</value>
+    <comment>Rom Backup completed</comment>
+  </data>
+  <data name="BRCustomWorldBackupCompleted" xml:space="preserve">
+    <value>Custom_Worlds Backup completed.</value>
+    <comment>Custom_Worlds Backup completed.</comment>
+  </data>
+  <data name="BRFileMoved" xml:space="preserve">
+    <value>File moved: {0}</value>
+    <comment>File moved: {nomFichier}</comment>
+  </data>
+  <data name="BRFolderMoved" xml:space="preserve">
+    <value>Folder moved: {0}</value>
+    <comment>Folder moved: {nomDossier}</comment>
+  </data>
+  <data name="BRBackupFolderNotExists" xml:space="preserve">
+    <value>The backup folder does not exist, unable to restore.</value>
+    <comment>The backup folder does not exist, unable to restore.</comment>
+  </data>
+  <data name="BRRestoreMoved" xml:space="preserve">
+    <value>Restored: {0} → {1}</value>
+    <comment>Restored: {nomFichier} → {cheminDestination}</comment>
+  </data>
+  <data name="BRFileRestored" xml:space="preserve">
+    <value>File restored: {0}</value>
+    <comment>File restored: {nomFichier}</comment>
+  </data>
+  <data name="BRFolderRestored" xml:space="preserve">
+    <value>Folder restored: {0}</value>
+    <comment>Folder restored: {nomDossier}</comment>
+  </data>
+  <data name="CAGeneratingYamlTemplates" xml:space="preserve">
+    <value>📦 Generating YAML templates...</value>
+    <comment>📦 Generating YAML templates...</comment>
+  </data>
+  <data name="CAEmbededError" xml:space="preserve">
+    <value>❌ Unable to find the embedded resource: {0}</value>
+    <comment>❌ Unable to find the embedded resource: {GenerateTemplatesPath}</comment>
+  </data>
+  <data name="CAGenerateTemplateApworldError" xml:space="preserve">
+    <value>❌ The file 'generate_templates.apworld' was not written correctly.</value>
+    <comment>❌ The file 'generate_templates.apworld' was not written correctly.</comment>
+  </data>
+  <data name="CAFileCopied" xml:space="preserve">
+    <value>✅ File copied to: {0}</value>
+    <comment>✅ File copied to: {destinationPath}</comment>
+  </data>
+  <data name="CALauncherNotFound" xml:space="preserve">
+    <value>❌ Launcher not found: {0}</value>
+    <comment>❌ Launcher not found: {launcherPath}</comment>
+  </data>
+  <data name="CAErrorProcess" xml:space="preserve">
+    <value>❌ ERROR: Failed to start the process.</value>
+    <comment>❌ ERROR: Failed to start the process.</comment>
+  </data>
+  <data name="CAYamlGeneratedSuccessfully" xml:space="preserve">
+    <value>✅ YAML generated successfully!</value>
+    <comment>✅ YAML generated successfully!</comment>
+  </data>
+  <data name="CAYamlGeneratedError" xml:space="preserve">
+    <value>❌ ERROR: YAML generation failed (code {0})</value>
+    <comment>❌ ERROR: YAML generation failed (code {process.ExitCode})</comment>
+  </data>
+  <data name="CAException" xml:space="preserve">
+    <value>❌ Exception : {0} - {1}</value>
+    <comment>❌ Exception : {ex.GetType().Name} - {ex.Message}</comment>
+  </data>
+  <data name="CAGeneratedItemJson" xml:space="preserve">
+    <value>📦 Generating Items Category JSON templates...</value>
+    <comment>📦 Generating Items Category JSON templates...</comment>
+  </data>
+  <data name="CAScanItemsApworldError" xml:space="preserve">
+    <value>❌ The file 'scan_items.apworld' was not written correctly.</value>
+    <comment>❌ The file 'scan_items.apworld' was not written correctly.</comment>
+  </data>
+  <data name="CAJsonNotfound" xml:space="preserve">
+    <value>⚠️ No JSON file found for synchronization.</value>
+    <comment>⚠️ No JSON file found for synchronization.</comment>
+  </data>
+  <data name="InstallNewVersion" xml:space="preserve">
+    <value>New version detected {0}</value>
+    <comment>New version detected {Version}</comment>
+  </data>
+  <data name="InstallNewVersionWithPrevious" xml:space="preserve">
+    <value>New version detected {0} (previous: {1})</value>
+    <comment>New version detected {Version} (previous: {currentVersion})</comment>
+  </data>
+  <data name="InstallDeleteExtractPath" xml:space="preserve">
+    <value>The folder {0} already exists, it will be deleted.</value>
+    <comment>The folder {ExtractPath} already exists, it will be deleted.</comment>
+  </data>
+  <data name="InstallCleanTempExtractPath" xml:space="preserve">
+    <value>Clean {0}</value>
+    <comment>Clean {TempExtractPath}</comment>
+  </data>
+  <data name="InstallImportApworldsDatabase" xml:space="preserve">
+    <value>Importing ApWorlds into the database...</value>
+    <comment>Importing ApWorlds into the database...</comment>
+  </data>
+  <data name="InstallUpdateComplete" xml:space="preserve">
+    <value>Update completed!</value>
+    <comment>Update completed!</comment>
+  </data>
+  <data name="InstallDLInnoExtractor" xml:space="preserve">
+    <value>Downloading {0}...</value>
+    <comment>Downloading {DownloadInnoExtractor}...</comment>
+  </data>
+  <data name="InstallDLInnoExtractorError" xml:space="preserve">
+    <value>Error: Unable to download InnoExtractor (code {0}).</value>
+    <comment>Error: Unable to download InnoExtractor (code {responseDownloadInnoExtractor.StatusCode}).</comment>
+  </data>
+  <data name="InstallDLTempExtraction" xml:space="preserve">
+    <value>Temporary extraction...</value>
+    <comment>Temporary extraction...</comment>
+  </data>
+  <data name="InstallDLTempExtractionError" xml:space="preserve">
+    <value>Error: Unable to find the extracted folder!</value>
+    <comment>Error: Unable to find the extracted folder!</comment>
+  </data>
+  <data name="InstallExtractingArchipelago" xml:space="preserve">
+    <value>Extracting Archipelago...</value>
+    <comment>Extracting Archipelago...</comment>
+  </data>
+  <data name="InstallUnableStartInnoExtractProcess" xml:space="preserve">
+    <value>❌ Unable to start the innoextract process.</value>
+    <comment>❌ Unable to start the innoextract process.</comment>
+  </data>
+  <data name="InstallInnoExtractError" xml:space="preserve">
+    <value>❌ Error during extraction (code {0}):</value>
+    <comment>❌ Error during extraction (code {proc.ExitCode}):</comment>
+  </data>
+  <data name="InstallInnoExtractorSuccessful" xml:space="preserve">
+    <value>✅ Extraction successful.</value>
+    <comment>✅ Extraction successful.</comment>
+  </data>
+  <data name="InstallInnoExtractorException" xml:space="preserve">
+    <value>❌ Exception while running innoextract: {0}</value>
+    <comment>❌ Exception while running innoextract: {ex.Message}</comment>
+  </data>
+  <data name="InstallMoveArchipelagoFiles" xml:space="preserve">
+    <value>Moving Archipelago installer files...</value>
+    <comment>Moving Archipelago installer files...</comment>
+  </data>
+  <data name="InstallMoveArchipelagoFilesSuccessful" xml:space="preserve">
+    <value>✅ Files successfully moved from 'app\' to the root folder.</value>
+    <comment>✅ Files successfully moved from 'app\\' to the root folder.</comment>
+  </data>
+  <data name="InstallMoveArchipelagoFilesFailed" xml:space="preserve">
+    <value>⚠️ Folder 'app\' not found after extraction.</value>
+    <comment>⚠️ Folder 'app\\' not found after extraction.</comment>
+  </data>
+  <data name="InstallVcRedistX64" xml:space="preserve">
+    <value>Installing vc_redist.x64...</value>
+    <comment>Installing vc_redist.x64...</comment>
+  </data>
+  <data name="InstallVcRedistX64Successful" xml:space="preserve">
+    <value>✅ VC++ Redistributable installed successfully (silent mode).</value>
+    <comment>✅ VC++ Redistributable installed successfully (silent mode).</comment>
+  </data>
+  <data name="InstallVcRedistX64Failed" xml:space="preserve">
+    <value>❌ VC++ installation error (code {0}).</value>
+    <comment>❌ VC++ installation error (code {process.ExitCode}).</comment>
+  </data>
+  <data name="InstallVcRedistX64Exception" xml:space="preserve">
+    <value>❌ Exception during VC++ installation: {0}</value>
+    <comment>❌ Exception during VC++ installation: {ex.Message}</comment>
+  </data>
+  <data name="InstallVcRedistX64NotFound" xml:space="preserve">
+    <value>⚠️ The file vc_redist.x64 was not found.</value>
+    <comment>⚠️ The file vc_redist.x64 was not found.</comment>
+  </data>
+  <data name="InstallVcRedistX64AlreadyInstalled" xml:space="preserve">
+    <value>✅ VC++ Redistributable already installed, no action needed.</value>
+    <comment>✅ VC++ Redistributable already installed, no action needed.</comment>
+  </data>
+  <data name="InstallDLArchipelagoWindows" xml:space="preserve">
+    <value>Downloading {0}...</value>
+    <comment>Downloading {DownloadWinUrl}...</comment>
+  </data>
+  <data name="InstallDLArchipelagoError" xml:space="preserve">
+    <value>Error: Unable to download Archipelago (code {0}).</value>
+    <comment>Error: Unable to download Archipelago (code {responseDownloadWinUrl.StatusCode}).</comment>
+  </data>
+  <data name="InstallDlArchipelagoLinux" xml:space="preserve">
+    <value>Downloading {0}...</value>
+    <comment>Downloading {DownloadLinuxUrl}...</comment>
+  </data>
+  <data name="InstallFreeMemory" xml:space="preserve">
+    <value>💾 RAM after cleanup: {0} MB</value>
+    <comment>💾 RAM after cleanup: {proc.WorkingSet64 / 1024 / 1024} MB</comment>
+  </data>
+  <data name="BotCommandDone" xml:space="preserve">
+    <value>✅ Done.</value>
+    <comment>✅ Done.</comment>
+  </data>
+  <data name="AddOrEditUrlChannelAsyncSuccessful" xml:space="preserve">
+    <value>URL and other information successfully added or updated.</value>
+    <comment>URL and other information successfully added or updated.</comment>
+  </data>
+  <data name="AddOrEditUrlChannelPathAsyncError" xml:space="preserve">
+    <value>Error: No Guild/Channel record found. Unable to add the patch.</value>
+    <comment>Error: No Guild/Channel record found. Unable to add the patch.</comment>
+  </data>
+  <data name="GetPatchAndGameNameForAliasNoRecordFound" xml:space="preserve">
+    <value>No record found.</value>
+    <comment>No record found.</comment>
+  </data>
+  <data name="SendAllPatchesForChannelAsyncNoChannelId" xml:space="preserve">
+    <value>No channel ID found for this GuildId and ChannelId.</value>
+    <comment>No channel ID found for this GuildId and ChannelId.</comment>
+  </data>
+  <data name="SendAllPatchesForChannelAsyncPathLink" xml:space="preserve">
+    <value>Patch for {0}, {1}: {2}</value>
+    <comment>Patch for {alias}, {gameName}: {patch}</comment>
+  </data>
+  <data name="DeleteChannelDataAsyncDeleteSuccessful" xml:space="preserve">
+    <value>Deletion successful!</value>
+    <comment>Deletion successful!</comment>
+  </data>
+  <data name="DeleteChannelDataByGuildIdAsyncDeletionGuildIdSuccessful" xml:space="preserve">
+    <value>Deletion by GuildId successful!</value>
+    <comment>Deletion by GuildId successful!</comment>
+  </data>
+  <data name="IsFillerAsyncNoResultFound" xml:space="preserve">
+    <value>No result found for the game '{0}' and the item '{1}'.</value>
+    <comment>No result found for the game '{gameName}' and the item '{itemName}'.</comment>
+  </data>
+  <data name="SyncItemsFromJsonAsyncSyncComplete" xml:space="preserve">
+    <value>✅ Synchronization completed successfully.</value>
+    <comment>✅ Synchronization completed successfully.</comment>
+  </data>
+  <data name="GetUserAliasesWithItemsAsyncNoItem" xml:space="preserve">
+    <value>No item.</value>
+    <comment>No item.</comment>
+  </data>
+  <data name="GetUserAliasesWithItemsAsyncNoAlias" xml:space="preserve">
+    <value>No alias found for the user: {0}</value>
+    <comment>No alias found for the user: {userId}</comment>
+  </data>
+  <data name="LanguageYes" xml:space="preserve">
+    <value>Yes</value>
+    <comment>Yes</comment>
+  </data>
+  <data name="LanguageNo" xml:space="preserve">
+    <value>No</value>
+    <comment>No</comment>
+  </data>
+  <data name="HintNoAlias" xml:space="preserve">
+    <value>Alias not specified.</value>
+    <comment>Alias not specified.</comment>
+  </data>
+  <data name="HintNoUrl" xml:space="preserve">
+    <value>No URL registered for this channel or no hint.</value>
+    <comment>No URL registered for this channel or no hint.</comment>
+  </data>
+  <data name="HintItemFor" xml:space="preserve">
+    <value>Item for {0}:</value>
+    <comment>Item for {0}:</comment>
+  </data>
+  <data name="HintNoHintFoundForReceiver" xml:space="preserve">
+    <value>No hint found for this receiver</value>
+    <comment>No hint found for this receiver</comment>
+  </data>
+  <data name="HintItemFrom" xml:space="preserve">
+    <value>Item from {0}:</value>
+    <comment>Item from {0}:</comment>
+  </data>
+  <data name="HintNoHintFoundFromFinder" xml:space="preserve">
+    <value>No hint found for this finder</value>
+    <comment>No hint found for this finder</comment>
+  </data>
+  <data name="HintItem" xml:space="preserve">
+    <value>**{0}'s** **{1}** is at **{2}** in **{3}'s** World</value>
+    <comment>**{item.Receiver}'s** **{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World</comment>
+  </data>
+</root>

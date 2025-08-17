@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,7 +50,7 @@ public static class BotCommands
             var result = await Declare.CommandService.ExecuteAsync(context, message.Content[argPos..], Declare.Services);
 
             if (!result.IsSuccess)
-                Console.WriteLine($"Command failed: {result.ErrorReason}");
+                Console.WriteLine(string.Format(Resource.BotCommandFailed, result.ErrorReason));
         }
     }
 
@@ -61,11 +62,11 @@ public static class BotCommands
 
             if (Declare.Client.GetChannel(channelId) is not IMessageChannel channel)
             {
-                Console.WriteLine($"Channel not found ({channelIdStr})");
+                Console.WriteLine(string.Format(Resource.BotChannelNotFound, channelIdStr));
                 foreach (var guild in Declare.Client.Guilds)
                 {
                     foreach (var textChannel in guild.TextChannels)
-                        Console.WriteLine($"Channel : {textChannel.Name} (ID: {textChannel.Id})");
+                        Console.WriteLine(string.Format(Resource.BotChannelId, textChannel.Name, textChannel.Id));
                 }
                 return;
             }
@@ -74,7 +75,7 @@ public static class BotCommands
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Sending error: {ex.Message}");
+            Console.WriteLine(string.Format(Resource.BotSendingError, ex.Message));
         }
     }
 
@@ -84,39 +85,50 @@ public static class BotCommands
 
     public static async Task HandleSlashCommandAsync(SocketSlashCommand command)
     {
-        var guildUser = command.User as IGuildUser;
-        string userId = command.User.Id.ToString();
-        string? channelId = command.ChannelId.ToString();
-        string guildId = command.GuildId?.ToString() ?? "";
-        string message = "";
-        string? realAlias = command.Data.Options.FirstOrDefault()?.Value as string;
-        var aliasMatch = !string.IsNullOrEmpty(realAlias) ? Regex.Match(realAlias, @"\(([^)]+)\)$") : Match.Empty;
-        var alias = aliasMatch.Success ? aliasMatch.Groups[1].Value : realAlias;
-        const int maxLength = 1999;
-
-        if (string.IsNullOrWhiteSpace(guildId) || string.IsNullOrWhiteSpace(channelId))
-        {
-            await command.RespondAsync("This command can’t be executed outside of a server.");
-            return;
-        }
-
         var isThread = command.Channel is IThreadChannel;
         await command.DeferAsync(ephemeral: isThread);
 
-        if (isThread)
+        _ = Task.Run(async () =>
         {
-            message = await HandleThreadedCommand(command, guildUser, message, alias, realAlias, channelId, guildId);
-            await SendPaginatedMessageAsync(command, message, maxLength);
-        }
-        else
-        {
-            message = await HandleChannelCommand(command, guildUser, alias, channelId, guildId);
-
-            if (!string.IsNullOrWhiteSpace(message))
+            try
             {
-                await command.FollowupAsync(message);
+                var guildUser = command.User as IGuildUser;
+                string channelId = command.ChannelId.ToString();
+                string guildId = command.GuildId?.ToString() ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(guildId) || string.IsNullOrWhiteSpace(channelId))
+                {
+                    await command.FollowupAsync(Resource.BotCommandOutsideServer, ephemeral: true);
+                    return;
+                }
+
+                string? realAlias = command.Data.Options?.FirstOrDefault()?.Value as string;
+                var aliasMatch = !string.IsNullOrEmpty(realAlias) ? Regex.Match(realAlias, @"\\(([^)]+)\\)$") : Match.Empty;
+                var alias = aliasMatch.Success ? aliasMatch.Groups[1].Value : realAlias;
+
+                const int maxLength = 1999;
+                string message;
+
+                if (isThread)
+                {
+                    message = await HandleThreadedCommand(command, guildUser, "", alias, realAlias, channelId, guildId);
+                    await SendPaginatedMessageAsync(command, message, maxLength); 
+                }
+                else
+                {
+                    message = await HandleChannelCommand(command, guildUser, alias, channelId, guildId);
+                    if (!string.IsNullOrWhiteSpace(message))
+                        await command.FollowupAsync(message);
+                    else
+                        await command.FollowupAsync(Resource.BotCommandDone);
+                }
             }
-        }
+            catch (Exception ex)
+            {
+                await command.FollowupAsync($"❌ {ex.Message}", ephemeral: true,
+                    options: new RequestOptions { Timeout = 10000 });
+            }
+        });
     }
 
     private static async Task<string> HandleThreadedCommand(SocketSlashCommand command, IGuildUser? user, string message, string? alias, string? realAlias, string channelId, string guildId)
@@ -138,7 +150,7 @@ public static class BotCommands
             "status-games-list" => await HelperClass.StatusGameList(message, channelId, guildId),
             "info" => await HelperClass.Info(message, channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, message, channelId, guildId),
-            _ => "This command must be executed in a channel."
+            _ => Resource.BotCommandChannel
         };
     }
 
@@ -160,7 +172,7 @@ public static class BotCommands
             "generate" => GenerationClass.Generate(command, "", channelId),
             "test-generate" => GenerationClass.TestGenerate(command, "", channelId),
             "generate-with-zip" => await GenerationClass.GenerateWithZip(command, "", channelId),
-            _ => "This command must be executed in a thread."
+            _ => Resource.BotCommandThread
         };
     }
 
@@ -207,7 +219,7 @@ public static class BotCommands
             "added-alias" => async () =>
                 (await ReceiverAliasesCommands.GetReceiver(guildId, channelId)).Distinct(StringComparer.OrdinalIgnoreCase).AsEnumerable(),
 
-            "file" => () => Task.FromResult(
+            "yamlfile" => () => Task.FromResult(
                     Directory.Exists(YamlPath(channelId))
                         ? Directory.GetFiles(YamlPath(channelId), "*.yaml").Select(f => Path.GetFileName(f)!).AsEnumerable()
                         : Enumerable.Empty<string>()),
@@ -251,19 +263,6 @@ public static class BotCommands
             .ToArray();
 
         return filtered;
-    }
-
-    #endregion
-
-    #region Options Builders
-
-    public static SlashCommandOptionBuilder BuildListItemsOption()
-    {
-        return new SlashCommandOptionBuilder()
-            .WithName("list-by-line")
-            .WithDescription("Display items line by line (true) or comma separated (false).")
-            .WithType(ApplicationCommandOptionType.Boolean)
-            .WithRequired(true);
     }
 
     #endregion

@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using System.Data.SQLite;
 using System.Text.Json;
 
 public static class ItemsCommands
@@ -26,7 +27,7 @@ public static class ItemsCommands
                     }
                     else
                     {
-                        Console.WriteLine($"No result found for the game '{gameName}' and the item '{itemName}'.");
+                        Console.WriteLine(string.Format(Resource.IsFillerAsyncNoResultFound, gameName, itemName));
                         return false;
                     }
                 }
@@ -98,7 +99,7 @@ public static class ItemsCommands
             }
 
             transaction.Commit();
-            Console.WriteLine("✅ Synchronization completed successfully.");
+            Console.WriteLine(Resource.SyncItemsFromJsonAsyncSyncComplete);
         }
         catch (Exception ex)
         {

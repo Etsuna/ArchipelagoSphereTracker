@@ -48,6 +48,7 @@ Un fichier `.env` est nécessaire dans le répertoire principal du dépôt.
 ```
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
 APP_ID=YOUR_DISCORD_BOT_APP_ID
+LANGUAGE=fr (langues supportées : de, en, es, fr, it, ja, pt) — si non défini, l’anglais sera utilisé par défaut.
 ```
 
 Si vous souhaitez créer votre propre bot Discord en utilisant le code de ce dépôt, votre bot aura besoin des permissions définies par l'entier `395137117248`.
@@ -180,6 +181,7 @@ A `.env` file is required in the root folder.
 ```
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
 APP_ID=YOUR_DISCORD_BOT_APP_ID
+LANGUAGE=en (supported languages: de, en, es, fr, it, ja, pt) — if not set, English will be used by default.
 ```
 
 If you want to create your own bot using this code, your bot must have the permissions defined by the integer `395137117248`.

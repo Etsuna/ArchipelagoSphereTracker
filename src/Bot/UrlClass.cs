@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord;
 using Discord.WebSocket;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -30,11 +31,11 @@ public class UrlClass
             if (portMatch.Success)
             {
                 port = portMatch.Groups[1].Value;
-                Console.WriteLine($"Port found : {port}");
+                Console.WriteLine(string.Format(Resource.HelperPort, port));
             }
             else
             {
-                Console.WriteLine("Port not found.");
+                Console.WriteLine(Resource.HelperPortNotFound);
                 return (false, pageContent);
             }
 
@@ -79,11 +80,11 @@ public class UrlClass
 
             if (string.IsNullOrEmpty(newUrl))
             {
-                message = "Empty URL not allowed.";
+                message = Resource.URLEmpty;
             }
             else if (!IsValidUrl(newUrl))
             {
-                message = $"The link is incorrect; use the room URL.";
+                message = Resource.URLNotValid;
             }
             else
             {
@@ -91,7 +92,7 @@ public class UrlClass
 
                 if (!isValid)
                 {
-                    message = $"Sphere_Tracker, Tracker, or the port not found. Addition canceled.";
+                    message = Resource.UrlCanceled;
                 }
                 else
                 {
@@ -111,7 +112,7 @@ public class UrlClass
                         type: type
                     );
 
-                    await thread.SendMessageAsync($"The thread has been created: {thread.Name}, wait for the bot to be ready.");
+                    await thread.SendMessageAsync(string.Format(Resource.UrlThredCreated, thread.Name));
 
                     channelId = thread.Id.ToString();
 
@@ -120,7 +121,7 @@ public class UrlClass
                         IGuildUser? user = command.User as IGuildUser;
                         if (user == null)
                         {
-                            message = "User not found for the private thread.";
+                            message = Resource.UrlPrivateThreadUserNotFound;
                         }
                         else
                         {
@@ -161,7 +162,7 @@ public class UrlClass
                                 continue;
                             }
 
-                            Console.WriteLine($"Name: {gameAlias} | Download: {downloadLink}");
+                            Console.WriteLine(string.Format(Resource.UrlGamePatch, gameAlias, downloadLink));
 
                             var patchLink = new Patch
                             {
@@ -181,17 +182,17 @@ public class UrlClass
                         await TrackingDataManager.SetAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
                         await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
                         await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
-                        await BotCommands.SendMessageAsync("BOT Ready!", channelId);
+                        await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
                         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
                     }
 
-                    message = $"URL set to {newUrl}. Messages configured for this channel. Please wait while the program retrieves all aliases.";
+                    message = string.Format(Resource.URLSet, newUrl);
                 }
             }
         }
         else
         {
-            message = "URL already set for this channel. Remove the URL before adding a new one.";
+            message = Resource.URLAlreadySet;
         }
 
         return message;
@@ -216,7 +217,7 @@ public class UrlClass
             await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId);
         }
 
-        message = "URL deleted.";
+        message = Resource.URLDeleted;
         await BotCommands.RegisterCommandsAsync();
         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
         return message;

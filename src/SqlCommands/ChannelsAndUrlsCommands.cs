@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using System.Data.SQLite;
 using System.Text.RegularExpressions;
 
 public static class ChannelsAndUrlsCommands
@@ -36,7 +37,7 @@ public static class ChannelsAndUrlsCommands
             command.Parameters.AddWithValue("@Silent", silent);
 
             await command.ExecuteNonQueryAsync();
-            Console.WriteLine("URL and other information successfully added or updated.");
+            Console.WriteLine(Resource.AddOrEditUrlChannelAsyncSuccessful);
         }
         catch (Exception ex)
         {
@@ -55,7 +56,7 @@ public static class ChannelsAndUrlsCommands
 
             if (guildChannelId == -1)
             {
-                Console.WriteLine("Error: No Guild/Channel record found. Unable to add the patch.");
+                Console.WriteLine(Resource.AddOrEditUrlChannelPathAsyncError);
                 return;
             }
 
@@ -164,7 +165,7 @@ public static class ChannelsAndUrlsCommands
             return $"{reader["GameName"]?.ToString() ?? string.Empty} : {reader["Patch"]?.ToString() ?? string.Empty}";
         }
 
-        return "No record found.";
+        return Resource.GetPatchAndGameNameForAliasNoRecordFound;
     }
 
 
@@ -181,7 +182,7 @@ public static class ChannelsAndUrlsCommands
             long guildChannelId = await DatabaseCommands.GetGuildChannelIdAsync(guildId, channelId, "ChannelsAndUrlsTable");
             if (guildChannelId == -1)
             {
-                Console.WriteLine("No channel ID found for this GuildId and ChannelId.");
+                Console.WriteLine(Resource.SendAllPatchesForChannelAsyncNoChannelId);
                 return;
             }
 
@@ -199,7 +200,7 @@ public static class ChannelsAndUrlsCommands
                 string gameName = reader["GameName"]?.ToString() ?? "Non spécifié";
                 string patch = reader["Patch"]?.ToString() ?? "Non spécifié";
 
-                await BotCommands.SendMessageAsync($"Patch for {alias}, {gameName} : {patch}", channelId);
+                await BotCommands.SendMessageAsync(string.Format(Resource.SendAllPatchesForChannelAsyncPathLink, alias, gameName, patch), channelId);
             }
         }
         catch (Exception ex)

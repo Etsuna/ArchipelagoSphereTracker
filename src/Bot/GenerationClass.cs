@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord;
 using Discord.WebSocket;
 using System.Diagnostics;
 using System.IO.Compression;
@@ -41,10 +42,10 @@ public class GenerationClass : Declare
             {
                 if (!string.IsNullOrEmpty(e.Data))
                 {
-                    Console.WriteLine($"🟢 **Log** : {e.Data}");
+                    Console.WriteLine(string.Format(Resource.GenerationLog, e.Data));
                     if (e.Data.Contains("Opening file input dialog"))
                     {
-                        errorMessage.AppendLine($"❌ **Error** : {e.Data}");
+                        errorMessage.AppendLine(string.Format(Resource.GenerationError, e.Data));
                         errorDetected = true;
                         if (!process.HasExited) process.Kill();
                     }
@@ -55,7 +56,7 @@ public class GenerationClass : Declare
             {
                 if (!string.IsNullOrEmpty(e.Data))
                 {
-                    errorMessage.AppendLine($"❌ **Error** : {e.Data}");
+                    errorMessage.AppendLine(string.Format(Resource.GenerationError, e.Data));
                     if (e.Data.Contains("ValueError") || e.Data.Contains("Exception") || e.Data.Contains("FileNotFoundError"))
                     {
                         errorDetected = true;
@@ -71,7 +72,7 @@ public class GenerationClass : Declare
             if (!process.WaitForExit(600000) && !errorDetected)
             {
                 if (!process.HasExited) process.Kill();
-                errorMessage.AppendLine("⏳ Timeout: Process stopped after 10 minutes.");
+                errorMessage.AppendLine(Resource.GenerationTimeout);
                 errorDetected = true;
             }
         }
@@ -86,7 +87,7 @@ public class GenerationClass : Declare
         {
             if (!Directory.Exists(outputFolder))
             {
-                await command.FollowupAsync($"❌ The output folder {outputFolder} does not exist.");
+                await command.FollowupAsync(string.Format(Resource.GenerationOutputFolderNotExists, outputFolder));
                 return;
             }
 
@@ -101,7 +102,7 @@ public class GenerationClass : Declare
             }
             else
             {
-                await command.FollowupAsync("❌ No ZIP file found.");
+                await command.FollowupAsync(Resource.GenerationZipNotFound);
             }
 
             if (playersFolder != null) Directory.Delete(playersFolder, true);
@@ -109,7 +110,7 @@ public class GenerationClass : Declare
         }
         else
         {
-            await command.FollowupAsync("✅ Test generation successful!");
+            await command.FollowupAsync(Resource.GenerationTestSuccessful);
         }
     }
 
@@ -117,11 +118,10 @@ public class GenerationClass : Declare
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         if (attachment == null || !attachment.Filename.EndsWith(".zip"))
-            return "❌ You must send a ZIP file containing the YAML files!";
+            return Resource.GenerationWrongZipFormat;
 
-        var basePath = Path.Combine(BasePath, "extern", "Archipelago");
-        var playersFolder = Path.Combine(basePath, "Players", channelId, "zip");
-        var outputFolder = Path.Combine(basePath, "output", channelId, "zip");
+        var playersFolder = Path.Combine(PlayersPath, channelId, "zip");
+        var outputFolder = Path.Combine(OutputPath, channelId, "zip");
         var filePath = Path.Combine(playersFolder, attachment.Filename);
 
         if (Directory.Exists(playersFolder)) Directory.Delete(playersFolder, true);
@@ -140,7 +140,7 @@ public class GenerationClass : Declare
             if (!file.EndsWith(".yaml"))
             {
                 var fileName = Path.GetFileName(file);
-                await command.FollowupAsync($"ℹ️ Info: {fileName} is not a YAML file. It was deleted before generation.\n");
+                await command.FollowupAsync(string.Format(Resource.GenerationNotAYamlFileIntoZip, fileName) + "\n");
                 File.Delete(file);
             }
         }
@@ -149,7 +149,7 @@ public class GenerationClass : Declare
 
         if (!Directory.GetFiles(playersFolder, "*.yaml").Any())
         {
-            await command.FollowupAsync("❌ No YAML file found in the archive!");
+            await command.FollowupAsync(Resource.GenerationNoYamlIntoZip);
         }
 
         var launcherPath = GetLauncherPath();
@@ -163,13 +163,12 @@ public class GenerationClass : Declare
 
     public static string TestGenerate(SocketSlashCommand command, string message, string channelId)
     {
-        var basePath = Path.Combine(BasePath, "extern", "Archipelago");
-        var playersFolder = Path.Combine(basePath, "Players", channelId, "yaml");
+        var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
 
         Directory.CreateDirectory(playersFolder);
 
         if (!Directory.GetFiles(playersFolder, "*.yaml").Any())
-            return "❌ No YAML file found!";
+            return Resource.GenerationNoYaml;
 
         var launcherPath = GetLauncherPath();
         var arguments = $"--player_files_path \"{playersFolder}\" --skip_output";
@@ -182,16 +181,15 @@ public class GenerationClass : Declare
 
     public static string Generate(SocketSlashCommand command, string message, string channelId)
     {
-        var basePath = Path.Combine(BasePath, "extern", "Archipelago");
-        var playersFolder = Path.Combine(basePath, "Players", channelId, "yaml");
-        var outputFolder = Path.Combine(basePath, "output", channelId, "yaml");
+        var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
+        var outputFolder = Path.Combine(OutputPath, channelId, "yaml");
 
         if (Directory.Exists(outputFolder)) Directory.Delete(outputFolder, true);
 
         Directory.CreateDirectory(playersFolder);
 
         if (!Directory.GetFiles(playersFolder, "*.yaml").Any())
-            return "❌ No YAML file found!";
+            return Resource.GenerationNoYaml;
 
         var launcherPath = GetLauncherPath();
         var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";

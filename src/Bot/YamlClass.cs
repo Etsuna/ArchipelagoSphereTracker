@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord;
 using Discord.WebSocket;
 using System.IO.Compression;
 using System.Text;
@@ -11,7 +12,7 @@ public class YamlClass : Declare
 
         if (string.IsNullOrEmpty(yamlFile))
         {
-            return "❌ No file selected.";
+            return Resource.NoFileSelected;
         }
 
         string templatePath = Path.Combine(BasePath, "extern", "Archipelago", "Players", "Templates", yamlFile);
@@ -22,7 +23,7 @@ public class YamlClass : Declare
         }
         else
         {
-            message = "❌ The file does not exist!";
+            message = Resource.YamlFileNotExists;
         }
 
         return message;
@@ -33,7 +34,7 @@ public class YamlClass : Declare
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         if (attachment == null || !attachment.Filename.EndsWith(".yaml"))
         {
-            return "❌ You must send a YAML file!";
+            return Resource.YamlWrongFile;
         }
 
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
@@ -57,11 +58,11 @@ public class YamlClass : Declare
                 {
                     await response.Content.CopyToAsync(fs);
                 }
-                message = $"File {attachment.Filename} sent.";
+                message = string.Format(Resource.YamlFileSent, attachment.Filename);
             }
             else
             {
-                message = "❌ File download failed.";
+                message = Resource.YamlFileDownloadFailed;
             }
 
         return message;
@@ -76,16 +77,16 @@ public class YamlClass : Declare
             try
             {
                 Directory.Delete(playersFolderChannel, true);
-                message = "All YAML files have been deleted.";
+                message = Resource.YamlDeleteAllFiles;
             }
             catch (IOException ex)
             {
-                message = $"Error while deleting the files: {ex.Message}";
+                message = string.Format(Resource.YamlDeleteAllFilesError, ex.Message);
             }
         }
         else
         {
-            message = "No YAML file found.";
+            message = Resource.YamlNotFound;
         }
 
         return message;
@@ -105,21 +106,21 @@ public class YamlClass : Declare
                 try
                 {
                     File.Delete(deletedfilePath);
-                    message += $"The file {fileSelected} has been successfully deleted. ✅";
+                    message += string.Format(Resource.YamlFileDeleted, fileSelected);
                 }
                 catch (Exception ex)
                 {
-                    message += $"Error while deleting the file {fileSelected}: {ex.Message} ❌";
+                    message += string.Format(Resource.YamlFileDeletedError, fileSelected, ex.Message);
                 }
             }
             else
             {
-                message += $"The file {fileSelected} does not exist. ❌";
+                message += string.Format(Resource.YamlDeleteFileNotExists, fileSelected);
             }
         }
         else
         {
-            message += "No file selected. ❌";
+            message += Resource.NoFileSelected;
         }
 
         return message;
@@ -159,7 +160,7 @@ public class YamlClass : Declare
         }
         else
         {
-            message += "❌ No YAML file found!";
+            message += Resource.YamlNoYaml;
         }
 
         return message;
@@ -170,16 +171,17 @@ public class YamlClass : Declare
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
 
         if (!Directory.Exists(playersFolderChannel))
-            return "❌ No YAML file found!";
+            return Resource.YamlNoYaml;
 
         var yamls = Directory.EnumerateFiles(playersFolderChannel, "*.yaml")
                              .OrderBy(Path.GetFileName)
                              .ToList();
 
         if (!yamls.Any())
-            return "❌ No YAML file found!";
+            return Resource.YamlNoYaml;
 
-        var sb = new StringBuilder("List of Yamls\n");
+        var sb = new StringBuilder(Resource.YamlList);
+        sb.AppendLine();
         foreach (var yml in yamls)
         {
             sb.AppendLine(Path.GetFileName(yml));

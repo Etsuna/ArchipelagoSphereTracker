@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord;
 
 public static class SlashCommandDefinitions
 {
@@ -6,143 +7,143 @@ public static class SlashCommandDefinitions
     {
         return new List<SlashCommandBuilder>
         {
-            new SlashCommandBuilder().WithName("get-aliases").WithDescription("Get Aliases"),
+            new SlashCommandBuilder().WithName("get-aliases").WithDescription(Resource.SCGetAliasesDescription),
 
             new SlashCommandBuilder()
                 .WithName("delete-alias")
-                .WithDescription("Delete Alias")
+                .WithDescription(Resource.SCDeleteAliasDescription)
                 .AddOption(AliasOption("added-alias")),
 
             new SlashCommandBuilder()
                 .WithName("add-alias")
-                .WithDescription("Add Alias")
+                .WithDescription(Resource.SCAddAliasDescription)
                 .AddOption(AliasOption("alias"))
-                .AddOption(BooleanOption("skip_useless_mention", "Set if you want to skip useless mention")),
+                .AddOption(BooleanOption(Resource.SCAddAliasSkipMention, Resource.SCAddAliasSkipMentionDescription)),
 
             new SlashCommandBuilder()
                 .WithName("add-url")
-                .WithDescription("Add a URL and create a thread.")
-                .AddOption("url", ApplicationCommandOptionType.String, "The URL to track", isRequired: true)
-                .AddOption("thread-name", ApplicationCommandOptionType.String, "Name of the thread to create", isRequired: true)
+                .WithDescription(Resource.SCAddUrlDescription)
+                .AddOption("url", ApplicationCommandOptionType.String, Resource.SCUrlToTrack, isRequired: true)
+                .AddOption(Resource.SCThreadName, ApplicationCommandOptionType.String, Resource.SCThreadNameDescription, isRequired: true)
                 .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("thread-type")
-                    .WithDescription("Specify if the thread is public or private")
+                    .WithName(Resource.SCThreadType)
+                    .WithDescription(Resource.SCThreadTypeDescription)
                     .WithType(ApplicationCommandOptionType.String)
                     .WithRequired(true)
-                    .AddChoice("Public", "Public")
-                    .AddChoice("Private", "Private"))
-                .AddOption(BooleanOption("silent", "Only send message when an alias is set")),
+                    .AddChoice(Resource.SCThreadPublic, "Public")
+                    .AddChoice(Resource.SCThreadPrivate, "Private"))
+                .AddOption(BooleanOption(Resource.SCSilentOption, Resource.SCSilentDescription)),
 
-            new SlashCommandBuilder().WithName("delete-url").WithDescription("Delete Url, clean Alias and Recap"),
-            new SlashCommandBuilder().WithName("status-games-list").WithDescription("Status for all games"),
-            new SlashCommandBuilder().WithName("recap-all").WithDescription("Recap list of items for all games"),
-            new SlashCommandBuilder().WithName("info").WithDescription("Get all infos for your Archipelago."),
+            new SlashCommandBuilder().WithName("delete-url").WithDescription(Resource.SCDeleteUrlDescription),
+            new SlashCommandBuilder().WithName("status-games-list").WithDescription(Resource.SCStatusGameListDescription),
+            new SlashCommandBuilder().WithName("recap-all").WithDescription(Resource.SCRecapAllDescription),
+            new SlashCommandBuilder().WithName("info").WithDescription(Resource.SCInfoDescription),
 
             new SlashCommandBuilder()
                 .WithName("get-patch")
-                .WithDescription("Patch for alias")
+                .WithDescription(Resource.SCGetPatchDescription)
                 .AddOption(AliasOption("alias")),
 
             new SlashCommandBuilder()
                 .WithName("recap")
-                .WithDescription("Recap list of items for a specific game")
+                .WithDescription(Resource.SCRecapDescription)
                 .AddOption(AliasOption("added-alias")),
 
             new SlashCommandBuilder()
                 .WithName("recap-and-clean")
-                .WithDescription("Recap and clean list of items for a specific game")
+                .WithDescription(Resource.RCRecapAndCleanDescription)
                 .AddOption(AliasOption("added-alias")),
 
             new SlashCommandBuilder()
                 .WithName("clean")
-                .WithDescription("Clean list of items for a specific game")
+                .WithDescription(Resource.SCCleanDescription)
                 .AddOption(AliasOption("added-alias")),
 
-            new SlashCommandBuilder().WithName("clean-all").WithDescription("Clean all recap items"),
+            new SlashCommandBuilder().WithName("clean-all").WithDescription(Resource.SCCleanAllDescription),
 
             new SlashCommandBuilder()
                 .WithName("hint-from-finder")
-                .WithDescription("Get a hint from finder")
+                .WithDescription(Resource.SCGetHintFromFinderDescription)
                 .AddOption(AliasOption("alias")),
 
             new SlashCommandBuilder()
                 .WithName("hint-for-receiver")
-                .WithDescription("Get a hint for receiver")
+                .WithDescription(Resource.SCGetHintForReveiverDescription)
                 .AddOption(AliasOption("alias")),
 
             new SlashCommandBuilder()
                 .WithName("list-items")
-                .WithDescription("List all items for alias")
+                .WithDescription(Resource.SCListItemDescription)
                 .AddOption(AliasOption("alias"))
-                .AddOption(BooleanOption("list-by-line", "Display items line by line (true) or comma separated (false).")),
+                .AddOption(BooleanOption("list-by-line", Resource.SCListByLineDescription)),
 
-            new SlashCommandBuilder().WithName("list-yamls").WithDescription("List all YAML files for the channel"),
-            new SlashCommandBuilder().WithName("list-apworld").WithDescription("List all APWorlds"),
+            new SlashCommandBuilder().WithName("list-yamls").WithDescription(Resource.SCListYamlsDescription),
+            new SlashCommandBuilder().WithName("list-apworld").WithDescription(Resource.SCListApworldDescription),
 
             new SlashCommandBuilder()
                 .WithName("apworlds-info")
-                .WithDescription("List info for specific APWorld")
+                .WithDescription(Resource.SCApworldInfoDescription)
                 .AddOption(new SlashCommandOptionBuilder()
                     .WithName("apworldsinfo")
-                    .WithDescription("Choose an APWorld")
+                    .WithDescription(Resource.SCApworldInfoChoiceDescription)
                     .WithType(ApplicationCommandOptionType.String)
                     .WithRequired(true)
                     .WithAutocomplete(true)),
 
-            new SlashCommandBuilder().WithName("backup-yamls").WithDescription("Backup all YAMLs for the channel"),
-            new SlashCommandBuilder().WithName("backup-apworld").WithDescription("Backup all APWorlds for the channel"),
+            new SlashCommandBuilder().WithName("backup-yamls").WithDescription(Resource.SCBackupYamlDescription),
+            new SlashCommandBuilder().WithName("backup-apworld").WithDescription(Resource.SCBackupApworldDescription),
 
             new SlashCommandBuilder()
                 .WithName("download-template")
-                .WithDescription("Download a YAML template")
+                .WithDescription(Resource.SCDownloadYamlTemplateDescription)
                 .AddOption(new SlashCommandOptionBuilder()
                     .WithName("template")
-                    .WithDescription("Choose a YAML file to download")
+                    .WithDescription(Resource.SCTemplateDescription)
                     .WithType(ApplicationCommandOptionType.String)
                     .WithRequired(true)
                     .WithAutocomplete(true)),
 
             new SlashCommandBuilder()
                 .WithName("delete-yaml")
-                .WithDescription("Delete a specific YAML file")
+                .WithDescription(Resource.SCDeleteYamlDescription)
                 .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("file")
-                    .WithDescription("Choose a YAML file to delete")
+                    .WithName("yamlfile")
+                    .WithDescription(Resource.SCDeleteYamlChooseDescription)
                     .WithType(ApplicationCommandOptionType.String)
                     .WithRequired(true)
                     .WithAutocomplete(true)),
 
-            new SlashCommandBuilder().WithName("clean-yamls").WithDescription("Clean all YAMLs in the channel"),
+            new SlashCommandBuilder().WithName("clean-yamls").WithDescription(Resource.SCCleanYamlDescription),
 
             new SlashCommandBuilder()
                 .WithName("send-yaml")
-                .WithDescription("Send or replace a YAML file for generation")
+                .WithDescription(Resource.SCSendYamlDescription)
                 .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("fichier")
-                    .WithDescription("Upload a YAML file")
+                    .WithName("file")
+                    .WithDescription(Resource.SCSendYamlChooseDescription)
                     .WithType(ApplicationCommandOptionType.Attachment)
                     .WithRequired(true)),
 
             new SlashCommandBuilder()
                 .WithName("generate-with-zip")
-                .WithDescription("Generate multiworld from a ZIP")
+                .WithDescription(Resource.SCGenerateWithZipDescription)
                 .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("fichier")
-                    .WithDescription("Upload a ZIP containing YAMLs")
+                    .WithName("file")
+                    .WithDescription(Resource.SCGenerateWithZipChooseDescription)
                     .WithType(ApplicationCommandOptionType.Attachment)
                     .WithRequired(true)),
 
             new SlashCommandBuilder()
                 .WithName("send-apworld")
-                .WithDescription("Send or replace an APWorld file")
+                .WithDescription(Resource.SCSendApworldDescription)
                 .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("fichier")
-                    .WithDescription("Upload an APWorld file")
+                    .WithName("file")
+                    .WithDescription(Resource.SCSendApworldChooseDescription)
                     .WithType(ApplicationCommandOptionType.Attachment)
                     .WithRequired(true)),
 
-            new SlashCommandBuilder().WithName("generate").WithDescription("Generate multiworld from existing YAMLs"),
-            new SlashCommandBuilder().WithName("test-generate").WithDescription("Test generation of multiworld from existing YAMLs")
+            new SlashCommandBuilder().WithName("generate").WithDescription(Resource.SCGenerateDescription),
+            new SlashCommandBuilder().WithName("test-generate").WithDescription(Resource.SCTestGenerateDescription)
         };
     }
 
@@ -152,7 +153,7 @@ public static class SlashCommandDefinitions
     {
         return new SlashCommandOptionBuilder()
             .WithName(name)
-            .WithDescription("Choose an alias")
+            .WithDescription(Resource.SCChooseAnAlias)
             .WithType(ApplicationCommandOptionType.String)
             .WithRequired(true)
             .WithAutocomplete(true);

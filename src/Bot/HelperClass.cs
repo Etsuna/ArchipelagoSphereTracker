@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord.WebSocket;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -10,21 +11,19 @@ public class HelperClass
 
         if (string.IsNullOrWhiteSpace(userId))
         {
-            return "Receiver ID not specified.";
-
+            return Resource.HelperNoId;
         }
 
         var getNameAndPatch = await ChannelsAndUrlsCommands.GetPatchAndGameNameForAlias(guildId, channelId, userId);
 
         if (!string.IsNullOrEmpty(getNameAndPatch))
         {
-            message += $"Patch for {userId}, {getNameAndPatch}\n\n";
+            message += string.Format(Resource.HelperPatch, userId, getNameAndPatch) + "\n\n";
         }
         else
         {
-            message = "No patch for this user.";
+            message = Resource.HelperNoPatch;
         }
-
         return message;
     }
 
@@ -40,45 +39,50 @@ public class HelperClass
             string? port = null;
             var match = Regex.Match(pageContent, @"/connect archipelago\.gg:(\d+)", RegexOptions.Singleline);
 
-            message += "Info:\n";
-            message += $"Room : {room}\n";
-            message += $"Tracker : {urlTracker}\n";
-            message += $"SphereTracker : {urlSphereTracker}\n";
-            message += $"Silent : {silent}\n";
+            message += Resource.HelperInfos + "\n";
+            message += string.Format(Resource.HelperRoom, room) + "\n";
+            message += string.Format(Resource.HelperUrlTracker, urlTracker) + "\n";
+            message += string.Format(Resource.HelperUrlSphereTracker, urlSphereTracker) + "\n";
+            message += string.Format(Resource.HelperSilent, TranslateBool(silent)) + "\n";
 
             if (match.Success)
             {
                 port = match.Groups[1].Value;
-                message += $"Port : {port}\n";
+                message += string.Format(Resource.HelperPort, port) + "\n";
             }
             else
             {
-                message += "Port not found.\n";
+                message += Resource.HelperPortNotFound + "\n";
             }
         }
         else
         {
-            message = "No URL registered for this channel.";
+            message = Resource.NoUrlRegistered;
         }
-
         return message;
     }
 
     public static async Task<string> StatusGameList(string message, string channelId, string guildId)
     {
+        var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
+        if (!checkChannel)
+        {
+            message = Resource.NoUrlRegistered;
+            return message;
+        }
+
         var getGameStatusForGuildAndChannelAsync = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guildId, channelId);
         var (urlTracker, urlSphereTracker, room, silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
-        var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 
         if (silent)
         {
-            message = "Status for all games, Thread is silent, Only for added aliases :\n";
+            message = Resource.HelperGameStatusWithSilent + "\n";
             getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 
             if (getReceiverAliases.Count == 0)
             {
-                message += "No alias is registered.";
+                message += Resource.AliasNotRegistered;
             }
             else
             {
@@ -86,7 +90,7 @@ public class HelperClass
 
                 if (getReceiverAliases.Count == 0)
                 {
-                    message += "No alias is registered.";
+                    message += Resource.AliasNotRegistered;
                 }
                 else
                 {
@@ -104,8 +108,8 @@ public class HelperClass
                     foreach (var game in filteredGameStatus)
                     {
                         string gameStatus = (game.Percent != "100.00")
-                            ? $"**{game.Name} - {game.Game} - {game.Percent}%**\n"
-                            : $"~~{game.Name} - {game.Game} - {game.Percent}%~~\n";
+                            ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, game.Percent) + "\n"
+                            : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, game.Percent) + "\n";
                         message += gameStatus;
                     }
                 }
@@ -120,18 +124,17 @@ public class HelperClass
                 foreach (var game in getGameStatusForGuildAndChannelAsync)
                 {
                     string gameStatus = (game.Percent != "100.00")
-                        ? $"**{game.Name} - {game.Game} - {game.Percent}%**\n"
-                        : $"~~{game.Name} - {game.Game} - {game.Percent}%~~\n";
+                        ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, game.Percent) + "\n"
+                        : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, game.Percent) + "\n";
 
                     message += gameStatus;
                 }
             }
             else
             {
-                message = "No URL registered for this channel.";
+                message = Resource.NoUrlRegistered;
             }
         }
-
         return message;
     }
 
@@ -165,7 +168,7 @@ public class HelperClass
         {
             if (string.IsNullOrWhiteSpace(alias))
             {
-                return "Alias error.";
+                return Resource.AliasEmpty;
             }
 
             var getGameStatusTextsAsync = await DisplayItemCommands.GetUserItemsGroupedAsync(guildId, channelId, alias);
@@ -176,18 +179,22 @@ public class HelperClass
 
             if (filteredItems.Any())
             {
-                message = $"Items for {userId} :\n{BuildItemMessage(filteredItems, listByLine)}";
+                message = string.Format(Resource.HelperItemsFor, userId) + $"\n{BuildItemMessage(filteredItems, listByLine)}";
             }
             else
             {
-                await command.FollowupAsync("No items");
+                await command.FollowupAsync(Resource.HelperNoItems);
             }
         }
         else
         {
-            await command.FollowupAsync("No URL registered for this channel.");
+            await command.FollowupAsync(Resource.NoUrlRegistered);
         }
-
         return message;
+    }
+
+    public static string TranslateBool(bool value)
+    {
+        return value ? Resource.LanguageYes : Resource.LanguageNo;
     }
 }
