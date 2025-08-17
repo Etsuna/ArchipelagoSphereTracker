@@ -93,7 +93,7 @@ public static class BotCommands
             try
             {
                 var guildUser = command.User as IGuildUser;
-                string channelId = command.ChannelId.ToString();
+                string channelId = command.ChannelId?.ToString() ?? string.Empty;
                 string guildId = command.GuildId?.ToString() ?? string.Empty;
 
                 if (string.IsNullOrWhiteSpace(guildId) || string.IsNullOrWhiteSpace(channelId))
