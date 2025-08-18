@@ -10,7 +10,7 @@
     various data types are done through the TypeConverter classes 
     associated with the data types.
     
-     Example:
+    Example:
     
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
@@ -118,453 +118,675 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ProgramArchipelagoAlreadyInstalled" xml:space="preserve">
-    <value>Archipelago {0} はすでにインストールされています。</value></data>
+    <value>Archipelago {0} はすでにインストールされています。</value>
+  </data>
   <data name="ProgramBotIsConnected" xml:space="preserve">
-    <value>ボットが接続されています！</value></data>
+    <value>ボットが接続されています！</value>
+  </data>
   <data name="ProgramInstallationMode" xml:space="preserve">
-    <value>インストールモード</value></data>
+    <value>インストールモード</value>
+  </data>
   <data name="ProgramStartingBot" xml:space="preserve">
-    <value>ボットを起動しています... {0}</value></data>
+    <value>ボットを起動しています... {0}</value>
+  </data>
   <data name="TDMNoMessageFound" xml:space="preserve">
-    <value>メッセージが見つかりません。スレッド作成日を使用しています： {0}</value></data>
+    <value>メッセージが見つかりません。スレッド作成日を使用しています： {0}</value>
+  </data>
   <data name="TDMChannelStillExists" xml:space="preserve">
-    <value>チャンネルがまだ存在します： {0}</value></data>
+    <value>チャンネルがまだ存在します： {0}</value>
+  </data>
   <data name="TDMNewMessageOnThread" xml:space="preserve">
-    <value>スレッド {0} に新しいメッセージが届きました。自動削除がキャンセルされました。</value></data>
+    <value>スレッド {0} に新しいメッセージが届きました。自動削除がキャンセルされました。</value>
+  </data>
   <data name="TDMNoMessage6Days" xml:space="preserve">
-    <value>6日間メッセージがありません。スレッド {1} に {0} までにメッセージが投稿されなければ、スレッドが削除されます。不必要になったらスレッドを削除するか、URLを削除してください！</value></data>
+    <value>6日間メッセージがありません。スレッド {1} に {0} までにメッセージが投稿されなければ、スレッドが削除されます。不必要になったらスレッドを削除するか、URLを削除してください！</value>
+  </data>
   <data name="TDMLastActivity" xml:space="preserve">
-    <value>最後のアクティビティ： {0}</value></data>
+    <value>最後のアクティビティ： {0}</value>
+  </data>
   <data name="TDMNoActivity" xml:space="preserve">
-    <value>7日間アクティビティがありません。スレッドを削除しています...</value></data>
+    <value>7日間アクティビティがありません。スレッドを削除しています...</value>
+  </data>
   <data name="TDMThreadDeleted" xml:space="preserve">
-    <value>スレッドが削除されました。</value></data>
+    <value>スレッドが削除されました。</value>
+  </data>
   <data name="TDMSettingsAliasesGamesStatus" xml:space="preserve">
-    <value>チャンネル {0} のエイリアスおよびゲームステータスを設定しています...</value></data>
+    <value>チャンネル {0} のエイリアスおよびゲームステータスを設定しています...</value>
+  </data>
   <data name="TDMCheckingGameStatus" xml:space="preserve">
-    <value>チャンネル {0} のゲームステータスを確認しています...</value></data>
+    <value>チャンネル {0} のゲームステータスを確認しています...</value>
+  </data>
   <data name="TDMCheckingItems" xml:space="preserve">
-    <value>チャンネル {0} のアイテムを確認しています...</value></data>
+    <value>チャンネル {0} のアイテムを確認しています...</value>
+  </data>
   <data name="TDMChannelNoLongerExists" xml:space="preserve">
-    <value>チャンネルが存在しなくなりました。チャンネル情報を削除しています： {0}。</value></data>
+    <value>チャンネルが存在しなくなりました。チャンネル情報を削除しています： {0}。</value>
+  </data>
   <data name="TDMDeletionCompleted" xml:space="preserve">
-    <value>削除が完了しました。</value></data>
+    <value>削除が完了しました。</value>
+  </data>
   <data name="TDMServerNotFound" xml:space="preserve">
-    <value>サーバーが見つかりません {0}、情報を削除しています。</value></data>
+    <value>サーバーが見つかりません {0}、情報を削除しています。</value>
+  </data>
   <data name="TDMWaitingCheck" xml:space="preserve">
-    <value>次のチェックまで5分待機しています...</value></data>
+    <value>次のチェックまで5分待機しています...</value>
+  </data>
   <data name="TDMTrackingCanceled" xml:space="preserve">
-    <value>追跡がキャンセルされました。</value></data>
+    <value>追跡がキャンセルされました。</value>
+  </data>
   <data name="TDMGoalComplete" xml:space="preserve">
-    <value>@everyone {0} はこのゲームの目標を達成しました： {1}！</value></data>
+    <value>@everyone {0} はこのゲームの目標を達成しました： {1}！</value>
+  </data>
   <data name="TDMAliasUpdated" xml:space="preserve">
-    <value>エイリアスが更新されました！</value></data>
-  <data name="TDPMessageItems" xml:space="preserve">
-    <value>{0} は {1} を {2} {3} （{4}） に送信しました。</value></data>
+    <value>エイリアスが更新されました！</value>
+  </data>
   <data name="TDPMEssageItemsNoMention" xml:space="preserve">
-    <value>{0} は {1} を {2} （{3}） に送信しました。</value></data>
+    <value>{0} は {1} を {2} （{3}） に送信しました。</value>
+  </data>
   <data name="AliasEmpty" xml:space="preserve">
-    <value>エイリアスが空 päすことはできません。</value></data>
+    <value>エイリアスが空 päすことはできません。</value>
+  </data>
   <data name="AliasAlreadyRegistered" xml:space="preserve">
-    <value>エイリアス '{0}' は &lt;@{1}&gt; にすでに登録されています。</value></data>
+    <value>エイリアス '{0}' は &lt;@{1}&gt; にすでに登録されています。</value>
+  </data>
   <data name="AliasAdded" xml:space="preserve">
-    <value>エイリアスが追加されました： {0} は &lt;@{1}&gt; に関連付けられ、その要約が生成されました。</value></data>
+    <value>エイリアスが追加されました： {0} は &lt;@{1}&gt; に関連付けられ、その要約が生成されました。</value>
+  </data>
   <data name="AliasOrUrlNotRegistered" xml:space="preserve">
-    <value>このチャンネルにURLが登録されていないか、エイリアスが記録されていません。</value></data>
+    <value>このチャンネルにURLが登録されていないか、エイリアスが記録されていません。</value>
+  </data>
   <data name="AliasNotRegistered" xml:space="preserve">
-    <value>エイリアスが登録されていません。</value></data>
+    <value>エイリアスが登録されていません。</value>
+  </data>
   <data name="AliasNotFound" xml:space="preserve">
-    <value>'{0}' のエイリアスは見つかりません。</value></data>
+    <value>'{0}' のエイリアスは見つかりません。</value>
+  </data>
   <data name="AliasDeleted" xml:space="preserve">
-    <value>エイリアス '{0}' が削除されました。</value></data>
+    <value>エイリアス '{0}' が削除されました。</value>
+  </data>
   <data name="AliasOtherOwner" xml:space="preserve">
-    <value>このエイリアス '{0}' の所有者ではありません。削除は行われません。</value></data>
+    <value>このエイリアス '{0}' の所有者ではありません。削除は行われません。</value>
+  </data>
   <data name="NoUrlRegistered" xml:space="preserve">
-    <value>このチャンネルにURLが登録されていません。</value></data>
+    <value>このチャンネルにURLが登録されていません。</value>
+  </data>
   <data name="AliasTable" xml:space="preserve">
-    <value>ユーザーの表です：</value></data>
+    <value>ユーザーの表です：</value>
+  </data>
   <data name="AliasTableValue" xml:space="preserve">
-    <value>| {0} | {1} | Filler Item Skip: {2}</value></data>
+    <value>| {0} | {1} | Filler Item Skip: {2}</value>
+  </data>
   <data name="ApworldWrongFile" xml:space="preserve">
-    <value>❌ APWORLD ファイルを送信する必要があります！</value></data>
+    <value>❌ APWORLD ファイルを送信する必要があります！</value>
+  </data>
   <data name="ApworldFileSent" xml:space="preserve">
-    <value>ファイル {0} が送信されました。</value></data>
+    <value>ファイル {0} が送信されました。</value>
+  </data>
   <data name="ApworldFileNotFound" xml:space="preserve">
-    <value>❌ APWORLD ファイルが見つかりません！</value></data>
+    <value>❌ APWORLD ファイルが見つかりません！</value>
+  </data>
   <data name="NoFileSelected" xml:space="preserve">
-    <value>❌ ファイルが選択されていません。</value></data>
+    <value>❌ ファイルが選択されていません。</value>
+  </data>
   <data name="ApworldList" xml:space="preserve">
-    <value>apworld リスト</value></data>
+    <value>apworld リスト</value>
+  </data>
   <data name="ApworldNotFound" xml:space="preserve">
-    <value>❌ APWORLD ファイルが見つかりません！</value></data>
+    <value>❌ APWORLD ファイルが見つかりません！</value>
+  </data>
   <data name="ApworldCustomFolderNotFound" xml:space="preserve">
-    <value>❌ custom_worlds フォルダが見つかりません。</value></data>
+    <value>❌ custom_worlds フォルダが見つかりません。</value>
+  </data>
   <data name="BotCommandFailed" xml:space="preserve">
-    <value>コマンドが失敗しました： {0}</value></data>
+    <value>コマンドが失敗しました： {0}</value>
+  </data>
   <data name="BotChannelNotFound" xml:space="preserve">
-    <value>チャンネルが見つかりません（{0}）</value></data>
+    <value>チャンネルが見つかりません（{0}）</value>
+  </data>
   <data name="BotChannelId" xml:space="preserve">
-    <value>チャンネル： {0} （ID: {1}）</value></data>
+    <value>チャンネル： {0} （ID: {1}）</value>
+  </data>
   <data name="BotSendingError" xml:space="preserve">
-    <value>送信エラー： {0}</value></data>
+    <value>送信エラー： {0}</value>
+  </data>
   <data name="BotCommandOutsideServer" xml:space="preserve">
-    <value>このコマンドはサーバー外で実行できません。</value></data>
+    <value>このコマンドはサーバー外で実行できません。</value>
+  </data>
   <data name="BotCommandChannel" xml:space="preserve">
-    <value>このコマンドはチャンネルで実行する必要があります。</value></data>
+    <value>このコマンドはチャンネルで実行する必要があります。</value>
+  </data>
   <data name="BotCommandThread" xml:space="preserve">
-    <value>このコマンドはスレッドで実行する必要があります。</value></data>
+    <value>このコマンドはスレッドで実行する必要があります。</value>
+  </data>
   <data name="GenerationError" xml:space="preserve">
-    <value>❌ **エラー**： {0}</value></data>
+    <value>❌ **エラー**： {0}</value>
+  </data>
   <data name="GenerationTimeout" xml:space="preserve">
-    <value>⏳ タイムアウト： 10 分後にプロセスが停止しました。</value></data>
+    <value>⏳ タイムアウト： 10 分後にプロセスが停止しました。</value>
+  </data>
   <data name="GenerationOutputFolderNotExists" xml:space="preserve">
-    <value>❌ 出力フォルダ {0} は存在しません。</value></data>
+    <value>❌ 出力フォルダ {0} は存在しません。</value>
+  </data>
   <data name="GenerationZipNotFound" xml:space="preserve">
-    <value>❌ ZIP ファイルが見つかりませんでした。</value></data>
+    <value>❌ ZIP ファイルが見つかりませんでした。</value>
+  </data>
   <data name="GenerationTestSuccessful" xml:space="preserve">
-    <value>✅ テスト生成が成功しました！</value></data>
+    <value>✅ テスト生成が成功しました！</value>
+  </data>
   <data name="GenerationWrongZipFormat" xml:space="preserve">
-    <value>❌ ZIP ファイルに YAML ファイルを含める必要があります！</value></data>
+    <value>❌ ZIP ファイルに YAML ファイルを含める必要があります！</value>
+  </data>
   <data name="GenerationNotAYamlFileIntoZip" xml:space="preserve">
-    <value>ℹ️ 情報: {0} は YAML ファイルではありません。生成前に削除されました。</value></data>
+    <value>ℹ️ 情報: {0} は YAML ファイルではありません。生成前に削除されました。</value>
+  </data>
   <data name="GenerationNoYamlIntoZip" xml:space="preserve">
-    <value>❌ アーカイブ内に YAML ファイルが見つかりません！</value></data>
+    <value>❌ アーカイブ内に YAML ファイルが見つかりません！</value>
+  </data>
   <data name="GenerationNoYaml" xml:space="preserve">
-    <value>❌ YAML ファイルが見つかりません！</value></data>
+    <value>❌ YAML ファイルが見つかりません！</value>
+  </data>
   <data name="GenerationLog" xml:space="preserve">
-    <value>🟢 **ログ** : {0}</value></data>
+    <value>🟢 **ログ** : {0}</value>
+  </data>
   <data name="HelperNoId" xml:space="preserve">
-    <value>受信者IDが指定されていません。</value></data>
+    <value>受信者IDが指定されていません。</value>
+  </data>
   <data name="HelperPatch" xml:space="preserve">
-    <value>{0} 用のパッチ、{1}</value></data>
+    <value>{0} 用のパッチ、{1}</value>
+  </data>
   <data name="HelperNoPatch" xml:space="preserve">
-    <value>このユーザーのためのパッチはありません。</value></data>
+    <value>このユーザーのためのパッチはありません。</value>
+  </data>
   <data name="HelperInfos" xml:space="preserve">
-    <value>情報:</value></data>
+    <value>情報:</value>
+  </data>
   <data name="HelperRoom" xml:space="preserve">
-    <value>ルーム: {0}</value></data>
+    <value>ルーム: {0}</value>
+  </data>
   <data name="HelperUrlTracker" xml:space="preserve">
-    <value>トラッカー: {0}</value></data>
+    <value>トラッカー: {0}</value>
+  </data>
   <data name="HelperUrlSphereTracker" xml:space="preserve">
-    <value>SphereTracker: {0}</value></data>
+    <value>SphereTracker: {0}</value>
+  </data>
   <data name="HelperSilent" xml:space="preserve">
-    <value>サイレント: {0}</value></data>
+    <value>サイレント: {0}</value>
+  </data>
   <data name="HelperPort" xml:space="preserve">
-    <value>ポート: {0}</value></data>
+    <value>ポート: {0}</value>
+  </data>
   <data name="HelperPortNotFound" xml:space="preserve">
-    <value>ポートが見つかりません。</value></data>
+    <value>ポートが見つかりません。</value>
+  </data>
   <data name="HelperGameStatusWithSilent" xml:space="preserve">
-    <value>すべてのゲームのステータス、スレッドはサイレント、追加されたエイリアスのみ:</value></data>
+    <value>すべてのゲームのステータス、スレッドはサイレント、追加されたエイリアスのみ:</value>
+  </data>
   <data name="HelperGameStatusInProgress" xml:space="preserve">
-    <value>**{0} - {1} - {2}%**</value></data>
+    <value>**{0} - {1} - {2}%**</value>
+  </data>
   <data name="HelperGameStatusDone" xml:space="preserve">
-    <value>~~{0} - {1} - {2}%~~</value></data>
+    <value>~~{0} - {1} - {2}%~~</value>
+  </data>
   <data name="HelperItemsFor" xml:space="preserve">
-    <value>{0} のアイテム:</value></data>
+    <value>{0} のアイテム:</value>
+  </data>
   <data name="HelperNoItems" xml:space="preserve">
-    <value>アイテムなし</value></data>
+    <value>アイテムなし</value>
+  </data>
   <data name="RACNoUrlOrAlias" xml:space="preserve">
-    <value>このチャンネルに登録されたURLがなく、エイリアスが記録されていません。</value></data>
+    <value>このチャンネルに登録されたURLがなく、エイリアスが記録されていません。</value>
+  </data>
   <data name="RACNoAliasRegistered" xml:space="preserve">
-    <value>登録されたエイリアスがありません。/add-alias コマンドを使用して、自動的にレポートファイルを生成してください。</value></data>
+    <value>登録されたエイリアスがありません。/add-alias コマンドを使用して、自動的にレポートファイルを生成してください。</value>
+  </data>
   <data name="RACUserNotExists" xml:space="preserve">
-    <value>ユーザー &lt;@{0}&gt; は存在しません。</value></data>
+    <value>ユーザー &lt;@{0}&gt; は存在しません。</value>
+  </data>
   <data name="RACUserNoRegistredWithAlias" xml:space="preserve">
-    <value>ユーザー &lt;@{0}&gt; はエイリアス: {1} で登録されていません。</value></data>
+    <value>ユーザー &lt;@{0}&gt; はエイリアス: {1} で登録されていません。</value>
+  </data>
   <data name="RACBuildMessageError" xml:space="preserve">
-    <value>内部エラー: buildMessage が-null でも、レポートが要求されています。</value></data>
+    <value>内部エラー: buildMessage が-null でも、レポートが要求されています。</value>
+  </data>
   <data name="RACCleanAll" xml:space="preserve">
-    <value>&lt;@{0}&gt; ための全てのクリーンが完了しました。</value></data>
+    <value>&lt;@{0}&gt; ための全てのクリーンが完了しました。</value>
+  </data>
   <data name="RACClean" xml:space="preserve">
-    <value>エイリアス {0} ためのクリーンが完了しました。</value></data>
+    <value>エイリアス {0} ためのクリーンが完了しました。</value>
+  </data>
   <data name="RACDetailsForUser" xml:space="preserve">
-    <value>&lt;@{0}&gt; の詳細</value></data>
+    <value>&lt;@{0}&gt; の詳細</value>
+  </data>
   <data name="RACBuildMessage" xml:space="preserve">
-    <value>**{0}** : {1}</value></data>
+    <value>**{0}** : {1}</value>
+  </data>
   <data name="RACNoList" xml:space="preserve">
-    <value>リストがありません。</value></data>
+    <value>リストがありません。</value>
+  </data>
   <data name="SCDeleteAliasDescription" xml:space="preserve">
-    <value>エイリアスを削除</value></data>
+    <value>エイリアスを削除</value>
+  </data>
   <data name="SCAddAliasDescription" xml:space="preserve">
-    <value>エイリアスを追加</value></data>
+    <value>エイリアスを追加</value>
+  </data>
   <data name="SCAddAliasSkipMentionDescription" xml:space="preserve">
-    <value>不要なメンション（フィラーライテム）をスキップする設定</value></data>
+    <value>不要なメンション（フィラーライテム）をスキップする設定</value>
+  </data>
   <data name="SCChooseAnAlias" xml:space="preserve">
-    <value>エイリアスを選択</value></data>
+    <value>エイリアスを選択</value>
+  </data>
   <data name="SCAddUrlDescription" xml:space="preserve">
-    <value>URL を追加し、スレッドを作成</value></data>
+    <value>URL を追加し、スレッドを作成</value>
+  </data>
   <data name="SCUrlToTrack" xml:space="preserve">
-    <value>トラックするURL</value></data>
+    <value>トラックするURL</value>
+  </data>
   <data name="SCThreadNameDescription" xml:space="preserve">
-    <value>作成するスレッドの名前</value></data>
+    <value>作成するスレッドの名前</value>
+  </data>
   <data name="SCThreadTypeDescription" xml:space="preserve">
-    <value>スレッドが公開か非公開かを指定</value></data>
+    <value>スレッドが公開か非公開かを指定</value>
+  </data>
   <data name="SCThreadPublic" xml:space="preserve">
-    <value>公開</value></data>
+    <value>公開</value>
+  </data>
   <data name="SCThreadPrivate" xml:space="preserve">
-    <value>非公開</value></data>
+    <value>非公開</value>
+  </data>
   <data name="SCSilentOption" xml:space="preserve">
-    <value>サイレント</value></data>
+    <value>サイレント</value>
+  </data>
   <data name="SCSilentDescription" xml:space="preserve">
-    <value>エイリアスが設定されたときだけメッセージを送信</value></data>
+    <value>エイリアスが設定されたときだけメッセージを送信</value>
+  </data>
   <data name="SCThreadName" xml:space="preserve">
-    <value>スレッドの名前</value></data>
+    <value>スレッドの名前</value>
+  </data>
   <data name="SCThreadType" xml:space="preserve">
-    <value>スレッドの種類</value></data>
+    <value>スレッドの種類</value>
+  </data>
   <data name="SCAddAliasSkipMention" xml:space="preserve">
-    <value>filler_items_skip_mention</value></data>
+    <value>filler_items_skip_mention</value>
+  </data>
   <data name="SCGetAliasesDescription" xml:space="preserve">
-    <value>すべてのエイリアスをリストする</value></data>
+    <value>すべてのエイリアスをリストする</value>
+  </data>
   <data name="SCDeleteUrlDescription" xml:space="preserve">
-    <value>URL を削除し、エイリアスとレポートをクリーン</value></data>
+    <value>URL を削除し、エイリアスとレポートをクリーン</value>
+  </data>
   <data name="SCStatusGameListDescription" xml:space="preserve">
-    <value>すべてのゲームのステータス</value></data>
+    <value>すべてのゲームのステータス</value>
+  </data>
   <data name="SCRecapAllDescription" xml:space="preserve">
-    <value>すべてのゲームのアイテムの要約リスト</value></data>
+    <value>すべてのゲームのアイテムの要約リスト</value>
+  </data>
   <data name="SCInfoDescription" xml:space="preserve">
-    <value>アーチペラルゴのすべての情報を取得する</value></data>
+    <value>アーチペラルゴのすべての情報を取得する</value>
+  </data>
   <data name="SCGetPatchDescription" xml:space="preserve">
-    <value>エイリアスのパッチを取得する</value></data>
+    <value>エイリアスのパッチを取得する</value>
+  </data>
   <data name="SCRecapDescription" xml:space="preserve">
-    <value>特定のゲームのアイテムの要約リスト</value></data>
+    <value>特定のゲームのアイテムの要約リスト</value>
+  </data>
   <data name="RCRecapAndCleanDescription" xml:space="preserve">
-    <value>特定のゲームのアイテムの要約リストを整理する</value></data>
+    <value>特定のゲームのアイテムの要約リストを整理する</value>
+  </data>
   <data name="SCCleanDescription" xml:space="preserve">
-    <value>特定のゲームのアイテムのリストを整理する</value></data>
+    <value>特定のゲームのアイテムのリストを整理する</value>
+  </data>
   <data name="SCCleanAllDescription" xml:space="preserve">
-    <value>すべての要約アイテムを整理する</value></data>
+    <value>すべての要約アイテムを整理する</value>
+  </data>
   <data name="SCGetHintFromFinderDescription" xml:space="preserve">
-    <value>ファインダーからヒントを取得する</value></data>
+    <value>ファインダーからヒントを取得する</value>
+  </data>
   <data name="SCGetHintForReveiverDescription" xml:space="preserve">
-    <value>受信者にヒントを提供する</value></data>
+    <value>受信者にヒントを提供する</value>
+  </data>
   <data name="SCListItemDescription" xml:space="preserve">
-    <value>エイリアスのすべてのアイテムをリストする</value></data>
+    <value>エイリアスのすべてのアイテムをリストする</value>
+  </data>
   <data name="SCListByLineDescription" xml:space="preserve">
-    <value>アイテムを改行ごとに表示する（true）またはカンマ区切りで表示する（false）</value></data>
+    <value>アイテムを改行ごとに表示する（true）またはカンマ区切りで表示する（false）</value>
+  </data>
   <data name="SCListYamlsDescription" xml:space="preserve">
-    <value>チャネルのすべてのYAMLファイルをリストする</value></data>
+    <value>チャネルのすべてのYAMLファイルをリストする</value>
+  </data>
   <data name="SCListApworldDescription" xml:space="preserve">
-    <value>すべてのAPWorldをリストする</value></data>
+    <value>すべてのAPWorldをリストする</value>
+  </data>
   <data name="SCApworldInfoDescription" xml:space="preserve">
-    <value>特定のAPWorldの情報をリストする</value></data>
+    <value>特定のAPWorldの情報をリストする</value>
+  </data>
   <data name="SCApworldInfoChoiceDescription" xml:space="preserve">
-    <value>APWorldを選択する</value></data>
+    <value>APWorldを選択する</value>
+  </data>
   <data name="SCBackupYamlDescription" xml:space="preserve">
-    <value>チャネルのすべてのYAMLをバックアップする</value></data>
+    <value>チャネルのすべてのYAMLをバックアップする</value>
+  </data>
   <data name="SCBackupApworldDescription" xml:space="preserve">
-    <value>チャネルのすべてのAPWorldをバックアップする</value></data>
+    <value>チャネルのすべてのAPWorldをバックアップする</value>
+  </data>
   <data name="SCDownloadYamlTemplateDescription" xml:space="preserve">
-    <value>YAMLテンプレートをダウンロードする</value></data>
+    <value>YAMLテンプレートをダウンロードする</value>
+  </data>
   <data name="SCTemplateDescription" xml:space="preserve">
-    <value>ダウンロードするYAMLファイルを選択する</value></data>
+    <value>ダウンロードするYAMLファイルを選択する</value>
+  </data>
   <data name="SCDeleteYamlDescription" xml:space="preserve">
-    <value>特定のYAMLファイルを削除する</value></data>
+    <value>特定のYAMLファイルを削除する</value>
+  </data>
   <data name="SCDeleteYamlChooseDescription" xml:space="preserve">
-    <value>削除するYAMLファイルを選択する</value></data>
+    <value>削除するYAMLファイルを選択する</value>
+  </data>
   <data name="SCCleanYamlDescription" xml:space="preserve">
-    <value>チャネルのすべてのYAMLを整理する</value></data>
+    <value>チャネルのすべてのYAMLを整理する</value>
+  </data>
   <data name="SCSendYamlDescription" xml:space="preserve">
-    <value>生成のためにYAMLファイルを送信または置き換える</value></data>
+    <value>生成のためにYAMLファイルを送信または置き換える</value>
+  </data>
   <data name="SCSendYamlChooseDescription" xml:space="preserve">
-    <value>YAMLファイルをアップロードする</value></data>
+    <value>YAMLファイルをアップロードする</value>
+  </data>
   <data name="SCGenerateWithZipDescription" xml:space="preserve">
-    <value>ZIPからマルチワールドを生成する</value></data>
+    <value>ZIPからマルチワールドを生成する</value>
+  </data>
   <data name="SCGenerateWithZipChooseDescription" xml:space="preserve">
-    <value>YAMLが含まれているZIPをアップロードする</value></data>
+    <value>YAMLが含まれているZIPをアップロードする</value>
+  </data>
   <data name="SCSendApworldDescription" xml:space="preserve">
-    <value>APWorldファイルを送信または置き換える</value></data>
+    <value>APWorldファイルを送信または置き換える</value>
+  </data>
   <data name="SCSendApworldChooseDescription" xml:space="preserve">
-    <value>APWorldファイルをアップロードする</value></data>
+    <value>APWorldファイルをアップロードする</value>
+  </data>
   <data name="SCGenerateDescription" xml:space="preserve">
-    <value>既存のYAMLからマルチワールドを生成する</value></data>
+    <value>既存のYAMLからマルチワールドを生成する</value>
+  </data>
   <data name="SCTestGenerateDescription" xml:space="preserve">
-    <value>既存のYAMLからマルチワールドの生成をテストする</value></data>
+    <value>既存のYAMLからマルチワールドの生成をテストする</value>
+  </data>
   <data name="URLEmpty" xml:space="preserve">
-    <value>空のURLは許可されません。</value></data>
+    <value>空のURLは許可されません。</value>
+  </data>
   <data name="URLNotValid" xml:space="preserve">
-    <value>リンクが正しくありません。ルームURLを使用してください。</value></data>
+    <value>リンクが正しくありません。ルームURLを使用してください。</value>
+  </data>
   <data name="UrlCanceled" xml:space="preserve">
-    <value>Sphere_Tracker、Tracker、またはポートが見つかりません。追加がキャンセルされました。</value></data>
+    <value>Sphere_Tracker、Tracker、またはポートが見つかりません。追加がキャンセルされました。</value>
+  </data>
   <data name="UrlThredCreated" xml:space="preserve">
-    <value>スレッドが作成されました：{0} ボットが準備完了するまでお待ちください。</value></data>
+    <value>スレッドが作成されました：{0} ボットが準備完了するまでお待ちください。</value>
+  </data>
   <data name="UrlPrivateThreadUserNotFound" xml:space="preserve">
-    <value>プライベートスレッドのユーザーが見つかりません。</value></data>
+    <value>プライベートスレッドのユーザーが見つかりません。</value>
+  </data>
   <data name="UrlGamePatch" xml:space="preserve">
-    <value>名前：{0} | ダウンロード：{1}</value></data>
+    <value>名前：{0} | ダウンロード：{1}</value>
+  </data>
   <data name="URLBotReady" xml:space="preserve">
-    <value>BOT準備完了、GL&amp;HF！</value></data>
+    <value>BOT準備完了、GL&amp;HF！</value>
+  </data>
   <data name="URLSet" xml:space="preserve">
-    <value>URLが{0}に設定されました。このチャネルのメッセージが構成されました。プログラムがすべてのエイリアスを取得するまでお待ちください。</value></data>
+    <value>URLが{0}に設定されました。このチャネルのメッセージが構成されました。プログラムがすべてのエイリアスを取得するまでお待ちください。</value>
+  </data>
   <data name="URLAlreadySet" xml:space="preserve">
-    <value>このチャネルには既にURLが設定されています。新しいURLを追加する前にURLを削除してください。</value></data>
+    <value>このチャネルには既にURLが設定されています。新しいURLを追加する前にURLを削除してください。</value>
+  </data>
   <data name="URLDeleted" xml:space="preserve">
-    <value>URLが削除されました。</value></data>
+    <value>URLが削除されました。</value>
+  </data>
   <data name="YamlFileNotExists" xml:space="preserve">
-    <value>❌ ファイルは存在しません！</value></data>
+    <value>❌ ファイルは存在しません！</value>
+  </data>
   <data name="YamlWrongFile" xml:space="preserve">
-    <value>❌ YAMLファイルを送信する必要があります！</value></data>
+    <value>❌ YAMLファイルを送信する必要があります！</value>
+  </data>
   <data name="YamlFileSent" xml:space="preserve">
-    <value>ファイル{0}が送信されました。</value></data>
+    <value>ファイル{0}が送信されました。</value>
+  </data>
   <data name="YamlFileDownloadFailed" xml:space="preserve">
-    <value>❌ ファイルのダウンロードに失敗しました。</value></data>
+    <value>❌ ファイルのダウンロードに失敗しました。</value>
+  </data>
   <data name="YamlDeleteAllFiles" xml:space="preserve">
-    <value>すべてのYAMLファイルが削除されました。</value></data>
+    <value>すべてのYAMLファイルが削除されました。</value>
+  </data>
   <data name="YamlDeleteAllFilesError" xml:space="preserve">
-    <value>ファイルの削除中にエラーが発生しました：{0}</value></data>
+    <value>ファイルの削除中にエラーが発生しました：{0}</value>
+  </data>
   <data name="YamlNotFound" xml:space="preserve">
-    <value>YAMLファイルが見つかりません。</value></data>
+    <value>YAMLファイルが見つかりません。</value>
+  </data>
   <data name="YamlFileDeleted" xml:space="preserve">
-    <value>✅ ファイル{0}が正常に削除されました。</value></data>
+    <value>✅ ファイル{0}が正常に削除されました。</value>
+  </data>
   <data name="YamlFileDeletedError" xml:space="preserve">
-    <value>❌ ファイル{0}の削除中にエラーが発生しました：{1}</value></data>
+    <value>❌ ファイル{0}の削除中にエラーが発生しました：{1}</value>
+  </data>
   <data name="YamlDeleteFileNotExists" xml:space="preserve">
-    <value>❌ ファイル {0} は存在しません。</value></data>
+    <value>❌ ファイル {0} は存在しません。</value>
+  </data>
   <data name="YamlNoYaml" xml:space="preserve">
-    <value>❌ YAML ファイルが見つかりません！</value></data>
+    <value>❌ YAML ファイルが見つかりません！</value>
+  </data>
   <data name="YamlList" xml:space="preserve">
-    <value>YAML の一覧：</value></data>
+    <value>YAML の一覧：</value>
+  </data>
   <data name="BRExternalFolderNotExists" xml:space="preserve">
-    <value>外部フォルダーが存在しません、バックアップを作成できません。</value></data>
+    <value>外部フォルダーが存在しません、バックアップを作成できません。</value>
+  </data>
   <data name="BRMoved" xml:space="preserve">
-    <value>移動しました：{0} → {1}</value></data>
+    <value>移動しました：{0} → {1}</value>
+  </data>
   <data name="BRError" xml:space="preserve">
-    <value>{0} でエラーが発生しました: {1}</value></data>
+    <value>{0} でエラーが発生しました: {1}</value>
+  </data>
   <data name="BRRomBackupCompleted" xml:space="preserve">
-    <value>Rom バックアップが完了しました</value></data>
+    <value>Rom バックアップが完了しました</value>
+  </data>
   <data name="BRCustomWorldBackupCompleted" xml:space="preserve">
-    <value>Custom_Worlds バックアップが完了しました。</value></data>
+    <value>Custom_Worlds バックアップが完了しました。</value>
+  </data>
   <data name="BRFileMoved" xml:space="preserve">
-    <value>ファイルが移動しました: {0}</value></data>
+    <value>ファイルが移動しました: {0}</value>
+  </data>
   <data name="BRFolderMoved" xml:space="preserve">
-    <value>フォルダーが移動しました: {0}</value></data>
+    <value>フォルダーが移動しました: {0}</value>
+  </data>
   <data name="BRBackupFolderNotExists" xml:space="preserve">
-    <value>バックアップフォルダーが存在しません、復元できません。</value></data>
+    <value>バックアップフォルダーが存在しません、復元できません。</value>
+  </data>
   <data name="BRRestoreMoved" xml:space="preserve">
-    <value>復元しました：{0} → {1}</value></data>
+    <value>復元しました：{0} → {1}</value>
+  </data>
   <data name="BRFileRestored" xml:space="preserve">
-    <value>ファイルが復元されました: {0}</value></data>
+    <value>ファイルが復元されました: {0}</value>
+  </data>
   <data name="BRFolderRestored" xml:space="preserve">
-    <value>フォルダーが復元されました: {0}</value></data>
+    <value>フォルダーが復元されました: {0}</value>
+  </data>
   <data name="CAGeneratingYamlTemplates" xml:space="preserve">
-    <value>📦 YAML テンプレートを生成しています...</value></data>
+    <value>📦 YAML テンプレートを生成しています...</value>
+  </data>
   <data name="CAEmbededError" xml:space="preserve">
-    <value>❌ 埋め込みリソースが見つかりません: {0}</value></data>
+    <value>❌ 埋め込みリソースが見つかりません: {0}</value>
+  </data>
   <data name="CAGenerateTemplateApworldError" xml:space="preserve">
-    <value>❌ ファイル 'generate_templates.apworld' が正しく書き込まれませんでした。</value></data>
+    <value>❌ ファイル 'generate_templates.apworld' が正しく書き込まれませんでした。</value>
+  </data>
   <data name="CAFileCopied" xml:space="preserve">
-    <value>✅ ファイルがコピーされました: {0}</value></data>
+    <value>✅ ファイルがコピーされました: {0}</value>
+  </data>
   <data name="CALauncherNotFound" xml:space="preserve">
-    <value>❌ ランチャーが見つかりません: {0}</value></data>
+    <value>❌ ランチャーが見つかりません: {0}</value>
+  </data>
   <data name="CAErrorProcess" xml:space="preserve">
-    <value>❌ ERROR: プロセスを開始できません。</value></data>
+    <value>❌ ERROR: プロセスを開始できません。</value>
+  </data>
   <data name="CAYamlGeneratedSuccessfully" xml:space="preserve">
-    <value>✅ YAML が正常に生成されました！</value></data>
+    <value>✅ YAML が正常に生成されました！</value>
+  </data>
   <data name="CAYamlGeneratedError" xml:space="preserve">
-    <value>❌ ERROR: YAML 生成に失敗しました (コード {0})</value></data>
+    <value>❌ ERROR: YAML 生成に失敗しました (コード {0})</value>
+  </data>
   <data name="CAException" xml:space="preserve">
-    <value>❌ 例外 : {0} - {1}</value></data>
+    <value>❌ 例外 : {0} - {1}</value>
+  </data>
   <data name="CAGeneratedItemJson" xml:space="preserve">
-    <value>📦 アイテムカテゴリーの JSON テンプレートを生成しています...</value></data>
+    <value>📦 アイテムカテゴリーの JSON テンプレートを生成しています...</value>
+  </data>
   <data name="CAScanItemsApworldError" xml:space="preserve">
-    <value>❌ ファイル 'scan_items.apworld' が正しく書き込まれませんでした。</value></data>
+    <value>❌ ファイル 'scan_items.apworld' が正しく書き込まれませんでした。</value>
+  </data>
   <data name="CAJsonNotfound" xml:space="preserve">
-    <value>⚠️ 同期用の JSON ファイルが見つかりません。</value></data>
+    <value>⚠️ 同期用の JSON ファイルが見つかりません。</value>
+  </data>
   <data name="InstallNewVersion" xml:space="preserve">
-    <value>新しいバージョンが検出されました {0}</value></data>
+    <value>新しいバージョンが検出されました {0}</value>
+  </data>
   <data name="InstallNewVersionWithPrevious" xml:space="preserve">
-    <value>新しいバージョンが検出されました {0} (以前のバージョン: {1})</value></data>
+    <value>新しいバージョンが検出されました {0} (以前のバージョン: {1})</value>
+  </data>
   <data name="InstallDeleteExtractPath" xml:space="preserve">
-    <value>フォルダー {0} が既に存在します、削除されます。</value></data>
+    <value>フォルダー {0} が既に存在します、削除されます。</value>
+  </data>
   <data name="InstallCleanTempExtractPath" xml:space="preserve">
-    <value>{0} のクリーンアップ</value></data>
+    <value>{0} のクリーンアップ</value>
+  </data>
   <data name="InstallImportApworldsDatabase" xml:space="preserve">
-    <value>データベースへの ApWorlds のインポート...</value></data>
+    <value>データベースへの ApWorlds のインポート...</value>
+  </data>
   <data name="InstallUpdateComplete" xml:space="preserve">
-    <value>更新が完了しました！</value></data>
+    <value>更新が完了しました！</value>
+  </data>
   <data name="InstallDLInnoExtractor" xml:space="preserve">
-    <value>{0} をダウンロードしています...</value></data>
+    <value>{0} をダウンロードしています...</value>
+  </data>
   <data name="InstallDLInnoExtractorError" xml:space="preserve">
-    <value>エラー：InnoExtractor をダウンロードできませんでした (コード {0})。</value></data>
+    <value>エラー：InnoExtractor をダウンロードできませんでした (コード {0})。</value>
+  </data>
   <data name="InstallDLTempExtraction" xml:space="preserve">
-    <value>一時的な展開...</value></data>
+    <value>一時的な展開...</value>
+  </data>
   <data name="InstallDLTempExtractionError" xml:space="preserve">
-    <value>エラー：展開されたフォルダーが見つかりません！</value></data>
+    <value>エラー：展開されたフォルダーが見つかりません！</value>
+  </data>
   <data name="InstallExtractingArchipelago" xml:space="preserve">
-    <value>アーチペラゴを展開しています...</value></data>
+    <value>アーチペラゴを展開しています...</value>
+  </data>
   <data name="InstallUnableStartInnoExtractProcess" xml:space="preserve">
-    <value>❌ innoextract プロセスを開始できませんでした。</value></data>
+    <value>❌ innoextract プロセスを開始できませんでした。</value>
+  </data>
   <data name="InstallInnoExtractError" xml:space="preserve">
-    <value>❌ 展開中にエラーが発生しました (コード {0}):</value></data>
+    <value>❌ 展開中にエラーが発生しました (コード {0}):</value>
+  </data>
   <data name="InstallInnoExtractorSuccessful" xml:space="preserve">
-    <value>✅ 展開に成功しました。</value></data>
+    <value>✅ 展開に成功しました。</value>
+  </data>
   <data name="InstallInnoExtractorException" xml:space="preserve">
-    <value>❌ innoextract を実行中に例外が発生しました: {0}</value></data>
+    <value>❌ innoextract を実行中に例外が発生しました: {0}</value>
+  </data>
   <data name="InstallMoveArchipelagoFiles" xml:space="preserve">
-    <value>アーチペラゴインストーラーファイルを移動しています...</value></data>
+    <value>アーチペラゴインストーラーファイルを移動しています...</value>
+  </data>
   <data name="InstallMoveArchipelagoFilesSuccessful" xml:space="preserve">
-    <value>✅ ファイルが 'app\' からルートフォルダーに正常に移動されました。</value></data>
+    <value>✅ ファイルが 'app\' からルートフォルダーに正常に移動されました。</value>
+  </data>
   <data name="InstallMoveArchipelagoFilesFailed" xml:space="preserve">
-    <value>⚠️ 展開後 'app\' フォルダーが見つかりません。</value></data>
+    <value>⚠️ 展開後 'app\' フォルダーが見つかりません。</value>
+  </data>
   <data name="InstallVcRedistX64" xml:space="preserve">
-    <value>vc_redist.x64 をインストールしています...</value></data>
+    <value>vc_redist.x64 をインストールしています...</value>
+  </data>
   <data name="InstallVcRedistX64Successful" xml:space="preserve">
-    <value>✅ VC++ 再配布可能パッケージが正常にインストールされました (サイレントモード)。</value></data>
+    <value>✅ VC++ 再配布可能パッケージが正常にインストールされました (サイレントモード)。</value>
+  </data>
   <data name="InstallVcRedistX64Failed" xml:space="preserve">
-    <value>❌ VC++ インストールエラー (コード {0})。</value></data>
+    <value>❌ VC++ インストールエラー (コード {0})。</value>
+  </data>
   <data name="InstallVcRedistX64Exception" xml:space="preserve">
-    <value>❌ VC++ インストール中に例外が発生しました: {0}</value></data>
+    <value>❌ VC++ インストール中に例外が発生しました: {0}</value>
+  </data>
   <data name="InstallVcRedistX64NotFound" xml:space="preserve">
-    <value>⚠️ ファイル vc_redist.x64 が見つかりません。</value></data>
+    <value>⚠️ ファイル vc_redist.x64 が見つかりません。</value>
+  </data>
   <data name="InstallVcRedistX64AlreadyInstalled" xml:space="preserve">
-    <value>✅ VC++ 再配布可能パッケージが既にインストールされています、アクションは必要ありません。</value></data>
+    <value>✅ VC++ 再配布可能パッケージが既にインストールされています、アクションは必要ありません。</value>
+  </data>
   <data name="InstallDLArchipelagoWindows" xml:space="preserve">
-    <value>ダウンロード中 {0}...</value></data>
+    <value>ダウンロード中 {0}...</value>
+  </data>
   <data name="InstallDLArchipelagoError" xml:space="preserve">
-    <value>エラー: アーチペラゴをダウンロードできませんでした（コード {0）。</value></data>
+    <value>エラー: アーチペラゴをダウンロードできませんでした（コード {0）。</value>
+  </data>
   <data name="InstallDlArchipelagoLinux" xml:space="preserve">
-    <value>ダウンロード中 {0}...</value></data>
+    <value>ダウンロード中 {0}...</value>
+  </data>
   <data name="InstallFreeMemory" xml:space="preserve">
-    <value>💾 クリーンアップ後のRAM: {0} MB</value></data>
+    <value>💾 クリーンアップ後のRAM: {0} MB</value>
+  </data>
   <data name="BotCommandDone" xml:space="preserve">
-    <value>✅ 完了。</value></data>
+    <value>✅ 完了。</value>
+  </data>
   <data name="AddOrEditUrlChannelAsyncSuccessful" xml:space="preserve">
-    <value>URLと他の情報が正常に追加または更新されました。</value></data>
+    <value>URLと他の情報が正常に追加または更新されました。</value>
+  </data>
   <data name="AddOrEditUrlChannelPathAsyncError" xml:space="preserve">
-    <value>エラー: Guild/Channelレコードが見つかりません。パッチを追加できません。</value></data>
+    <value>エラー: Guild/Channelレコードが見つかりません。パッチを追加できません。</value>
+  </data>
   <data name="GetPatchAndGameNameForAliasNoRecordFound" xml:space="preserve">
-    <value>レコードが見つかりません。</value></data>
+    <value>レコードが見つかりません。</value>
+  </data>
   <data name="SendAllPatchesForChannelAsyncNoChannelId" xml:space="preserve">
-    <value>このGuildIdおよびChannelIdに対するチャンネルIDが見つかりません。</value></data>
+    <value>このGuildIdおよびChannelIdに対するチャンネルIDが見つかりません。</value>
+  </data>
   <data name="SendAllPatchesForChannelAsyncPathLink" xml:space="preserve">
-    <value>パッチ {0}、{1}: {2}</value></data>
+    <value>パッチ {0}、{1}: {2}</value>
+  </data>
   <data name="DeleteChannelDataAsyncDeleteSuccessful" xml:space="preserve">
-    <value>削除が成功しました！</value></data>
+    <value>削除が成功しました！</value>
+  </data>
   <data name="DeleteChannelDataByGuildIdAsyncDeletionGuildIdSuccessful" xml:space="preserve">
-    <value>GuildIdによる削除が成功しました！</value></data>
+    <value>GuildIdによる削除が成功しました！</value>
+  </data>
   <data name="IsFillerAsyncNoResultFound" xml:space="preserve">
-    <value>'{0}' および '{1}' に対する結果が見つかりません。</value></data>
+    <value>'{0}' および '{1}' に対する結果が見つかりません。</value>
+  </data>
   <data name="SyncItemsFromJsonAsyncSyncComplete" xml:space="preserve">
-    <value>✅ 同期が正常に完了しました。</value></data>
+    <value>✅ 同期が正常に完了しました。</value>
+  </data>
   <data name="GetUserAliasesWithItemsAsyncNoItem" xml:space="preserve">
-    <value>アイテムがありません。</value></data>
+    <value>アイテムがありません。</value>
+  </data>
   <data name="GetUserAliasesWithItemsAsyncNoAlias" xml:space="preserve">
-    <value>ユーザー: {0} のエイリアスが見つかりません。</value></data>
+    <value>ユーザー: {0} のエイリアスが見つかりません。</value>
+  </data>
   <data name="LanguageYes" xml:space="preserve">
-    <value>はい</value></data>
+    <value>はい</value>
+  </data>
   <data name="LanguageNo" xml:space="preserve">
-    <value>いいえ</value></data>
+    <value>いいえ</value>
+  </data>
   <data name="HintNoAlias" xml:space="preserve">
-    <value>エイリアスが指定されていません。</value></data>
+    <value>エイリアスが指定されていません。</value>
+  </data>
   <data name="HintNoUrl" xml:space="preserve">
-    <value>このチャンネルにURLが登録されていないか、ヒントがありません。</value></data>
+    <value>このチャンネルにURLが登録されていないか、ヒントがありません。</value>
+  </data>
   <data name="HintItemFor" xml:space="preserve">
-    <value>{0} のアイテム:</value></data>
+    <value>{0} のアイテム:</value>
+  </data>
   <data name="HintNoHintFoundForReceiver" xml:space="preserve">
-    <value>この受信者にヒントが見つかりません。</value></data>
+    <value>この受信者にヒントが見つかりません。</value>
+  </data>
   <data name="HintItemFrom" xml:space="preserve">
-    <value>{0} からのアイテム:</value></data>
+    <value>{0} からのアイテム:</value>
+  </data>
   <data name="HintNoHintFoundFromFinder" xml:space="preserve">
-    <value>この発見者にヒントが見つかりません。</value></data>
+    <value>この発見者にヒントが見つかりません。</value>
+  </data>
   <data name="HintItem" xml:space="preserve">
-    <value>**{0} の **{1} は **{2} にあります。{3} のワールドで</value></data>
+    <value>**{0} の **{1} は **{2} にあります。{3} のワールドで</value>
+  </data>
 </root>

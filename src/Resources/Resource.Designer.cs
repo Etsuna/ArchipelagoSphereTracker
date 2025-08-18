@@ -1870,15 +1870,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à {0} sent {1} to {2} {3} ({4}).
-        /// </summary>
-        internal static string TDPMessageItems {
-            get {
-                return ResourceManager.GetString("TDPMessageItems", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à {0} sent {1} to {2} ({3}).
         /// </summary>
         internal static string TDPMEssageItemsNoMention {
