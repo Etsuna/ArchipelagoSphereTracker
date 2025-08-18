@@ -1,16 +1,11 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using System.Data.SQLite;
+using System.Text;
 using System.Text.RegularExpressions;
 
 public static class ChannelsAndUrlsCommands
 {
     private const string DefaultTrackerValue = "Non trouvé";
-    private const string DefaultDatabaseFile = "Data Source=AST.db;Version=3;";
-
-    private static SQLiteConnection CreateConnection(string databaseFile = DefaultDatabaseFile)
-    {
-        return new SQLiteConnection(databaseFile);
-    }
 
     // ==========================
     // 🎯 Channel et URL
@@ -19,8 +14,7 @@ public static class ChannelsAndUrlsCommands
     {
         try
         {
-            using var connection = CreateConnection();
-            await connection.OpenAsync();
+            using var connection = await Db.OpenAsync(Declare.CT);
 
             using var command = new SQLiteCommand(connection)
             {
@@ -49,8 +43,7 @@ public static class ChannelsAndUrlsCommands
     {
         try
         {
-            using var connection = CreateConnection();
-            await connection.OpenAsync();
+            using var connection = await Db.OpenAsync(Declare.CT);
 
             long guildChannelId = await DatabaseCommands.GetGuildChannelIdAsync(guildId, channelId, "ChannelsAndUrlsTable");
 
@@ -100,8 +93,7 @@ public static class ChannelsAndUrlsCommands
     {
         try
         {
-            using var connection = CreateConnection();
-            await connection.OpenAsync();
+            using var connection = await Db.OpenAsync(Declare.CT);
 
             using var command = new SQLiteCommand(connection)
             {
@@ -138,8 +130,7 @@ public static class ChannelsAndUrlsCommands
     // ==========================
     public static async Task<string> GetPatchAndGameNameForAlias(string guildId, string channelId, string alias)
     {
-        using var connection = CreateConnection();
-        await connection.OpenAsync();
+        using var connection = await Db.OpenAsync(Declare.CT);
 
         // Extraire le nom réel si l'alias est de la forme "NomAffiché (NomRéel)"
         var match = Regex.Match(alias, @"\(([^)]+)\)$");
@@ -172,14 +163,15 @@ public static class ChannelsAndUrlsCommands
     // ==============================
     // 🎯 GET ALL PATCHES FOR CHANNEL
     // ==============================
-    public static async Task SendAllPatchesForChannelAsync(string guildId, string channelId)
+    public static async Task SendAllPatchesFileForChannelAsync(string guildId, string channelId)
     {
         try
         {
-            using var connection = CreateConnection();
-            await connection.OpenAsync();
+            using var connection = await Db.OpenAsync(Declare.CT);
 
-            long guildChannelId = await DatabaseCommands.GetGuildChannelIdAsync(guildId, channelId, "ChannelsAndUrlsTable");
+            long guildChannelId = await DatabaseCommands.GetGuildChannelIdAsync(
+                guildId, channelId, "ChannelsAndUrlsTable");
+
             if (guildChannelId == -1)
             {
                 Console.WriteLine(Resource.SendAllPatchesForChannelAsyncNoChannelId);
@@ -187,20 +179,59 @@ public static class ChannelsAndUrlsCommands
             }
 
             using var command = new SQLiteCommand(@"
-                SELECT Alias, GameName, Patch
-                FROM UrlAndChannelPatchTable
-                WHERE ChannelsAndUrlsTableId = @ChannelsAndUrlsTableId", connection);
+            SELECT Alias, GameName, Patch
+            FROM UrlAndChannelPatchTable
+            WHERE ChannelsAndUrlsTableId = @ChannelsAndUrlsTableId;", connection);
 
             command.Parameters.AddWithValue("@ChannelsAndUrlsTableId", guildChannelId);
 
             using var reader = await command.ExecuteReaderAsync();
+
+            var sb = new StringBuilder(capacity: 4096);
+            bool any = false;
+
+            // En-tête
+            sb.AppendLine("**Patches configurés pour ce canal :**");
+            sb.AppendLine();
+
             while (await reader.ReadAsync())
             {
+                any = true;
+
                 string alias = reader["Alias"]?.ToString() ?? "Inconnu";
                 string gameName = reader["GameName"]?.ToString() ?? "Non spécifié";
                 string patch = reader["Patch"]?.ToString() ?? "Non spécifié";
 
-                await BotCommands.SendMessageAsync(string.Format(Resource.SendAllPatchesForChannelAsyncPathLink, alias, gameName, patch), channelId);
+                // Même formatage que ta version message
+                string line = "• " + string.Format(
+                    Resource.SendAllPatchesForChannelAsyncPathLink, alias, gameName, patch);
+
+                sb.AppendLine(line);
+            }
+
+            if (!any)
+            {
+                await BotCommands.SendMessageAsync("Aucun patch configuré pour ce canal.", channelId);
+                return;
+            }
+
+            // Écriture dans un fichier temporaire
+            string fileName = $"patches_{channelId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
+            string tempPath = Path.Combine(Path.GetTempPath(), fileName);
+
+            // UTF-8 sans BOM
+            await File.WriteAllTextAsync(tempPath, sb.ToString(), new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+            try
+            {
+                await using var fs = new FileStream(tempPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+                // Envoi du fichier (implémentation ci-dessous)
+                await BotCommands.SendFileAsync(channelId, fs, fileName, "Liste complète des patches pour ce canal.");
+            }
+            finally
+            {
+                // Nettoyage
+                try { File.Delete(tempPath); } catch { /* pas grave si ça échoue */ }
             }
         }
         catch (Exception ex)

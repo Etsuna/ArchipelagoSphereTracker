@@ -8,9 +8,7 @@ public static class ItemsCommands
     {
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
-            {
-                await connection.OpenAsync();
+                using var connection = await Db.OpenAsync(Declare.CT);
 
                 var query = "SELECT Category FROM ItemsTable WHERE GameName = @GameName AND ItemName = @ItemName";
 
@@ -31,7 +29,6 @@ public static class ItemsCommands
                         return false;
                     }
                 }
-            }
         }
         catch (Exception ex)
         {
@@ -46,10 +43,8 @@ public static class ItemsCommands
         {
             string jsonContent = await File.ReadAllTextAsync(jsonPath);
             using var doc = JsonDocument.Parse(jsonContent);
-
-            using var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;");
-            await connection.OpenAsync();
-
+            
+            using var connection = await Db.OpenAsync(Declare.CT);
             using var transaction = connection.BeginTransaction();
 
             var logLines = new List<string>();

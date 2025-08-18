@@ -341,7 +341,7 @@ public static class TrackingDataManager
 
         if (!silent)
         {
-            await ChannelsAndUrlsCommands.SendAllPatchesForChannelAsync(guild, channel);
+            await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guild, channel);
         }
     }
 

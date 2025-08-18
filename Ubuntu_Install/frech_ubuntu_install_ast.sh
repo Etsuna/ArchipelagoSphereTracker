@@ -50,9 +50,11 @@ chmod +x ArchipelagoSphereTracker
 ### 5) Fichier .env
 read -p "🔑 DISCORD_TOKEN: " DISCORD_TOKEN
 read -p "🆔 APP_ID: "        APP_ID
+read -p "ℹ️ LANGUAGE: (available: de, en, es, fr, ja, pt)"       LANGUAGE
 cat > .env <<EOF
 DISCORD_TOKEN=$DISCORD_TOKEN
 APP_ID=$APP_ID
+LANGUAGE=$LANGUAGE
 EOF
 echo "✅ .env file created"
 

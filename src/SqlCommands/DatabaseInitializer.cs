@@ -163,6 +163,26 @@ CREATE TABLE IF NOT EXISTS ProgramIdTable (
 CREATE TABLE IF NOT EXISTS TelemetryTable (
     Date TEXT PRIMARY KEY
 );
+
+-- Index utiles
+CREATE INDEX IF NOT EXISTS idx_channels_guild_channel
+  ON ChannelsAndUrlsTable(GuildId, ChannelId);
+
+CREATE INDEX IF NOT EXISTS idx_displayeditem_game_item
+  ON DisplayedItemTable(Game, Item);
+
+CREATE INDEX IF NOT EXISTS idx_receiveraliases_guild_channel_receiver
+  ON ReceiverAliasesTable(GuildId, ChannelId, Receiver);
+
+CREATE INDEX IF NOT EXISTS idx_aliaschoices_guild_channel_alias
+  ON AliasChoicesTable(GuildId, ChannelId, Alias);
+
+CREATE INDEX IF NOT EXISTS idx_gamestatus_guild_channel_name
+  ON GameStatusTable(GuildId, ChannelId, Name);
+
+-- Un seul index unique suffit
+CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
+  ON DisplayedItemTable(GuildId, ChannelId, Sphere, Finder, Receiver, Item, Location, Game);
 ";
         command.ExecuteNonQuery();
 

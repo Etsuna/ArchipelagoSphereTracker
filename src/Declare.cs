@@ -13,6 +13,7 @@ public class Declare
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();
 
     public static CancellationTokenSource Cts = new CancellationTokenSource();
+    public static CancellationToken CT => Cts?.Token ?? CancellationToken.None;
     public static DiscordSocketClient Client = new DiscordSocketClient();
     public static CommandService CommandService = new CommandService();
     public static IServiceProvider Services = default!;

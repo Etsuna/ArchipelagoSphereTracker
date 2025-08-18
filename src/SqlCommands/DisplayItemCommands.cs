@@ -9,8 +9,7 @@ public static class DisplayItemCommands
     {
         var keys = new HashSet<string>();
 
-        using var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;");
-        await connection.OpenAsync();
+        using var connection = await Db.OpenAsync(Declare.CT);
         using var command = new SQLiteCommand(@"
     SELECT Sphere, Finder, Receiver, Item, Location, Game 
     FROM DisplayedItemTable 
@@ -33,37 +32,34 @@ public static class DisplayItemCommands
     {
         var itemsFromDb = new List<DisplayedItem>();
 
-        using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
-        {
-            await connection.OpenAsync();
-
-            using (var command = new SQLiteCommand(@"
+        using var connection = await Db.OpenAsync(Declare.CT);
+        
+        using (var command = new SQLiteCommand(@"
             SELECT *
             FROM DisplayedItemTable
             WHERE GuildId = @GuildId
               AND ChannelId = @ChannelId
               AND Receiver = @Receiver;", connection))
-            {
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                command.Parameters.AddWithValue("@ChannelId", channelId);
-                command.Parameters.AddWithValue("@Receiver", receiver);
+        {
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@Receiver", receiver);
 
-                using (var reader = await command.ExecuteReaderAsync())
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
                 {
-                    while (await reader.ReadAsync())
+                    itemsFromDb.Add(new DisplayedItem
                     {
-                        itemsFromDb.Add(new DisplayedItem
-                        {
-                            GuildId = reader["GuildId"]?.ToString() ?? string.Empty,
-                            ChannelId = reader["ChannelId"]?.ToString() ?? string.Empty,
-                            Sphere = reader["Sphere"]?.ToString() ?? string.Empty,
-                            Finder = reader["Finder"]?.ToString() ?? string.Empty,
-                            Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
-                            Item = reader["Item"]?.ToString() ?? string.Empty,
-                            Location = reader["Location"]?.ToString() ?? string.Empty,
-                            Game = reader["Game"]?.ToString() ?? string.Empty,
-                        });
-                    }
+                        GuildId = reader["GuildId"]?.ToString() ?? string.Empty,
+                        ChannelId = reader["ChannelId"]?.ToString() ?? string.Empty,
+                        Sphere = reader["Sphere"]?.ToString() ?? string.Empty,
+                        Finder = reader["Finder"]?.ToString() ?? string.Empty,
+                        Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
+                        Item = reader["Item"]?.ToString() ?? string.Empty,
+                        Location = reader["Location"]?.ToString() ?? string.Empty,
+                        Game = reader["Game"]?.ToString() ?? string.Empty,
+                    });
                 }
             }
         }
@@ -75,37 +71,34 @@ public static class DisplayItemCommands
     {
         var itemsFromDb = new List<DisplayedItem>();
 
-        using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
-        {
-            await connection.OpenAsync();
+        using var connection = await Db.OpenAsync(Declare.CT);
 
-            using (var command = new SQLiteCommand(@"
+        using (var command = new SQLiteCommand(@"
             SELECT Item, GuildId, ChannelId, Sphere, Finder, Receiver, Location, Game
             FROM DisplayedItemTable
             WHERE GuildId = @GuildId
               AND ChannelId = @ChannelId
               AND Receiver = @Receiver;", connection))
-            {
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                command.Parameters.AddWithValue("@ChannelId", channelId);
-                command.Parameters.AddWithValue("@Receiver", alias);
+        {
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@Receiver", alias);
 
-                using (var reader = await command.ExecuteReaderAsync())
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
                 {
-                    while (await reader.ReadAsync())
+                    itemsFromDb.Add(new DisplayedItem
                     {
-                        itemsFromDb.Add(new DisplayedItem
-                        {
-                            GuildId = reader["GuildId"]?.ToString() ?? string.Empty,
-                            ChannelId = reader["ChannelId"]?.ToString() ?? string.Empty,
-                            Sphere = reader["Sphere"]?.ToString() ?? string.Empty,
-                            Finder = reader["Finder"]?.ToString() ?? string.Empty,
-                            Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
-                            Item = reader["Item"]?.ToString() ?? string.Empty,
-                            Location = reader["Location"]?.ToString() ?? string.Empty,
-                            Game = reader["Game"]?.ToString() ?? string.Empty,
-                        });
-                    }
+                        GuildId = reader["GuildId"]?.ToString() ?? string.Empty,
+                        ChannelId = reader["ChannelId"]?.ToString() ?? string.Empty,
+                        Sphere = reader["Sphere"]?.ToString() ?? string.Empty,
+                        Finder = reader["Finder"]?.ToString() ?? string.Empty,
+                        Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
+                        Item = reader["Item"]?.ToString() ?? string.Empty,
+                        Location = reader["Location"]?.ToString() ?? string.Empty,
+                        Game = reader["Game"]?.ToString() ?? string.Empty,
+                    });
                 }
             }
         }
@@ -118,13 +111,15 @@ public static class DisplayItemCommands
         if (items.Count == 0)
             return;
 
-        using var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;");
-        await connection.OpenAsync();
+        using var connection = await Db.OpenAsync(Declare.CT);
         using var transaction = connection.BeginTransaction();
 
         using var command = new SQLiteCommand(@"
-            INSERT INTO DisplayedItemTable (GuildId, ChannelId, Sphere, Finder, Receiver, Item, Location, Game)
-            VALUES (@GuildId, @ChannelId, @Sphere, @Finder, @Receiver, @Item, @Location, @Game);", connection, transaction);
+        INSERT OR IGNORE INTO DisplayedItemTable
+            (GuildId, ChannelId, Sphere, Finder, Receiver, Item, Location, Game)
+        VALUES
+            (@GuildId, @ChannelId, @Sphere, @Finder, @Receiver, @Item, @Location, @Game);",
+            connection, transaction);
 
         command.Parameters.Add("@GuildId", System.Data.DbType.String);
         command.Parameters.Add("@ChannelId", System.Data.DbType.String);
@@ -134,6 +129,8 @@ public static class DisplayItemCommands
         command.Parameters.Add("@Item", System.Data.DbType.String);
         command.Parameters.Add("@Location", System.Data.DbType.String);
         command.Parameters.Add("@Game", System.Data.DbType.String);
+
+        command.Prepare();
 
         foreach (var item in items)
         {
@@ -151,5 +148,6 @@ public static class DisplayItemCommands
 
         await transaction.CommitAsync();
     }
+
 }
 
