@@ -177,6 +177,8 @@ public class UrlClass
 
                     if (!string.IsNullOrEmpty(trackerUrl) && !string.IsNullOrEmpty(sphereTrackerUrl))
                     {
+                        Declare.AddedChannelId.Add(channelId);
+
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, newUrl, trackerUrl, sphereTrackerUrl, silent);
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                         await TrackingDataManager.SetAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
@@ -184,6 +186,8 @@ public class UrlClass
                         await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
                         await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
                         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
+
+                        Declare.AddedChannelId.Remove(channelId);
                     }
 
                     message = string.Format(Resource.URLSet, newUrl);
@@ -211,10 +215,12 @@ public class UrlClass
         if (string.IsNullOrEmpty(channelId))
         {
             await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guildId);
+            await DatabaseCommands.ReclaimSpaceAsync();
         }
         else
         {
             await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId);
+            await DatabaseCommands.ReclaimSpaceAsync();
         }
 
         message = Resource.URLDeleted;

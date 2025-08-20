@@ -38,7 +38,6 @@ public static class AliasChoicesCommands
     {
         try
         {
-
             using var connection = await Db.OpenAsync(Declare.CT);
 
             using (var transaction = await connection.BeginTransactionAsync())

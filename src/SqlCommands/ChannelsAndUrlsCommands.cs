@@ -190,7 +190,6 @@ public static class ChannelsAndUrlsCommands
             var sb = new StringBuilder(capacity: 4096);
             bool any = false;
 
-            // En-tête
             sb.AppendLine("**Patches configurés pour ce canal :**");
             sb.AppendLine();
 
@@ -202,7 +201,6 @@ public static class ChannelsAndUrlsCommands
                 string gameName = reader["GameName"]?.ToString() ?? "Non spécifié";
                 string patch = reader["Patch"]?.ToString() ?? "Non spécifié";
 
-                // Même formatage que ta version message
                 string line = "• " + string.Format(
                     Resource.SendAllPatchesForChannelAsyncPathLink, alias, gameName, patch);
 
@@ -215,23 +213,19 @@ public static class ChannelsAndUrlsCommands
                 return;
             }
 
-            // Écriture dans un fichier temporaire
             string fileName = $"patches_{channelId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
             string tempPath = Path.Combine(Path.GetTempPath(), fileName);
 
-            // UTF-8 sans BOM
             await File.WriteAllTextAsync(tempPath, sb.ToString(), new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
             try
             {
                 await using var fs = new FileStream(tempPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
-                // Envoi du fichier (implémentation ci-dessous)
                 await BotCommands.SendFileAsync(channelId, fs, fileName, "Liste complète des patches pour ce canal.");
             }
             finally
             {
-                // Nettoyage
-                try { File.Delete(tempPath); } catch { /* pas grave si ça échoue */ }
+                try { File.Delete(tempPath); } catch {  }
             }
         }
         catch (Exception ex)

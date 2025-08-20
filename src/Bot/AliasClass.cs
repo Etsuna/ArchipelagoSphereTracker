@@ -2,6 +2,7 @@
 using Discord;
 using Discord.WebSocket;
 using System.Text;
+using System.Text.RegularExpressions;
 
 public class AliasClass
 {

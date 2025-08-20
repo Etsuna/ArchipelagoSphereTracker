@@ -17,7 +17,6 @@ public static class TrackingDataManager
 
     private static readonly ConcurrentDictionary<string, byte> InFlight = new();
 
-
     public static void StartTracking()
     {
 
@@ -42,6 +41,7 @@ public static class TrackingDataManager
                 {
                     var getAllGuild = await DatabaseCommands.GetAllGuildsAsync("ChannelsAndUrlsTable");
                     var uniqueGuilds = getAllGuild.Distinct().ToList();
+
                     await Telemetry.SendDailyTelemetryAsync(programID);
 
                     await Parallel.ForEachAsync(
@@ -54,26 +54,27 @@ public static class TrackingDataManager
                         {
                             Console.WriteLine(string.Format(Resource.TDMServerNotFound, guild));
                             await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guild);
+                            await DatabaseCommands.ReclaimSpaceAsync();
                             Console.WriteLine(Resource.TDMDeletionCompleted);
                             return;
                         }
 
-                        // 2) Déduplique les channels
                         var channelsRaw = await DatabaseCommands.GetAllChannelsAsync(guild, "ChannelsAndUrlsTable");
                         var uniqueChannels = channelsRaw.Distinct().ToList();
 
+                        var channelsToProcess = uniqueChannels
+                            .Where(ch => !Declare.AddedChannelId.Contains(ch))
+                            .ToList();
+
                         await Parallel.ForEachAsync(
-                            uniqueChannels,
+                            channelsToProcess,
                             new ParallelOptions { MaxDegreeOfParallelism = MaxChannelsParallel, CancellationToken = ctGuild },
                             async (channel, ctChan) =>
                             {
-                                // Clé unique guild:channel
                                 var key = $"{guild}:{channel}";
 
-                                // 3) Garde "in-flight" : si déjà en cours => on skip
                                 if (!InFlight.TryAdd(key, 0))
                                 {
-                                    // déjà en traitement; on ignore cette occurrence
                                     return;
                                 }
 
@@ -86,13 +87,13 @@ public static class TrackingDataManager
                                     {
                                         Console.WriteLine(string.Format(Resource.TDMChannelNoLongerExists, channel));
                                         await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
+                                        await DatabaseCommands.ReclaimSpaceAsync();
                                         Console.WriteLine(Resource.TDMDeletionCompleted);
                                         return;
                                     }
 
                                     Console.WriteLine(string.Format(Resource.TDMChannelStillExists, channelCheck.Name));
 
-                                    // Gestion inactivité thread
                                     if (guildCheck.GetChannel(ulong.Parse(channel)) is SocketThreadChannel thread)
                                     {
                                         var messages = await thread.GetMessagesAsync(1).FlattenAsync();
@@ -149,6 +150,7 @@ public static class TrackingDataManager
                                             Console.WriteLine(string.Format(Resource.TDMLastActivity, lastActivity));
                                             Console.WriteLine(Resource.TDMNoActivity);
                                             await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
+                                            await DatabaseCommands.ReclaimSpaceAsync();
                                             await thread.DeleteAsync();
                                             Console.WriteLine(Resource.TDMThreadDeleted);
                                             Declare.WarnedThreads.Remove(thread.Id.ToString());
@@ -156,7 +158,6 @@ public static class TrackingDataManager
                                         }
                                     }
 
-                                    // Travail principal (si ces méthodes envoient des messages, pense à y mettre aussi le guard)
                                     Console.WriteLine(string.Format(Resource.TDMSettingsAliasesGamesStatus, channelCheck.Name));
                                     await SetAliasAndGameStatusAsync(guild, channel, urlTracker, silent);
 
@@ -168,7 +169,6 @@ public static class TrackingDataManager
                                 }
                                 finally
                                 {
-                                    // Libère la clé in-flight
                                     InFlight.TryRemove(key, out _);
                                 }
                             });
@@ -227,7 +227,6 @@ public static class TrackingDataManager
 
             if (checkIfChannelExistsAsync)
             {
-                // On groupe par Receiver
                 var groupedByReceiver = newItems
                     .GroupBy(item => item.Receiver ?? "Inconnu");
 
@@ -235,17 +234,14 @@ public static class TrackingDataManager
                 {
                     var receiver = group.Key;
 
-                    // Construire les messages individuels (comme avant)
                     var messages = await Task.WhenAll(
                         group.Select(item => BuildMessageAsync(guild, channel, item, silent))
                     );
 
                     var nonEmpty = messages.Where(m => !string.IsNullOrWhiteSpace(m));
 
-                    // Ajouter un petit header par receiver
-                    var withHeader = nonEmpty.ToList(); // liste d'abord
+                    var withHeader = nonEmpty.ToList();
 
-                    // Découper en chunks de texte
                     var chunks = ChunkMessages(withHeader).ToList();
 
                     var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, receiver);
@@ -253,7 +249,6 @@ public static class TrackingDataManager
 
                     for (int i = 0; i < chunks.Count; i++)
                     {
-                        // Numérotation si plusieurs pages
                         string header = chunks.Count > 1
                             ? $"**Items pour {receiver} {mentions} ({group.Count()}) [{i + 1}/{chunks.Count}]:**"
                             : $"**Items pour {receiver} {mentions} ({group.Count()}):**";
@@ -629,7 +624,6 @@ public static class TrackingDataManager
         {
             if (string.IsNullOrWhiteSpace(msg)) continue;
 
-            // +1 pour le saut de ligne éventuel
             if (sb.Length + msg.Length + (sb.Length > 0 ? 1 : 0) > maxLength)
             {
                 yield return sb.ToString();

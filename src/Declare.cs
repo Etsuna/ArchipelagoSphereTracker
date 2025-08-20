@@ -11,6 +11,7 @@ public class Declare
     public static readonly bool IsDev = (Environment.GetEnvironmentVariable("IS_DEV") ?? "false").ToLower() == "true";
     public static readonly bool TelemetryEnabled = (Environment.GetEnvironmentVariable("TELEMETRY") ?? "true").ToLower() == "true";
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();
+    public static List<string> AddedChannelId = new List<string>();
 
     public static CancellationTokenSource Cts = new CancellationTokenSource();
     public static CancellationToken CT => Cts?.Token ?? CancellationToken.None;

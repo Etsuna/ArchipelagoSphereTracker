@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 public static class Db
 {
-    // 🔒 Un seul writer à la fois
     public static readonly SemaphoreSlim WriteGate = new(1, 1);
 
     private static string BuildConnString() =>
@@ -14,9 +13,8 @@ public static class Db
     public static async Task<SQLiteConnection> OpenAsync(CancellationToken ct = default)
     {
         var conn = new SQLiteConnection(BuildConnString());
-        await conn.OpenAsync(Declare.CT);
+        await conn.OpenAsync(ct);
 
-        // PRAGMA idempotents (au cas où le provider ignore une partie de la CS)
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = @"
@@ -31,7 +29,6 @@ PRAGMA busy_timeout=5000;";
         return conn;
     }
 
-    // Retry ciblé BUSY/LOCKED (backoff: 200,400,800,1600ms)
     public static async Task WithLockedRetryAsync(Func<Task> action, CancellationToken ct)
     {
         const int max = 4;

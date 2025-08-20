@@ -470,4 +470,28 @@ public static class DatabaseCommands
             }
         }
     }
+
+    // ==========================
+    // 🎯 RECLAIM SPACE (VACUUM)
+    // ==========================
+    public static async Task ReclaimSpaceAsync()
+    {
+        Thread.Sleep(3000);
+        try
+        {
+            using var connection = await Db.OpenAsync(Declare.CT);
+
+            using (var chk = new SQLiteCommand("PRAGMA wal_checkpoint(TRUNCATE);", connection))
+                await chk.ExecuteNonQueryAsync();
+
+            using (var vacuum = new SQLiteCommand("VACUUM;", connection))
+                await vacuum.ExecuteNonQueryAsync();
+
+            Console.WriteLine("Checkpoint + VACUUM effectués.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur ReclaimSpaceAsync: {ex.Message}");
+        }
+    }
 }
