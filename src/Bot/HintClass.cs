@@ -8,16 +8,16 @@ public class HintClass
         string? realAlias,
         string channelId,
         string guildId,
-        Func<string, string, string, CancellationToken, Task<List<HintStatus>>> fetchHintsFunc,
+        Func<string, string, string, Task<List<HintStatus>>> fetchHintsFunc,
         Func<HintStatus, string?, bool> filterFunc,
         string headerTemplate,
-        string noHintMessage,
-        CancellationToken ct = default)
+        string noHintMessage
+        )
     {
         if (string.IsNullOrWhiteSpace(realAlias))
             return Resource.HintNoAlias;
 
-        var hints = await fetchHintsFunc(guildId, channelId, realAlias, ct).ConfigureAwait(false);
+        var hints = await fetchHintsFunc(guildId, channelId, realAlias).ConfigureAwait(false);
 
         if (hints.Any())
         {
@@ -36,30 +36,30 @@ public class HintClass
     }
 
     public static Task<string> HintForReceiver(
-        string message, string? realAlias, string channelId, string guildId, CancellationToken ct = default) =>
+        string message, string? realAlias, string channelId, string guildId) =>
         HintHandler(
             message,
             realAlias,
             channelId,
             guildId,
-            HintStatusCommands.GetHintStatusForReceiver, // (guildId, channelId, receiver, ct)
+            HintStatusCommands.GetHintStatusForReceiver,
             (hint, alias) => hint.Receiver == alias,
             Resource.HintItemFor,
-            Resource.HintNoHintFoundForReceiver,
-            ct);
+            Resource.HintNoHintFoundForReceiver
+            );
 
     public static Task<string> HintForFinder(
-        string message, string? realAlias, string channelId, string guildId, CancellationToken ct = default) =>
+        string message, string? realAlias, string channelId, string guildId) =>
         HintHandler(
             message,
             realAlias,
             channelId,
             guildId,
-            HintStatusCommands.GetHintStatusForFinder, // (guildId, channelId, finder, ct)
+            HintStatusCommands.GetHintStatusForFinder,
             (hint, alias) => hint.Finder == alias,
             Resource.HintItemFrom,
-            Resource.HintNoHintFoundFromFinder,
-            ct);
+            Resource.HintNoHintFoundFromFinder
+            );
 
     public static string BuildHintMessage(string header, IEnumerable<HintStatus> hints)
     {

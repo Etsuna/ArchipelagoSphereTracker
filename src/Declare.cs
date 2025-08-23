@@ -4,7 +4,7 @@ using Discord.Commands;
 public class Declare
 {
     public static string Version = "0.6.3";
-    public static string BotVersion = "3.5.0";
+    public static string BotVersion = "4.0.0";
     public static string InnoExtractorVersion = "1.9";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
@@ -18,7 +18,6 @@ public class Declare
 
 
     public static CancellationTokenSource Cts = new CancellationTokenSource();
-    public static CancellationToken CT => Cts?.Token ?? CancellationToken.None;
     public static DiscordSocketClient Client = new DiscordSocketClient();
     public static CommandService CommandService = new CommandService();
     public static IServiceProvider Services = default!;

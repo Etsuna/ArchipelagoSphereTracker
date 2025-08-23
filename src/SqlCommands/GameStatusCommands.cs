@@ -5,14 +5,14 @@ public static class GameStatusCommands
 {
     public static async Task<List<GameStatus>> GetGameStatusForGuildAndChannelAsync(
         string guildId,
-        string channelId,
-        CancellationToken ct = default)
+        string channelId
+        )
     {
         var gameStatuses = new List<GameStatus>();
 
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             using var command = new SQLiteCommand(@"
                 SELECT Hashtag, Name, Game, Status, Checks, Percent, LastActivity
@@ -22,8 +22,8 @@ public static class GameStatusCommands
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@ChannelId", channelId);
 
-            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 gameStatuses.Add(new GameStatus
                 {
@@ -48,15 +48,15 @@ public static class GameStatusCommands
     public static async Task<Dictionary<string, GameStatus>> GetStatusesByNamesAsync(
         string guildId,
         string channelId,
-        List<string> names,
-        CancellationToken ct = default)
+        List<string> names
+        )
     {
         var statuses = new Dictionary<string, GameStatus>();
         if (names is null || names.Count == 0) return statuses;
 
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             var paramNames = names.Select((_, i) => $"@Name{i}").ToArray();
             var inClause = string.Join(", ", paramNames);
@@ -72,8 +72,8 @@ public static class GameStatusCommands
             for (int i = 0; i < names.Count; i++)
                 command.Parameters.AddWithValue(paramNames[i], names[i]);
 
-            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var status = new GameStatus
                 {
@@ -99,15 +99,15 @@ public static class GameStatusCommands
     public static async Task<HashSet<string>> GetExistingGameNamesAsync(
         string guildId,
         string channelId,
-        List<string> games,
-        CancellationToken ct = default)
+        List<string> games
+        )
     {
         var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (games is null || games.Count == 0) return existing;
 
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             var paramNames = games.Select((_, i) => $"@Game{i}").ToArray();
             var inClause = string.Join(", ", paramNames);
@@ -123,8 +123,8 @@ public static class GameStatusCommands
             for (int i = 0; i < games.Count; i++)
                 command.Parameters.AddWithValue(paramNames[i], games[i]);
 
-            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 if (!reader.IsDBNull(0))
                     existing.Add(reader.GetString(0));
@@ -141,8 +141,8 @@ public static class GameStatusCommands
     public static async Task AddOrReplaceGameStatusAsync(
         string guildId,
         string channelId,
-        List<GameStatus> gameStatuses,
-        CancellationToken ct = default)
+        List<GameStatus> gameStatuses
+        )
     {
         if (gameStatuses is null || gameStatuses.Count == 0) return;
 
@@ -171,7 +171,6 @@ public static class GameStatusCommands
 
                 foreach (var gs in gameStatuses)
                 {
-                    ct.ThrowIfCancellationRequested();
                     command.Parameters["@Hashtag"].Value = (object?)gs.Hashtag ?? DBNull.Value;
                     command.Parameters["@Name"].Value = (object?)gs.Name ?? DBNull.Value;
                     command.Parameters["@Game"].Value = (object?)gs.Game ?? DBNull.Value;
@@ -180,9 +179,9 @@ public static class GameStatusCommands
                     command.Parameters["@Percent"].Value = (object?)gs.Percent ?? DBNull.Value;
                     command.Parameters["@LastActivity"].Value = (object?)gs.LastActivity ?? DBNull.Value;
 
-                    await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {
@@ -193,8 +192,8 @@ public static class GameStatusCommands
     public static async Task UpdateGameStatusBatchAsync(
         string guildId,
         string channelId,
-        List<GameStatus> gameStatuses,
-        CancellationToken ct = default)
+        List<GameStatus> gameStatuses
+        )
     {
         if (gameStatuses is null || gameStatuses.Count == 0) return;
 
@@ -225,16 +224,15 @@ public static class GameStatusCommands
 
                 foreach (var gs in gameStatuses)
                 {
-                    ct.ThrowIfCancellationRequested();
                     command.Parameters["@Name"].Value = (object?)gs.Name ?? DBNull.Value;
                     command.Parameters["@Status"].Value = (object?)gs.Status ?? DBNull.Value;
                     command.Parameters["@Percent"].Value = (object?)gs.Percent ?? DBNull.Value;
                     command.Parameters["@Checks"].Value = (object?)gs.Checks ?? DBNull.Value;
                     command.Parameters["@LastActivity"].Value = (object?)gs.LastActivity ?? DBNull.Value;
 
-                    await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {
@@ -244,8 +242,8 @@ public static class GameStatusCommands
 
     public static async Task DeleteDuplicateAliasAsync(
         string guildId,
-        string channelId,
-        CancellationToken ct = default)
+        string channelId
+        )
     {
         try
         {
@@ -263,8 +261,8 @@ public static class GameStatusCommands
                     select.Parameters.AddWithValue("@GuildId", guildId);
                     select.Parameters.AddWithValue("@ChannelId", channelId);
 
-                    using var reader = await select.ExecuteReaderAsync(ct).ConfigureAwait(false);
-                    while (await reader.ReadAsync(ct).ConfigureAwait(false))
+                    using var reader = await select.ExecuteReaderAsync().ConfigureAwait(false);
+                    while (await reader.ReadAsync().ConfigureAwait(false))
                     {
                         if (!reader.IsDBNull(0))
                             existingNames.Add(reader.GetString(0));
@@ -295,12 +293,11 @@ public static class GameStatusCommands
 
                     foreach (var name in namesToDelete)
                     {
-                        ct.ThrowIfCancellationRequested();
                         pName.Value = name;
-                        await delete.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                        await delete.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {

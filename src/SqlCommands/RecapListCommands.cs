@@ -9,8 +9,8 @@ public static class RecapListCommands
         string guildId,
         string channelId,
         string userId,
-        string alias,
-        CancellationToken ct = default)
+        string alias
+        )
     {
         try
         {
@@ -24,8 +24,8 @@ public static class RecapListCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 command.Parameters.AddWithValue("@UserId", userId);
                 command.Parameters.AddWithValue("@Alias", alias);
-                await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-            }, ct);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
         }
         catch (Exception ex)
         {
@@ -39,8 +39,8 @@ public static class RecapListCommands
     public static async Task AddOrEditRecapListItemsForAllAsync(
         string guildId,
         string channelId,
-        List<DisplayedItem> items,
-        CancellationToken ct = default)
+        List<DisplayedItem> items
+        )
     {
         if (items is null || items.Count == 0) return;
 
@@ -58,14 +58,12 @@ public static class RecapListCommands
 
                 foreach (var it in items)
                 {
-                    ct.ThrowIfCancellationRequested();
-
                     // ignore self-gifts
                     if (it.Receiver == it.Finder) continue;
 
                     // Récupère les RecapListTable.Id pour ce receiver
                     var ids = await DatabaseCommands
-                        .GetIdsAsync(guildId, channelId, it.Receiver, "RecapListTable", ct)
+                        .GetIdsAsync(guildId, channelId, it.Receiver, "RecapListTable")
                         .ConfigureAwait(false);
                     if (ids is null || ids.Count == 0) continue;
 
@@ -73,10 +71,10 @@ public static class RecapListCommands
                     {
                         pId.Value = id;
                         pItem.Value = it.Item ?? string.Empty;
-                        await insert.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                        await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {
@@ -88,8 +86,8 @@ public static class RecapListCommands
         string guildId,
         string channelId,
         string alias,
-        List<DisplayedItem> items,
-        CancellationToken ct = default)
+        List<DisplayedItem> items
+        )
     {
         if (items is null || items.Count == 0) return;
 
@@ -97,7 +95,7 @@ public static class RecapListCommands
         {
             // IDs de la/les recap list(s) ciblée(s)
             var ids = await DatabaseCommands
-                .GetIdsAsync(guildId, channelId, alias, "RecapListTable", ct)
+                .GetIdsAsync(guildId, channelId, alias, "RecapListTable")
                 .ConfigureAwait(false);
 
             if (ids is null || ids.Count == 0)
@@ -120,15 +118,14 @@ public static class RecapListCommands
                 {
                     foreach (var it in items)
                     {
-                        ct.ThrowIfCancellationRequested();
                         if (it.Receiver == it.Finder) continue;
 
                         pId.Value = id;
                         pItem.Value = it.Item ?? string.Empty;
-                        await insert.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                        await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {
@@ -142,12 +139,12 @@ public static class RecapListCommands
     public static async Task<bool> CheckIfExistsWithoutAlias(
         string guildId,
         string channelId,
-        string userId,
-        CancellationToken ct = default)
+        string userId
+        )
     {
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
             using var command = new SQLiteCommand(@"
                 SELECT COUNT(*)
                 FROM RecapListTable
@@ -156,7 +153,7 @@ public static class RecapListCommands
             command.Parameters.AddWithValue("@ChannelId", channelId);
             command.Parameters.AddWithValue("@UserId", userId);
 
-            var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
+            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
             var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0L;
             return count > 0;
         }
@@ -171,12 +168,12 @@ public static class RecapListCommands
         string guildId,
         string channelId,
         string userId,
-        string alias,
-        CancellationToken ct = default)
+        string alias
+        )
     {
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
             using var command = new SQLiteCommand(@"
                 SELECT COUNT(*)
                 FROM RecapListTable
@@ -187,7 +184,7 @@ public static class RecapListCommands
             command.Parameters.AddWithValue("@UserId", userId);
             command.Parameters.AddWithValue("@Alias", alias);
 
-            var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
+            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
             var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0L;
             return count > 0;
         }
@@ -204,8 +201,8 @@ public static class RecapListCommands
     public static async Task DeleteAliasAndItemsForUserIdAsync(
         string guildId,
         string channelId,
-        string userId,
-        CancellationToken ct = default)
+        string userId
+        )
     {
         try
         {
@@ -224,8 +221,8 @@ public static class RecapListCommands
                 deleteItems.Parameters.AddWithValue("@GuildId", guildId);
                 deleteItems.Parameters.AddWithValue("@ChannelId", channelId);
                 deleteItems.Parameters.AddWithValue("@UserId", userId);
-                await deleteItems.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-            }, ct);
+                await deleteItems.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
         }
         catch (Exception ex)
         {
@@ -241,8 +238,8 @@ public static class RecapListCommands
         string guildId,
         string channelId,
         string userId,
-        string alias,
-        CancellationToken ct = default)
+        string alias
+        )
     {
         try
         {
@@ -263,8 +260,8 @@ public static class RecapListCommands
                 deleteItems.Parameters.AddWithValue("@ChannelId", channelId);
                 deleteItems.Parameters.AddWithValue("@UserId", userId);
                 deleteItems.Parameters.AddWithValue("@Alias", alias);
-                await deleteItems.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-            }, ct);
+                await deleteItems.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
         }
         catch (Exception ex)
         {
@@ -280,8 +277,8 @@ public static class RecapListCommands
         string guildId,
         string channelId,
         string userId,
-        string alias,
-        CancellationToken ct = default)
+        string alias
+        )
     {
         try
         {
@@ -303,7 +300,7 @@ public static class RecapListCommands
                     deleteItems.Parameters.AddWithValue("@ChannelId", channelId);
                     deleteItems.Parameters.AddWithValue("@UserId", userId);
                     deleteItems.Parameters.AddWithValue("@Alias", alias);
-                    await deleteItems.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    await deleteItems.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
 
                 // 2) Supprimer la/les lignes de RecapListTable
@@ -318,9 +315,9 @@ public static class RecapListCommands
                     deleteAlias.Parameters.AddWithValue("@ChannelId", channelId);
                     deleteAlias.Parameters.AddWithValue("@UserId", userId);
                     deleteAlias.Parameters.AddWithValue("@Alias", alias);
-                    await deleteAlias.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    await deleteAlias.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {

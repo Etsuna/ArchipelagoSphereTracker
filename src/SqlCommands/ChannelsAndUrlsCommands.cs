@@ -16,8 +16,8 @@ public static class ChannelsAndUrlsCommands
         string newUrl,
         string? trackerUrl,
         string? sphereTrackerUrl,
-        bool silent,
-        CancellationToken ct = default)
+        bool silent
+        )
     {
         try
         {
@@ -37,8 +37,8 @@ public static class ChannelsAndUrlsCommands
                 command.Parameters.AddWithValue("@SphereTracker", sphereTrackerUrl ?? DefaultTrackerValue);
                 command.Parameters.AddWithValue("@Silent", silent);
 
-                await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-            }, ct);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
 
             Console.WriteLine(Resource.AddOrEditUrlChannelAsyncSuccessful);
         }
@@ -54,8 +54,8 @@ public static class ChannelsAndUrlsCommands
     public static async Task AddOrEditUrlChannelPathAsync(
         string guildId,
         string channelId,
-        List<Patch> patch,
-        CancellationToken ct = default)
+        List<Patch> patch
+        )
     {
         try
         {
@@ -87,13 +87,12 @@ public static class ChannelsAndUrlsCommands
 
                 foreach (var p in patch)
                 {
-                    ct.ThrowIfCancellationRequested();
                     aliasParam.Value = p.GameAlias ?? string.Empty;
                     gameNameParam.Value = p.GameName ?? string.Empty;
                     patchParam.Value = p.PatchLink ?? string.Empty;
-                    await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {
@@ -105,11 +104,11 @@ public static class ChannelsAndUrlsCommands
     // 🎯 GET URL AND TRACKER (READ)
     // ==========================
     public static async Task<(string trackerUrl, string sphereTrackerUrl, string roomUrl, bool Silent)>
-        GetTrackerUrlsAsync(string guildId, string channelId, CancellationToken ct = default)
+        GetTrackerUrlsAsync(string guildId, string channelId)
     {
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             using var command = new SQLiteCommand(@"
                 SELECT Tracker, SphereTracker, Room, Silent
@@ -119,8 +118,8 @@ public static class ChannelsAndUrlsCommands
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@ChannelId", channelId);
 
-            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            if (await reader.ReadAsync(ct).ConfigureAwait(false))
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 return (
                     reader["Tracker"]?.ToString() ?? string.Empty,
@@ -139,11 +138,11 @@ public static class ChannelsAndUrlsCommands
         }
     }
 
-    public static async Task<bool> CountChannelByGuildId(string guildId, CancellationToken ct = default)
+    public static async Task<bool> CountChannelByGuildId(string guildId)
     {
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             using var countCommand = new SQLiteCommand(@"
             SELECT COUNT(DISTINCT ChannelId)
@@ -152,7 +151,7 @@ public static class ChannelsAndUrlsCommands
 
             countCommand.Parameters.AddWithValue("@GuildId", guildId);
 
-            var result = await countCommand.ExecuteScalarAsync(ct).ConfigureAwait(false);
+            var result = await countCommand.ExecuteScalarAsync().ConfigureAwait(false);
             var count = Convert.ToInt32(result ?? 0);
 
             return count <= 2;
@@ -174,12 +173,12 @@ public static class ChannelsAndUrlsCommands
     public static async Task<string> GetPatchAndGameNameForAlias(
         string guildId,
         string channelId,
-        string alias,
-        CancellationToken ct = default)
+        string alias
+        )
     {
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             // Extraire le nom réel si l'alias est de la forme "NomAffiché (NomRéel)"
             var match = Regex.Match(alias, @"\(([^)]+)\)$");
@@ -197,8 +196,8 @@ public static class ChannelsAndUrlsCommands
             command.Parameters.AddWithValue("@ChannelsAndUrlsTableId", guildChannelId);
             command.Parameters.AddWithValue("@Alias", realAlias);
 
-            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            if (await reader.ReadAsync(ct).ConfigureAwait(false))
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var game = reader["GameName"]?.ToString() ?? string.Empty;
                 var patch = reader["Patch"]?.ToString() ?? string.Empty;
@@ -219,12 +218,12 @@ public static class ChannelsAndUrlsCommands
     // ==============================
     public static async Task SendAllPatchesFileForChannelAsync(
         string guildId,
-        string channelId,
-        CancellationToken ct = default)
+        string channelId
+        )
     {
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             long guildChannelId = await DatabaseCommands
                 .GetGuildChannelIdAsync(guildId, channelId, "ChannelsAndUrlsTable");
@@ -242,7 +241,7 @@ public static class ChannelsAndUrlsCommands
 
             command.Parameters.AddWithValue("@ChannelsAndUrlsTableId", guildChannelId);
 
-            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
             var sb = new StringBuilder(capacity: 4096);
             bool any = false;
@@ -250,7 +249,7 @@ public static class ChannelsAndUrlsCommands
             sb.AppendLine("**Patches configurés pour ce canal :**");
             sb.AppendLine();
 
-            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 any = true;
 
@@ -276,8 +275,8 @@ public static class ChannelsAndUrlsCommands
             await File.WriteAllTextAsync(
                 tempPath,
                 sb.ToString(),
-                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-                ct);
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)
+                );
 
             try
             {

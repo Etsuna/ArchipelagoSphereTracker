@@ -35,7 +35,7 @@ public static class TrackingDataManager
         {
             try
             {
-                var programID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable", Declare.CT);
+                var programID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable");
 
                 while (!token.IsCancellationRequested)
                 {
@@ -46,7 +46,7 @@ public static class TrackingDataManager
 
                     await Parallel.ForEachAsync(
                     uniqueGuilds,
-                    new ParallelOptions { MaxDegreeOfParallelism = MaxGuildsParallel, CancellationToken = token },
+                    new ParallelOptions { MaxDegreeOfParallelism = MaxGuildsParallel },
                     async (guild, ctGuild) =>
                     {
                         var guildCheck = Declare.Client.GetGuild(ulong.Parse(guild));
@@ -68,7 +68,7 @@ public static class TrackingDataManager
 
                         await Parallel.ForEachAsync(
                             channelsToProcess,
-                            new ParallelOptions { MaxDegreeOfParallelism = MaxChannelsParallel, CancellationToken = ctGuild },
+                            new ParallelOptions { MaxDegreeOfParallelism = MaxChannelsParallel },
                             async (channel, ctChan) =>
                             {
                                 var key = $"{guild}:{channel}";
@@ -174,7 +174,7 @@ public static class TrackingDataManager
                             });
                     });
                     Console.WriteLine(Resource.TDMWaitingCheck);
-                    await Task.Delay(300000, token);
+                    await Task.Delay(300000);
                 }
             }
             catch (TaskCanceledException)

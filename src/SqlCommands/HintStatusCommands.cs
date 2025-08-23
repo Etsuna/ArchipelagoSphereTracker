@@ -6,8 +6,8 @@ public static class HintStatusCommands
     public static async Task UpdateHintStatusAsync(
         string guildId,
         string channelId,
-        List<HintStatus> hintstatusList,
-        CancellationToken ct = default)
+        List<HintStatus> hintstatusList
+        )
     {
         if (hintstatusList is null || hintstatusList.Count == 0) return;
 
@@ -40,7 +40,6 @@ public static class HintStatusCommands
 
             foreach (var s in hintstatusList)
             {
-                ct.ThrowIfCancellationRequested();
                 pFinder.Value = s.Finder ?? (object)DBNull.Value;
                 pReceiver.Value = s.Receiver ?? (object)DBNull.Value;
                 pItem.Value = s.Item ?? (object)DBNull.Value;
@@ -49,20 +48,20 @@ public static class HintStatusCommands
                 pEntrance.Value = s.Entrance ?? (object)DBNull.Value;
                 pFound.Value = s.Found ?? (object)DBNull.Value;
 
-                await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
-        }, ct);
+        });
     }
 
     public static async Task<List<HintStatus>> GetHintStatusForReceiver(
         string guildId,
         string channelId,
-        string receiverId,
-        CancellationToken ct = default)
+        string receiverId
+        )
     {
         var list = new List<HintStatus>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
             FROM HintStatusTable
@@ -72,8 +71,8 @@ public static class HintStatusCommands
         command.Parameters.AddWithValue("@ChannelId", channelId);
         command.Parameters.AddWithValue("@Receiver", receiverId);
 
-        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
         {
             list.Add(new HintStatus
             {
@@ -93,12 +92,12 @@ public static class HintStatusCommands
     public static async Task<List<HintStatus>> GetHintStatusForFinder(
         string guildId,
         string channelId,
-        string finderId,
-        CancellationToken ct = default)
+        string finderId
+        )
     {
         var list = new List<HintStatus>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
             FROM HintStatusTable
@@ -108,8 +107,8 @@ public static class HintStatusCommands
         command.Parameters.AddWithValue("@ChannelId", channelId);
         command.Parameters.AddWithValue("@Finder", finderId);
 
-        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
         {
             list.Add(new HintStatus
             {
@@ -128,12 +127,12 @@ public static class HintStatusCommands
 
     public static async Task<List<HintStatus>> GetHintStatus(
         string guild,
-        string channel,
-        CancellationToken ct = default)
+        string channel
+        )
     {
         var list = new List<HintStatus>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
             FROM HintStatusTable
@@ -142,8 +141,8 @@ public static class HintStatusCommands
         command.Parameters.AddWithValue("@GuildId", guild);
         command.Parameters.AddWithValue("@ChannelId", channel);
 
-        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
         {
             list.Add(new HintStatus
             {
@@ -163,8 +162,8 @@ public static class HintStatusCommands
     public static async Task AddHintStatusAsync(
         string guild,
         string channel,
-        List<HintStatus> hintStatus,
-        CancellationToken ct = default)
+        List<HintStatus> hintStatus
+        )
     {
         if (hintStatus is null || hintStatus.Count == 0) return;
 
@@ -193,8 +192,6 @@ public static class HintStatusCommands
 
                 foreach (var s in hintStatus)
                 {
-                    ct.ThrowIfCancellationRequested();
-
                     pGuild.Value = guild;
                     pChannel.Value = channel;
                     pFinder.Value = (object?)s.Finder ?? DBNull.Value;
@@ -205,9 +202,9 @@ public static class HintStatusCommands
                     pEntrance.Value = (object?)s.Entrance ?? DBNull.Value;
                     pFound.Value = (object?)s.Found ?? DBNull.Value;
 
-                    await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {
@@ -217,8 +214,8 @@ public static class HintStatusCommands
 
     public static async Task DeleteDuplicateReceiversAliasAsync(
         string guildId,
-        string channelId,
-        CancellationToken ct = default)
+        string channelId
+        )
     {
         try
         {
@@ -234,8 +231,8 @@ public static class HintStatusCommands
                     select.Parameters.AddWithValue("@GuildId", guildId);
                     select.Parameters.AddWithValue("@ChannelId", channelId);
 
-                    using var reader = await select.ExecuteReaderAsync(ct).ConfigureAwait(false);
-                    while (await reader.ReadAsync(ct).ConfigureAwait(false))
+                    using var reader = await select.ExecuteReaderAsync().ConfigureAwait(false);
+                    while (await reader.ReadAsync().ConfigureAwait(false))
                     {
                         if (!reader.IsDBNull(0))
                             existing.Add(reader.GetString(0));
@@ -266,12 +263,11 @@ public static class HintStatusCommands
 
                     foreach (var name in toDelete)
                     {
-                        ct.ThrowIfCancellationRequested();
                         p.Value = name;
-                        await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                        await del.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {
@@ -281,8 +277,8 @@ public static class HintStatusCommands
 
     public static async Task DeleteDuplicateFindersAliasAsync(
         string guildId,
-        string channelId,
-        CancellationToken ct = default)
+        string channelId
+        )
     {
         try
         {
@@ -298,8 +294,8 @@ public static class HintStatusCommands
                     select.Parameters.AddWithValue("@GuildId", guildId);
                     select.Parameters.AddWithValue("@ChannelId", channelId);
 
-                    using var reader = await select.ExecuteReaderAsync(ct).ConfigureAwait(false);
-                    while (await reader.ReadAsync(ct).ConfigureAwait(false))
+                    using var reader = await select.ExecuteReaderAsync().ConfigureAwait(false);
+                    while (await reader.ReadAsync().ConfigureAwait(false))
                     {
                         if (!reader.IsDBNull(0))
                             existing.Add(reader.GetString(0));
@@ -330,12 +326,11 @@ public static class HintStatusCommands
 
                     foreach (var name in toDelete)
                     {
-                        ct.ThrowIfCancellationRequested();
                         p.Value = name;
-                        await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                        await del.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 }
-            }, ct);
+            });
         }
         catch (Exception ex)
         {

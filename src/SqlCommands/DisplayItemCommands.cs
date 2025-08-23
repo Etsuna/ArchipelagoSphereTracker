@@ -7,12 +7,12 @@ public static class DisplayItemCommands
     // ==========================
     public static async Task<HashSet<string>> GetExistingKeysAsync(
         string guildId,
-        string channelId,
-        CancellationToken ct = default)
+        string channelId
+        )
     {
         var keys = new HashSet<string>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT Sphere, Finder, Receiver, Item, Location, Game
             FROM DisplayedItemTable
@@ -21,8 +21,8 @@ public static class DisplayItemCommands
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
 
-        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
         {
             var key = $"{reader["Sphere"]}|{reader["Finder"]}|{reader["Receiver"]}|{reader["Item"]}|{reader["Location"]}|{reader["Game"]}";
             keys.Add(key);
@@ -34,12 +34,12 @@ public static class DisplayItemCommands
     public static async Task<List<DisplayedItem>> GetUserItemsGroupedAsync(
         string guildId,
         string channelId,
-        string receiver,
-        CancellationToken ct = default)
+        string receiver
+        )
     {
         var itemsFromDb = new List<DisplayedItem>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using (var command = new SQLiteCommand(@"
             SELECT GuildId, ChannelId, Sphere, Finder, Receiver, Item, Location, Game
             FROM DisplayedItemTable
@@ -51,8 +51,8 @@ public static class DisplayItemCommands
             command.Parameters.AddWithValue("@ChannelId", channelId);
             command.Parameters.AddWithValue("@Receiver", receiver);
 
-            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 itemsFromDb.Add(new DisplayedItem
                 {
@@ -74,12 +74,12 @@ public static class DisplayItemCommands
     public static async Task<List<DisplayedItem>> GetAliasItems(
         string guildId,
         string channelId,
-        string alias,
-        CancellationToken ct = default)
+        string alias
+        )
     {
         var itemsFromDb = new List<DisplayedItem>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using (var command = new SQLiteCommand(@"
             SELECT Item, GuildId, ChannelId, Sphere, Finder, Receiver, Location, Game
             FROM DisplayedItemTable
@@ -91,8 +91,8 @@ public static class DisplayItemCommands
             command.Parameters.AddWithValue("@ChannelId", channelId);
             command.Parameters.AddWithValue("@Receiver", alias);
 
-            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 itemsFromDb.Add(new DisplayedItem
                 {
@@ -117,8 +117,8 @@ public static class DisplayItemCommands
     public static async Task AddItemsAsync(
         List<DisplayedItem> items,
         string guildId,
-        string channelId,
-        CancellationToken ct = default)
+        string channelId
+        )
     {
         if (items == null || items.Count == 0)
             return;
@@ -145,8 +145,6 @@ public static class DisplayItemCommands
 
             foreach (var it in items)
             {
-                ct.ThrowIfCancellationRequested();
-
                 command.Parameters["@GuildId"].Value = guildId;
                 command.Parameters["@ChannelId"].Value = channelId;
                 command.Parameters["@Sphere"].Value = (object?)it.Sphere ?? DBNull.Value;
@@ -156,8 +154,8 @@ public static class DisplayItemCommands
                 command.Parameters["@Location"].Value = (object?)it.Location ?? DBNull.Value;
                 command.Parameters["@Game"].Value = (object?)it.Game ?? DBNull.Value;
 
-                await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
-        }, ct);
+        });
     }
 }

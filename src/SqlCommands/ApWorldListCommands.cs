@@ -3,11 +3,11 @@ using System.Text;
 
 public static class ApWorldListCommands
 {
-    public static async Task<string?> GetItemsByTitleAsync(string title, CancellationToken ct = default)
+    public static async Task<string?> GetItemsByTitleAsync(string title)
     {
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             var sb = new StringBuilder()
                 .Append("**").Append(title).Append("**\n\n");
@@ -16,7 +16,7 @@ public static class ApWorldListCommands
             using (var command = new SQLiteCommand(queryId, connection))
             {
                 command.Parameters.AddWithValue("@Title", title);
-                var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
+                var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
                 if (result is null)
                     return $"Title '{title}' not found.";
 
@@ -30,9 +30,9 @@ public static class ApWorldListCommands
                 using var itemCommand = new SQLiteCommand(queryItems, connection);
                 itemCommand.Parameters.AddWithValue("@ApWorldListTableId", apWorldListTableId);
 
-                using var reader = await itemCommand.ExecuteReaderAsync(ct).ConfigureAwait(false);
+                using var reader = await itemCommand.ExecuteReaderAsync().ConfigureAwait(false);
                 var hasAny = false;
-                while (await reader.ReadAsync(ct).ConfigureAwait(false))
+                while (await reader.ReadAsync().ConfigureAwait(false))
                 {
                     hasAny = true;
                     var text = reader.IsDBNull(0) ? "" : reader.GetString(0);
@@ -57,19 +57,19 @@ public static class ApWorldListCommands
         }
     }
 
-    public static async Task<List<string>> GetAllTitles(CancellationToken ct = default)
+    public static async Task<List<string>> GetAllTitles()
     {
         var titles = new List<string>();
 
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             const string query = "SELECT Title FROM ApWorldListTable;";
             using var command = new SQLiteCommand(query, connection);
-            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
-            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 if (!reader.IsDBNull(0))
                     titles.Add(reader.GetString(0));

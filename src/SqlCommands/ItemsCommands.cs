@@ -6,12 +6,12 @@ public static class ItemsCommands
 {
     public static async Task<bool> IsFillerAsync(
         string gameName,
-        string itemName,
-        CancellationToken ct = default)
+        string itemName
+        )
     {
         try
         {
-            await using var connection = await Db.OpenReadAsync(ct);
+            await using var connection = await Db.OpenReadAsync();
 
             const string query = @"
                 SELECT Category
@@ -22,7 +22,7 @@ public static class ItemsCommands
             command.Parameters.AddWithValue("@GameName", gameName);
             command.Parameters.AddWithValue("@ItemName", itemName);
 
-            var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
+            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
 
             if (result is string category)
                 return category.Equals("filler", StringComparison.OrdinalIgnoreCase);
@@ -37,18 +37,18 @@ public static class ItemsCommands
         }
     }
 
-    public static async Task SyncItemsFromJsonAsync(string jsonPath, CancellationToken ct = default)
+    public static async Task SyncItemsFromJsonAsync(string jsonPath)
     {
         try
         {
-            var jsonContent = await File.ReadAllTextAsync(jsonPath, ct).ConfigureAwait(false);
+            var jsonContent = await File.ReadAllTextAsync(jsonPath).ConfigureAwait(false);
             using var doc = JsonDocument.Parse(jsonContent);
 
             await Db.WriteAsync(async conn =>
             {
                 // DDL dans la transaction de Db.WriteAsync (BEGIN IMMEDIATE)
                 using (var dropCmd = new SQLiteCommand("DROP TABLE IF EXISTS ItemsTable;", conn))
-                    await dropCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    await dropCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                 using (var createCmd = new SQLiteCommand(@"
                     CREATE TABLE ItemsTable (
@@ -58,7 +58,7 @@ public static class ItemsCommands
                         PRIMARY KEY (GameName, Category, ItemName)
                     );", conn))
                 {
-                    await createCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    await createCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
 
                 using var insertCmd = new SQLiteCommand(@"
@@ -81,7 +81,6 @@ public static class ItemsCommands
 
                         foreach (var itemEl in catProp.Value.EnumerateArray())
                         {
-                            ct.ThrowIfCancellationRequested();
                             if (itemEl.ValueKind != JsonValueKind.String) continue;
 
                             var itemName = itemEl.GetString();
@@ -91,11 +90,11 @@ public static class ItemsCommands
                             pCategory.Value = category;
                             pItem.Value = itemName;
 
-                            await insertCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                            await insertCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                         }
                     }
                 }
-            }, ct);
+            });
 
             Console.WriteLine(Resource.SyncItemsFromJsonAsyncSyncComplete);
         }

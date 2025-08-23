@@ -24,7 +24,7 @@ public class UrlClass
 
         async Task<(bool isValid, string pageContent, string message)> IsAllUrlIsValidAsync(string newUrl)
         {
-            if(!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId, Declare.CT))
+            if(!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId))
             {
                 return (false, "", "You can't have more than 2 Threads. Delete one before adding a new Sphere_Tracker please.");
             }

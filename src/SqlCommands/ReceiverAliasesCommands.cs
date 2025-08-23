@@ -6,11 +6,11 @@ public static class ReceiverAliasesCommands
     // ==========================
     // 🎯 Receiver Aliases (READ)
     // ==========================
-    public static async Task<List<string>> GetReceiver(string guildId, string channelId, CancellationToken ct = default)
+    public static async Task<List<string>> GetReceiver(string guildId, string channelId)
     {
         var receivers = new List<string>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT Receiver
             FROM ReceiverAliasesTable
@@ -18,8 +18,8 @@ public static class ReceiverAliasesCommands
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
 
-        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
         {
             var receiver = reader["Receiver"]?.ToString() ?? "";
             if (!string.IsNullOrEmpty(receiver))
@@ -28,9 +28,9 @@ public static class ReceiverAliasesCommands
         return receivers;
     }
 
-    public static async Task<bool> CheckIfReceiverExists(string guildId, string channelId, string receiver, CancellationToken ct = default)
+    public static async Task<bool> CheckIfReceiverExists(string guildId, string channelId, string receiver)
     {
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT COUNT(*)
             FROM ReceiverAliasesTable
@@ -39,16 +39,16 @@ public static class ReceiverAliasesCommands
         command.Parameters.AddWithValue("@ChannelId", channelId);
         command.Parameters.AddWithValue("@Receiver", receiver);
 
-        var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
+        var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
         var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0L;
         return count > 0;
     }
 
-    public static async Task<List<string>> GetUserIds(string guildId, string channelId, CancellationToken ct = default)
+    public static async Task<List<string>> GetUserIds(string guildId, string channelId)
     {
         var receivers = new List<string>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT UserId
             FROM ReceiverAliasesTable
@@ -56,8 +56,8 @@ public static class ReceiverAliasesCommands
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
 
-        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
         {
             var uid = reader["UserId"]?.ToString() ?? "";
             if (!string.IsNullOrEmpty(uid))
@@ -69,11 +69,11 @@ public static class ReceiverAliasesCommands
     // ==========================
     // 🎯 GET RECEIVER USER IDS (READ)
     // ==========================
-    public static async Task<List<ReceiverUserInfo>> GetReceiverUserIdsAsync(string guildId, string channelId, string receiver, CancellationToken ct = default)
+    public static async Task<List<ReceiverUserInfo>> GetReceiverUserIdsAsync(string guildId, string channelId, string receiver)
     {
         var userInfos = new List<ReceiverUserInfo>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT Receiver, UserId, IsEnabled
             FROM ReceiverAliasesTable
@@ -82,8 +82,8 @@ public static class ReceiverAliasesCommands
         command.Parameters.AddWithValue("@ChannelId", channelId);
         command.Parameters.AddWithValue("@Receiver", receiver);
 
-        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
         {
             var info = new ReceiverUserInfo
             {
@@ -99,11 +99,11 @@ public static class ReceiverAliasesCommands
     // ==========================
     // 🎯 GET ALL USERS IDS (READ)
     // ==========================
-    public static async Task<List<string>> GetAllUsersIds(string guildId, string channelId, string receiver, CancellationToken ct = default)
+    public static async Task<List<string>> GetAllUsersIds(string guildId, string channelId, string receiver)
     {
         var userIds = new List<string>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT UserId
             FROM ReceiverAliasesTable
@@ -112,8 +112,8 @@ public static class ReceiverAliasesCommands
         command.Parameters.AddWithValue("@ChannelId", channelId);
         command.Parameters.AddWithValue("@Receiver", receiver);
 
-        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
         {
             if (!reader.IsDBNull(0))
                 userIds.Add(reader.GetString(0));
@@ -124,7 +124,7 @@ public static class ReceiverAliasesCommands
     // ==========================
     // 🎯 DELETE RECEIVER ALIAS (WRITE)
     // ==========================
-    public static async Task DeleteReceiverAlias(string guildId, string channelId, string receiver, CancellationToken ct = default)
+    public static async Task DeleteReceiverAlias(string guildId, string channelId, string receiver)
     {
         await Db.WriteAsync(async conn =>
         {
@@ -134,14 +134,14 @@ public static class ReceiverAliasesCommands
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@ChannelId", channelId);
             command.Parameters.AddWithValue("@Receiver", receiver);
-            await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-        }, ct);
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+        });
     }
 
     // ==========================
     // 🎯 INSERT RECEIVER ALIAS  (WRITE)
     // ==========================   
-    public static async Task InsertReceiverAlias(string guildId, string channelId, string receiver, string userId, bool isEnabled, CancellationToken ct = default)
+    public static async Task InsertReceiverAlias(string guildId, string channelId, string receiver, string userId, bool isEnabled)
     {
         await Db.WriteAsync(async conn =>
         {
@@ -153,8 +153,8 @@ public static class ReceiverAliasesCommands
             command.Parameters.AddWithValue("@Receiver", receiver);
             command.Parameters.AddWithValue("@UserId", userId);
             command.Parameters.AddWithValue("@IsEnabled", isEnabled);
-            await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-        }, ct);
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+        });
     }
 
     // ==========================
@@ -164,12 +164,12 @@ public static class ReceiverAliasesCommands
         string guildId,
         string channelId,
         string userId,
-        string specificAlias = "",
-        CancellationToken ct = default)
+        string specificAlias = ""
+        )
     {
         var aliasesWithItems = new Dictionary<string, List<string>>();
 
-        await using var connection = await Db.OpenReadAsync(ct);
+        await using var connection = await Db.OpenReadAsync();
 
         const string aliasQuery = @"
             SELECT Alias, RecapListTable.Id AS RecapListTableId
@@ -181,8 +181,8 @@ public static class ReceiverAliasesCommands
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
 
-        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
         {
             var alias = reader["Alias"]?.ToString();
             var recapListTableId = Convert.ToInt64(reader["RecapListTableId"]);
@@ -199,8 +199,8 @@ public static class ReceiverAliasesCommands
             using var itemCommand = new SQLiteCommand(itemsQuery, connection);
             itemCommand.Parameters.AddWithValue("@RecapListTableId", recapListTableId);
 
-            using var itemReader = await itemCommand.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            while (await itemReader.ReadAsync(ct).ConfigureAwait(false))
+            using var itemReader = await itemCommand.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await itemReader.ReadAsync().ConfigureAwait(false))
             {
                 var item = itemReader["Item"] as string;
                 items.Add(!string.IsNullOrEmpty(item) ? item : Resource.GetUserAliasesWithItemsAsyncNoItem);
