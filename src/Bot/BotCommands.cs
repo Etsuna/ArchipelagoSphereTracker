@@ -79,7 +79,7 @@ public static class BotCommands
         }
     }
 
-    public static async Task SendFileAsync(string channelId, Stream stream, string fileName, string caption = null)
+    public static async Task SendFileAsync(string channelId, Stream stream, string fileName, string? caption = null)
     {
         var chan = Declare.Client.GetChannel(ulong.Parse(channelId)) as IMessageChannel
                    ?? throw new InvalidOperationException("Channel introuvable");
