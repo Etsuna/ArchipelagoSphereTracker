@@ -22,8 +22,13 @@ public class UrlClass
             return !checkIfChannelExistsAsync;
         }
 
-        async Task<(bool isValid, string pageContent)> IsAllUrlIsValidAsync(string newUrl)
+        async Task<(bool isValid, string pageContent, string message)> IsAllUrlIsValidAsync(string newUrl)
         {
+            if(!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId, Declare.CT))
+            {
+                return (false, "", "You can't have more than 2 Threads. Delete one before adding a new Sphere_Tracker please.");
+            }
+
             using HttpClient client = new();
             string pageContent = await client.GetStringAsync(newUrl);
 
@@ -36,7 +41,7 @@ public class UrlClass
             else
             {
                 Console.WriteLine(Resource.HelperPortNotFound);
-                return (false, pageContent);
+                return (false, pageContent, Resource.HelperPortNotFound);
             }
 
             trackerUrl = ExtractUrl(pageContent, "Multiworld Tracker");
@@ -44,7 +49,7 @@ public class UrlClass
 
             if (string.IsNullOrEmpty(trackerUrl) || string.IsNullOrEmpty(sphereTrackerUrl) || string.IsNullOrEmpty(port))
             {
-                return (false, pageContent);
+                return (false, pageContent, Resource.UrlCanceled);
             }
 
             if (!trackerUrl.StartsWith("http"))
@@ -56,7 +61,12 @@ public class UrlClass
                 sphereTrackerUrl = baseUrl + sphereTrackerUrl;
             }
 
-            return (true, pageContent);
+            if(await TrackingDataManager.CheckMaxPlayersAsync(trackerUrl))
+            {
+                return (false, pageContent, $"You can't have more than {Declare.MaxPlayer} players");
+            }
+
+            return (true, pageContent, string.Empty);
         }
 
         string? ExtractUrl(string htmlContent, string linkText)
@@ -88,11 +98,11 @@ public class UrlClass
             }
             else
             {
-                var (isValid, pageContent) = await IsAllUrlIsValidAsync(newUrl);
+                var (isValid, pageContent, errorMessage) = await IsAllUrlIsValidAsync(newUrl);
 
                 if (!isValid)
                 {
-                    message = Resource.UrlCanceled;
+                    message = errorMessage;
                 }
                 else
                 {

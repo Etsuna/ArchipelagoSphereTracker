@@ -3,185 +3,211 @@ using System.Text.RegularExpressions;
 
 public static class HintStatusCommands
 {
-    public static async Task UpdateHintStatusAsync(string guildId, string channelId, List<HintStatus> hintstatusList)
+    public static async Task UpdateHintStatusAsync(
+        string guildId,
+        string channelId,
+        List<HintStatus> hintstatusList,
+        CancellationToken ct = default)
     {
-        using var connection = await Db.OpenAsync(Declare.CT);
+        if (hintstatusList is null || hintstatusList.Count == 0) return;
 
-        using (var transaction = connection.BeginTransaction())
+        await Db.WriteAsync(async conn =>
         {
-            foreach (var status in hintstatusList)
-            {
-                using (var command = new SQLiteCommand(@"
-                    UPDATE HintStatusTable
-                    SET Found = @Found
-                    WHERE GuildId = @GuildId 
-                      AND ChannelId = @ChannelId
-                      AND Finder = @Finder
-                      AND Receiver = @Receiver
-                      AND Item = @Item
-                      AND Location = @Location
-                      AND Game = @Game
-                      AND Entrance = @Entrance;", connection, transaction))
-                {
-                    command.Parameters.AddWithValue("@GuildId", guildId);
-                    command.Parameters.AddWithValue("@ChannelId", channelId);
-                    command.Parameters.AddWithValue("@Finder", status.Finder);
-                    command.Parameters.AddWithValue("@Receiver", status.Receiver);
-                    command.Parameters.AddWithValue("@Item", status.Item);
-                    command.Parameters.AddWithValue("@Location", status.Location);
-                    command.Parameters.AddWithValue("@Game", status.Game);
-                    command.Parameters.AddWithValue("@Entrance", status.Entrance);
-                    command.Parameters.AddWithValue("@Found", status.Found);
+            using var command = conn.CreateCommand();
+            command.CommandText = @"
+                UPDATE HintStatusTable
+                SET Found = @Found
+                WHERE GuildId = @GuildId
+                  AND ChannelId = @ChannelId
+                  AND Finder = @Finder
+                  AND Receiver = @Receiver
+                  AND Item = @Item
+                  AND Location = @Location
+                  AND Game = @Game
+                  AND Entrance = @Entrance;";
 
-                    await command.ExecuteNonQueryAsync();
-                }
-            }
-
-            transaction.Commit();
-        }
-    }
-
-    public static async Task<List<HintStatus>> GetHintStatusForReceiver(string guildId, string channelId, string receiverId)
-    {
-        var hintStatuses = new List<HintStatus>();
-
-        using var connection = await Db.OpenAsync(Declare.CT);
-        using (var command = new SQLiteCommand(@"
-                SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
-                FROM HintStatusTable
-                WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Receiver = @Receiver;", connection))
-        {
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@ChannelId", channelId);
-            command.Parameters.AddWithValue("@Receiver", receiverId);
-            using (var reader = await command.ExecuteReaderAsync())
+            var pFinder = command.Parameters.Add("@Finder", System.Data.DbType.String);
+            var pReceiver = command.Parameters.Add("@Receiver", System.Data.DbType.String);
+            var pItem = command.Parameters.Add("@Item", System.Data.DbType.String);
+            var pLocation = command.Parameters.Add("@Location", System.Data.DbType.String);
+            var pGame = command.Parameters.Add("@Game", System.Data.DbType.String);
+            var pEntrance = command.Parameters.Add("@Entrance", System.Data.DbType.String);
+            var pFound = command.Parameters.Add("@Found", System.Data.DbType.String);
+
+            command.Prepare();
+
+            foreach (var s in hintstatusList)
             {
-                while (await reader.ReadAsync())
-                {
-                    var hintStatus = new HintStatus
-                    {
-                        Finder = reader["Finder"]?.ToString() ?? string.Empty,
-                        Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
-                        Item = reader["Item"]?.ToString() ?? string.Empty,
-                        Location = reader["Location"]?.ToString() ?? string.Empty,
-                        Game = reader["Game"]?.ToString() ?? string.Empty,
-                        Entrance = reader["Entrance"]?.ToString() ?? string.Empty,
-                        Found = reader["Found"]?.ToString() ?? string.Empty
-                    };
-                    hintStatuses.Add(hintStatus);
-                }
+                ct.ThrowIfCancellationRequested();
+                pFinder.Value = s.Finder ?? (object)DBNull.Value;
+                pReceiver.Value = s.Receiver ?? (object)DBNull.Value;
+                pItem.Value = s.Item ?? (object)DBNull.Value;
+                pLocation.Value = s.Location ?? (object)DBNull.Value;
+                pGame.Value = s.Game ?? (object)DBNull.Value;
+                pEntrance.Value = s.Entrance ?? (object)DBNull.Value;
+                pFound.Value = s.Found ?? (object)DBNull.Value;
+
+                await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             }
-        }
-        return hintStatuses;
+        }, ct);
     }
 
-    public static async Task<List<HintStatus>> GetHintStatusForFinder(string guildId, string channelId, string receiverId)
+    public static async Task<List<HintStatus>> GetHintStatusForReceiver(
+        string guildId,
+        string channelId,
+        string receiverId,
+        CancellationToken ct = default)
     {
-        var hintStatuses = new List<HintStatus>();
+        var list = new List<HintStatus>();
 
-        using var connection = await Db.OpenAsync(Declare.CT);
-        using (var command = new SQLiteCommand(@"
-                SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
-                FROM HintStatusTable
-                WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Finder = @Finder;", connection))
+        await using var connection = await Db.OpenReadAsync(ct);
+        using var command = new SQLiteCommand(@"
+            SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
+            FROM HintStatusTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Receiver = @Receiver;", connection);
+
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        command.Parameters.AddWithValue("@Receiver", receiverId);
+
+        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+        while (await reader.ReadAsync(ct).ConfigureAwait(false))
         {
-            command.Parameters.AddWithValue("@GuildId", guildId);
-            command.Parameters.AddWithValue("@ChannelId", channelId);
-            command.Parameters.AddWithValue("@Finder", receiverId);
-            using (var reader = await command.ExecuteReaderAsync())
+            list.Add(new HintStatus
             {
-                while (await reader.ReadAsync())
-                {
-                    var hintStatus = new HintStatus
-                    {
-                        Finder = reader["Finder"]?.ToString() ?? string.Empty,
-                        Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
-                        Item = reader["Item"]?.ToString() ?? string.Empty,
-                        Location = reader["Location"]?.ToString() ?? string.Empty,
-                        Game = reader["Game"]?.ToString() ?? string.Empty,
-                        Entrance = reader["Entrance"]?.ToString() ?? string.Empty,
-                        Found = reader["Found"]?.ToString() ?? string.Empty
-                    };
-                    hintStatuses.Add(hintStatus);
-                }
-            }
+                Finder = reader["Finder"]?.ToString() ?? string.Empty,
+                Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
+                Item = reader["Item"]?.ToString() ?? string.Empty,
+                Location = reader["Location"]?.ToString() ?? string.Empty,
+                Game = reader["Game"]?.ToString() ?? string.Empty,
+                Entrance = reader["Entrance"]?.ToString() ?? string.Empty,
+                Found = reader["Found"]?.ToString() ?? string.Empty
+            });
         }
-        return hintStatuses;
+
+        return list;
     }
 
-    public static async Task<List<HintStatus>> GetHintStatus(string guild, string channel)
+    public static async Task<List<HintStatus>> GetHintStatusForFinder(
+        string guildId,
+        string channelId,
+        string finderId,
+        CancellationToken ct = default)
     {
-        var hintStatuses = new List<HintStatus>();
+        var list = new List<HintStatus>();
 
-        using var connection = await Db.OpenAsync(Declare.CT);
-        using (var command = new SQLiteCommand(@"
-                SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
-                FROM HintStatusTable
-                WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection))
+        await using var connection = await Db.OpenReadAsync(ct);
+        using var command = new SQLiteCommand(@"
+            SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
+            FROM HintStatusTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Finder = @Finder;", connection);
+
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        command.Parameters.AddWithValue("@Finder", finderId);
+
+        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+        while (await reader.ReadAsync(ct).ConfigureAwait(false))
         {
-            command.Parameters.AddWithValue("@GuildId", guild);
-            command.Parameters.AddWithValue("@ChannelId", channel);
-            using (var reader = await command.ExecuteReaderAsync())
+            list.Add(new HintStatus
             {
-                while (await reader.ReadAsync())
-                {
-                    var hintStatus = new HintStatus
-                    {
-                        Finder = reader["Finder"]?.ToString() ?? string.Empty,
-                        Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
-                        Item = reader["Item"]?.ToString() ?? string.Empty,
-                        Location = reader["Location"]?.ToString() ?? string.Empty,
-                        Game = reader["Game"]?.ToString() ?? string.Empty,
-                        Entrance = reader["Entrance"]?.ToString() ?? string.Empty,
-                        Found = reader["Found"]?.ToString() ?? string.Empty
-                    };
-                    hintStatuses.Add(hintStatus);
-                }
-            }
+                Finder = reader["Finder"]?.ToString() ?? string.Empty,
+                Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
+                Item = reader["Item"]?.ToString() ?? string.Empty,
+                Location = reader["Location"]?.ToString() ?? string.Empty,
+                Game = reader["Game"]?.ToString() ?? string.Empty,
+                Entrance = reader["Entrance"]?.ToString() ?? string.Empty,
+                Found = reader["Found"]?.ToString() ?? string.Empty
+            });
         }
-        return hintStatuses;
+
+        return list;
     }
 
-    public static async Task AddHintStatusAsync(string guild, string channel, List<HintStatus> hintStatus)
+    public static async Task<List<HintStatus>> GetHintStatus(
+        string guild,
+        string channel,
+        CancellationToken ct = default)
     {
+        var list = new List<HintStatus>();
+
+        await using var connection = await Db.OpenReadAsync(ct);
+        using var command = new SQLiteCommand(@"
+            SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
+            FROM HintStatusTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
+
+        command.Parameters.AddWithValue("@GuildId", guild);
+        command.Parameters.AddWithValue("@ChannelId", channel);
+
+        using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        {
+            list.Add(new HintStatus
+            {
+                Finder = reader["Finder"]?.ToString() ?? string.Empty,
+                Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
+                Item = reader["Item"]?.ToString() ?? string.Empty,
+                Location = reader["Location"]?.ToString() ?? string.Empty,
+                Game = reader["Game"]?.ToString() ?? string.Empty,
+                Entrance = reader["Entrance"]?.ToString() ?? string.Empty,
+                Found = reader["Found"]?.ToString() ?? string.Empty
+            });
+        }
+
+        return list;
+    }
+
+    public static async Task AddHintStatusAsync(
+        string guild,
+        string channel,
+        List<HintStatus> hintStatus,
+        CancellationToken ct = default)
+    {
+        if (hintStatus is null || hintStatus.Count == 0) return;
+
         try
         {
-            using var connection = await Db.OpenAsync(Declare.CT);
-
-            using (var transaction = (SQLiteTransaction)await connection.BeginTransactionAsync())
+            await Db.WriteAsync(async conn =>
             {
-                using (var command = new SQLiteCommand(@"
-                        INSERT OR REPLACE INTO HintStatusTable (GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Entrance, Found)
-                        VALUES (@GuildId, @ChannelId, @Finder, @Receiver, @Item, @Location, @Game, @Entrance, @Found);", connection, transaction))
+                using var command = conn.CreateCommand();
+                command.CommandText = @"
+                    INSERT OR REPLACE INTO HintStatusTable
+                        (GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Entrance, Found)
+                    VALUES
+                        (@GuildId, @ChannelId, @Finder, @Receiver, @Item, @Location, @Game, @Entrance, @Found);";
+
+                var pGuild = command.Parameters.Add("@GuildId", System.Data.DbType.String);
+                var pChannel = command.Parameters.Add("@ChannelId", System.Data.DbType.String);
+                var pFinder = command.Parameters.Add("@Finder", System.Data.DbType.String);
+                var pReceiver = command.Parameters.Add("@Receiver", System.Data.DbType.String);
+                var pItem = command.Parameters.Add("@Item", System.Data.DbType.String);
+                var pLocation = command.Parameters.Add("@Location", System.Data.DbType.String);
+                var pGame = command.Parameters.Add("@Game", System.Data.DbType.String);
+                var pEntrance = command.Parameters.Add("@Entrance", System.Data.DbType.String);
+                var pFound = command.Parameters.Add("@Found", System.Data.DbType.String);
+
+                command.Prepare();
+
+                foreach (var s in hintStatus)
                 {
-                    command.Parameters.Add("@GuildId", System.Data.DbType.String);
-                    command.Parameters.Add("@ChannelId", System.Data.DbType.String);
-                    command.Parameters.Add("@Finder", System.Data.DbType.String);
-                    command.Parameters.Add("@Receiver", System.Data.DbType.String);
-                    command.Parameters.Add("@Item", System.Data.DbType.String);
-                    command.Parameters.Add("@Location", System.Data.DbType.String);
-                    command.Parameters.Add("@Game", System.Data.DbType.String);
-                    command.Parameters.Add("@Entrance", System.Data.DbType.String);
-                    command.Parameters.Add("@Found", System.Data.DbType.String);
+                    ct.ThrowIfCancellationRequested();
 
-                    foreach (var status in hintStatus)
-                    {
-                        command.Parameters["@GuildId"].Value = guild;
-                        command.Parameters["@ChannelId"].Value = channel;
-                        command.Parameters["@Finder"].Value = status.Finder;
-                        command.Parameters["@Receiver"].Value = status.Receiver;
-                        command.Parameters["@Item"].Value = status.Item;
-                        command.Parameters["@Location"].Value = status.Location;
-                        command.Parameters["@Game"].Value = status.Game;
-                        command.Parameters["@Entrance"].Value = status.Entrance;
-                        command.Parameters["@Found"].Value = status.Found;
+                    pGuild.Value = guild;
+                    pChannel.Value = channel;
+                    pFinder.Value = (object?)s.Finder ?? DBNull.Value;
+                    pReceiver.Value = (object?)s.Receiver ?? DBNull.Value;
+                    pItem.Value = (object?)s.Item ?? DBNull.Value;
+                    pLocation.Value = (object?)s.Location ?? DBNull.Value;
+                    pGame.Value = (object?)s.Game ?? DBNull.Value;
+                    pEntrance.Value = (object?)s.Entrance ?? DBNull.Value;
+                    pFound.Value = (object?)s.Found ?? DBNull.Value;
 
-                        await command.ExecuteNonQueryAsync();
-                    }
+                    await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
                 }
-
-                await transaction.CommitAsync();
-            }
+            }, ct);
         }
         catch (Exception ex)
         {
@@ -189,61 +215,63 @@ public static class HintStatusCommands
         }
     }
 
-    public static async Task DeleteDuplicateReceiversAliasAsync(string guildId, string channelId)
+    public static async Task DeleteDuplicateReceiversAliasAsync(
+        string guildId,
+        string channelId,
+        CancellationToken ct = default)
     {
         try
         {
-            using var connection = await Db.OpenAsync(Declare.CT);
-
-            var existingReceivers = new List<string>();
-            using (var selectCommand = new SQLiteCommand(connection))
+            await Db.WriteAsync(async conn =>
             {
-                selectCommand.CommandText = @"
+                // 1) lire tous les Receiver
+                var existing = new List<string>();
+                using (var select = new SQLiteCommand(@"
                     SELECT Receiver
                     FROM HintStatusTable
-                    WHERE GuildId = @GuildId
-                      AND ChannelId = @ChannelId";
-                selectCommand.Parameters.AddWithValue("@GuildId", guildId);
-                selectCommand.Parameters.AddWithValue("@ChannelId", channelId);
-
-                using (var reader = await selectCommand.ExecuteReaderAsync())
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", conn))
                 {
-                    while (await reader.ReadAsync())
+                    select.Parameters.AddWithValue("@GuildId", guildId);
+                    select.Parameters.AddWithValue("@ChannelId", channelId);
+
+                    using var reader = await select.ExecuteReaderAsync(ct).ConfigureAwait(false);
+                    while (await reader.ReadAsync(ct).ConfigureAwait(false))
                     {
-                        existingReceivers.Add(reader.GetString(0));
+                        if (!reader.IsDBNull(0))
+                            existing.Add(reader.GetString(0));
                     }
                 }
-            }
 
-            var receiversToDelete = new HashSet<string>();
-            foreach (var name in existingReceivers)
-            {
-                var match = Regex.Match(name, @"\((.+?)\)$");
-                if (match.Success)
+                // 2) détecter les doublons à supprimer
+                var toDelete = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var name in existing)
                 {
-                    var baseName = match.Groups[1].Value;
-                    if (existingReceivers.Contains(baseName))
+                    var m = Regex.Match(name, @"\((.+?)\)$");
+                    if (m.Success)
                     {
-                        receiversToDelete.Add(baseName);
+                        var baseName = m.Groups[1].Value;
+                        if (existing.Contains(baseName))
+                            toDelete.Add(baseName);
                     }
                 }
-            }
 
-            foreach (var receiverToDelete in receiversToDelete)
-            {
-                using (var deleteCommand = new SQLiteCommand(connection))
+                // 3) supprimer
+                using (var del = new SQLiteCommand(@"
+                    DELETE FROM HintStatusTable
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Receiver = @Receiver;", conn))
                 {
-                    deleteCommand.CommandText = @"
-                        DELETE FROM HintStatusTable
-                        WHERE GuildId = @GuildId
-                          AND ChannelId = @ChannelId
-                          AND Receiver = @Receiver";
-                    deleteCommand.Parameters.AddWithValue("@GuildId", guildId);
-                    deleteCommand.Parameters.AddWithValue("@ChannelId", channelId);
-                    deleteCommand.Parameters.AddWithValue("@Receiver", receiverToDelete);
-                    await deleteCommand.ExecuteNonQueryAsync();
+                    del.Parameters.AddWithValue("@GuildId", guildId);
+                    del.Parameters.AddWithValue("@ChannelId", channelId);
+                    var p = del.Parameters.Add("@Receiver", System.Data.DbType.String);
+
+                    foreach (var name in toDelete)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        p.Value = name;
+                        await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    }
                 }
-            }
+            }, ct);
         }
         catch (Exception ex)
         {
@@ -251,61 +279,63 @@ public static class HintStatusCommands
         }
     }
 
-    public static async Task DeleteDuplicateFindersAliasAsync(string guildId, string channelId)
+    public static async Task DeleteDuplicateFindersAliasAsync(
+        string guildId,
+        string channelId,
+        CancellationToken ct = default)
     {
         try
         {
-            using var connection = await Db.OpenAsync(Declare.CT);
-
-            var existingFinders = new List<string>();
-            using (var selectCommand = new SQLiteCommand(connection))
+            await Db.WriteAsync(async conn =>
             {
-                selectCommand.CommandText = @"
+                // 1) lire tous les Finder
+                var existing = new List<string>();
+                using (var select = new SQLiteCommand(@"
                     SELECT Finder
                     FROM HintStatusTable
-                    WHERE GuildId = @GuildId
-                      AND ChannelId = @ChannelId";
-                selectCommand.Parameters.AddWithValue("@GuildId", guildId);
-                selectCommand.Parameters.AddWithValue("@ChannelId", channelId);
-
-                using (var reader = await selectCommand.ExecuteReaderAsync())
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", conn))
                 {
-                    while (await reader.ReadAsync())
+                    select.Parameters.AddWithValue("@GuildId", guildId);
+                    select.Parameters.AddWithValue("@ChannelId", channelId);
+
+                    using var reader = await select.ExecuteReaderAsync(ct).ConfigureAwait(false);
+                    while (await reader.ReadAsync(ct).ConfigureAwait(false))
                     {
-                        existingFinders.Add(reader.GetString(0));
+                        if (!reader.IsDBNull(0))
+                            existing.Add(reader.GetString(0));
                     }
                 }
-            }
 
-            var findersToDelete = new HashSet<string>();
-            foreach (var name in existingFinders)
-            {
-                var match = Regex.Match(name, @"\((.+?)\)$");
-                if (match.Success)
+                // 2) détecter les doublons à supprimer
+                var toDelete = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var name in existing)
                 {
-                    var baseName = match.Groups[1].Value;
-                    if (existingFinders.Contains(baseName))
+                    var m = Regex.Match(name, @"\((.+?)\)$");
+                    if (m.Success)
                     {
-                        findersToDelete.Add(baseName);
+                        var baseName = m.Groups[1].Value;
+                        if (existing.Contains(baseName))
+                            toDelete.Add(baseName);
                     }
                 }
-            }
 
-            foreach (var finderToDelete in findersToDelete)
-            {
-                using (var deleteCommand = new SQLiteCommand(connection))
+                // 3) supprimer (⚠️ dans HintStatusTable, pas GameStatusTable)
+                using (var del = new SQLiteCommand(@"
+                    DELETE FROM HintStatusTable
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Finder = @Finder;", conn))
                 {
-                    deleteCommand.CommandText = @"
-                        DELETE FROM GameStatusTable
-                        WHERE GuildId = @GuildId
-                          AND ChannelId = @ChannelId
-                          AND Finder = @Finder";
-                    deleteCommand.Parameters.AddWithValue("@GuildId", guildId);
-                    deleteCommand.Parameters.AddWithValue("@ChannelId", channelId);
-                    deleteCommand.Parameters.AddWithValue("@Finder", finderToDelete);
-                    await deleteCommand.ExecuteNonQueryAsync();
+                    del.Parameters.AddWithValue("@GuildId", guildId);
+                    del.Parameters.AddWithValue("@ChannelId", channelId);
+                    var p = del.Parameters.Add("@Finder", System.Data.DbType.String);
+
+                    foreach (var name in toDelete)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        p.Value = name;
+                        await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    }
                 }
-            }
+            }, ct);
         }
         catch (Exception ex)
         {

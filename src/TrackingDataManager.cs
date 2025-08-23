@@ -1,12 +1,12 @@
-﻿using Discord;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord;
 using Discord.WebSocket;
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Net;
-using System.Web;
-using System.Text.RegularExpressions;
 using System.Text;
-using ArchipelagoSphereTracker.src.Resources;
-using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
+using System.Web;
 
 public static class TrackingDataManager
 {
@@ -20,8 +20,8 @@ public static class TrackingDataManager
     public static void StartTracking()
     {
 
-        const int MaxGuildsParallel = 2;
-        const int MaxChannelsParallel = 8;
+        const int MaxGuildsParallel = 10;
+        const int MaxChannelsParallel = 2;
 
         if (Declare.Cts != null)
         {
@@ -35,7 +35,7 @@ public static class TrackingDataManager
         {
             try
             {
-                var programID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable");
+                var programID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable", Declare.CT);
 
                 while (!token.IsCancellationRequested)
                 {
@@ -636,5 +636,48 @@ public static class TrackingDataManager
 
         if (sb.Length > 0)
             yield return sb.ToString();
+    }
+
+    public static async Task<bool> CheckMaxPlayersAsync(string trackerUrl)
+    {
+        using var stream = await Declare.HttpClient.GetStreamAsync(trackerUrl);
+        using var reader = new StreamReader(stream);
+
+        var html = await reader.ReadToEndAsync();
+        var tableMatch = TableRegex.Match(html);
+
+        if (!tableMatch.Success)
+            return true;
+
+        var firstTableHtml = tableMatch.Groups[1].Value;
+        var rowMatches = RowRegex.Matches(firstTableHtml);
+
+        var parsedRows = new List<Match[]>(rowMatches.Count);
+
+        for (int i = 1; i < rowMatches.Count; i++)
+        {
+            var cells = CellRegex.Matches(rowMatches[i].Groups[1].Value);
+            if (cells.Count == 7)
+            {
+                parsedRows.Add(cells.Cast<Match>().ToArray());
+            }
+        }
+
+        if (parsedRows.Count == 0)
+            return true;
+
+        var namesToCheck = new List<string>(parsedRows.Count);
+        foreach (var cells in parsedRows)
+        {
+            var name = WebUtility.HtmlDecode(cells[1].Groups[1].Value.Trim());
+            namesToCheck.Add(name);
+        }
+        Console.WriteLine($"Player {namesToCheck.Count}/{Declare.MaxPlayer}");
+        if (namesToCheck.Count > Declare.MaxPlayer)
+        {
+            Console.WriteLine($"Players Min > Players Max, Impossible to add this archipelago.");
+            return true;
+        }
+        return false;
     }
 }

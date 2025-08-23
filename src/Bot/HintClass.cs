@@ -4,21 +4,20 @@ using System.Text;
 public class HintClass
 {
     public static async Task<string> HintHandler(
-    string message,
-    string? realAlias,
-    string channelId,
-    string guildId,
-    Func<string, string, string, Task<List<HintStatus>>> fetchHintsFunc,
-    Func<HintStatus, string?, bool> filterFunc,
-    string headerTemplate,
-    string noHintMessage)
+        string message,
+        string? realAlias,
+        string channelId,
+        string guildId,
+        Func<string, string, string, CancellationToken, Task<List<HintStatus>>> fetchHintsFunc,
+        Func<HintStatus, string?, bool> filterFunc,
+        string headerTemplate,
+        string noHintMessage,
+        CancellationToken ct = default)
     {
-        if (string.IsNullOrEmpty(realAlias))
-        {
+        if (string.IsNullOrWhiteSpace(realAlias))
             return Resource.HintNoAlias;
-        }
 
-        var hints = await fetchHintsFunc(guildId, channelId, realAlias);
+        var hints = await fetchHintsFunc(guildId, channelId, realAlias, ct).ConfigureAwait(false);
 
         if (hints.Any())
         {
@@ -36,45 +35,40 @@ public class HintClass
         return message;
     }
 
-
-    public static async Task<string> HintForReceiver(string message, string? realAlias, string channelId, string guildId)
-    {
-        return await HintHandler(
+    public static Task<string> HintForReceiver(
+        string message, string? realAlias, string channelId, string guildId, CancellationToken ct = default) =>
+        HintHandler(
             message,
             realAlias,
             channelId,
             guildId,
-            HintStatusCommands.GetHintStatusForReceiver,
+            HintStatusCommands.GetHintStatusForReceiver, // (guildId, channelId, receiver, ct)
             (hint, alias) => hint.Receiver == alias,
             Resource.HintItemFor,
-            Resource.HintNoHintFoundForReceiver
-        );
-    }
+            Resource.HintNoHintFoundForReceiver,
+            ct);
 
-    public static async Task<string> HintForFinder(string message, string? realAlias, string channelId, string guildId)
-    {
-        return await HintHandler(
+    public static Task<string> HintForFinder(
+        string message, string? realAlias, string channelId, string guildId, CancellationToken ct = default) =>
+        HintHandler(
             message,
             realAlias,
             channelId,
             guildId,
-            HintStatusCommands.GetHintStatusForFinder,
+            HintStatusCommands.GetHintStatusForFinder, // (guildId, channelId, finder, ct)
             (hint, alias) => hint.Finder == alias,
             Resource.HintItemFrom,
-            Resource.HintNoHintFoundFromFinder
-        );
-    }
+            Resource.HintNoHintFoundFromFinder,
+            ct);
 
     public static string BuildHintMessage(string header, IEnumerable<HintStatus> hints)
     {
-        var messageBuilder = new StringBuilder();
-        messageBuilder.AppendLine(header);
+        var sb = new StringBuilder();
+        sb.AppendLine(header);
 
         foreach (var item in hints)
-        {
-            messageBuilder.AppendLine(string.Format(Resource.HintItem, item.Receiver, item.Item, item.Location, item.Finder));
-        }
+            sb.AppendLine(string.Format(Resource.HintItem, item.Receiver, item.Item, item.Location, item.Finder));
 
-        return messageBuilder.ToString();
+        return sb.ToString();
     }
 }

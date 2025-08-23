@@ -1,13 +1,6 @@
 #!/bin/bash
 set -e  # Quitte en cas d'erreur
 
-### Vérification architecture
-ARCH=$(uname -m)
-if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-  echo "❌ Architecture $ARCH is not supported. This script only works on x86_64."
-  exit 1
-fi
-
 ### Détection WSL
 IS_WSL=false
 if grep -qi microsoft /proc/sys/kernel/osrelease; then
@@ -64,19 +57,8 @@ wget -q --show-progress "$LATEST_URL"
 tar -xzf "$FILENAME" && rm "$FILENAME"
 chmod +x ArchipelagoSphereTracker
 
-### 5) Fichier .env
-read -p "🔑 DISCORD_TOKEN: " DISCORD_TOKEN
-read -p "ℹ️ LANGUAGE: (available: de, en, es, fr, ja, pt)"       LANGUAGE
-read -p "ℹ️ TELEMETRY: (available: true, false)"       TELEMETRY
-read -p "ℹ️ TELEMETRY_NAME: (If null, Generate a random number)"       TELEMETRY_NAME
-cat > .env <<EOF
-DISCORD_TOKEN=$DISCORD_TOKEN
-LANGUAGE=$LANGUAGE
-EOF
-echo "✅ .env file created"
-
 ### 6) Installation interne
-./ArchipelagoSphereTracker --install
+./ArchipelagoSphereTracker --NormalMode
 
 ### 7) Service systemd (si pas WSL)
 if [ "$IS_WSL" = false ]; then

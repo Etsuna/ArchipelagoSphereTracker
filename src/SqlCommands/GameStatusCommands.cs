@@ -3,43 +3,38 @@ using System.Text.RegularExpressions;
 
 public static class GameStatusCommands
 {
-    public static async Task<List<GameStatus>> GetGameStatusForGuildAndChannelAsync(string guildId, string channelId)
+    public static async Task<List<GameStatus>> GetGameStatusForGuildAndChannelAsync(
+        string guildId,
+        string channelId,
+        CancellationToken ct = default)
     {
         var gameStatuses = new List<GameStatus>();
 
         try
         {
-            using var connection = await Db.OpenAsync(Declare.CT);
+            await using var connection = await Db.OpenReadAsync(ct);
 
-            using (var command = new SQLiteCommand(connection))
+            using var command = new SQLiteCommand(@"
+                SELECT Hashtag, Name, Game, Status, Checks, Percent, LastActivity
+                FROM GameStatusTable
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
+
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+
+            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
-                command.CommandText = @"
-                    SELECT Hashtag, Name, Game, Status, Checks, Percent, LastActivity
-                    FROM GameStatusTable
-                    WHERE GuildId = @GuildId
-                      AND ChannelId = @ChannelId";
-
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                command.Parameters.AddWithValue("@ChannelId", channelId);
-
-                using (var reader = await command.ExecuteReaderAsync())
+                gameStatuses.Add(new GameStatus
                 {
-                    while (await reader.ReadAsync())
-                    {
-                        var gameStatus = new GameStatus
-                        {
-                            Hashtag = reader["Hashtag"]?.ToString() ?? string.Empty,
-                            Name = reader["Name"]?.ToString() ?? string.Empty,
-                            Game = reader["Game"]?.ToString() ?? string.Empty,
-                            Status = reader["Status"]?.ToString() ?? string.Empty,
-                            Checks = reader["Checks"]?.ToString() ?? string.Empty,
-                            Percent = reader["Percent"]?.ToString() ?? string.Empty,
-                            LastActivity = reader["LastActivity"]?.ToString() ?? string.Empty
-                        };
-
-                        gameStatuses.Add(gameStatus);
-                    }
-                }
+                    Hashtag = reader["Hashtag"]?.ToString() ?? string.Empty,
+                    Name = reader["Name"]?.ToString() ?? string.Empty,
+                    Game = reader["Game"]?.ToString() ?? string.Empty,
+                    Status = reader["Status"]?.ToString() ?? string.Empty,
+                    Checks = reader["Checks"]?.ToString() ?? string.Empty,
+                    Percent = reader["Percent"]?.ToString() ?? string.Empty,
+                    LastActivity = reader["LastActivity"]?.ToString() ?? string.Empty
+                });
             }
         }
         catch (Exception ex)
@@ -50,54 +45,47 @@ public static class GameStatusCommands
         return gameStatuses;
     }
 
-    public static async Task<Dictionary<string, GameStatus>> GetStatusesByNamesAsync(string guildId, string channelId, List<string> names)
+    public static async Task<Dictionary<string, GameStatus>> GetStatusesByNamesAsync(
+        string guildId,
+        string channelId,
+        List<string> names,
+        CancellationToken ct = default)
     {
         var statuses = new Dictionary<string, GameStatus>();
-
-        if (names == null || names.Count == 0)
-            return statuses;
+        if (names is null || names.Count == 0) return statuses;
 
         try
         {
-            using var connection = await Db.OpenAsync(Declare.CT);
+            await using var connection = await Db.OpenReadAsync(ct);
 
-            var parameters = string.Join(", ", names.Select((_, i) => $"@Name{i}"));
+            var paramNames = names.Select((_, i) => $"@Name{i}").ToArray();
+            var inClause = string.Join(", ", paramNames);
 
-            using (var command = new SQLiteCommand(connection))
+            using var command = new SQLiteCommand($@"
+                SELECT Hashtag, Name, Game, Status, Checks, Percent, LastActivity
+                FROM GameStatusTable
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId
+                  AND Name IN ({inClause});", connection);
+
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            for (int i = 0; i < names.Count; i++)
+                command.Parameters.AddWithValue(paramNames[i], names[i]);
+
+            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
-                command.CommandText = $@"
-                    SELECT Hashtag, Name, Game, Status, Checks, Percent, LastActivity
-                    FROM GameStatusTable
-                    WHERE GuildId = @GuildId
-                      AND ChannelId = @ChannelId
-                      AND Name IN ({parameters})";
-
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                command.Parameters.AddWithValue("@ChannelId", channelId);
-
-                for (int i = 0; i < names.Count; i++)
+                var status = new GameStatus
                 {
-                    command.Parameters.AddWithValue($"@Name{i}", names[i]);
-                }
-
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        var status = new GameStatus
-                        {
-                            Hashtag = reader["Hashtag"]?.ToString() ?? string.Empty,
-                            Name = reader["Name"]?.ToString() ?? string.Empty,
-                            Game = reader["Game"]?.ToString() ?? string.Empty,
-                            Status = reader["Status"]?.ToString() ?? string.Empty,
-                            Checks = reader["Checks"]?.ToString() ?? string.Empty,
-                            Percent = reader["Percent"]?.ToString() ?? string.Empty,
-                            LastActivity = reader["LastActivity"]?.ToString() ?? string.Empty
-                        };
-
-                        statuses[status.Name] = status;
-                    }
-                }
+                    Hashtag = reader["Hashtag"]?.ToString() ?? string.Empty,
+                    Name = reader["Name"]?.ToString() ?? string.Empty,
+                    Game = reader["Game"]?.ToString() ?? string.Empty,
+                    Status = reader["Status"]?.ToString() ?? string.Empty,
+                    Checks = reader["Checks"]?.ToString() ?? string.Empty,
+                    Percent = reader["Percent"]?.ToString() ?? string.Empty,
+                    LastActivity = reader["LastActivity"]?.ToString() ?? string.Empty
+                };
+                statuses[status.Name] = status;
             }
         }
         catch (Exception ex)
@@ -108,42 +96,38 @@ public static class GameStatusCommands
         return statuses;
     }
 
-    public static async Task<HashSet<string>> GetExistingGameNamesAsync(string guildId, string channelId, List<string> games)
+    public static async Task<HashSet<string>> GetExistingGameNamesAsync(
+        string guildId,
+        string channelId,
+        List<string> games,
+        CancellationToken ct = default)
     {
-        var existingGames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        if (games == null || games.Count == 0)
-            return existingGames;
+        var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (games is null || games.Count == 0) return existing;
 
         try
         {
-            using var connection = await Db.OpenAsync(Declare.CT);
+            await using var connection = await Db.OpenReadAsync(ct);
 
-            var parameterNames = games.Select((_, index) => $"@Game{index}").ToArray();
-            var inClause = string.Join(", ", parameterNames);
+            var paramNames = games.Select((_, i) => $"@Game{i}").ToArray();
+            var inClause = string.Join(", ", paramNames);
 
-            var commandText = $@"
-            SELECT Game
-            FROM GameStatusTable
-            WHERE GuildId = @GuildId
-              AND ChannelId = @ChannelId
-              AND Game IN ({inClause})";
-
-            using var command = new SQLiteCommand(commandText, connection);
+            using var command = new SQLiteCommand($@"
+                SELECT Game
+                FROM GameStatusTable
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId
+                  AND Game IN ({inClause});", connection);
 
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@ChannelId", channelId);
-
             for (int i = 0; i < games.Count; i++)
-            {
-                command.Parameters.AddWithValue($"@Game{i}", games[i]);
-            }
+                command.Parameters.AddWithValue(paramNames[i], games[i]);
 
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
             {
-                var gameName = reader.GetString(0);
-                existingGames.Add(gameName);
+                if (!reader.IsDBNull(0))
+                    existing.Add(reader.GetString(0));
             }
         }
         catch (Exception ex)
@@ -151,50 +135,54 @@ public static class GameStatusCommands
             Console.WriteLine($"Error while retrieving existing games: {ex.Message}");
         }
 
-        return existingGames;
+        return existing;
     }
 
-    public static async Task AddOrReplaceGameStatusAsync(string guildId, string channelId, List<GameStatus> gameStatuses)
+    public static async Task AddOrReplaceGameStatusAsync(
+        string guildId,
+        string channelId,
+        List<GameStatus> gameStatuses,
+        CancellationToken ct = default)
     {
+        if (gameStatuses is null || gameStatuses.Count == 0) return;
+
         try
         {
-            using var connection = await Db.OpenAsync(Declare.CT);
-
-            using (var transaction = await connection.BeginTransactionAsync())
+            await Db.WriteAsync(async conn =>
             {
-                using (var command = new SQLiteCommand(connection))
-                {
-                    command.CommandText = @"
-                        INSERT OR REPLACE INTO GameStatusTable
+                using var command = conn.CreateCommand();
+                command.CommandText = @"
+                    INSERT OR REPLACE INTO GameStatusTable
                         (GuildId, ChannelId, Hashtag, Name, Game, Status, Checks, Percent, LastActivity)
-                        VALUES (@GuildId, @ChannelId, @Hashtag, @Name, @Game, @Status, @Checks, @Percent, @LastActivity)";
+                    VALUES
+                        (@GuildId, @ChannelId, @Hashtag, @Name, @Game, @Status, @Checks, @Percent, @LastActivity);";
 
-                    command.Parameters.Add(new SQLiteParameter("@GuildId", guildId));
-                    command.Parameters.Add(new SQLiteParameter("@ChannelId", channelId));
-                    command.Parameters.Add(new SQLiteParameter("@Hashtag", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@Name", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@Game", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@Status", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@Checks", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@Percent", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@LastActivity", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@GuildId", guildId));
+                command.Parameters.Add(new SQLiteParameter("@ChannelId", channelId));
+                command.Parameters.Add(new SQLiteParameter("@Hashtag", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@Name", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@Game", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@Status", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@Checks", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@Percent", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@LastActivity", System.Data.DbType.String));
 
-                    foreach (var gameStatus in gameStatuses)
-                    {
-                        command.Parameters["@Hashtag"].Value = gameStatus.Hashtag ?? (object)DBNull.Value;
-                        command.Parameters["@Name"].Value = gameStatus.Name ?? (object)DBNull.Value;
-                        command.Parameters["@Game"].Value = gameStatus.Game ?? (object)DBNull.Value;
-                        command.Parameters["@Status"].Value = gameStatus.Status ?? (object)DBNull.Value;
-                        command.Parameters["@Checks"].Value = gameStatus.Checks ?? (object)DBNull.Value;
-                        command.Parameters["@Percent"].Value = gameStatus.Percent ?? (object)DBNull.Value;
-                        command.Parameters["@LastActivity"].Value = gameStatus.LastActivity ?? (object)DBNull.Value;
+                command.Prepare();
 
-                        await command.ExecuteNonQueryAsync();
-                    }
+                foreach (var gs in gameStatuses)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    command.Parameters["@Hashtag"].Value = (object?)gs.Hashtag ?? DBNull.Value;
+                    command.Parameters["@Name"].Value = (object?)gs.Name ?? DBNull.Value;
+                    command.Parameters["@Game"].Value = (object?)gs.Game ?? DBNull.Value;
+                    command.Parameters["@Status"].Value = (object?)gs.Status ?? DBNull.Value;
+                    command.Parameters["@Checks"].Value = (object?)gs.Checks ?? DBNull.Value;
+                    command.Parameters["@Percent"].Value = (object?)gs.Percent ?? DBNull.Value;
+                    command.Parameters["@LastActivity"].Value = (object?)gs.LastActivity ?? DBNull.Value;
+
+                    await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
                 }
-
-                await transaction.CommitAsync();
-            }
+            }, ct);
         }
         catch (Exception ex)
         {
@@ -202,48 +190,51 @@ public static class GameStatusCommands
         }
     }
 
-    public static async Task UpdateGameStatusBatchAsync(string guildId, string channelId, List<GameStatus> gameStatuses)
+    public static async Task UpdateGameStatusBatchAsync(
+        string guildId,
+        string channelId,
+        List<GameStatus> gameStatuses,
+        CancellationToken ct = default)
     {
+        if (gameStatuses is null || gameStatuses.Count == 0) return;
+
         try
         {
-            using var connection = await Db.OpenAsync(Declare.CT);
-
-            using (var transaction = await connection.BeginTransactionAsync())
+            await Db.WriteAsync(async conn =>
             {
-                using (var command = new SQLiteCommand(connection))
-                {
-                    command.CommandText = @"
+                using var command = conn.CreateCommand();
+                command.CommandText = @"
                     UPDATE GameStatusTable
                     SET Status = @Status,
                         Percent = @Percent,
                         Checks = @Checks,
                         LastActivity = @LastActivity
                     WHERE GuildId = @GuildId
-                    AND ChannelId = @ChannelId
-                    AND Name = @Name";
+                      AND ChannelId = @ChannelId
+                      AND Name = @Name;";
 
-                    command.Parameters.Add(new SQLiteParameter("@GuildId", guildId));
-                    command.Parameters.Add(new SQLiteParameter("@ChannelId", channelId));
-                    command.Parameters.Add(new SQLiteParameter("@Status", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@Percent", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@Checks", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@LastActivity", System.Data.DbType.String));
-                    command.Parameters.Add(new SQLiteParameter("@Name", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@GuildId", guildId));
+                command.Parameters.Add(new SQLiteParameter("@ChannelId", channelId));
+                command.Parameters.Add(new SQLiteParameter("@Status", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@Percent", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@Checks", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@LastActivity", System.Data.DbType.String));
+                command.Parameters.Add(new SQLiteParameter("@Name", System.Data.DbType.String));
 
-                    foreach (var gameStatus in gameStatuses)
-                    {
-                        command.Parameters["@Name"].Value = gameStatus.Name ?? (object)DBNull.Value;
-                        command.Parameters["@Status"].Value = gameStatus.Status ?? (object)DBNull.Value;
-                        command.Parameters["@Percent"].Value = gameStatus.Percent ?? (object)DBNull.Value;
-                        command.Parameters["@Checks"].Value = gameStatus.Checks ?? (object)DBNull.Value;
-                        command.Parameters["@LastActivity"].Value = gameStatus.LastActivity ?? (object)DBNull.Value;
+                command.Prepare();
 
-                        await command.ExecuteNonQueryAsync();
-                    }
+                foreach (var gs in gameStatuses)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    command.Parameters["@Name"].Value = (object?)gs.Name ?? DBNull.Value;
+                    command.Parameters["@Status"].Value = (object?)gs.Status ?? DBNull.Value;
+                    command.Parameters["@Percent"].Value = (object?)gs.Percent ?? DBNull.Value;
+                    command.Parameters["@Checks"].Value = (object?)gs.Checks ?? DBNull.Value;
+                    command.Parameters["@LastActivity"].Value = (object?)gs.LastActivity ?? DBNull.Value;
+
+                    await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
                 }
-
-                await transaction.CommitAsync();
-            }
+            }, ct);
         }
         catch (Exception ex)
         {
@@ -251,61 +242,65 @@ public static class GameStatusCommands
         }
     }
 
-    public static async Task DeleteDuplicateAliasAsync(string guildId, string channelId)
+    public static async Task DeleteDuplicateAliasAsync(
+        string guildId,
+        string channelId,
+        CancellationToken ct = default)
     {
         try
         {
-            using var connection = await Db.OpenAsync(Declare.CT);
-
-            var existingNames = new List<string>();
-            using (var selectCommand = new SQLiteCommand(connection))
+            // On fait tout dans une écriture transactionnelle (lecture + delete),
+            // pour éviter des races avec d'autres writers.
+            await Db.WriteAsync(async conn =>
             {
-                selectCommand.CommandText = @"
+                // 1) Lire tous les Name existants pour ce couple guild/channel
+                var existingNames = new List<string>();
+                using (var select = new SQLiteCommand(@"
                     SELECT Name
                     FROM GameStatusTable
-                    WHERE GuildId = @GuildId
-                      AND ChannelId = @ChannelId";
-                selectCommand.Parameters.AddWithValue("@GuildId", guildId);
-                selectCommand.Parameters.AddWithValue("@ChannelId", channelId);
-
-                using (var reader = await selectCommand.ExecuteReaderAsync())
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", conn))
                 {
-                    while (await reader.ReadAsync())
+                    select.Parameters.AddWithValue("@GuildId", guildId);
+                    select.Parameters.AddWithValue("@ChannelId", channelId);
+
+                    using var reader = await select.ExecuteReaderAsync(ct).ConfigureAwait(false);
+                    while (await reader.ReadAsync(ct).ConfigureAwait(false))
                     {
-                        existingNames.Add(reader.GetString(0));
+                        if (!reader.IsDBNull(0))
+                            existingNames.Add(reader.GetString(0));
                     }
                 }
-            }
 
-            var namesToDelete = new HashSet<string>();
-            foreach (var name in existingNames)
-            {
-                var match = Regex.Match(name, @"\((.+?)\)$");
-                if (match.Success)
+                // 2) Déterminer les noms à supprimer (ceux qui existent en double sans suffixe "(...)")
+                var namesToDelete = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var name in existingNames)
                 {
-                    var baseName = match.Groups[1].Value;
-                    if (existingNames.Contains(baseName))
+                    var match = Regex.Match(name, @"\((.+?)\)$");
+                    if (match.Success)
                     {
-                        namesToDelete.Add(baseName);
+                        var baseName = match.Groups[1].Value;
+                        if (existingNames.Contains(baseName))
+                            namesToDelete.Add(baseName);
                     }
                 }
-            }
 
-            foreach (var nameToDelete in namesToDelete)
-            {
-                using (var deleteCommand = new SQLiteCommand(connection))
+                // 3) Supprimer
+                using (var delete = new SQLiteCommand(@"
+                    DELETE FROM GameStatusTable
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Name = @Name;", conn))
                 {
-                    deleteCommand.CommandText = @"
-                        DELETE FROM GameStatusTable
-                        WHERE GuildId = @GuildId
-                          AND ChannelId = @ChannelId
-                          AND Name = @Name";
-                    deleteCommand.Parameters.AddWithValue("@GuildId", guildId);
-                    deleteCommand.Parameters.AddWithValue("@ChannelId", channelId);
-                    deleteCommand.Parameters.AddWithValue("@Name", nameToDelete);
-                    await deleteCommand.ExecuteNonQueryAsync();
+                    delete.Parameters.AddWithValue("@GuildId", guildId);
+                    delete.Parameters.AddWithValue("@ChannelId", channelId);
+                    var pName = delete.Parameters.Add("@Name", System.Data.DbType.String);
+
+                    foreach (var name in namesToDelete)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        pName.Value = name;
+                        await delete.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+                    }
                 }
-            }
+            }, ct);
         }
         catch (Exception ex)
         {
@@ -313,4 +308,3 @@ public static class GameStatusCommands
         }
     }
 }
-

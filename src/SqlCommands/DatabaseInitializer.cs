@@ -2,46 +2,48 @@
 
 public class DatabaseInitializer
 {
-    private const string DatabaseFile = "AST.db";
-
-    public static void InitializeDatabase()
+    public static async Task InitializeDatabaseAsync(CancellationToken ct = default)
     {
-        if (!File.Exists(DatabaseFile))
+        // crée le fichier si besoin (Declare.DatabaseFile est déjà utilisé par Db)
+        if (!File.Exists(Declare.DatabaseFile))
+            SQLiteConnection.CreateFile(Declare.DatabaseFile);
+
+        await using var conn = await Db.OpenWriteAsync(ct);
+
+        // PRAGMA de base (déjà mis à l’ouverture, mais ok de redonder ici pour l’init)
+        using (var pragma = conn.CreateCommand())
         {
-            SQLiteConnection.CreateFile(DatabaseFile);
+            pragma.CommandText = @"
+                PRAGMA journal_mode=WAL;
+                PRAGMA synchronous=NORMAL;
+                PRAGMA foreign_keys=ON;
+                PRAGMA temp_store=MEMORY;
+            ";
+            pragma.ExecuteNonQuery();
         }
 
-        using var connection = new SQLiteConnection($"Data Source={DatabaseFile};Version=3;");
-        connection.Open();
-
-        using var command = new SQLiteCommand(connection);
-
-        // Activer les clés étrangères
-        command.CommandText = "PRAGMA foreign_keys = ON;";
-        command.ExecuteNonQuery();
-
-        // Création des tables
-        command.CommandText = @"
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
 -- ==========================
 -- 🎯 ChannelsAndUrlsTable
 -- ==========================
 CREATE TABLE IF NOT EXISTS ChannelsAndUrlsTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId TEXT NOT NULL,
-    ChannelId TEXT NOT NULL,
-    Room TEXT,
-    Tracker TEXT,
+    GuildId      TEXT NOT NULL,
+    ChannelId    TEXT NOT NULL,
+    Room         TEXT,
+    Tracker      TEXT,
     SphereTracker TEXT,
-    Silent BOOLEAN
+    Silent       BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS UrlAndChannelPatchTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     ChannelsAndUrlsTableId INTEGER NOT NULL,
-    Alias TEXT NOT NULL,
-    GameName TEXT,
-    Patch TEXT,
-    FOREIGN KEY (ChannelsAndUrlsTableId) REFERENCES ChannelsAndUrlsTable(Id)
+    Alias     TEXT NOT NULL,
+    GameName  TEXT,
+    Patch     TEXT,
+    FOREIGN KEY (ChannelsAndUrlsTableId) REFERENCES ChannelsAndUrlsTable(Id) ON DELETE CASCADE
 );
 
 -- ==========================
@@ -49,17 +51,17 @@ CREATE TABLE IF NOT EXISTS UrlAndChannelPatchTable (
 -- ==========================
 CREATE TABLE IF NOT EXISTS RecapListTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId TEXT NOT NULL,
+    GuildId   TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
-    UserId TEXT NOT NULL,
-    Alias TEXT NOT NULL
+    UserId    TEXT NOT NULL,
+    Alias     TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS RecapListItemsTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     RecapListTableId INTEGER NOT NULL,
     Item TEXT,
-    FOREIGN KEY (RecapListTableId) REFERENCES RecapListTable(Id)
+    FOREIGN KEY (RecapListTableId) REFERENCES RecapListTable(Id) ON DELETE CASCADE
 );
 
 -- ==========================
@@ -67,10 +69,10 @@ CREATE TABLE IF NOT EXISTS RecapListItemsTable (
 -- ==========================
 CREATE TABLE IF NOT EXISTS ReceiverAliasesTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId TEXT NOT NULL,
+    GuildId   TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
-    Receiver TEXT NOT NULL,
-    UserId TEXT NOT NULL,
+    Receiver  TEXT NOT NULL,
+    UserId    TEXT NOT NULL,
     IsEnabled BOOLEAN
 );
 
@@ -79,10 +81,10 @@ CREATE TABLE IF NOT EXISTS ReceiverAliasesTable (
 -- ==========================
 CREATE TABLE IF NOT EXISTS AliasChoicesTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId TEXT NOT NULL,
+    GuildId   TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
-    Alias TEXT NOT NULL,
-    Game TEXT
+    Alias     TEXT NOT NULL,
+    Game      TEXT
 );
 
 -- ==========================
@@ -90,14 +92,14 @@ CREATE TABLE IF NOT EXISTS AliasChoicesTable (
 -- ==========================
 CREATE TABLE IF NOT EXISTS DisplayedItemTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId TEXT NOT NULL,
+    GuildId   TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
-    Sphere TEXT,
-    Finder TEXT,
-    Receiver TEXT,
-    Item TEXT,
-    Location TEXT,
-    Game TEXT
+    Sphere    TEXT,
+    Finder    TEXT,
+    Receiver  TEXT,
+    Item      TEXT,
+    Location  TEXT,
+    Game      TEXT
 );
 
 -- ==========================
@@ -105,14 +107,14 @@ CREATE TABLE IF NOT EXISTS DisplayedItemTable (
 -- ==========================
 CREATE TABLE IF NOT EXISTS GameStatusTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId TEXT NOT NULL,
-    ChannelId TEXT NOT NULL,
-    Hashtag TEXT,
-    Name TEXT,
-    Game TEXT,
-    Status TEXT,
-    Checks TEXT,
-    Percent TEXT,
+    GuildId      TEXT NOT NULL,
+    ChannelId    TEXT NOT NULL,
+    Hashtag      TEXT,
+    Name         TEXT,
+    Game         TEXT,
+    Status       TEXT,
+    Checks       TEXT,
+    Percent      TEXT,
     LastActivity TEXT
 );
 
@@ -121,32 +123,32 @@ CREATE TABLE IF NOT EXISTS GameStatusTable (
 -- ==========================
 CREATE TABLE IF NOT EXISTS HintStatusTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId TEXT NOT NULL,
+    GuildId   TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
-    Finder TEXT,
-    Receiver TEXT,
-    Item TEXT,
-    Location TEXT,
-    Game TEXT,
-    Entrance TEXT,
-    Found TEXT
+    Finder    TEXT,
+    Receiver  TEXT,
+    Item      TEXT,
+    Location  TEXT,
+    Game      TEXT,
+    Entrance  TEXT,
+    Found     TEXT
 );
 
 -- ==========================
--- 🎯 ApWorldListTable
+-- 🎯 ApWorldList / Items
 -- ==========================
 CREATE TABLE IF NOT EXISTS ApWorldListTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    Title TEXT NOT NULL,
-    Item TEXT NOT NULL 
+    Title TEXT NOT NULL
+    -- (Item) retiré: non utilisé par ton code de lecture
 );
 
 CREATE TABLE IF NOT EXISTS ApWorldItemTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     ApWorldListTableId INTEGER,
     Text TEXT NOT NULL,
-    Link TEXT NOT NULL,
-    FOREIGN KEY (ApWorldListTableId) REFERENCES ApWorldListTable(Id)
+    Link TEXT, -- nullable: ton code le permet
+    FOREIGN KEY (ApWorldListTableId) REFERENCES ApWorldListTable(Id) ON DELETE CASCADE
 );
 
 -- ==========================
@@ -163,30 +165,65 @@ CREATE TABLE IF NOT EXISTS TelemetryTable (
     Date TEXT PRIMARY KEY
 );
 
--- Index utiles
+-- ==========================
+-- Index & contraintes
+-- ==========================
+
+-- Accès fréquents par guilde+channel
 CREATE INDEX IF NOT EXISTS idx_channels_guild_channel
   ON ChannelsAndUrlsTable(GuildId, ChannelId);
+
+CREATE INDEX IF NOT EXISTS idx_displayeditem_guild_channel
+  ON DisplayedItemTable(GuildId, ChannelId);
+
+CREATE INDEX IF NOT EXISTS idx_displayeditem_receiver
+  ON DisplayedItemTable(GuildId, ChannelId, Receiver);
+
+CREATE INDEX IF NOT EXISTS idx_displayeditem_finder
+  ON DisplayedItemTable(GuildId, ChannelId, Finder);
 
 CREATE INDEX IF NOT EXISTS idx_displayeditem_game_item
   ON DisplayedItemTable(Game, Item);
 
-CREATE INDEX IF NOT EXISTS idx_receiveraliases_guild_channel_receiver
+CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcr
   ON ReceiverAliasesTable(GuildId, ChannelId, Receiver);
 
-CREATE INDEX IF NOT EXISTS idx_aliaschoices_guild_channel_alias
+CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcu
+  ON ReceiverAliasesTable(GuildId, ChannelId, UserId);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_recalias
+  ON RecapListTable(GuildId, ChannelId, UserId, Alias);
+
+-- pour REPLACE sur AliasChoices
+CREATE UNIQUE INDEX IF NOT EXISTS uq_aliaschoices
   ON AliasChoicesTable(GuildId, ChannelId, Alias);
 
-CREATE INDEX IF NOT EXISTS idx_gamestatus_guild_channel_name
+-- pour REPLACE sur GameStatus
+CREATE UNIQUE INDEX IF NOT EXISTS uq_gamestatus_name
   ON GameStatusTable(GuildId, ChannelId, Name);
 
--- Un seul index unique suffit
+-- pour REPLACE sur UrlAndChannelPatch
+CREATE UNIQUE INDEX IF NOT EXISTS uq_url_patch
+  ON UrlAndChannelPatchTable(ChannelsAndUrlsTableId, Alias);
+
+-- Unicité d’un DisplayedItem (pour INSERT OR IGNORE)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
   ON DisplayedItemTable(GuildId, ChannelId, Sphere, Finder, Receiver, Item, Location, Game);
 ";
-        command.ExecuteNonQuery();
+        cmd.ExecuteNonQuery();
 
-        // Compactage de la base après initialisation
-        command.CommandText = "VACUUM;";
-        command.ExecuteNonQuery();
+        // petit coup d'ANALYZE pour de meilleurs plans
+        using (var analyze = conn.CreateCommand())
+        {
+            analyze.CommandText = "ANALYZE;";
+            analyze.ExecuteNonQuery();
+        }
+
+        // compactage initial
+        using (var vacuum = conn.CreateCommand())
+        {
+            vacuum.CommandText = "VACUUM;";
+            vacuum.ExecuteNonQuery();
+        }
     }
 }

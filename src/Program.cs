@@ -11,17 +11,40 @@ class Program
     static async Task Main(string[] args)
     {
         Env.Load();
+#if DEBUG
+        args = new string[] { "--normalmode" };
+#endif
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        var arm64 = RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
+
+
+        if (!isWindows && !isLinux)
+        {
+            Console.WriteLine("Resource.ProgramOSNotSupported");
+            return;
+        }
 
         Thread.CurrentThread.CurrentUICulture = new CultureInfo(Declare.Language);
 
-        DatabaseInitializer.InitializeDatabase();
+        await DatabaseInitializer.InitializeDatabaseAsync();
 
-        if (args.Length > 0 && args[0].ToLower() == "install")
+        if (args.Length == 0)
         {
+            ShowHelp();
+            return;
+        }
+
+        if (args[0].ToLower() == "--install")
+        {
+            if(arm64)
+            {
+                Console.WriteLine("Resource.ProgramArm64NotSupported");
+                return;
+            }
+
             Console.WriteLine(Resource.ProgramInstallationMode);
             await BackupRestoreClass.Backup();
             await InstallClass.Install(currentVersion, isWindows, isLinux);
@@ -33,21 +56,58 @@ class Program
             return;
         }
 
-        if (currentVersion.Trim() == Declare.Version)
+        if (args[0].ToLower() == "--archipelagomode")
         {
-            Console.WriteLine(string.Format(Resource.ProgramArchipelagoAlreadyInstalled, Declare.Version));
-        }
-        else
-        {
-            await BackupRestoreClass.Backup();
-            await InstallClass.Install(currentVersion, isWindows, isLinux);
-            await BackupRestoreClass.RestoreBackup();
+            if (arm64)
+            {
+                Console.WriteLine("Resource.ProgramArm64NotSupported");
+                return;
+            }
+
+            Console.WriteLine("Archipelago Mode started.");
+            Declare.IsArchipelagoMode = true;
         }
 
-        CustomApworldClass.GenerateYamls();
-        CustomApworldClass.GenerateItems();
+        if (args[0].ToLower() == "--normalmode")
+        {
+            Console.WriteLine("Normal Mode started.");
+            Declare.IsArchipelagoMode = false;
+        }
 
-        string version = $"AST v{Declare.BotVersion} - Archipelago v{Declare.Version}";
+        if(args[0].ToLower() == "")
+        {
+            ShowHelp();
+            return;
+        }
+
+        static void ShowHelp()
+        {
+            Console.WriteLine("Usage:");
+            Console.WriteLine("  --install           Run installation process, needed only for --ArchipelagoMode. Not supported on arm64");
+            Console.WriteLine("  --ArchipelagoMode   Run the program in Archipelago mode. Not supported on arm64");
+            Console.WriteLine("  --NormalMode        Run the program in Normal mode.");
+            Console.WriteLine();
+            Console.WriteLine("If no or invalid arguments are provided, this help message will be displayed.");
+        }
+
+        if(Declare.IsArchipelagoMode)
+        {
+            if (currentVersion.Trim() == Declare.Version)
+            {
+                Console.WriteLine(string.Format(Resource.ProgramArchipelagoAlreadyInstalled, Declare.Version));
+            }
+            else
+            {
+                await BackupRestoreClass.Backup();
+                await InstallClass.Install(currentVersion, isWindows, isLinux);
+                await BackupRestoreClass.RestoreBackup();
+            }
+
+            CustomApworldClass.GenerateYamls();
+            CustomApworldClass.GenerateItems();
+        }
+
+        string version = Declare.IsArchipelagoMode ? $"AST v{Declare.BotVersion} - Archipelago v{Declare.Version}" : $"AST v{Declare.BotVersion}";
 
         Console.WriteLine(string.Format(Resource.ProgramStartingBot, version));
 

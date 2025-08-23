@@ -5,7 +5,7 @@ public static class SlashCommandDefinitions
 {
     public static IEnumerable<SlashCommandBuilder> GetAll()
     {
-        return new List<SlashCommandBuilder>
+        var commands = new List<SlashCommandBuilder>
         {
             new SlashCommandBuilder().WithName("get-aliases").WithDescription(Resource.SCGetAliasesDescription),
 
@@ -77,9 +77,6 @@ public static class SlashCommandDefinitions
                 .AddOption(AliasOption("alias"))
                 .AddOption(BooleanOption("list-by-line", Resource.SCListByLineDescription)),
 
-            new SlashCommandBuilder().WithName("list-yamls").WithDescription(Resource.SCListYamlsDescription),
-            new SlashCommandBuilder().WithName("list-apworld").WithDescription(Resource.SCListApworldDescription),
-
             new SlashCommandBuilder()
                 .WithName("apworlds-info")
                 .WithDescription(Resource.SCApworldInfoDescription)
@@ -89,62 +86,73 @@ public static class SlashCommandDefinitions
                     .WithType(ApplicationCommandOptionType.String)
                     .WithRequired(true)
                     .WithAutocomplete(true)),
-
-            new SlashCommandBuilder().WithName("backup-yamls").WithDescription(Resource.SCBackupYamlDescription),
-            new SlashCommandBuilder().WithName("backup-apworld").WithDescription(Resource.SCBackupApworldDescription),
-
-            new SlashCommandBuilder()
-                .WithName("download-template")
-                .WithDescription(Resource.SCDownloadYamlTemplateDescription)
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("template")
-                    .WithDescription(Resource.SCTemplateDescription)
-                    .WithType(ApplicationCommandOptionType.String)
-                    .WithRequired(true)
-                    .WithAutocomplete(true)),
-
-            new SlashCommandBuilder()
-                .WithName("delete-yaml")
-                .WithDescription(Resource.SCDeleteYamlDescription)
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("yamlfile")
-                    .WithDescription(Resource.SCDeleteYamlChooseDescription)
-                    .WithType(ApplicationCommandOptionType.String)
-                    .WithRequired(true)
-                    .WithAutocomplete(true)),
-
-            new SlashCommandBuilder().WithName("clean-yamls").WithDescription(Resource.SCCleanYamlDescription),
-
-            new SlashCommandBuilder()
-                .WithName("send-yaml")
-                .WithDescription(Resource.SCSendYamlDescription)
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("file")
-                    .WithDescription(Resource.SCSendYamlChooseDescription)
-                    .WithType(ApplicationCommandOptionType.Attachment)
-                    .WithRequired(true)),
-
-            new SlashCommandBuilder()
-                .WithName("generate-with-zip")
-                .WithDescription(Resource.SCGenerateWithZipDescription)
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("file")
-                    .WithDescription(Resource.SCGenerateWithZipChooseDescription)
-                    .WithType(ApplicationCommandOptionType.Attachment)
-                    .WithRequired(true)),
-
-            new SlashCommandBuilder()
-                .WithName("send-apworld")
-                .WithDescription(Resource.SCSendApworldDescription)
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("file")
-                    .WithDescription(Resource.SCSendApworldChooseDescription)
-                    .WithType(ApplicationCommandOptionType.Attachment)
-                    .WithRequired(true)),
-
-            new SlashCommandBuilder().WithName("generate").WithDescription(Resource.SCGenerateDescription),
-            new SlashCommandBuilder().WithName("test-generate").WithDescription(Resource.SCTestGenerateDescription)
         };
+
+        if (Declare.IsArchipelagoMode)
+        {
+            commands.AddRange(new[]
+            {
+                new SlashCommandBuilder().WithName("list-yamls").WithDescription(Resource.SCListYamlsDescription),
+                new SlashCommandBuilder().WithName("list-apworld").WithDescription(Resource.SCListApworldDescription),
+
+                new SlashCommandBuilder().WithName("backup-yamls").WithDescription(Resource.SCBackupYamlDescription),
+                new SlashCommandBuilder().WithName("backup-apworld").WithDescription(Resource.SCBackupApworldDescription),
+
+                new SlashCommandBuilder()
+                    .WithName("download-template")
+                    .WithDescription(Resource.SCDownloadYamlTemplateDescription)
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("template")
+                        .WithDescription(Resource.SCTemplateDescription)
+                        .WithType(ApplicationCommandOptionType.String)
+                        .WithRequired(true)
+                        .WithAutocomplete(true)),
+
+                new SlashCommandBuilder()
+                    .WithName("delete-yaml")
+                    .WithDescription(Resource.SCDeleteYamlDescription)
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("yamlfile")
+                        .WithDescription(Resource.SCDeleteYamlChooseDescription)
+                        .WithType(ApplicationCommandOptionType.String)
+                        .WithRequired(true)
+                        .WithAutocomplete(true)),
+
+                new SlashCommandBuilder().WithName("clean-yamls").WithDescription(Resource.SCCleanYamlDescription),
+
+                new SlashCommandBuilder()
+                    .WithName("send-yaml")
+                    .WithDescription(Resource.SCSendYamlDescription)
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("file")
+                        .WithDescription(Resource.SCSendYamlChooseDescription)
+                        .WithType(ApplicationCommandOptionType.Attachment)
+                        .WithRequired(true)),
+
+                new SlashCommandBuilder()
+                    .WithName("generate-with-zip")
+                    .WithDescription(Resource.SCGenerateWithZipDescription)
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("file")
+                        .WithDescription(Resource.SCGenerateWithZipChooseDescription)
+                        .WithType(ApplicationCommandOptionType.Attachment)
+                        .WithRequired(true)),
+
+                new SlashCommandBuilder()
+                    .WithName("send-apworld")
+                    .WithDescription(Resource.SCSendApworldDescription)
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("file")
+                        .WithDescription(Resource.SCSendApworldChooseDescription)
+                        .WithType(ApplicationCommandOptionType.Attachment)
+                        .WithRequired(true)),
+
+                new SlashCommandBuilder().WithName("generate").WithDescription(Resource.SCGenerateDescription),
+                new SlashCommandBuilder().WithName("test-generate").WithDescription(Resource.SCTestGenerateDescription)
+            });
+        }
+
+        return commands;
     }
 
     #region Helper Methods

@@ -47,7 +47,6 @@ Un fichier `.env` est nécessaire dans le répertoire principal du dépôt.
 ### Exemple de Configuration :
 ```
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
-APP_ID=YOUR_DISCORD_BOT_APP_ID
 LANGUAGE=fr (langues supportées : de, en, es, fr, it, ja, pt) — si non défini, l’anglais sera utilisé par défaut.
 ```
 
@@ -180,7 +179,6 @@ A `.env` file is required in the root folder.
 ### Example:
 ```
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
-APP_ID=YOUR_DISCORD_BOT_APP_ID
 LANGUAGE=en (supported languages: de, en, es, fr, it, ja, pt) — if not set, English will be used by default.
 ```
 
