@@ -15,12 +15,6 @@ public static class SlashCommandDefinitions
                 .AddOption(AliasOption("added-alias")),
 
             new SlashCommandBuilder()
-                .WithName("add-alias")
-                .WithDescription(Resource.SCAddAliasDescription)
-                .AddOption(AliasOption("alias"))
-                .AddOption(BooleanOption(Resource.SCAddAliasSkipMention, Resource.SCAddAliasSkipMentionDescription)),
-
-            new SlashCommandBuilder()
                 .WithName("add-url")
                 .WithDescription(Resource.SCAddUrlDescription)
                 .AddOption("url", ApplicationCommandOptionType.String, Resource.SCUrlToTrack, isRequired: true)
@@ -150,6 +144,22 @@ public static class SlashCommandDefinitions
                 new SlashCommandBuilder().WithName("generate").WithDescription(Resource.SCGenerateDescription),
                 new SlashCommandBuilder().WithName("test-generate").WithDescription(Resource.SCTestGenerateDescription)
             });
+        }
+
+        if (Declare.IsArchipelagoMode)
+        {
+            commands.Add(new SlashCommandBuilder()
+            .WithName("add-alias")
+            .WithDescription(Resource.SCAddAliasDescription)
+            .AddOption(AliasOption("alias"))
+            .AddOption(BooleanOption(Resource.SCAddAliasSkipMention, Resource.SCAddAliasSkipMentionDescription)));
+        }
+        else
+        {
+            commands.Add(new SlashCommandBuilder()
+            .WithName("add-alias")
+            .WithDescription(Resource.SCAddAliasDescription)
+            .AddOption(AliasOption("alias")));
         }
 
         return commands;
