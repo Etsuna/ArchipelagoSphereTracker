@@ -29,30 +29,9 @@ class Program
 
         Thread.CurrentThread.CurrentUICulture = new CultureInfo(Declare.Language);
 
-        await DatabaseInitializer.InitializeDatabaseAsync();
-
         if (args.Length == 0)
         {
             ShowHelp();
-            return;
-        }
-
-        if (args[0].ToLower() == "--install")
-        {
-            if(arm64)
-            {
-                Console.WriteLine("Resource.ProgramArm64NotSupported");
-                return;
-            }
-
-            Console.WriteLine(Resource.ProgramInstallationMode);
-            await BackupRestoreClass.Backup();
-            await InstallClass.Install(currentVersion, isWindows, isLinux);
-            await BackupRestoreClass.RestoreBackup();
-
-            CustomApworldClass.GenerateYamls();
-            CustomApworldClass.GenerateItems();
-
             return;
         }
 
@@ -90,7 +69,28 @@ class Program
             Console.WriteLine("If no or invalid arguments are provided, this help message will be displayed.");
         }
 
-        if(Declare.IsArchipelagoMode)
+        await DatabaseInitializer.InitializeDatabaseAsync();
+
+        if (args[0].ToLower() == "--install")
+        {
+            if (arm64)
+            {
+                Console.WriteLine("Resource.ProgramArm64NotSupported");
+                return;
+            }
+
+            Console.WriteLine(Resource.ProgramInstallationMode);
+            await BackupRestoreClass.Backup();
+            await InstallClass.Install(currentVersion, isWindows, isLinux);
+            await BackupRestoreClass.RestoreBackup();
+
+            CustomApworldClass.GenerateYamls();
+            CustomApworldClass.GenerateItems();
+
+            return;
+        }
+
+        if (Declare.IsArchipelagoMode)
         {
             if (currentVersion.Trim() == Declare.Version)
             {

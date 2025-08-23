@@ -21,6 +21,9 @@ jobs:
           - os: ubuntu-latest
             rid: linux-x64
             configuration: Release
+          - os: windows-latest
+            rid: win-arm64
+            configuration: Release
           - os: ubuntu-latest
             rid: linux-arm64
             configuration: Release
