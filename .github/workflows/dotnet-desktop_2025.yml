@@ -69,18 +69,34 @@ jobs:
         Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
         certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
 
-        # Trouver automatiquement le dernier signtool installé (x64)
         $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
                     Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
         if (-not $signtool) { throw "signtool.exe not found on runner." }
 
-        $exe = "bin\Release\net8.0\${{ matrix.rid }}\publish\ArchipelagoSphereTracker.exe"
-        if (-not (Test-Path $exe)) { throw "Executable not found: $exe" }
+        Write-Host "Using signtool: $signtool"
+        $sdkVersion = Split-Path (Split-Path $signtool -Parent) -Leaf
+        Write-Host "Detected Windows SDK: $sdkVersion"
 
-        & $signtool sign /fd SHA256 /td SHA256 /tr "http://timestamp.sectigo.com/rfc3161" `
-          /f certificate\certificate.pfx /p $env:CODESIGN_PWD $exe
+        $artifactDir = "bin\${{ matrix.configuration }}\net8.0\${{ matrix.rid }}\publish"
+        $targets = Get-ChildItem $artifactDir -Filter *.exe -ErrorAction SilentlyContinue
+        if (-not $targets) { throw "No EXE found to sign in $artifactDir" }
+
+        foreach ($exe in $targets) {
+          & $signtool sign /fd SHA256 /td SHA256 /tr "http://timestamp.sectigo.com/rfc3161" `
+            /f certificate\certificate.pfx /p $env:CODESIGN_PWD $exe.FullName
+        }
 
         Remove-Item -Recurse -Force certificate
+
+    - name: Verify signature
+      if: matrix.os == 'windows-2025'
+      shell: pwsh
+      run: |
+        $artifactDir = "bin\${{ matrix.configuration }}\net8.0\${{ matrix.rid }}\publish"
+        Get-ChildItem $artifactDir -Filter *.exe | ForEach-Object {
+          Write-Host "Verifying $($_.FullName)"
+          Get-AuthenticodeSignature $_.FullName | Format-List Status,StatusMessage,SignerCertificate,TimeStamperCertificate
+        }
 
     - name: Prepare upload folder
       shell: bash
