@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-ArchipelagoSphereTracker.exe install
+ArchipelagoSphereTracker.exe --install
 pause

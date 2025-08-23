@@ -81,10 +81,17 @@ jobs:
           cp bin/Release/net8.0/${{ matrix.rid }}/publish/* upload_dir/
         fi
 
-    - name: Copy command files
+    - name: Copy command files (if any)
       shell: bash
       run: |
-        cp Install/${{ matrix.rid }}/* upload_dir/
+        set -euo pipefail
+        src="Install/${{ matrix.rid }}"
+        if [ -d "$src" ] && compgen -G "$src/*" > /dev/null; then
+          cp -r "$src/"* upload_dir/
+          echo "Copied command files from $src"
+        else
+          echo "No command files for $src — skipping."
+        fi
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
