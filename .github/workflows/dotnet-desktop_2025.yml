@@ -91,12 +91,35 @@ jobs:
     - name: Verify signature
       if: matrix.os == 'windows-2025'
       shell: pwsh
+      env:
+        CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
       run: |
+        # Recréer le PFX (comme au step de signature)
+        New-Item -ItemType Directory -Path certificate | Out-Null
+        Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
+        certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
+
+        # Extraire le .cer (public) depuis le PFX
+        $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2("certificate\certificate.pfx", $env:CODESIGN_PWD)
+        $cerPath = "certificate\codesign.cer"
+        [IO.File]::WriteAllBytes($cerPath, $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
+
+        # Ajouter aux magasins du runner (temporaire)
+        certutil -addstore -f Root $cerPath
+        certutil -addstore -f "TrustedPublisher" $cerPath
+
+        # Vérifier
         $artifactDir = "bin\${{ matrix.configuration }}\net8.0\${{ matrix.rid }}\publish"
         Get-ChildItem $artifactDir -Filter *.exe | ForEach-Object {
           Write-Host "Verifying $($_.FullName)"
           Get-AuthenticodeSignature $_.FullName | Format-List Status,StatusMessage,SignerCertificate,TimeStamperCertificate
         }
+
+        # Nettoyage (facultatif car runner éphémère)
+        certutil -delstore Root $($cert.Thumbprint)
+        certutil -delstore "TrustedPublisher" $($cert.Thumbprint)
+        Remove-Item -Recurse -Force certificate
 
     - name: Prepare upload folder
       shell: bash
