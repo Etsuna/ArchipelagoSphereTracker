@@ -11,17 +11,74 @@ class Program
     static async Task Main(string[] args)
     {
         Env.Load();
+#if DEBUG
+        args = new string[] { "--normalmode" };
+#endif
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        var arm64 = RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
+
+
+        if (!isWindows && !isLinux)
+        {
+            Console.WriteLine(Resource.ProgramOSNotSupported);
+            return;
+        }
 
         Thread.CurrentThread.CurrentUICulture = new CultureInfo(Declare.Language);
 
-        DatabaseInitializer.InitializeDatabase();
-
-        if (args.Length > 0 && args[0].ToLower() == "install")
+        if (args.Length == 0)
         {
+            ShowHelp();
+            return;
+        }
+
+        if (args[0].ToLower() == "--archipelagomode")
+        {
+            if (arm64)
+            {
+                Console.WriteLine(Resource.ProgramArm64NotSupported);
+                return;
+            }
+
+            Console.WriteLine(Resource.ArchipelagoModeStarted);
+            Declare.IsArchipelagoMode = true;
+        }
+
+        if (args[0].ToLower() == "--normalmode")
+        {
+            Console.WriteLine(Resource.NormalModeStarted);
+            Declare.IsArchipelagoMode = false;
+        }
+
+        if(args[0].ToLower() == "")
+        {
+            ShowHelp();
+            return;
+        }
+
+        static void ShowHelp()
+        {
+            Console.WriteLine("Usage:");
+            Console.WriteLine($"  --install           {Resource.ProgramInstall}");
+            Console.WriteLine($"  --ArchipelagoMode   {Resource.ProgramArchipelagoMode}");
+            Console.WriteLine($"  --NormalMode        {Resource.ProgramNormalMode}");
+            Console.WriteLine();
+            Console.WriteLine(Resource.ProgramHelp);
+        }
+
+        await DatabaseInitializer.InitializeDatabaseAsync();
+
+        if (args[0].ToLower() == "--install")
+        {
+            if (arm64)
+            {
+                Console.WriteLine(Resource.ProgramArm64NotSupported);
+                return;
+            }
+
             Console.WriteLine(Resource.ProgramInstallationMode);
             await BackupRestoreClass.Backup();
             await InstallClass.Install(currentVersion, isWindows, isLinux);
@@ -33,21 +90,24 @@ class Program
             return;
         }
 
-        if (currentVersion.Trim() == Declare.Version)
+        if (Declare.IsArchipelagoMode)
         {
-            Console.WriteLine(string.Format(Resource.ProgramArchipelagoAlreadyInstalled, Declare.Version));
-        }
-        else
-        {
-            await BackupRestoreClass.Backup();
-            await InstallClass.Install(currentVersion, isWindows, isLinux);
-            await BackupRestoreClass.RestoreBackup();
+            if (currentVersion.Trim() == Declare.Version)
+            {
+                Console.WriteLine(string.Format(Resource.ProgramArchipelagoAlreadyInstalled, Declare.Version));
+            }
+            else
+            {
+                await BackupRestoreClass.Backup();
+                await InstallClass.Install(currentVersion, isWindows, isLinux);
+                await BackupRestoreClass.RestoreBackup();
+            }
+
+            CustomApworldClass.GenerateYamls();
+            CustomApworldClass.GenerateItems();
         }
 
-        CustomApworldClass.GenerateYamls();
-        CustomApworldClass.GenerateItems();
-
-        string version = $"AST v{Declare.BotVersion} - Archipelago v{Declare.Version}";
+        string version = Declare.IsArchipelagoMode ? $"AST v{Declare.BotVersion} - Archipelago v{Declare.Version}" : $"AST v{Declare.BotVersion}";
 
         Console.WriteLine(string.Format(Resource.ProgramStartingBot, version));
 

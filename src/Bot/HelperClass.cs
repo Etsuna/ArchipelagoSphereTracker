@@ -117,7 +117,7 @@ public class HelperClass
         }
         else
         {
-            message = "Status for all games :\n";
+            message = $"{Resource.HelperStatusAllGames}\n";
 
             if (getGameStatusForGuildAndChannelAsync.Any())
             {

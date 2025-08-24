@@ -116,7 +116,7 @@ public class BackupRestoreClass : Declare
                 Console.WriteLine(string.Format(Resource.BRFolderMoved, nomDossier));
             }
 
-            Console.WriteLine("Players folder move completed.");
+            Console.WriteLine(Resource.BRPlayerFolderMoved);
         }
 
         return Task.CompletedTask;

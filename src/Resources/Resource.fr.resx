@@ -180,9 +180,6 @@
   <data name="TDMAliasUpdated" xml:space="preserve">
     <value>Alias mis à jour !</value>
   </data>
-  <data name="TDPMessageItems" xml:space="preserve">
-    <value>{0} a envoyé {1} à {2} {3} ({4})</value>
-  </data>
   <data name="TDPMEssageItemsNoMention" xml:space="preserve">
     <value>{0} a envoyé {1} à {2} ({3})</value>
   </data>
@@ -791,5 +788,62 @@
   </data>
   <data name="HintItem" xml:space="preserve">
     <value>L'item **{1}** de **{0}** se trouve à **{2}** dans le monde de **{3}**.</value>
+  </data>
+  <data name="ProgramOSNotSupported" xml:space="preserve">
+    <value>Système d’exploitation du programme non pris en charge</value>
+  </data>
+  <data name="ProgramArm64NotSupported" xml:space="preserve">
+    <value>Programme Arm64 non pris en charge</value>
+  </data>
+  <data name="ArchipelagoModeStarted" xml:space="preserve">
+    <value>Mode Archipelago démarré.</value>
+  </data>
+  <data name="NormalModeStarted" xml:space="preserve">
+    <value>Mode Normal démarré.</value>
+  </data>
+  <data name="ProgramInstall" xml:space="preserve">
+    <value>Exécutez le processus d’installation, requis uniquement pour --ArchipelagoMode. Non pris en charge sur arm64.</value>
+  </data>
+  <data name="ProgramArchipelagoMode" xml:space="preserve">
+    <value>Exécutez le programme en mode Archipelago. Non pris en charge sur arm64.</value>
+  </data>
+  <data name="ProgramNormalMode" xml:space="preserve">
+    <value>Exécutez le programme en mode Normal.</value>
+  </data>
+  <data name="ProgramHelp" xml:space="preserve">
+    <value>Si aucun argument ou un argument non valide n’est fourni, ce message d’aide sera affiché.</value>
+  </data>
+  <data name="HelperStatusAllGames" xml:space="preserve">
+    <value>Status de tous les jeux :</value>
+  </data>
+  <data name="UrlCheckMaxTread" xml:space="preserve">
+    <value>Vous ne pouvez pas avoir plus de 2 threads. Supprimez-en un avant d’ajouter une nouvelle room url , s’il vous plaît.</value>
+  </data>
+  <data name="UrlMaxPlayers" xml:space="preserve">
+    <value>Vous ne pouvez pas avoir plus de {0} joueurs.</value>
+  </data>
+  <data name="BRPlayerFolderMoved" xml:space="preserve">
+    <value>Déplacement du dossier des joueurs terminé.</value>
+  </data>
+  <data name="NotFound" xml:space="preserve">
+    <value>Non trouvé</value>
+  </data>
+  <data name="PatchSetForThisThread" xml:space="preserve">
+    <value>**Patches configurés pour ce fil:**</value>
+  </data>
+  <data name="NoPatchForThisThread" xml:space="preserve">
+    <value>Aucun patch configuré pour ce fil.</value>
+  </data>
+  <data name="CompletListForThisThread" xml:space="preserve">
+    <value>Liste complète des patches pour ce canal.</value>
+  </data>
+  <data name="NoRecordFoundForGuilChannel" xml:space="preserve">
+    <value>Aucun enregistrement trouvé pour le GuildId et le ChannelId spécifiés.</value>
+  </data>
+  <data name="ItemFor" xml:space="preserve">
+    <value>Items pour</value>
+  </data>
+  <data name="CheckPlayerMinMax" xml:space="preserve">
+    <value>Joueurs minimum &gt; joueurs maximum. Impossible d’ajouter cet archipel. Le nombre maximum de joueurs est défini sur {0}</value>
   </data>
 </root>

@@ -3,27 +3,29 @@
 public static class RecapListCommands
 {
     // ==========================
-    // 🎯 RecapList
+    // 🎯 RecapList (WRITE)
     // ==========================
-    public static async Task AddOrEditRecapListAsync(string guildId, string channelId, string userId, string alias)
+    public static async Task AddOrEditRecapListAsync(
+        string guildId,
+        string channelId,
+        string userId,
+        string alias
+        )
     {
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            await Db.WriteAsync(async conn =>
             {
-                await connection.OpenAsync();
-                using (var command = new SQLiteCommand(connection))
-                {
-                    command.CommandText = @"INSERT INTO RecapListTable
-                        (GuildId, ChannelId, UserId, Alias)
-                        VALUES (@GuildId, @ChannelId, @UserId, @Alias)";
-                    command.Parameters.AddWithValue("@GuildId", guildId);
-                    command.Parameters.AddWithValue("@ChannelId", channelId);
-                    command.Parameters.AddWithValue("@UserId", userId);
-                    command.Parameters.AddWithValue("@Alias", alias);
-                    await command.ExecuteNonQueryAsync();
-                }
-            }
+                using var command = conn.CreateCommand();
+                command.CommandText = @"
+                    INSERT INTO RecapListTable (GuildId, ChannelId, UserId, Alias)
+                    VALUES (@GuildId, @ChannelId, @UserId, @Alias);";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                command.Parameters.AddWithValue("@UserId", userId);
+                command.Parameters.AddWithValue("@Alias", alias);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
         }
         catch (Exception ex)
         {
@@ -32,51 +34,45 @@ public static class RecapListCommands
     }
 
     // ==========================
-    // 🎯 RecapListItems
+    // 🎯 RecapListItems (WRITE) — pour tous
     // ==========================
-    public static async Task AddOrEditRecapListItemsForAllAsync(string guildId, string channelId, List<DisplayedItem> items)
+    public static async Task AddOrEditRecapListItemsForAllAsync(
+        string guildId,
+        string channelId,
+        List<DisplayedItem> items
+        )
     {
-        if (items == null || items.Count == 0)
-            return;
+        if (items is null || items.Count == 0) return;
 
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            await Db.WriteAsync(async conn =>
             {
-                await connection.OpenAsync();
+                using var insert = conn.CreateCommand();
+                insert.CommandText = @"
+                    INSERT INTO RecapListItemsTable (RecapListTableId, Item)
+                    VALUES (@RecapListTableId, @Item);";
+                var pId = insert.Parameters.Add("@RecapListTableId", System.Data.DbType.Int64);
+                var pItem = insert.Parameters.Add("@Item", System.Data.DbType.String);
+                insert.Prepare();
 
-                foreach (var item in items)
+                foreach (var it in items)
                 {
-                    if(item.Receiver == item.Finder)
-                    {
-                        continue;
-                    }
+                    if (it.Receiver == it.Finder) continue;
 
-                    var getIds = await DatabaseCommands.GetIdsAsync(guildId, channelId, item.Receiver, "RecapListTable");
+                    var ids = await DatabaseCommands
+                        .GetIdsAsync(guildId, channelId, it.Receiver, "RecapListTable")
+                        .ConfigureAwait(false);
+                    if (ids is null || ids.Count == 0) continue;
 
-                    if (getIds == null || getIds.Count == 0)
+                    foreach (var id in ids)
                     {
-                        continue;
-                    }
-
-                    foreach(var id in getIds)
-                    {
-                        using (var transaction = connection.BeginTransaction())
-                        {
-                            using (var command = new SQLiteCommand(@"
-                        INSERT INTO RecapListItemsTable
-                        (RecapListTableId, Item)
-                        VALUES (@RecapListTableId, @Item);", connection, transaction))
-                            {
-                                command.Parameters.AddWithValue("@RecapListTableId", id);
-                                command.Parameters.AddWithValue("@Item", item.Item);
-                                await command.ExecuteNonQueryAsync();
-                            }
-                            transaction.Commit();
-                        }
+                        pId.Value = id;
+                        pItem.Value = it.Item ?? string.Empty;
+                        await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 }
-            }
+            });
         }
         catch (Exception ex)
         {
@@ -84,49 +80,49 @@ public static class RecapListCommands
         }
     }
 
-    public static async Task AddOrEditRecapListItemsAsync(string guildId, string channelId, string alias, List<DisplayedItem> items)
+    public static async Task AddOrEditRecapListItemsAsync(
+        string guildId,
+        string channelId,
+        string alias,
+        List<DisplayedItem> items
+        )
     {
-        if (items == null || items.Count == 0)
-            return;
+        if (items is null || items.Count == 0) return;
 
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            var ids = await DatabaseCommands
+                .GetIdsAsync(guildId, channelId, alias, "RecapListTable")
+                .ConfigureAwait(false);
+
+            if (ids is null || ids.Count == 0)
             {
-                await connection.OpenAsync();
-                var getIds = await DatabaseCommands.GetIdsAsync(guildId, channelId, alias, "RecapListTable");
+                Console.WriteLine("Error: No Guild/Channel record found. Unable to add the items.");
+                return;
+            }
 
-                if (getIds == null || getIds.Count == 0)
-                {
-                    Console.WriteLine("Error: No Guild/Channel record found. Unable to add the items.");
-                    return;
-                }
+            await Db.WriteAsync(async conn =>
+            {
+                using var insert = conn.CreateCommand();
+                insert.CommandText = @"
+                    INSERT INTO RecapListItemsTable (RecapListTableId, Item)
+                    VALUES (@RecapListTableId, @Item);";
+                var pId = insert.Parameters.Add("@RecapListTableId", System.Data.DbType.Int64);
+                var pItem = insert.Parameters.Add("@Item", System.Data.DbType.String);
+                insert.Prepare();
 
-                foreach(var id in getIds)
+                foreach (var id in ids)
                 {
-                    using (var transaction = connection.BeginTransaction())
+                    foreach (var it in items)
                     {
-                        foreach (var item in items)
-                        {
-                            if(item.Receiver == item.Finder)
-                            {
-                                continue;
-                            }
+                        if (it.Receiver == it.Finder) continue;
 
-                            using (var command = new SQLiteCommand(@"
-                        INSERT INTO RecapListItemsTable
-                        (RecapListTableId, Item)
-                        VALUES (@RecapListTableId, @Item);", connection, transaction))
-                            {
-                                command.Parameters.AddWithValue("@RecapListTableId", id);
-                                command.Parameters.AddWithValue("@Item", item.Item);
-                                await command.ExecuteNonQueryAsync();
-                            }
-                        }
-                        transaction.Commit();
+                        pId.Value = id;
+                        pItem.Value = it.Item ?? string.Empty;
+                        await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 }
-            }
+            });
         }
         catch (Exception ex)
         {
@@ -135,28 +131,28 @@ public static class RecapListCommands
     }
 
     // ============================
-    // 🎯 CHECK IF RecapList EXISTS
+    // 🎯 CHECK IF RecapList EXISTS (READ)
     // ============================
-    public static async Task<bool> CheckIfExistsWithoutAlias(string guildId, string channelId, string userId)
+    public static async Task<bool> CheckIfExistsWithoutAlias(
+        string guildId,
+        string channelId,
+        string userId
+        )
     {
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
-            {
-                await connection.OpenAsync();
-                using (var command = new SQLiteCommand(connection))
-                {
-                    command.CommandText = @"SELECT COUNT(*) FROM RecapListTable
-                        WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND UserId = @UserId";
-                    command.Parameters.AddWithValue("@GuildId", guildId);
-                    command.Parameters.AddWithValue("@ChannelId", channelId);
-                    command.Parameters.AddWithValue("@UserId", userId);
-                    var result = await command.ExecuteScalarAsync();
-                    var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0;
+            await using var connection = await Db.OpenReadAsync();
+            using var command = new SQLiteCommand(@"
+                SELECT COUNT(*)
+                FROM RecapListTable
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND UserId = @UserId;", connection);
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@UserId", userId);
 
-                    return count > 0;
-                }
-            }
+            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+            var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0L;
+            return count > 0;
         }
         catch (Exception ex)
         {
@@ -165,27 +161,29 @@ public static class RecapListCommands
         }
     }
 
-    public static async Task<bool> CheckIfExists(string guildId, string channelId, string userId, string alias)
+    public static async Task<bool> CheckIfExists(
+        string guildId,
+        string channelId,
+        string userId,
+        string alias
+        )
     {
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
-            {
-                await connection.OpenAsync();
-                using (var command = new SQLiteCommand(connection))
-                {
-                    command.CommandText = @"SELECT COUNT(*) FROM RecapListTable
-                        WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND UserId = @UserId AND Alias = @Alias";
-                    command.Parameters.AddWithValue("@GuildId", guildId);
-                    command.Parameters.AddWithValue("@ChannelId", channelId);
-                    command.Parameters.AddWithValue("@UserId", userId);
-                    command.Parameters.AddWithValue("@Alias", alias);
-                    var result = await command.ExecuteScalarAsync();
-                    var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0;
+            await using var connection = await Db.OpenReadAsync();
+            using var command = new SQLiteCommand(@"
+                SELECT COUNT(*)
+                FROM RecapListTable
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId
+                  AND UserId = @UserId AND Alias = @Alias;", connection);
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@UserId", userId);
+            command.Parameters.AddWithValue("@Alias", alias);
 
-                    return count > 0;
-                }
-            }
+            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+            var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0L;
+            return count > 0;
         }
         catch (Exception ex)
         {
@@ -195,19 +193,20 @@ public static class RecapListCommands
     }
 
     // ==========================
-    // 🎯 DELETE RecapList FOR UserId
+    // 🎯 DELETE RecapList FOR UserId (WRITE)
     // ==========================
-    public static async Task DeleteAliasAndItemsForUserIdAsync(string guildId, string channelId, string userId)
+    public static async Task DeleteAliasAndItemsForUserIdAsync(
+        string guildId,
+        string channelId,
+        string userId
+        )
     {
-        using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+        try
         {
-            await connection.OpenAsync();
-
-            using (var transaction = connection.BeginTransaction())
+            await Db.WriteAsync(async conn =>
             {
-                try
-                {
-                    using (var deleteItemsCommand = new SQLiteCommand(@"
+                using var deleteItems = conn.CreateCommand();
+                deleteItems.CommandText = @"
                     DELETE FROM RecapListItemsTable
                     WHERE RecapListTableId IN (
                         SELECT Id
@@ -215,41 +214,36 @@ public static class RecapListCommands
                         WHERE GuildId = @GuildId
                           AND ChannelId = @ChannelId
                           AND UserId = @UserId
-                    );", connection, transaction))
-                    {
-                        deleteItemsCommand.Parameters.AddWithValue("@GuildId", guildId);
-                        deleteItemsCommand.Parameters.AddWithValue("@ChannelId", channelId);
-                        deleteItemsCommand.Parameters.AddWithValue("@UserId", userId);
-
-                        await deleteItemsCommand.ExecuteNonQueryAsync();
-                    }
-
-                    await transaction.CommitAsync();
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    Console.WriteLine($"Error while deleting: {ex.Message}");
-                    throw;
-                }
-            }
+                    );";
+                deleteItems.Parameters.AddWithValue("@GuildId", guildId);
+                deleteItems.Parameters.AddWithValue("@ChannelId", channelId);
+                deleteItems.Parameters.AddWithValue("@UserId", userId);
+                await deleteItems.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while deleting: {ex.Message}");
+            throw;
         }
     }
 
     // ==========================
-    // 🎯 DELETE RecapList FOR ALIAS
+    // 🎯 DELETE RecapList FOR ALIAS (WRITE)
     // ==========================
-    public static async Task DeleteRecapListAsync(string guildId, string channelId, string userId, string alias)
+    public static async Task DeleteRecapListAsync(
+        string guildId,
+        string channelId,
+        string userId,
+        string alias
+        )
     {
-        using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+        try
         {
-            await connection.OpenAsync();
-
-            using (var transaction = connection.BeginTransaction())
+            await Db.WriteAsync(async conn =>
             {
-                try
-                {
-                    using (var deleteItemsCommand = new SQLiteCommand(@"
+                using var deleteItems = conn.CreateCommand();
+                deleteItems.CommandText = @"
                     DELETE FROM RecapListItemsTable
                     WHERE RecapListTableId IN (
                         SELECT Id
@@ -258,39 +252,36 @@ public static class RecapListCommands
                           AND ChannelId = @ChannelId
                           AND UserId = @UserId
                           AND Alias = @Alias
-                    );", connection, transaction))
-                    {
-                        deleteItemsCommand.Parameters.AddWithValue("@GuildId", guildId);
-                        deleteItemsCommand.Parameters.AddWithValue("@ChannelId", channelId);
-                        deleteItemsCommand.Parameters.AddWithValue("@UserId", userId);
-                        deleteItemsCommand.Parameters.AddWithValue("@Alias", alias);
-
-                        await deleteItemsCommand.ExecuteNonQueryAsync();
-                    }
-
-                    await transaction.CommitAsync();
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    Console.WriteLine($"Error while deleting: {ex.Message}");
-                    throw;
-                }
-            }
+                    );";
+                deleteItems.Parameters.AddWithValue("@GuildId", guildId);
+                deleteItems.Parameters.AddWithValue("@ChannelId", channelId);
+                deleteItems.Parameters.AddWithValue("@UserId", userId);
+                deleteItems.Parameters.AddWithValue("@Alias", alias);
+                await deleteItems.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while deleting: {ex.Message}");
+            throw;
         }
     }
 
-    public static async Task DeleteAliasAndRecapListAsync(string guildId, string channelId, string userId, string alias)
+    // ==========================
+    // 🎯 DELETE alias + recap list (WRITE)
+    // ==========================
+    public static async Task DeleteAliasAndRecapListAsync(
+        string guildId,
+        string channelId,
+        string userId,
+        string alias
+        )
     {
-        using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+        try
         {
-            await connection.OpenAsync();
-
-            using (var transaction = connection.BeginTransaction())
+            await Db.WriteAsync(async conn =>
             {
-                try
-                {
-                    using (var deleteItemsCommand = new SQLiteCommand(@"
+                using (var deleteItems = new SQLiteCommand(@"
                     DELETE FROM RecapListItemsTable
                     WHERE RecapListTableId IN (
                         SELECT Id
@@ -299,40 +290,34 @@ public static class RecapListCommands
                           AND ChannelId = @ChannelId
                           AND UserId = @UserId
                           AND Alias = @Alias
-                    );", connection, transaction))
-                    {
-                        deleteItemsCommand.Parameters.AddWithValue("@GuildId", guildId);
-                        deleteItemsCommand.Parameters.AddWithValue("@ChannelId", channelId);
-                        deleteItemsCommand.Parameters.AddWithValue("@UserId", userId);
-                        deleteItemsCommand.Parameters.AddWithValue("@Alias", alias);
+                    );", conn))
+                {
+                    deleteItems.Parameters.AddWithValue("@GuildId", guildId);
+                    deleteItems.Parameters.AddWithValue("@ChannelId", channelId);
+                    deleteItems.Parameters.AddWithValue("@UserId", userId);
+                    deleteItems.Parameters.AddWithValue("@Alias", alias);
+                    await deleteItems.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
 
-                        await deleteItemsCommand.ExecuteNonQueryAsync();
-                    }
-
-                    using (var deleteAliasCommand = new SQLiteCommand(@"
+                using (var deleteAlias = new SQLiteCommand(@"
                     DELETE FROM RecapListTable
                     WHERE GuildId = @GuildId
                       AND ChannelId = @ChannelId
                       AND UserId = @UserId
-                      AND Alias = @Alias;", connection, transaction))
-                    {
-                        deleteAliasCommand.Parameters.AddWithValue("@GuildId", guildId);
-                        deleteAliasCommand.Parameters.AddWithValue("@ChannelId", channelId);
-                        deleteAliasCommand.Parameters.AddWithValue("@UserId", userId);
-                        deleteAliasCommand.Parameters.AddWithValue("@Alias", alias);
-
-                        await deleteAliasCommand.ExecuteNonQueryAsync();
-                    }
-
-                    await transaction.CommitAsync();
-                }
-                catch (Exception ex)
+                      AND Alias = @Alias;", conn))
                 {
-                    await transaction.RollbackAsync();
-                    Console.WriteLine($"Error while deleting: {ex.Message}");
-                    throw;
+                    deleteAlias.Parameters.AddWithValue("@GuildId", guildId);
+                    deleteAlias.Parameters.AddWithValue("@ChannelId", channelId);
+                    deleteAlias.Parameters.AddWithValue("@UserId", userId);
+                    deleteAlias.Parameters.AddWithValue("@Alias", alias);
+                    await deleteAlias.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
-            }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while deleting: {ex.Message}");
+            throw;
         }
     }
 }

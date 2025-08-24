@@ -3,26 +3,21 @@
 public static class TelemetryCommands
 {
     // ==========================
-    // 🎯 Telemetry Has Been Sent Today
+    // 🎯 Telemetry Has Been Sent Today (READ)
     // ==========================
     public static async Task<bool> HasTelemetryBeenSentTodayAsync()
     {
-        string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
-            {
-                await connection.OpenAsync();
+            await using var connection = await Db.OpenReadAsync();
+            using var command = new SQLiteCommand(
+                "SELECT 1 FROM TelemetryTable WHERE Date = @Date LIMIT 1;", connection);
+            command.Parameters.AddWithValue("@Date", today);
 
-                using (var command = new SQLiteCommand("SELECT 1 FROM TelemetryTable WHERE Date = @Date LIMIT 1", connection))
-                {
-                    command.Parameters.AddWithValue("@Date", today);
-
-                    var result = await command.ExecuteScalarAsync();
-                    return result != null;
-                }
-            }
+            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+            return result != null;
         }
         catch (Exception ex)
         {
@@ -32,29 +27,26 @@ public static class TelemetryCommands
     }
 
     // ==========================
-    // 🎯 Mark Telemetry As Sent
+    // 🎯 Mark Telemetry As Sent (WRITE)
     // ==========================
     public static async Task MarkTelemetryAsSentAsync()
     {
-        string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            await Db.WriteAsync(async conn =>
             {
-                await connection.OpenAsync();
+                using (var deleteCmd = new SQLiteCommand("DELETE FROM TelemetryTable;", conn))
+                    await deleteCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                using (var deleteCmd = new SQLiteCommand("DELETE FROM TelemetryTable", connection))
-                {
-                    await deleteCmd.ExecuteNonQueryAsync();
-                }
-
-                using (var insertCmd = new SQLiteCommand("INSERT INTO TelemetryTable (Date) VALUES (@Date)", connection))
+                using (var insertCmd = new SQLiteCommand(
+                    "INSERT INTO TelemetryTable (Date) VALUES (@Date);", conn))
                 {
                     insertCmd.Parameters.AddWithValue("@Date", today);
-                    await insertCmd.ExecuteNonQueryAsync();
+                    await insertCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
-            }
+            });
         }
         catch (Exception ex)
         {

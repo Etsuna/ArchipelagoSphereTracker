@@ -5,6 +5,7 @@
 Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : https://archipelago.gg/room/trackerID).
 
 ## Fonctionnalités Actuelles
+### Mode Normal et Mode Archipelago
 * Multi-Discord et Multi-Channel
 * Ajouter une URL (Droits d'admin requis)
 * Supprimer une URL (Droits d'admin requis)
@@ -20,15 +21,19 @@ Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : http
 * Lister le lien des Patchs.
 * Récupérer le port de connexion.
 * Suppression automatique du fil après 1 semaine d'inactivité.
-* Envoyer des Yamls au server filtré par le channel.
-* Envoyer des Apworld au server.
-* Backup des Yamls envoyés au channel
-* Backup des Apwrolds envoyés au channel
+
+### Mode Archipelago Seulement
+* ARM64 n'est pas supporté avec ce mode.
+* Envoyer des `.yamls` au server filtré par le channel.
+* Envoyer des `.apworld` au server.
+* Backup des `.yamls` envoyés au channel
+* Backup des `.apwrolds` envoyés au channel
 * Générer à partir du dossier du server un Multiworld.
-* Générer à partir du server une fichier Zip contenant tous les Yamls compris dans le Zip.
-* Lister les Yamls filtré par le channel.
-* Lister les Apworlds présent dans le server.
+* Générer à partir du server une fichier Zip contenant tous les `.yamls` compris dans le Zip.
+* Lister les `Yamls` filtré par le channel.
+* Lister les `Apworlds` présent dans le server.
 * Gestion automatique de la compatibilité Windows et Linux pour la generation des Multiworld.
+
 
 Pour plus d'info, voir le [Wiki](https://github.com/Etsuna/ArchipelagoSphereTracker/wiki)
 
@@ -47,8 +52,7 @@ Un fichier `.env` est nécessaire dans le répertoire principal du dépôt.
 ### Exemple de Configuration :
 ```
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
-APP_ID=YOUR_DISCORD_BOT_APP_ID
-LANGUAGE=fr (langues supportées : de, en, es, fr, it, ja, pt) — si non défini, l’anglais sera utilisé par défaut.
+LANGUAGE=fr (langues supportées : en et fr) — si non défini, l’anglais sera utilisé par défaut.
 ```
 
 Si vous souhaitez créer votre propre bot Discord en utilisant le code de ce dépôt, votre bot aura besoin des permissions définies par l'entier `395137117248`.
@@ -64,7 +68,8 @@ Les permissions suivantes seront accordées à ArchipelagoSphereTracker :
 * Intégrer des liens  
 * Joindre des fichiers  
 * Ajouter des réactions  
-* Lire l’historique des messages  
+* Lire l’historique des messages
+* Utiliser des commands slash
 
 ## Execution avec l'intégration d'Archipelago (Génération de multiworld, envoi de yamls/apworlds, etc)
 ```
@@ -94,13 +99,15 @@ dotnet restore
 dotnet build --configuration Release
 
 # Publishez le projet
-Windows : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r win-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
-linux : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+Windows x64 : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r win-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+linux x64: dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+Windows arm64 : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r win-arm64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+linux arm64: dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-arm64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
 
 # Lancez le bot
 Allez dans le dossier .\bin\Release\net8.0\linux-x64\publish\ ou .\bin\Release\net8.0\win-x64\publish\ selon votre OS
 Copiez le fichier .env dans ce dossier
-Windows: exécutez ArchipelagoSphereTracker.exe
+Windows: exécutez ArchipelagoSphereTracker.exe (--install ou --NormalMode ou --ArchipelagoMode)
 Linux: exécutez ./ArchipelagoSphereTracker
 ```
 
@@ -137,6 +144,7 @@ Elle permet de mieux comprendre l’adoption du programme, d’évaluer son util
 A Discord bot designed to be linked to an Archipelago room (example: https://archipelago.gg/room/trackerID).
 
 ## Current Features
+### Normal Mode and Archipelago Mode
 * Multi-Discord and Multi-Channel support  
 * Add a tracker URL (admin rights required)  
 * Remove a tracker URL (admin rights required)  
@@ -152,15 +160,19 @@ A Discord bot designed to be linked to an Archipelago room (example: https://arc
 * List patch links  
 * Retrieve the tracker connection port  
 * Auto-delete threads after 1 week of inactivity  
+
+### Archipelago Mode Only
+* X64 Only, ARM64 is not supported for this Mode
 * Upload `.yaml` files to the server (filtered by channel)  
 * Upload `.apworld` files to the server  
 * Backup uploaded `.yaml` files by channel  
 * Backup uploaded `.apworld` files by channel  
 * Generate a Multiworld from the server’s folder  
 * Generate a ZIP file containing all `.yaml` files from the server  
-* List `.yaml` files filtered by channel  
-* List `.apworld` files on the server  
-* Automatic handling of Windows/Linux compatibility for Multiworld generation  
+* List `Yamls` files filtered by channel  
+* List `Apworlds` files on the server  
+* Automatic handling of Windows/Linux compatibility for Multiworld generation
+
 
 More info available on the [Wiki](https://github.com/Etsuna/ArchipelagoSphereTracker/wiki)
 
@@ -180,8 +192,7 @@ A `.env` file is required in the root folder.
 ### Example:
 ```
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
-APP_ID=YOUR_DISCORD_BOT_APP_ID
-LANGUAGE=en (supported languages: de, en, es, fr, it, ja, pt) — if not set, English will be used by default.
+LANGUAGE=en (supported languages: en and fr) — if not set, English will be used by default.
 ```
 
 If you want to create your own bot using this code, your bot must have the permissions defined by the integer `395137117248`.
@@ -197,7 +208,8 @@ The following permissions will be used by ArchipelagoSphereTracker:
 * Embed links  
 * Attach files  
 * Add reactions  
-* Read message history  
+* Read message history 
+* Use Slash Commands
 
 ## Running with Archipelago Integration (Multiworld generation, `.yaml`/`.apworld` uploads, etc.)
 ```
@@ -234,7 +246,7 @@ Run the bot
 
 Go to the folder .\bin\Release\net8.0\linux-x64\publish\ or .\bin\Release\net8.0\win-x64\publish\ depending on your OS
 Copy the .env file to this folder
-Windows: run ArchipelagoSphereTracker.exe
+Windows: run ArchipelagoSphereTracker.exe (--install or --NormalMode or --ArchipelagoMode)
 Linux: run ./ArchipelagoSphereTracker
 ```
 

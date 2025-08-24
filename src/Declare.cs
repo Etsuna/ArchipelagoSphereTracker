@@ -4,13 +4,18 @@ using Discord.Commands;
 public class Declare
 {
     public static string Version = "0.6.3";
-    public static string BotVersion = "3.5.0";
+    public static string BotVersion = "4.0.0";
     public static string InnoExtractorVersion = "1.9";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
-    public static readonly bool IsDev = (Environment.GetEnvironmentVariable("IS_DEV") ?? "false").ToLower() == "true";
     public static readonly bool TelemetryEnabled = (Environment.GetEnvironmentVariable("TELEMETRY") ?? "true").ToLower() == "true";
+    public static readonly string TelemetryName = Environment.GetEnvironmentVariable("TELEMETRY_NAME") ?? Guid.NewGuid().ToString();
+
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();
+    public static List<string> AddedChannelId = new List<string>();
+    public static readonly int MaxPlayer = 25;
+    public static bool IsArchipelagoMode { get; set; } = false;
+
 
     public static CancellationTokenSource Cts = new CancellationTokenSource();
     public static DiscordSocketClient Client = new DiscordSocketClient();

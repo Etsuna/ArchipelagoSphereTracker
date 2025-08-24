@@ -1,4 +1,5 @@
 ﻿using System.Data.SQLite;
+using System.Text;
 
 public static class ApWorldListCommands
 {
@@ -6,49 +7,48 @@ public static class ApWorldListCommands
     {
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            await using var connection = await Db.OpenReadAsync();
+
+            var sb = new StringBuilder()
+                .Append("**").Append(title).Append("**\n\n");
+
+            const string queryId = "SELECT Id FROM ApWorldListTable WHERE Title = @Title;";
+            using (var command = new SQLiteCommand(queryId, connection))
             {
-                await connection.OpenAsync();
+                command.Parameters.AddWithValue("@Title", title);
+                var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+                if (result is null)
+                    return $"Title '{title}' not found.";
 
-                var message = $"**{title}**\n\n";
+                var apWorldListTableId = Convert.ToInt32(result);
 
-                var query = "SELECT Id FROM ApWorldListTable WHERE Title = @Title";
-                using (var command = new SQLiteCommand(query, connection))
+                const string queryItems = @"
+                    SELECT Text, Link
+                    FROM ApWorldItemTable
+                    WHERE ApWorldListTableId = @ApWorldListTableId;";
+
+                using var itemCommand = new SQLiteCommand(queryItems, connection);
+                itemCommand.Parameters.AddWithValue("@ApWorldListTableId", apWorldListTableId);
+
+                using var reader = await itemCommand.ExecuteReaderAsync().ConfigureAwait(false);
+                var hasAny = false;
+                while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue("@Title", title);
-                    var result = await command.ExecuteScalarAsync();
-                    if (result == null)
-                    {
-                        return $"Title '{title}' not found.";
-                    }
+                    hasAny = true;
+                    var text = reader.IsDBNull(0) ? "" : reader.GetString(0);
+                    var link = reader.IsDBNull(1) ? null : reader.GetString(1);
 
-                    int apWorldListTableId = Convert.ToInt32(result);
-
-                    query = "SELECT Text, Link FROM ApWorldItemTable WHERE ApWorldListTableId = @ApWorldListTableId";
-                    using (var itemCommand = new SQLiteCommand(query, connection))
-                    {
-                        itemCommand.Parameters.AddWithValue("@ApWorldListTableId", apWorldListTableId);
-                        using (var reader = await itemCommand.ExecuteReaderAsync())
-                        {
-                            while (await reader.ReadAsync())
-                            {
-                                string text = reader.GetString(0);
-                                string link = reader.IsDBNull(1) ? "NULL" : reader.GetString(1);
-                                if (link != "NULL")
-                                {
-                                    message += $"• {text} — [Link]({link})\n";
-                                }
-                                else
-                                {
-                                    message += $"• {text}\n";
-                                }
-                            }
-                        }
-                    }
+                    if (!string.IsNullOrWhiteSpace(link))
+                        sb.Append("• ").Append(text).Append(" — ").Append("[Link](").Append(link).Append(")\n");
+                    else
+                        sb.Append("• ").Append(text).Append('\n');
                 }
 
-                return message;
+                if (!hasAny)
+                    sb.Append("_(no items)_\n");
             }
+
+            return sb.ToString();
         }
         catch (Exception ex)
         {
@@ -59,28 +59,27 @@ public static class ApWorldListCommands
 
     public static async Task<List<string>> GetAllTitles()
     {
+        var titles = new List<string>();
+
         try
         {
-            using (var connection = new SQLiteConnection($"Data Source={Declare.DatabaseFile};Version=3;"))
+            await using var connection = await Db.OpenReadAsync();
+
+            const string query = "SELECT Title FROM ApWorldListTable;";
+            using var command = new SQLiteCommand(query, connection);
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
-                await connection.OpenAsync();
-                var titles = new List<string>();
-                var query = "SELECT Title FROM ApWorldListTable";
-                using (var command = new SQLiteCommand(query, connection))
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        titles.Add(reader.GetString(0));
-                    }
-                }
-                return titles;
+                if (!reader.IsDBNull(0))
+                    titles.Add(reader.GetString(0));
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error while retrieving titles: {ex.Message}");
-            return new List<string>();
         }
+
+        return titles;
     }
 }

@@ -79,6 +79,13 @@ public static class BotCommands
         }
     }
 
+    public static async Task SendFileAsync(string channelId, Stream stream, string fileName, string? caption = null)
+    {
+        var chan = Declare.Client.GetChannel(ulong.Parse(channelId)) as IMessageChannel
+                   ?? throw new InvalidOperationException("Channel introuvable");
+        await chan.SendFileAsync(stream, fileName, caption);
+    }
+
     #endregion
 
     #region Slash Command Handler
@@ -103,7 +110,7 @@ public static class BotCommands
                 }
 
                 string? realAlias = command.Data.Options?.FirstOrDefault()?.Value as string;
-                var aliasMatch = !string.IsNullOrEmpty(realAlias) ? Regex.Match(realAlias, @"\\(([^)]+)\\)$") : Match.Empty;
+                var aliasMatch = !string.IsNullOrEmpty(realAlias) ? Regex.Match(realAlias, @"(?<=\()\s*([^)]+?)\s*(?=\)\s*$)") : Match.Empty;
                 var alias = aliasMatch.Success ? aliasMatch.Groups[1].Value : realAlias;
 
                 const int maxLength = 1999;
@@ -214,10 +221,10 @@ public static class BotCommands
 
         Func<Task<IEnumerable<string>>> fetcher = name switch
         {
-            "alias" => async () => (await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId)).AsEnumerable(),
+        "alias" => async () => (await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId)).AsEnumerable(),
 
-            "added-alias" => async () =>
-                (await ReceiverAliasesCommands.GetReceiver(guildId, channelId)).Distinct(StringComparer.OrdinalIgnoreCase).AsEnumerable(),
+        "added-alias" => async () =>
+                    (await ReceiverAliasesCommands.GetReceiver(guildId, channelId)).Distinct(StringComparer.OrdinalIgnoreCase).AsEnumerable(),
 
             "yamlfile" => () => Task.FromResult(
                     Directory.Exists(YamlPath(channelId))

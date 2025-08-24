@@ -67,8 +67,6 @@ chmod +x ArchipelagoSphereTracker
 ### 5) Fichier .env
 read -p "🔑 DISCORD_TOKEN: " DISCORD_TOKEN
 read -p "ℹ️ LANGUAGE: (available: de, en, es, fr, ja, pt)"       LANGUAGE
-read -p "ℹ️ TELEMETRY: (available: true, false)"       TELEMETRY
-read -p "ℹ️ TELEMETRY_NAME: (If null, Generate a random number)"       TELEMETRY_NAME
 cat > .env <<EOF
 DISCORD_TOKEN=$DISCORD_TOKEN
 LANGUAGE=$LANGUAGE
@@ -76,7 +74,7 @@ EOF
 echo "✅ .env file created"
 
 ### 6) Installation interne
-./ArchipelagoSphereTracker --install
+./ArchipelagoSphereTracker --Archipelago
 
 ### 7) Service systemd (si pas WSL)
 if [ "$IS_WSL" = false ]; then

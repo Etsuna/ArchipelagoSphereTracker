@@ -22,8 +22,13 @@ public class UrlClass
             return !checkIfChannelExistsAsync;
         }
 
-        async Task<(bool isValid, string pageContent)> IsAllUrlIsValidAsync(string newUrl)
+        async Task<(bool isValid, string pageContent, string message)> IsAllUrlIsValidAsync(string newUrl)
         {
+            if(!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId))
+            {
+                return (false, "", Resource.UrlCheckMaxTread);
+            }
+
             using HttpClient client = new();
             string pageContent = await client.GetStringAsync(newUrl);
 
@@ -36,7 +41,7 @@ public class UrlClass
             else
             {
                 Console.WriteLine(Resource.HelperPortNotFound);
-                return (false, pageContent);
+                return (false, pageContent, Resource.HelperPortNotFound);
             }
 
             trackerUrl = ExtractUrl(pageContent, "Multiworld Tracker");
@@ -44,7 +49,7 @@ public class UrlClass
 
             if (string.IsNullOrEmpty(trackerUrl) || string.IsNullOrEmpty(sphereTrackerUrl) || string.IsNullOrEmpty(port))
             {
-                return (false, pageContent);
+                return (false, pageContent, Resource.UrlCanceled);
             }
 
             if (!trackerUrl.StartsWith("http"))
@@ -56,7 +61,12 @@ public class UrlClass
                 sphereTrackerUrl = baseUrl + sphereTrackerUrl;
             }
 
-            return (true, pageContent);
+            if(await TrackingDataManager.CheckMaxPlayersAsync(trackerUrl))
+            {
+                return (false, pageContent, string.Format(Resource.UrlMaxPlayers, Declare.MaxPlayer));
+            }
+
+            return (true, pageContent, string.Empty);
         }
 
         string? ExtractUrl(string htmlContent, string linkText)
@@ -88,11 +98,11 @@ public class UrlClass
             }
             else
             {
-                var (isValid, pageContent) = await IsAllUrlIsValidAsync(newUrl);
+                var (isValid, pageContent, errorMessage) = await IsAllUrlIsValidAsync(newUrl);
 
                 if (!isValid)
                 {
-                    message = Resource.UrlCanceled;
+                    message = errorMessage;
                 }
                 else
                 {
@@ -177,6 +187,8 @@ public class UrlClass
 
                     if (!string.IsNullOrEmpty(trackerUrl) && !string.IsNullOrEmpty(sphereTrackerUrl))
                     {
+                        Declare.AddedChannelId.Add(channelId);
+
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, newUrl, trackerUrl, sphereTrackerUrl, silent);
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                         await TrackingDataManager.SetAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
@@ -184,6 +196,8 @@ public class UrlClass
                         await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
                         await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
                         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
+
+                        Declare.AddedChannelId.Remove(channelId);
                     }
 
                     message = string.Format(Resource.URLSet, newUrl);
@@ -211,10 +225,12 @@ public class UrlClass
         if (string.IsNullOrEmpty(channelId))
         {
             await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guildId);
+            await DatabaseCommands.ReclaimSpaceAsync();
         }
         else
         {
             await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId);
+            await DatabaseCommands.ReclaimSpaceAsync();
         }
 
         message = Resource.URLDeleted;

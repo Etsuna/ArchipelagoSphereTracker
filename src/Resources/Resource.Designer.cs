@@ -223,6 +223,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago Mode started..
+        /// </summary>
+        internal static string ArchipelagoModeStarted {
+            get {
+                return ResourceManager.GetString("ArchipelagoModeStarted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Channel : {0} (ID: {1}).
         /// </summary>
         internal static string BotChannelId {
@@ -376,6 +385,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Players folder move completed..
+        /// </summary>
+        internal static string BRPlayerFolderMoved {
+            get {
+                return ResourceManager.GetString("BRPlayerFolderMoved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Restored: {0} → {1}.
         /// </summary>
         internal static string BRRestoreMoved {
@@ -498,6 +516,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string CAYamlGeneratedSuccessfully {
             get {
                 return ResourceManager.GetString("CAYamlGeneratedSuccessfully", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {Declare.MaxPlayer}..
+        /// </summary>
+        internal static string CheckPlayerMinMax {
+            get {
+                return ResourceManager.GetString("CheckPlayerMinMax", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Complet list for this thread.
+        /// </summary>
+        internal static string CompletListForThisThread {
+            get {
+                return ResourceManager.GetString("CompletListForThisThread", resourceCulture);
             }
         }
         
@@ -750,6 +786,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string HelperSilent {
             get {
                 return ResourceManager.GetString("HelperSilent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Status for all games:.
+        /// </summary>
+        internal static string HelperStatusAllGames {
+            get {
+                return ResourceManager.GetString("HelperStatusAllGames", resourceCulture);
             }
         }
         
@@ -1096,6 +1141,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Items for.
+        /// </summary>
+        internal static string ItemFor {
+            get {
+                return ResourceManager.GetString("ItemFor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à No.
         /// </summary>
         internal static string LanguageNo {
@@ -1123,11 +1177,56 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à No patch found for this thread..
+        /// </summary>
+        internal static string NoPatchForThisThread {
+            get {
+                return ResourceManager.GetString("NoPatchForThisThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No record found for the specified GuildId and ChannelId..
+        /// </summary>
+        internal static string NoRecordFoundForGuilChannel {
+            get {
+                return ResourceManager.GetString("NoRecordFoundForGuilChannel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Normal Mode started..
+        /// </summary>
+        internal static string NormalModeStarted {
+            get {
+                return ResourceManager.GetString("NormalModeStarted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Not Found..
+        /// </summary>
+        internal static string NotFound {
+            get {
+                return ResourceManager.GetString("NotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à No URL registered for this channel..
         /// </summary>
         internal static string NoUrlRegistered {
             get {
                 return ResourceManager.GetString("NoUrlRegistered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à **Patch set for this thread.**.
+        /// </summary>
+        internal static string PatchSetForThisThread {
+            get {
+                return ResourceManager.GetString("PatchSetForThisThread", resourceCulture);
             }
         }
         
@@ -1141,6 +1240,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Run the program in Archipelago mode. Not supported on arm64.
+        /// </summary>
+        internal static string ProgramArchipelagoMode {
+            get {
+                return ResourceManager.GetString("ProgramArchipelagoMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Program Arm64 Not Supported.
+        /// </summary>
+        internal static string ProgramArm64NotSupported {
+            get {
+                return ResourceManager.GetString("ProgramArm64NotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Bot is connected!.
         /// </summary>
         internal static string ProgramBotIsConnected {
@@ -1150,11 +1267,47 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à If no or invalid arguments are provided, this help message will be displayed..
+        /// </summary>
+        internal static string ProgramHelp {
+            get {
+                return ResourceManager.GetString("ProgramHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Run installation process, needed only for --ArchipelagoMode. Not supported on arm64&quot;.
+        /// </summary>
+        internal static string ProgramInstall {
+            get {
+                return ResourceManager.GetString("ProgramInstall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Installation Mode.
         /// </summary>
         internal static string ProgramInstallationMode {
             get {
                 return ResourceManager.GetString("ProgramInstallationMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Run the program in Normal mode..
+        /// </summary>
+        internal static string ProgramNormalMode {
+            get {
+                return ResourceManager.GetString("ProgramNormalMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Program OS Not Supported.
+        /// </summary>
+        internal static string ProgramOSNotSupported {
+            get {
+                return ResourceManager.GetString("ProgramOSNotSupported", resourceCulture);
             }
         }
         
@@ -1870,15 +2023,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à {0} sent {1} to {2} {3} ({4}).
-        /// </summary>
-        internal static string TDPMessageItems {
-            get {
-                return ResourceManager.GetString("TDPMessageItems", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à {0} sent {1} to {2} ({3}).
         /// </summary>
         internal static string TDPMEssageItemsNoMention {
@@ -1915,6 +2059,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à You can&apos;t have more than 2 Threads. Delete one before adding a new room url please..
+        /// </summary>
+        internal static string UrlCheckMaxTread {
+            get {
+                return ResourceManager.GetString("UrlCheckMaxTread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à URL deleted..
         /// </summary>
         internal static string URLDeleted {
@@ -1938,6 +2091,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string UrlGamePatch {
             get {
                 return ResourceManager.GetString("UrlGamePatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à You can&apos;t have more than {0} players.
+        /// </summary>
+        internal static string UrlMaxPlayers {
+            get {
+                return ResourceManager.GetString("UrlMaxPlayers", resourceCulture);
             }
         }
         
