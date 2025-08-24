@@ -250,8 +250,8 @@ public static class TrackingDataManager
                     for (int i = 0; i < chunks.Count; i++)
                     {
                         string header = chunks.Count > 1
-                            ? $"**Items pour {receiver} {mentions} ({group.Count()}) [{i + 1}/{chunks.Count}]:**"
-                            : $"**Items pour {receiver} {mentions} ({group.Count()}):**";
+                            ? $"**{Resource.ItemFor} {receiver} {mentions} ({group.Count()}) [{i + 1}/{chunks.Count}]:**"
+                            : $"**{Resource.ItemFor} {receiver} {mentions} ({group.Count()}):**";
 
                         string finalMessage = header + "\n" + chunks[i];
 
@@ -675,7 +675,7 @@ public static class TrackingDataManager
         Console.WriteLine($"Player {namesToCheck.Count}/{Declare.MaxPlayer}");
         if (namesToCheck.Count > Declare.MaxPlayer)
         {
-            Console.WriteLine($"Players Min > Players Max, Impossible to add this archipelago.");
+            Console.WriteLine(string.Format(Resource.CheckPlayerMinMax, Declare.MaxPlayer));
             return true;
         }
         return false;

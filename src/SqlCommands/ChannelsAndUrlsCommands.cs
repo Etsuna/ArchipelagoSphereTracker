@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 public static class ChannelsAndUrlsCommands
 {
-    private const string DefaultTrackerValue = "Non trouvé";
+    private static string DefaultTrackerValue = Resource.NotFound;
 
     // ==========================
     // 🎯 Channel et URL (WRITE)
@@ -246,7 +246,7 @@ public static class ChannelsAndUrlsCommands
             var sb = new StringBuilder(capacity: 4096);
             bool any = false;
 
-            sb.AppendLine("**Patches configurés pour ce canal :**");
+            sb.AppendLine(Resource.PatchSetForThisThread);
             sb.AppendLine();
 
             while (await reader.ReadAsync().ConfigureAwait(false))
@@ -265,7 +265,7 @@ public static class ChannelsAndUrlsCommands
 
             if (!any)
             {
-                await BotCommands.SendMessageAsync("Aucun patch configuré pour ce canal.", channelId);
+                await BotCommands.SendMessageAsync(Resource.NoPatchForThisThread, channelId);
                 return;
             }
 
@@ -292,7 +292,7 @@ public static class ChannelsAndUrlsCommands
                     channelId,
                     fs,
                     fileName,
-                    "Liste complète des patches pour ce canal.");
+                    Resource.CompletListForThisThread);
             }
             finally
             {

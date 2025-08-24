@@ -30,7 +30,6 @@ public static class Db
         return conn;
     }
 
-    // Voie d’écriture sérialisée avec BEGIN IMMEDIATE
     public static async Task WriteAsync(Func<SQLiteConnection, Task> work)
     {
         await WriteGate.WaitAsync();

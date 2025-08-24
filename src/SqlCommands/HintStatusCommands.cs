@@ -221,7 +221,6 @@ public static class HintStatusCommands
         {
             await Db.WriteAsync(async conn =>
             {
-                // 1) lire tous les Receiver
                 var existing = new List<string>();
                 using (var select = new SQLiteCommand(@"
                     SELECT Receiver
@@ -239,7 +238,6 @@ public static class HintStatusCommands
                     }
                 }
 
-                // 2) détecter les doublons à supprimer
                 var toDelete = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var name in existing)
                 {
@@ -252,7 +250,6 @@ public static class HintStatusCommands
                     }
                 }
 
-                // 3) supprimer
                 using (var del = new SQLiteCommand(@"
                     DELETE FROM HintStatusTable
                     WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Receiver = @Receiver;", conn))
@@ -284,7 +281,6 @@ public static class HintStatusCommands
         {
             await Db.WriteAsync(async conn =>
             {
-                // 1) lire tous les Finder
                 var existing = new List<string>();
                 using (var select = new SQLiteCommand(@"
                     SELECT Finder
@@ -302,7 +298,6 @@ public static class HintStatusCommands
                     }
                 }
 
-                // 2) détecter les doublons à supprimer
                 var toDelete = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var name in existing)
                 {
@@ -315,7 +310,6 @@ public static class HintStatusCommands
                     }
                 }
 
-                // 3) supprimer (⚠️ dans HintStatusTable, pas GameStatusTable)
                 using (var del = new SQLiteCommand(@"
                     DELETE FROM HintStatusTable
                     WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Finder = @Finder;", conn))

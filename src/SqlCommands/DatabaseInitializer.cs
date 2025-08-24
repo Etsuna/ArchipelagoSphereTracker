@@ -4,13 +4,11 @@ public class DatabaseInitializer
 {
     public static async Task InitializeDatabaseAsync()
     {
-        // crée le fichier si besoin (Declare.DatabaseFile est déjà utilisé par Db)
         if (!File.Exists(Declare.DatabaseFile))
             SQLiteConnection.CreateFile(Declare.DatabaseFile);
 
         await using var conn = await Db.OpenWriteAsync();
 
-        // PRAGMA de base (déjà mis à l’ouverture, mais ok de redonder ici pour l’init)
         using (var pragma = conn.CreateCommand())
         {
             pragma.CommandText = @"
@@ -212,14 +210,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
 ";
         cmd.ExecuteNonQuery();
 
-        // petit coup d'ANALYZE pour de meilleurs plans
         using (var analyze = conn.CreateCommand())
         {
             analyze.CommandText = "ANALYZE;";
             analyze.ExecuteNonQuery();
         }
 
-        // compactage initial
         using (var vacuum = conn.CreateCommand())
         {
             vacuum.CommandText = "VACUUM;";

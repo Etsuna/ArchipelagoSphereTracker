@@ -23,7 +23,7 @@ class Program
 
         if (!isWindows && !isLinux)
         {
-            Console.WriteLine("Resource.ProgramOSNotSupported");
+            Console.WriteLine(Resource.ProgramOSNotSupported);
             return;
         }
 
@@ -39,17 +39,17 @@ class Program
         {
             if (arm64)
             {
-                Console.WriteLine("Resource.ProgramArm64NotSupported");
+                Console.WriteLine(Resource.ProgramArm64NotSupported);
                 return;
             }
 
-            Console.WriteLine("Archipelago Mode started.");
+            Console.WriteLine(Resource.ArchipelagoModeStarted);
             Declare.IsArchipelagoMode = true;
         }
 
         if (args[0].ToLower() == "--normalmode")
         {
-            Console.WriteLine("Normal Mode started.");
+            Console.WriteLine(Resource.NormalModeStarted);
             Declare.IsArchipelagoMode = false;
         }
 
@@ -62,11 +62,11 @@ class Program
         static void ShowHelp()
         {
             Console.WriteLine("Usage:");
-            Console.WriteLine("  --install           Run installation process, needed only for --ArchipelagoMode. Not supported on arm64");
-            Console.WriteLine("  --ArchipelagoMode   Run the program in Archipelago mode. Not supported on arm64");
-            Console.WriteLine("  --NormalMode        Run the program in Normal mode.");
+            Console.WriteLine($"  --install           {Resource.ProgramInstall}");
+            Console.WriteLine($"  --ArchipelagoMode   {Resource.ProgramArchipelagoMode}");
+            Console.WriteLine($"  --NormalMode        {Resource.ProgramNormalMode}");
             Console.WriteLine();
-            Console.WriteLine("If no or invalid arguments are provided, this help message will be displayed.");
+            Console.WriteLine(Resource.ProgramHelp);
         }
 
         await DatabaseInitializer.InitializeDatabaseAsync();
@@ -75,7 +75,7 @@ class Program
         {
             if (arm64)
             {
-                Console.WriteLine("Resource.ProgramArm64NotSupported");
+                Console.WriteLine(Resource.ProgramArm64NotSupported);
                 return;
             }
 

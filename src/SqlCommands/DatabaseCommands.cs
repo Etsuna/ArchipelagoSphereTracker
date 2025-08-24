@@ -34,7 +34,6 @@ public static class DatabaseCommands
     {
         try
         {
-            // 1) Essayer de lire l'ID existant
             await using (var connection = await Db.OpenReadAsync())
             {
                 using var selectCmd = new SQLiteCommand("SELECT ProgramId FROM ProgramIdTable LIMIT 1;", connection);
@@ -43,10 +42,8 @@ public static class DatabaseCommands
                     return result!;
             }
 
-            // 2) Générer un nouvel ID
             var newId = Declare.TelemetryName;
 
-            // 3) L'insérer (écriture transactionnelle)
             await Db.WriteAsync(async conn =>
             {
                 using var insertCmd = new SQLiteCommand("INSERT INTO ProgramIdTable (ProgramId) VALUES (@ProgramId);", conn);
@@ -137,7 +134,7 @@ public static class DatabaseCommands
             if (result is long l) return l;
             if (result != null && long.TryParse(result.ToString(), out var parsed)) return parsed;
 
-            Console.WriteLine("No record found for the specified GuildId and ChannelId.");
+            Console.WriteLine(Resource.NoRecordFoundForGuilChannel);
             return -1;
         }
         catch (Exception ex)
@@ -213,7 +210,6 @@ public static class DatabaseCommands
             {
                 using var command = conn.CreateCommand();
 
-                // 1) UrlAndChannelPatchTable (via sous-requête)
                 command.CommandText = @"
                     DELETE FROM UrlAndChannelPatchTable
                     WHERE ChannelsAndUrlsTableId IN (
@@ -224,10 +220,8 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // Réutiliser la même commande, nettoyer/mettre à jour les paramètres si besoin
                 command.Parameters.Clear();
 
-                // 2) ChannelsAndUrlsTable
                 command.CommandText = @"
                     DELETE FROM ChannelsAndUrlsTable
                     WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
@@ -235,7 +229,6 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 3) ReceiverAliasesTable
                 command.Parameters.Clear();
                 command.CommandText = @"
                     DELETE FROM ReceiverAliasesTable
@@ -244,7 +237,6 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 4) RecapListItemsTable (via sous-requête)
                 command.Parameters.Clear();
                 command.CommandText = @"
                     DELETE FROM RecapListItemsTable
@@ -256,7 +248,6 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 5) RecapListTable
                 command.Parameters.Clear();
                 command.CommandText = @"
                     DELETE FROM RecapListTable
@@ -265,7 +256,6 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 6) DisplayedItemTable
                 command.Parameters.Clear();
                 command.CommandText = @"
                     DELETE FROM DisplayedItemTable
@@ -274,7 +264,6 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 7) AliasChoicesTable
                 command.Parameters.Clear();
                 command.CommandText = @"
                     DELETE FROM AliasChoicesTable
@@ -283,7 +272,6 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 8) GameStatusTable
                 command.Parameters.Clear();
                 command.CommandText = @"
                     DELETE FROM GameStatusTable
@@ -292,7 +280,6 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 9) HintStatusTable
                 command.Parameters.Clear();
                 command.CommandText = @"
                     DELETE FROM HintStatusTable
@@ -321,7 +308,6 @@ public static class DatabaseCommands
             {
                 using var command = conn.CreateCommand();
 
-                // 1) UrlAndChannelPatchTable via sous-requête
                 command.CommandText = @"
                     DELETE FROM UrlAndChannelPatchTable
                     WHERE ChannelsAndUrlsTableId IN (
@@ -331,19 +317,16 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 2) ChannelsAndUrlsTable
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM ChannelsAndUrlsTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 3) ReceiverAliasesTable
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM ReceiverAliasesTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 4) RecapListItemsTable via sous-requête
                 command.Parameters.Clear();
                 command.CommandText = @"
                     DELETE FROM RecapListItemsTable
@@ -354,31 +337,26 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 5) RecapListTable
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM RecapListTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 6) DisplayedItemTable
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM DisplayedItemTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 7) AliasChoicesTable
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM AliasChoicesTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 8) GameStatusTable
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM GameStatusTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // 9) HintStatusTable
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM HintStatusTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
@@ -400,23 +378,19 @@ public static class DatabaseCommands
     {
         try
         {
-            // éviter Thread.Sleep
             await Task.Delay(3000);
 
-            // On sérialise manuellement via le WriteGate pour exclure toute autre écriture
             await Db.WriteGate.WaitAsync();
             try
             {
                 await using var connection = await Db.OpenWriteAsync();
-                // wal_checkpoint(TRUNCATE) peut être fait hors transaction
                 using (var chk = new SQLiteCommand("PRAGMA wal_checkpoint(TRUNCATE);", connection))
                     await chk.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // VACUUM ne doit pas être exécuté dans une transaction
                 using (var vacuum = new SQLiteCommand("VACUUM;", connection))
                     await vacuum.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                Console.WriteLine("Checkpoint + VACUUM effectués.");
+                Console.WriteLine("Checkpoint + VACUUM Done.");
             }
             finally
             {

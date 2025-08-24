@@ -46,7 +46,6 @@ public static class ItemsCommands
 
             await Db.WriteAsync(async conn =>
             {
-                // DDL dans la transaction de Db.WriteAsync (BEGIN IMMEDIATE)
                 using (var dropCmd = new SQLiteCommand("DROP TABLE IF EXISTS ItemsTable;", conn))
                     await dropCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 

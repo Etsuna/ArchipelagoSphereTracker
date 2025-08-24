@@ -26,7 +26,7 @@ public class UrlClass
         {
             if(!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId))
             {
-                return (false, "", "You can't have more than 2 Threads. Delete one before adding a new Sphere_Tracker please.");
+                return (false, "", Resource.UrlCheckMaxTread);
             }
 
             using HttpClient client = new();
@@ -63,7 +63,7 @@ public class UrlClass
 
             if(await TrackingDataManager.CheckMaxPlayersAsync(trackerUrl))
             {
-                return (false, pageContent, $"You can't have more than {Declare.MaxPlayer} players");
+                return (false, pageContent, string.Format(Resource.UrlMaxPlayers, Declare.MaxPlayer));
             }
 
             return (true, pageContent, string.Empty);

@@ -58,10 +58,8 @@ public static class RecapListCommands
 
                 foreach (var it in items)
                 {
-                    // ignore self-gifts
                     if (it.Receiver == it.Finder) continue;
 
-                    // Récupère les RecapListTable.Id pour ce receiver
                     var ids = await DatabaseCommands
                         .GetIdsAsync(guildId, channelId, it.Receiver, "RecapListTable")
                         .ConfigureAwait(false);
@@ -93,7 +91,6 @@ public static class RecapListCommands
 
         try
         {
-            // IDs de la/les recap list(s) ciblée(s)
             var ids = await DatabaseCommands
                 .GetIdsAsync(guildId, channelId, alias, "RecapListTable")
                 .ConfigureAwait(false);
@@ -284,7 +281,6 @@ public static class RecapListCommands
         {
             await Db.WriteAsync(async conn =>
             {
-                // 1) Supprimer les items liés
                 using (var deleteItems = new SQLiteCommand(@"
                     DELETE FROM RecapListItemsTable
                     WHERE RecapListTableId IN (
@@ -303,7 +299,6 @@ public static class RecapListCommands
                     await deleteItems.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
 
-                // 2) Supprimer la/les lignes de RecapListTable
                 using (var deleteAlias = new SQLiteCommand(@"
                     DELETE FROM RecapListTable
                     WHERE GuildId = @GuildId

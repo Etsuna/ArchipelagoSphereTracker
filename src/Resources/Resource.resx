@@ -1013,4 +1013,80 @@
     <value>**{0}'s** **{1}** is at **{2}** in **{3}'s** World</value>
     <comment>**{item.Receiver}'s** **{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World</comment>
   </data>
+  <data name="ProgramOSNotSupported" xml:space="preserve">
+    <value>Program OS Not Supported</value>
+    <comment>Program OS Not Supported</comment>
+  </data>
+  <data name="ProgramArm64NotSupported" xml:space="preserve">
+    <value>Program Arm64 Not Supported</value>
+    <comment>Program Arm64 Not Supported</comment>
+  </data>
+  <data name="ArchipelagoModeStarted" xml:space="preserve">
+    <value>Archipelago Mode started.</value>
+    <comment>Archipelago Mode started.</comment>
+  </data>
+  <data name="NormalModeStarted" xml:space="preserve">
+    <value>Normal Mode started.</value>
+    <comment>Normal Mode started.</comment>
+  </data>
+  <data name="ProgramInstall" xml:space="preserve">
+    <value>Run installation process, needed only for --ArchipelagoMode. Not supported on arm64"</value>
+    <comment>Run installation process, needed only for --ArchipelagoMode. Not supported on arm64"</comment>
+  </data>
+  <data name="ProgramArchipelagoMode" xml:space="preserve">
+    <value>Run the program in Archipelago mode. Not supported on arm64</value>
+    <comment>Run the program in Archipelago mode. Not supported on arm64</comment>
+  </data>
+  <data name="ProgramNormalMode" xml:space="preserve">
+    <value>Run the program in Normal mode.</value>
+    <comment>Run the program in Normal mode.</comment>
+  </data>
+  <data name="ProgramHelp" xml:space="preserve">
+    <value>If no or invalid arguments are provided, this help message will be displayed.</value>
+    <comment>If no or invalid arguments are provided, this help message will be displayed.</comment>
+  </data>
+  <data name="HelperStatusAllGames" xml:space="preserve">
+    <value>Status for all games:</value>
+    <comment>Status for all games:</comment>
+  </data>
+  <data name="UrlCheckMaxTread" xml:space="preserve">
+    <value>You can't have more than 2 Threads. Delete one before adding a new room url please.</value>
+    <comment>You can't have more than 2 Threads. Delete one before adding a new room url please.</comment>
+  </data>
+  <data name="UrlMaxPlayers" xml:space="preserve">
+    <value>You can't have more than {0} players</value>
+    <comment>You can't have more than {Declare.MaxPlayer} players</comment>
+  </data>
+  <data name="BRPlayerFolderMoved" xml:space="preserve">
+    <value>Players folder move completed.</value>
+    <comment>Players folder move completed.</comment>
+  </data>
+  <data name="NotFound" xml:space="preserve">
+    <value>Not Found.</value>
+    <comment>Not Found.</comment>
+  </data>
+  <data name="PatchSetForThisThread" xml:space="preserve">
+    <value>**Patch set for this thread.**</value>
+    <comment>**Patch set for this thread.**</comment>
+  </data>
+  <data name="NoPatchForThisThread" xml:space="preserve">
+    <value>No patch found for this thread.</value>
+    <comment>No patch found for this thread.</comment>
+  </data>
+  <data name="CompletListForThisThread" xml:space="preserve">
+    <value>Complet list for this thread</value>
+    <comment>Complet list for this thread</comment>
+  </data>
+  <data name="NoRecordFoundForGuilChannel" xml:space="preserve">
+    <value>No record found for the specified GuildId and ChannelId.</value>
+    <comment>No record found for the specified GuildId and ChannelId.</comment>
+  </data>
+  <data name="ItemFor" xml:space="preserve">
+    <value>Items for</value>
+    <comment>Items for</comment>
+  </data>
+  <data name="CheckPlayerMinMax" xml:space="preserve">
+    <value>Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {Declare.MaxPlayer}.</value>
+    <comment>Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}.</comment>
+  </data>
 </root>
