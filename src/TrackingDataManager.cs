@@ -1,6 +1,9 @@
-﻿using ArchipelagoSphereTracker.src.Resources;
+﻿using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.Enums;
+using ArchipelagoSphereTracker.src.Resources;
 using Discord;
 using Discord.WebSocket;
+using HtmlAgilityPack;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Net;
@@ -158,6 +161,7 @@ public static class TrackingDataManager
                                         }
                                     }
 
+
                                     Console.WriteLine(string.Format(Resource.TDMSettingsAliasesGamesStatus, channelCheck.Name));
                                     await SetAliasAndGameStatusAsync(guild, channel, urlTracker, silent);
 
@@ -174,6 +178,7 @@ public static class TrackingDataManager
                             });
                     });
                     Console.WriteLine(Resource.TDMWaitingCheck);
+                    await DatabaseCommands.ReclaimSpaceAsync();
                     await Task.Delay(300000);
                 }
             }
@@ -186,36 +191,73 @@ public static class TrackingDataManager
 
     public static async Task GetTableDataAsync(string guild, string channel, string url, bool silent)
     {
-        var checkIfChannelExistsAsync = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
+        var channelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
 
-        using var stream = await Declare.HttpClient.GetStreamAsync(url);
-        using var html = new StreamReader(stream);
+        using var resp = await Declare.HttpClient.GetAsync(url, HttpCompletionOption.ResponseContentRead);
+        resp.EnsureSuccessStatusCode();
+        var html = await resp.Content.ReadAsStringAsync();
 
-        var cellPattern = new Regex(@"<td.*?>(.*?)</td>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
 
-        var existingKeys = await DisplayItemCommands.GetExistingKeysAsync(guild, channel);
+        var table = doc.DocumentNode.SelectSingleNode("//table");
+        if (table is null) return;
+
+        var headers = table.SelectNodes(".//thead//th")
+                   ?? table.SelectNodes(".//tr[1]/th")
+                   ?? table.SelectNodes(".//tr[1]/td");
+
+        int IndexOf(string key)
+        {
+            if (headers == null) return -1;
+            for (int i = 0; i < headers.Count; i++)
+            {
+                var t = Normalize(headers[i].InnerText);
+                if (t == key || t.Contains(key)) return i;
+            }
+            return -1;
+        }
+
+        int iSphere = IndexOf("sphere");
+        int iFinder = IndexOf("finder");
+        int iRecv = IndexOf("receiver");
+        int iItem = IndexOf("item");
+        int iLoc = IndexOf("location");
+        int iGame = IndexOf("game");
+
+        var existingKeys = new HashSet<string>(await DisplayItemCommands.GetExistingKeysAsync(guild, channel));
+
+        var rows = table.SelectNodes(".//tbody/tr") ?? table.SelectNodes(".//tr[position()>1]");
         var newItems = new List<DisplayedItem>();
 
-        foreach (var rowHtml in StreamHtmlRows(html))
+        if (rows != null)
         {
-            var cells = cellPattern.Matches(rowHtml);
-            if (cells.Count == 6)
+            foreach (var tr in rows)
             {
-                var newItem = new DisplayedItem
+                var tds = tr.SelectNodes("./td");
+                if (tds == null || tds.Count == 0) continue;
+
+                string Cell(int i)
                 {
-                    Sphere = HttpUtility.HtmlDecode(cells[0].Groups[1].Value.Trim()),
-                    Finder = HttpUtility.HtmlDecode(cells[1].Groups[1].Value.Trim()),
-                    Receiver = HttpUtility.HtmlDecode(cells[2].Groups[1].Value.Trim()),
-                    Item = HttpUtility.HtmlDecode(cells[3].Groups[1].Value.Trim()),
-                    Location = HttpUtility.HtmlDecode(cells[4].Groups[1].Value.Trim()),
-                    Game = HttpUtility.HtmlDecode(cells[5].Groups[1].Value.Trim())
+                    if (i < 0 || i >= tds.Count) return "";
+                    var text = WebUtility.HtmlDecode(tds[i].InnerText)?.Trim();
+                    return string.IsNullOrEmpty(text) ? "" : text.Replace('\u00A0', ' ');
+                }
+
+                var item = new DisplayedItem
+                {
+                    Sphere = Cell(iSphere),
+                    Finder = Cell(iFinder),
+                    Receiver = Cell(iRecv),
+                    Item = Cell(iItem),
+                    Location = Cell(iLoc),
+                    Game = Cell(iGame)
                 };
 
-                var key = $"{newItem.Sphere}|{newItem.Finder}|{newItem.Receiver}|{newItem.Item}|{newItem.Location}|{newItem.Game}";
-
+                var key = $"{item.Sphere}|{item.Finder}|{item.Receiver}|{item.Item}|{item.Location}|{item.Game}";
                 if (!existingKeys.Contains(key))
                 {
-                    newItems.Add(newItem);
+                    newItems.Add(item);
                 }
             }
         }
@@ -225,10 +267,9 @@ public static class TrackingDataManager
             await DisplayItemCommands.AddItemsAsync(newItems, guild, channel);
             await RecapListCommands.AddOrEditRecapListItemsForAllAsync(guild, channel, newItems);
 
-            if (checkIfChannelExistsAsync)
+            if (channelExists)
             {
-                var groupedByReceiver = newItems
-                    .GroupBy(item => item.Receiver ?? "Inconnu");
+                var groupedByReceiver = newItems.GroupBy(item => item.Receiver ?? "Inconnu");
 
                 foreach (var group in groupedByReceiver)
                 {
@@ -238,10 +279,7 @@ public static class TrackingDataManager
                         group.Select(item => BuildMessageAsync(guild, channel, item, silent))
                     );
 
-                    var nonEmpty = messages.Where(m => !string.IsNullOrWhiteSpace(m));
-
-                    var withHeader = nonEmpty.ToList();
-
+                    var withHeader = messages.Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
                     var chunks = ChunkMessages(withHeader).ToList();
 
                     var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, receiver);
@@ -268,33 +306,6 @@ public static class TrackingDataManager
                         await Task.Delay(1100);
                     }
                 }
-            }
-        }
-    }
-
-    private static IEnumerable<string> StreamHtmlRows(StreamReader reader)
-    {
-        var sb = new StringBuilder();
-        string? line;
-        bool insideRow = false;
-
-        while ((line = reader.ReadLine()) != null)
-        {
-            if (line.Contains("<tr", StringComparison.OrdinalIgnoreCase))
-            {
-                insideRow = true;
-                sb.Clear();
-            }
-
-            if (insideRow)
-            {
-                sb.AppendLine(line);
-            }
-
-            if (line.Contains("</tr>", StringComparison.OrdinalIgnoreCase))
-            {
-                insideRow = false;
-                yield return sb.ToString();
             }
         }
     }
@@ -342,75 +353,98 @@ public static class TrackingDataManager
         return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
     }
 
-    private static readonly Regex TableRegex = new(@"<table.*?>(.*?)</table>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
-    private static readonly Regex RowRegex = new(@"<tr>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
-    private static readonly Regex CellRegex = new(@"<td.*?>(.*?)</td>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
     public static async Task SetAliasAndGameStatusAsync(string guild, string channel, string urlTracker, bool silent)
     {
         if (await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "AliasChoicesTable"))
             return;
 
-        using var stream = await Declare.HttpClient.GetStreamAsync(urlTracker);
-        using var reader = new StreamReader(stream);
+        using var resp = await Declare.HttpClient.GetAsync(urlTracker, HttpCompletionOption.ResponseContentRead);
+        resp.EnsureSuccessStatusCode();
+        var html = await resp.Content.ReadAsStringAsync();
 
-        var html = await reader.ReadToEndAsync();
-        var tableMatch = TableRegex.Match(html);
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
 
-        if (!tableMatch.Success)
-            return;
+        var table = doc.DocumentNode.SelectSingleNode("//table");
+        if (table is null) return;
 
-        var firstTableHtml = tableMatch.Groups[1].Value;
-        var rowMatches = RowRegex.Matches(firstTableHtml);
+        var headers = table.SelectNodes(".//thead//th")
+                   ?? table.SelectNodes(".//tr[1]/th")
+                   ?? table.SelectNodes(".//tr[1]/td");
+        if (headers is null || headers.Count == 0) return;
 
-        var parsedRows = new List<Match[]>(rowMatches.Count);
-
-        for (int i = 1; i < rowMatches.Count; i++)
+        int IndexOf(string key)
         {
-            var cells = CellRegex.Matches(rowMatches[i].Groups[1].Value);
-            if (cells.Count == 7)
+            for (int i = 0; i < headers.Count; i++)
             {
-                parsedRows.Add(cells.Cast<Match>().ToArray());
+                var t = Normalize(headers[i].InnerText);
+                if (t == key || t.Contains(key)) return i;
             }
+            return -1;
         }
 
-        if (parsedRows.Count == 0)
-            return;
+        int iHashtag = IndexOf("hashtag");
+        if (iHashtag < 0) { iHashtag = IndexOf("#"); }
+        int iName = IndexOf("name");
+        int iGame = IndexOf("game");
+        int iStatus = IndexOf("status");
+        int iChecks = IndexOf("checks");
+        int iPercent = IndexOf("percent");
+        int iLastAct = IndexOf("last activity");
 
-        var namesToCheck = new List<string>(parsedRows.Count);
-        foreach (var cells in parsedRows)
+        var rows = table.SelectNodes(".//tbody/tr") ?? table.SelectNodes(".//tr[position()>1]");
+        if (rows is null || rows.Count == 0) return;
+
+        var tmpRows = new List<HtmlNode[]>(rows.Count);
+        var namesToCheck = new List<string>(rows.Count);
+
+        foreach (var tr in rows)
         {
-            var name = WebUtility.HtmlDecode(cells[1].Groups[1].Value.Trim());
-            namesToCheck.Add(name);
+            var tds = tr.SelectNodes("./td");
+            if (tds is null || tds.Count == 0) continue;
+
+            if (iName < 0 || iGame < 0) continue;
+
+            tmpRows.Add(tds.ToArray());
+
+            var name = Clean(iName < tds.Count ? tds[iName] : null);
+            if (!string.IsNullOrWhiteSpace(name))
+                namesToCheck.Add(name);
         }
+
+        if (tmpRows.Count == 0) return;
 
         var existingNames = await GameStatusCommands.GetExistingGameNamesAsync(guild, channel, namesToCheck);
 
-        var newGameStatuses = new List<GameStatus>(parsedRows.Count);
-        var gameNameList = new List<Dictionary<string, string>>(parsedRows.Count);
+        var newGameStatuses = new List<GameStatus>(tmpRows.Count);
+        var gameNameList = new List<Dictionary<string, string>>(tmpRows.Count);
 
-        foreach (var cells in parsedRows)
+        foreach (var tds in tmpRows)
         {
-            var hashtagCell = WebUtility.HtmlDecode(cells[0].Groups[1].Value.Trim());
-            var hashtagMatch = Regex.Match(hashtagCell, @">([^<]+)<");
-            var hashtag = hashtagMatch.Success ? hashtagMatch.Groups[1].Value.Trim() : hashtagCell;
+            string hashtag = Clean(iHashtag >= 0 && iHashtag < tds.Length ? tds[iHashtag] : null);
+            string name = Clean(iName >= 0 && iName < tds.Length ? tds[iName] : null);
+            string game = Clean(iGame >= 0 && iGame < tds.Length ? tds[iGame] : null);
 
-            var name = WebUtility.HtmlDecode(cells[1].Groups[1].Value.Trim());
-            var game = WebUtility.HtmlDecode(cells[2].Groups[1].Value.Trim());
+            if (string.IsNullOrWhiteSpace(name)) continue;
 
             gameNameList.Add(new Dictionary<string, string> { { name, game } });
 
             if (!existingNames.Contains(name))
             {
+                string status = Clean(iStatus >= 0 && iStatus < tds.Length ? tds[iStatus] : null);
+                string checks = Clean(iChecks >= 0 && iChecks < tds.Length ? tds[iChecks] : null);
+                string pct = Clean(iPercent >= 0 && iPercent < tds.Length ? tds[iPercent] : null);
+                string last = Clean(iLastAct >= 0 && iLastAct < tds.Length ? tds[iLastAct] : null);
+
                 newGameStatuses.Add(new GameStatus
                 {
                     Hashtag = hashtag,
                     Name = name,
                     Game = game,
-                    Status = WebUtility.HtmlDecode(cells[3].Groups[1].Value.Trim()),
-                    Checks = WebUtility.HtmlDecode(cells[4].Groups[1].Value.Trim()),
-                    Percent = WebUtility.HtmlDecode(cells[5].Groups[1].Value.Trim()),
-                    LastActivity = WebUtility.HtmlDecode(cells[6].Groups[1].Value.Trim())
+                    Status = status,
+                    Checks = checks,
+                    Percent = pct,
+                    LastActivity = last
                 });
             }
         }
@@ -432,26 +466,26 @@ public static class TrackingDataManager
         }
     }
 
-    private static readonly Regex RowRegex2 = new(@"<tr.*?>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
     public static async Task CheckGameStatusAsync(string guild, string channel, string urlTracker, bool silent)
     {
-        using var stream = await Declare.HttpClient.GetStreamAsync(urlTracker);
-        using var reader = new StreamReader(stream);
+        using var resp = await Declare.HttpClient.GetAsync(urlTracker, HttpCompletionOption.ResponseContentRead);
+        resp.EnsureSuccessStatusCode();
+        var html = await resp.Content.ReadAsStringAsync();
 
-        var html = await reader.ReadToEndAsync();
-        var tables = TableRegex.Matches(html);
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
 
-        if (tables.Count < 2)
+        var tables = doc.DocumentNode.SelectNodes("//table");
+        if (tables is null || tables.Count < 2)
             return;
 
-        var table1Html = tables[0].Groups[1].Value;
-        var table2Html = tables[1].Groups[1].Value;
+        var table1Html = tables[0].OuterHtml;
+        var table2Html = tables[1].OuterHtml;
 
-        if (!string.IsNullOrEmpty(table1Html))
+        if (!string.IsNullOrWhiteSpace(table1Html))
             await ProcessGameStatusTableAsync(table1Html, guild, channel, silent);
 
-        if (!string.IsNullOrEmpty(table2Html))
+        if (!string.IsNullOrWhiteSpace(table2Html))
             await ProcessHintTableAsync(table2Html, guild, channel);
     }
 
@@ -459,43 +493,67 @@ public static class TrackingDataManager
     {
         await GameStatusCommands.DeleteDuplicateAliasAsync(guild, channel);
 
-        var rows = RowRegex2.Matches(tableHtml);
-        if (rows.Count <= 1)
-            return;
+        var doc = new HtmlDocument();
+        doc.LoadHtml(tableHtml);
 
-        var newGameStatuses = new List<GameStatus>(rows.Count);
-        var statusChanges = new List<GameStatus>(rows.Count);
+        var table = doc.DocumentNode.SelectSingleNode("//table") ?? doc.DocumentNode;
+        var headers = table.SelectNodes(".//thead//th")
+                   ?? table.SelectNodes(".//tr[1]/th")
+                   ?? table.SelectNodes(".//tr[1]/td");
+        if (headers is null || headers.Count == 0) return;
+
+        int iHashtag = IndexOfHeader(headers, "hashtag"); if (iHashtag < 0) iHashtag = IndexOfHeader(headers, "#");
+        int iName = IndexOfHeader(headers, "name");
+        int iGame = IndexOfHeader(headers, "game");
+        int iStatus = IndexOfHeader(headers, "status");
+        int iChecks = IndexOfHeader(headers, "checks");
+        int iPercent = IndexOfHeader(headers, "percent");
+        int iLast = IndexOfHeader(headers, "last activity");
+
+        var req = new[] { iHashtag, iName, iGame, iStatus, iChecks, iPercent, iLast };
+        if (req.Any(i => i < 0)) return;
+
+        var rows = table.SelectNodes(".//tbody/tr") ?? table.SelectNodes(".//tr[position()>1]");
+        if (rows is null || rows.Count == 0) return;
 
         var parsedEntries = new Dictionary<string, GameStatus>(rows.Count);
 
-        for (int i = 1; i < rows.Count; i++)
+        foreach (var tr in rows)
         {
-            var cells = CellRegex.Matches(rows[i].Groups[1].Value);
-            if (cells.Count != 7)
-                continue;
+            var tds = tr.SelectNodes("./td");
+            if (tds is null || tds.Count == 0) continue;
 
-            var hashtagRaw = WebUtility.HtmlDecode(cells[0].Groups[1].Value.Trim());
-            var hashtagMatch = Regex.Match(hashtagRaw, @">([^<]+)<");
-            var hashtag = hashtagMatch.Success ? hashtagMatch.Groups[1].Value.Trim() : hashtagRaw;
+            string hashtag = ExtractHashtag(iHashtag < tds.Count ? tds[iHashtag] : null);
+            string name = Clean(iName < tds.Count ? tds[iName] : null);
+            string game = Clean(iGame < tds.Count ? tds[iGame] : null);
+            string status = Clean(iStatus < tds.Count ? tds[iStatus] : null);
+            string checks = Clean(iChecks < tds.Count ? tds[iChecks] : null);
+            string percent = Clean(iPercent < tds.Count ? tds[iPercent] : null);
+            string last = Clean(iLast < tds.Count ? tds[iLast] : null);
+
+            if (string.IsNullOrWhiteSpace(name)) continue;
 
             var entry = new GameStatus
             {
                 Hashtag = hashtag,
-                Name = WebUtility.HtmlDecode(cells[1].Groups[1].Value.Trim()),
-                Game = WebUtility.HtmlDecode(cells[2].Groups[1].Value.Trim()),
-                Status = WebUtility.HtmlDecode(cells[3].Groups[1].Value.Trim()),
-                Checks = WebUtility.HtmlDecode(cells[4].Groups[1].Value.Trim()),
-                Percent = WebUtility.HtmlDecode(cells[5].Groups[1].Value.Trim()),
-                LastActivity = WebUtility.HtmlDecode(cells[6].Groups[1].Value.Trim())
+                Name = name,
+                Game = game,
+                Status = status,
+                Checks = checks,
+                Percent = percent,
+                LastActivity = last
             };
 
             parsedEntries[entry.Name] = entry;
         }
 
-        if (parsedEntries.Count == 0)
-            return;
+        if (parsedEntries.Count == 0) return;
 
-        var existingStatuses = await GameStatusCommands.GetStatusesByNamesAsync(guild, channel, parsedEntries.Keys.ToList());
+        var existingStatuses = await GameStatusCommands.GetStatusesByNamesAsync(
+            guild, channel, parsedEntries.Keys.ToList());
+
+        var newGameStatuses = new List<GameStatus>(parsedEntries.Count);
+        var statusChanges = new List<GameStatus>(parsedEntries.Count);
 
         foreach (var (name, newEntry) in parsedEntries)
         {
@@ -506,37 +564,31 @@ public static class TrackingDataManager
             }
 
             if (existing.Percent == "100.00")
-            {
                 continue;
-            }
 
             bool isChanged = false;
-
             if (existing.Status != newEntry.Status) { existing.Status = newEntry.Status; isChanged = true; }
             if (existing.Percent != newEntry.Percent) { existing.Percent = newEntry.Percent; isChanged = true; }
             if (existing.Checks != newEntry.Checks) { existing.Checks = newEntry.Checks; isChanged = true; }
 
             if (isChanged)
             {
-                existing.Status = newEntry.Status;
-                existing.Percent = newEntry.Percent;
-                existing.Checks = newEntry.Checks;
                 existing.LastActivity = newEntry.LastActivity;
                 statusChanges.Add(existing);
 
                 if (newEntry.Percent == "100.00" || newEntry.Status == "Goal Complete")
                 {
-                    var matchCustomAlias = Regex.Match(existing.Name, @"\(([^)]+)\)$");
+                    var matchCustomAlias = System.Text.RegularExpressions.Regex.Match(existing.Name, @"\(([^)]+)\)$");
                     var alias = matchCustomAlias.Success ? matchCustomAlias.Groups[1].Value : existing.Name;
 
                     var getReceivers = await ReceiverAliasesCommands.CheckIfReceiverExists(guild, channel, alias);
 
                     if (!silent || getReceivers)
                     {
-                        if (isChanged)
-                        {
-                            await BotCommands.SendMessageAsync(string.Format(Resource.TDMGoalComplete, newEntry.Name, newEntry.Game), channel);
-                        }
+                        await BotCommands.SendMessageAsync(
+                            string.Format(Resource.TDMGoalComplete, newEntry.Name, newEntry.Game),
+                            channel
+                        );
                     }
                 }
             }
@@ -554,50 +606,72 @@ public static class TrackingDataManager
         await HintStatusCommands.DeleteDuplicateReceiversAliasAsync(guild, channel);
         await HintStatusCommands.DeleteDuplicateFindersAliasAsync(guild, channel);
 
-        var rows = RowRegex2.Matches(tableHtml);
-        if (rows.Count == 0)
-            return;
+        var doc = new HtmlDocument();
+        doc.LoadHtml(tableHtml);
+
+        var table = doc.DocumentNode.SelectSingleNode("//table") ?? doc.DocumentNode;
+        var headers = table.SelectNodes(".//thead//th")
+                   ?? table.SelectNodes(".//tr[1]/th")
+                   ?? table.SelectNodes(".//tr[1]/td");
+        if (headers is null || headers.Count == 0) return;
+
+        int iFinder = IndexOfHeader(headers, "finder");
+        int iReceiver = IndexOfHeader(headers, "receiver");
+        int iItem = IndexOfHeader(headers, "item");
+        int iLocation = IndexOfHeader(headers, "location");
+        int iGame = IndexOfHeader(headers, "game");
+        int iEntrance = IndexOfHeader(headers, "entrance");
+        int iFound = IndexOfHeader(headers, "found");
+
+        var required = new[] { iFinder, iReceiver, iItem, iLocation, iGame, iEntrance, iFound };
+        if (required.Any(i => i < 0)) return;
+
+        var rows = table.SelectNodes(".//tbody/tr") ?? table.SelectNodes(".//tr[position()>1]");
+        if (rows is null || rows.Count == 0) return;
+
+        var existingList = await HintStatusCommands.GetHintStatus(guild, channel);
+        var existingByKey = existingList.ToDictionary(MakeKey);
 
         var hintsToAdd = new List<HintStatus>(rows.Count);
         var hintsToUpdate = new List<HintStatus>(rows.Count);
 
-        var getHintStatusList = await HintStatusCommands.GetHintStatus(guild, channel);
-
-        for (int i = 1; i < rows.Count; i++)
+        foreach (var tr in rows)
         {
-            var cells = CellRegex.Matches(rows[i].Groups[1].Value);
-            if (cells.Count != 7)
+            var tds = tr.SelectNodes("./td");
+            if (tds is null || tds.Count == 0) continue;
+
+            string finder = Clean(iFinder < tds.Count ? tds[iFinder] : null);
+            string receiver = Clean(iReceiver < tds.Count ? tds[iReceiver] : null);
+            string item = Clean(iItem < tds.Count ? tds[iItem] : null);
+            string location = Clean(iLocation < tds.Count ? tds[iLocation] : null);
+            string game = Clean(iGame < tds.Count ? tds[iGame] : null);
+            string entrance = Clean(iEntrance < tds.Count ? tds[iEntrance] : null);
+            string found = Clean(iFound < tds.Count ? tds[iFound] : null);
+
+            if (string.IsNullOrWhiteSpace(finder) && string.IsNullOrWhiteSpace(receiver))
                 continue;
+
+            if (found == "✔") found = "OK";
 
             var hint = new HintStatus
             {
-                Finder = WebUtility.HtmlDecode(cells[0].Groups[1].Value.Trim()),
-                Receiver = WebUtility.HtmlDecode(cells[1].Groups[1].Value.Trim()),
-                Item = WebUtility.HtmlDecode(cells[2].Groups[1].Value.Trim()),
-                Location = WebUtility.HtmlDecode(cells[3].Groups[1].Value.Trim()),
-                Game = WebUtility.HtmlDecode(cells[4].Groups[1].Value.Trim()),
-                Entrance = WebUtility.HtmlDecode(cells[5].Groups[1].Value.Trim()),
-                Found = WebUtility.HtmlDecode(cells[6].Groups[1].Value.Trim())
+                Finder = finder,
+                Receiver = receiver,
+                Item = item,
+                Location = location,
+                Game = game,
+                Entrance = entrance,
+                Found = found
             };
 
-            if (hint.Found == "✔")
-            {
-                hint.Found = "OK";
-            }
+            var key = MakeKey(hint);
 
-            var existingKey = getHintStatusList.Where(getHintStatusList => getHintStatusList.Finder == hint.Finder
-            && getHintStatusList.Receiver == hint.Receiver
-            && getHintStatusList.Item == hint.Item
-            && getHintStatusList.Location == hint.Location
-            && getHintStatusList.Game == hint.Game
-            && getHintStatusList.Entrance == hint.Entrance).FirstOrDefault();
-
-            if (existingKey != null)
+            if (existingByKey.TryGetValue(key, out var existing))
             {
-                if (existingKey.Found != hint.Found)
+                if (!string.Equals(existing.Found, found, StringComparison.Ordinal))
                 {
-                    existingKey.Found = "OK";
-                    hintsToUpdate.Add(existingKey);
+                    existing.Found = "OK";
+                    hintsToUpdate.Add(existing);
                 }
             }
             else
@@ -607,14 +681,10 @@ public static class TrackingDataManager
         }
 
         if (hintsToAdd.Count > 0)
-        {
             await HintStatusCommands.AddHintStatusAsync(guild, channel, hintsToAdd);
-        }
 
         if (hintsToUpdate.Count > 0)
-        {
             await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
-        }
     }
 
     private static IEnumerable<string> ChunkMessages(IEnumerable<string> messages, int maxLength = 1900)
@@ -640,44 +710,94 @@ public static class TrackingDataManager
 
     public static async Task<bool> CheckMaxPlayersAsync(string trackerUrl)
     {
-        using var stream = await Declare.HttpClient.GetStreamAsync(trackerUrl);
-        using var reader = new StreamReader(stream);
+        using var resp = await Declare.HttpClient.GetAsync(trackerUrl, HttpCompletionOption.ResponseContentRead);
+        resp.EnsureSuccessStatusCode();
+        var html = await resp.Content.ReadAsStringAsync();
 
-        var html = await reader.ReadToEndAsync();
-        var tableMatch = TableRegex.Match(html);
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
 
-        if (!tableMatch.Success)
+        var table = doc.DocumentNode.SelectSingleNode("//table");
+        if (table is null)
             return true;
 
-        var firstTableHtml = tableMatch.Groups[1].Value;
-        var rowMatches = RowRegex.Matches(firstTableHtml);
+        var headers = table.SelectNodes(".//thead//th")
+                   ?? table.SelectNodes(".//tr[1]/th")
+                   ?? table.SelectNodes(".//tr[1]/td");
+        if (headers is null || headers.Count == 0)
+            return true;
 
-        var parsedRows = new List<Match[]>(rowMatches.Count);
-
-        for (int i = 1; i < rowMatches.Count; i++)
+        int iName = -1;
+        for (int i = 0; i < headers.Count; i++)
         {
-            var cells = CellRegex.Matches(rowMatches[i].Groups[1].Value);
-            if (cells.Count == 7)
+            var t = Normalize(headers[i].InnerText);
+            if (t == "name" || t.Contains("name"))
             {
-                parsedRows.Add(cells.Cast<Match>().ToArray());
+                iName = i;
+                break;
             }
         }
-
-        if (parsedRows.Count == 0)
+        if (iName < 0)
             return true;
 
-        var namesToCheck = new List<string>(parsedRows.Count);
-        foreach (var cells in parsedRows)
+        var rows = table.SelectNodes(".//tbody/tr") ?? table.SelectNodes(".//tr[position()>1]");
+        if (rows is null || rows.Count == 0)
+            return true;
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var tr in rows)
         {
-            var name = WebUtility.HtmlDecode(cells[1].Groups[1].Value.Trim());
-            namesToCheck.Add(name);
+            var tds = tr.SelectNodes("./td");
+            if (tds is null || tds.Count <= iName) continue;
+
+            var name = Clean(tds[iName]);
+            if (!string.IsNullOrWhiteSpace(name))
+                names.Add(name);
         }
-        Console.WriteLine($"Player {namesToCheck.Count}/{Declare.MaxPlayer}");
-        if (namesToCheck.Count > Declare.MaxPlayer)
+
+        var count = names.Count;
+        Console.WriteLine($"Player {count}/{Declare.MaxPlayer}");
+
+        if (count > Declare.MaxPlayer)
         {
             Console.WriteLine(string.Format(Resource.CheckPlayerMinMax, Declare.MaxPlayer));
             return true;
         }
+
         return false;
+    }
+
+    private static string Normalize(string s) =>
+    new string((s ?? "").Trim().ToLowerInvariant()
+        .Where(ch => char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch))
+        .ToArray());
+
+    private static string Clean(HtmlNode? td)
+    {
+        if (td is null) return "";
+        var t = WebUtility.HtmlDecode(td.InnerText)?.Trim();
+        return string.IsNullOrEmpty(t) ? "" : t.Replace('\u00A0', ' ');
+    }
+
+    private static string MakeKey(HintStatus h) =>
+        $"{h.Finder}|{h.Receiver}|{h.Item}|{h.Location}|{h.Game}|{h.Entrance}";
+
+    private static int IndexOfHeader(IList<HtmlNode> headers, string key)
+    {
+        for (int i = 0; i < headers.Count; i++)
+        {
+            var t = Normalize(headers[i].InnerText);
+            if (t == key || t.Contains(key)) return i;
+        }
+        return -1;
+    }
+
+    private static string ExtractHashtag(HtmlNode? td)
+    {
+        if (td is null) return "";
+        var a = td.SelectSingleNode(".//a");
+        var text = a != null ? a.InnerText : td.InnerText;
+        text = WebUtility.HtmlDecode(text)?.Trim() ?? "";
+        return string.IsNullOrEmpty(text) ? "" : text.Replace('\u00A0', ' ');
     }
 }
