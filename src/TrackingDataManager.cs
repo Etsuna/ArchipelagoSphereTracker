@@ -201,7 +201,7 @@ public static class TrackingDataManager
 
     public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string room, bool silent)
     {
-        (var receivedItem, var hints) = await Data(baseUrl, room);
+        var receivedItem = await Data(baseUrl, room);
 
         if (receivedItem == null)
         {
@@ -209,14 +209,14 @@ public static class TrackingDataManager
             return;
         }
 
-        if (hints == null)
+       /* if (hints == null)
         {
             Console.WriteLine("Aucun item publié.");
             return;
-        }
+        }*/
 
        await ProcessItemsTableAsync(guild, channel, receivedItem, silent);
-       await ProcessHintTableAsync(guild, channel, hints, silent);
+       //await ProcessHintTableAsync(guild, channel, hints, silent);
     }
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
@@ -266,6 +266,7 @@ public static class TrackingDataManager
         var channelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
         var existingKeys = new HashSet<string>(await DisplayItemCommands.GetExistingKeysAsync(guild, channel));
         var newItems = new List<DisplayedItem>();
+        var ownItemCount = 0;
 
         foreach (var received in receivedItem)
         {
@@ -273,6 +274,10 @@ public static class TrackingDataManager
             {
                 foreach (var it in player.Items)
                 {
+                    if(it.FromPlayerName == "Player0")
+                    {
+                        continue;
+                    }
 
                     var di = new DisplayedItem
                     {
@@ -282,12 +287,14 @@ public static class TrackingDataManager
                         Location = it.LocationName,
                         Game = it.FromPlayerGame,
                         Flag = it.Flags.ToString(),
-
                     };
 
                     var key = $"{di.Finder}|{di.Receiver}|{di.Item}|{di.Location}|{di.Game}|{di.Flag}";
                     if (!existingKeys.Contains(key))
+                    {
+                        ownItemCount++;
                         newItems.Add(di);
+                    }
                 }
             }
         }
@@ -318,8 +325,8 @@ public static class TrackingDataManager
                     for (int i = 0; i < chunks.Count; i++)
                     {
                         string header = chunks.Count > 1
-                            ? $"**{Resource.ItemFor} {receiver} {mentions} ({group.Count()}) [{i + 1}/{chunks.Count}]:**"
-                            : $"**{Resource.ItemFor} {receiver} {mentions} ({group.Count()}):**";
+                            ? $"**{Resource.ItemFor} {receiver} {mentions} ({group.Count() - ownItemCount}) [{i + 1}/{chunks.Count}]:**"
+                            : $"**{Resource.ItemFor} {receiver} {mentions} ({group.Count() - ownItemCount}):**";
 
                         string finalMessage = header + "\n" + chunks[i];
 
@@ -340,7 +347,7 @@ public static class TrackingDataManager
         }
     }
 
-    private static async Task ProcessHintTableAsync(string guild, string channel, List<TrackerItemsEnricher.EnrichedTeamHints> hintsList, bool silent)
+   /* private static async Task ProcessHintTableAsync(string guild, string channel, List<TrackerItemsEnricher.EnrichedTeamHints> hintsList, bool silent)
     {
         var existingList = await HintStatusCommands.GetHintStatus(guild, channel);
         var existingByKey = existingList.ToDictionary(MakeKey);
@@ -395,7 +402,7 @@ public static class TrackingDataManager
 
         if (hintsToUpdate.Count > 0)
             await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
-    }
+    }*/
 
     private static IEnumerable<string> ChunkMessages(IEnumerable<string> messages, int maxLength = 1900)
     {

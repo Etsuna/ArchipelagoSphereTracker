@@ -1,4 +1,5 @@
 ﻿using Discord;
+using System;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,10 +10,12 @@ public static class GetData
     {
         var room = await RoomInfo(baseUrl, roomId);
 
-        if(room is null) return null;
+        if (room is null) return null;
+
+        (var rootTracker, var rootItem) = await TrackerDatapackageFetcher.getRoots(baseUrl, room.Tracker);
 
         // 1) checksums depuis /api/tracker/<tracker_id>
-        var checksums = await TrackerDatapackageFetcher.GetDatapackageChecksumsAsync(baseUrl, room.Tracker);
+        var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
         IDictionary<string, string> gameToChecksum = checksums; // "GameName" => "checksum"
 
         // 2) fetch tous les datapackages
@@ -77,12 +80,7 @@ public static class GetData
             roomPlayers.Add(new TrackerItemsEnricher.RoomPlayer { Name = p.Name, Game = p.Game });
 
         // 5) Récupérer et enrichir player_items_received
-        var enriched = await TrackerItemsEnricher.FetchAndEnrichAsync(
-            baseUrl,
-            room.Tracker,
-            roomPlayers,
-            perGameIndexesForTracker
-        );
+        var enriched = TrackerItemsEnricher.FetchAndEnrich(rootItem, roomPlayers, perGameIndexesForTracker);
 
         /*// 6) Affichage des items reçus enrichis
         Console.WriteLine("\nPlayer Items Received (enriched):");
@@ -238,11 +236,12 @@ public static class GetData
         }
     }
 
+
+
     // -------- tracker -> checksums --------
     public static class TrackerDatapackageFetcher
     {
-        public static async Task<IDictionary<string, string>> GetDatapackageChecksumsAsync(
-            string baseUrl, string trackerId)
+        public static async Task<(TrackerRoot, TrackerItemsEnricher.TrackerRoot)> getRoots(string baseUrl, string trackerId)
         {
             var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{trackerId}";
             using var http = new HttpClient();
@@ -255,9 +254,17 @@ public static class GetData
                 ReadCommentHandling = JsonCommentHandling.Skip
             };
 
-            var root = JsonSerializer.Deserialize<TrackerRoot>(json, options)
+            var rootTracker = JsonSerializer.Deserialize<TrackerRoot>(json, options)
                        ?? throw new InvalidOperationException("Empty tracker payload");
 
+            var rootItems = JsonSerializer.Deserialize<TrackerItemsEnricher.TrackerRoot>(json, options)
+                       ?? throw new InvalidOperationException("Empty tracker payload");
+
+            return (rootTracker, rootItems);
+        }
+
+        public static IDictionary<string, string> GetDatapackageChecksums(TrackerRoot root)
+        {
             var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             if (root.DataPackage != null)
             {
@@ -579,11 +586,11 @@ public static class GetData
 
             public int FromPlayerId { get; set; }
             public string FromPlayerName { get; set; } = "";
-            public string FromPlayerGame { get; set; } = ""; 
+            public string FromPlayerGame { get; set; } = "";
 
             public int ToPlayerId { get; set; }
             public string ToPlayerName { get; set; } = "";
-            public string ToPlayerGame { get; set; } = "";  
+            public string ToPlayerGame { get; set; } = "";
 
             public int Flags { get; set; }
         }
@@ -606,19 +613,8 @@ public static class GetData
             ReadCommentHandling = JsonCommentHandling.Skip
         };
 
-        public static async Task<List<EnrichedTeamItems>> FetchAndEnrichAsync(
-            string baseUrl,
-            string trackerId,
-            IList<RoomPlayer> roomPlayers,
-            IDictionary<string, DatapackageIndex> perGameIndexes)
+        public static List<EnrichedTeamItems> FetchAndEnrich(TrackerRoot root, IList<RoomPlayer> roomPlayers, IDictionary<string, DatapackageIndex> perGameIndexes)
         {
-            var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{trackerId}";
-            using var http = new HttpClient();
-            var json = await http.GetStringAsync(url);
-
-            var root = JsonSerializer.Deserialize<TrackerRoot>(json, JsonOpts)
-                       ?? throw new InvalidOperationException("Empty tracker payload");
-
             var enrichedTeams = new List<EnrichedTeamItems>();
 
             foreach (var teamBlock in root.PlayerItemsReceived)

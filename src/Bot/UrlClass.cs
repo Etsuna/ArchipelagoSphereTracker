@@ -166,6 +166,7 @@ public class UrlClass
                         /*                        await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
                                                 await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);*/
                         await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
+                        await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
                         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
 
                         Declare.AddedChannelId.Remove(channelId);
