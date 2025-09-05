@@ -10,12 +10,12 @@ public class DisplayedItem
 {
     public string GuildId { get; set; } = string.Empty;
     public string ChannelId { get; set; } = string.Empty;
-    public string Sphere { get; set; } = string.Empty;
     public string Finder { get; set; } = string.Empty;
     public string Receiver { get; set; } = string.Empty;
     public string Item { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
     public string Game { get; set; } = string.Empty;
+    public string Flag { get; set; } = string.Empty;
 }
 
 public class GameStatus
@@ -37,7 +37,7 @@ public class HintStatus
     public string Location { get; set; } = string.Empty;
     public string Game { get; set; } = string.Empty;
     public string Entrance { get; set; } = string.Empty;
-    public string Found { get; set; } = string.Empty;
+    public string Flag { get; set; } = string.Empty;
 }
 
 public class ReceiverUserInfo

@@ -5,34 +5,43 @@ using System.Text.Json;
 public static class ItemsCommands
 {
     public static async Task<bool> IsFillerAsync(
-        string gameName,
-        string itemName
-        )
+    string guildId,
+    string channelId,
+    string gameName,
+    string itemName)
     {
         try
         {
             await using var connection = await Db.OpenReadAsync();
 
             const string query = @"
-                SELECT Category
-                FROM ItemsTable
-                WHERE GameName = @GameName AND ItemName = @ItemName;";
+            SELECT Flag
+            FROM DisplayedItemTable
+            WHERE GuildId  = @GuildId
+              AND ChannelId = @ChannelId
+              AND Game     = @GameName
+              AND Item     = @ItemName
+            LIMIT 1;";
 
             using var command = new SQLiteCommand(query, connection);
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
             command.Parameters.AddWithValue("@GameName", gameName);
             command.Parameters.AddWithValue("@ItemName", itemName);
 
             var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
 
-            if (result is string category)
-                return category.Equals("filler", StringComparison.OrdinalIgnoreCase);
+            if (result != null && int.TryParse(result.ToString(), out var flag))
+            {
+                return flag == 0;
+            }
 
-            Console.WriteLine(string.Format(Resource.IsFillerAsyncNoResultFound, gameName, itemName));
+            Console.WriteLine($"[IsFillerAsync] No row found for Guild={guildId}, Channel={channelId}, Game={gameName}, Item={itemName}");
             return false;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error while checking the category: {ex.Message}");
+            Console.WriteLine($"Error while checking filler: {ex.Message}");
             return false;
         }
     }

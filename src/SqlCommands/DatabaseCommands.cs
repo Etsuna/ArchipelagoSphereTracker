@@ -381,7 +381,6 @@ public static class DatabaseCommands
             var dbPath = Declare.DatabaseFile;
             await Task.Delay(2000);
 
-            // Taille actuelle du -wal
             var walPath = dbPath + "-wal";
             long walSize = 0;
             if (File.Exists(walPath))

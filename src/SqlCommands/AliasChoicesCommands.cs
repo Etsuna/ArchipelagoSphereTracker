@@ -110,4 +110,44 @@ public static class AliasChoicesCommands
 
         return aliases;
     }
+
+    public static async Task<List<(string Alias, string? Game)>> GetAliasGameListAsync(
+    string guildId,
+    string channelId
+)
+    {
+        var items = new List<(string Alias, string? Game)>();
+
+        try
+        {
+            await using var connection = await Db.OpenReadAsync();
+
+            const string query = @"
+            SELECT Alias, Game
+            FROM AliasChoicesTable
+            WHERE GuildId   = @GuildId
+              AND ChannelId = @ChannelId
+            ORDER BY Alias COLLATE NOCASE;";
+
+            using var command = new SQLiteCommand(query, connection);
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var alias = reader.IsDBNull(0) ? null : reader.GetString(0);
+                var game = reader.IsDBNull(1) ? null : reader.GetString(1);
+
+                if (!string.IsNullOrEmpty(alias))
+                    items.Add((alias!, game));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while retrieving alias+game: {ex.Message}");
+        }
+
+        return items;
+    }
 }

@@ -29,9 +29,9 @@ CREATE TABLE IF NOT EXISTS ChannelsAndUrlsTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     GuildId      TEXT NOT NULL,
     ChannelId    TEXT NOT NULL,
-    Room         TEXT,
-    Tracker      TEXT,
-    SphereTracker TEXT,
+    BaseUrl      TEXT NOT NULL,
+    Room         TEXT NOT NULL,
+    Tracker      TEXT NOT NULL,
     Silent       BOOLEAN
 );
 
@@ -92,12 +92,12 @@ CREATE TABLE IF NOT EXISTS DisplayedItemTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     GuildId   TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
-    Sphere    TEXT,
     Finder    TEXT,
     Receiver  TEXT,
     Item      TEXT,
     Location  TEXT,
-    Game      TEXT
+    Game      TEXT,
+    Flag      TEXT
 );
 
 -- ==========================
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS HintStatusTable (
     Location  TEXT,
     Game      TEXT,
     Entrance  TEXT,
-    Found     TEXT
+    Flag     TEXT
 );
 
 -- ==========================
@@ -206,7 +206,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_url_patch
 
 -- Unicité d’un DisplayedItem (pour INSERT OR IGNORE)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
-  ON DisplayedItemTable(GuildId, ChannelId, Sphere, Finder, Receiver, Item, Location, Game);
+  ON DisplayedItemTable(GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag);
 ";
         cmd.ExecuteNonQuery();
 

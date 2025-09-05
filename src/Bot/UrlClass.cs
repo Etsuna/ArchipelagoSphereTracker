@@ -1,6 +1,7 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using Discord;
 using Discord.WebSocket;
+using System;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -8,13 +9,31 @@ public class UrlClass
 {
     public static async Task<string> AddUrl(SocketSlashCommand command, IGuildUser? guildUser, string message, string channelId, string guildId, ITextChannel channel)
     {
-        string baseUrl = "https://archipelago.gg";
-        string? trackerUrl = null;
-        string? sphereTrackerUrl = null;
+        string baseUrl = string.Empty;
+        string? tracker = string.Empty;
+        string? room = string.Empty;
         string port = string.Empty;
         var silent = command.Data.Options.ElementAtOrDefault(3)?.Value as bool? ?? false;
+        var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
+        var uri = new Uri(newUrl);
+
+        baseUrl = $"{uri.Scheme}://{uri.Authority}";
+
+        var segments = uri.AbsolutePath.Trim('/').Split('/');
+        room = segments.Length > 1 ? segments[^1] : "";
 
         bool IsValidUrl(string url) => url.Contains(baseUrl + "/room");
+
+        var roomInfo = await GetData.RoomInfo(baseUrl, room);
+
+        if (roomInfo == null)
+        {
+            message = "Room Not Found";
+            return message;
+        }
+
+        tracker = roomInfo.Tracker != null ? roomInfo.Tracker : tracker;
+        port = !string.IsNullOrEmpty(roomInfo.LastPort.ToString()) ? roomInfo.LastPort.ToString() : port;
 
         async Task<bool> CanAddUrlAsync(string guildId, string channelId)
         {
@@ -22,71 +41,25 @@ public class UrlClass
             return !checkIfChannelExistsAsync;
         }
 
-        async Task<(bool isValid, string pageContent, string message)> IsAllUrlIsValidAsync(string newUrl)
+        async Task<(bool isValid, string message)> IsAllUrlIsValidAsync()
         {
-            if(!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId))
+            if (!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId))
             {
-                return (false, "", Resource.UrlCheckMaxTread);
+                return (false, Resource.UrlCheckMaxTread);
             }
 
-            using HttpClient client = new();
-            string pageContent = await client.GetStringAsync(newUrl);
+            var playersCount = roomInfo.Players.Count;
 
-            var portMatch = Regex.Match(pageContent, @"/connect archipelago\.gg:(\d+)");
-            if (portMatch.Success)
+            if(playersCount > Declare.MaxPlayer)
             {
-                port = portMatch.Groups[1].Value;
-                Console.WriteLine(string.Format(Resource.HelperPort, port));
-            }
-            else
-            {
-                Console.WriteLine(Resource.HelperPortNotFound);
-                return (false, pageContent, Resource.HelperPortNotFound);
+                return (false, string.Format(Resource.CheckPlayerMinMax, Declare.MaxPlayer));
             }
 
-            trackerUrl = ExtractUrl(pageContent, "Multiworld Tracker");
-            sphereTrackerUrl = ExtractUrl(pageContent, "Sphere Tracker");
-
-            if (string.IsNullOrEmpty(trackerUrl) || string.IsNullOrEmpty(sphereTrackerUrl) || string.IsNullOrEmpty(port))
-            {
-                return (false, pageContent, Resource.UrlCanceled);
-            }
-
-            if (!trackerUrl.StartsWith("http"))
-            {
-                trackerUrl = baseUrl + trackerUrl;
-            }
-            if (!sphereTrackerUrl.StartsWith("http"))
-            {
-                sphereTrackerUrl = baseUrl + sphereTrackerUrl;
-            }
-
-            if(await TrackingDataManager.CheckMaxPlayersAsync(trackerUrl))
-            {
-                return (false, pageContent, string.Format(Resource.UrlMaxPlayers, Declare.MaxPlayer));
-            }
-
-            return (true, pageContent, string.Empty);
+            return (true, string.Empty);
         }
-
-        string? ExtractUrl(string htmlContent, string linkText)
-        {
-            var match = Regex.Match(htmlContent, $@"<a[^>]*>.*{linkText}.*</a>", RegexOptions.IgnoreCase);
-            if (match.Success)
-            {
-                var hrefMatch = Regex.Match(match.Value, @"href=""(.*?)""");
-                if (hrefMatch.Success)
-                {
-                    return hrefMatch.Groups[1].Value;
-                }
-            }
-            return null;
-        }
-
 
         if (await CanAddUrlAsync(guildId, channelId))
         {
-            var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
 
             if (string.IsNullOrEmpty(newUrl))
             {
@@ -98,7 +71,7 @@ public class UrlClass
             }
             else
             {
-                var (isValid, pageContent, errorMessage) = await IsAllUrlIsValidAsync(newUrl);
+                var (isValid, errorMessage) = await IsAllUrlIsValidAsync();
 
                 if (!isValid)
                 {
@@ -149,51 +122,49 @@ public class UrlClass
                         }
                     }
 
-                    var rowsMatch = Regex.Matches(pageContent, @"<tr[^>]*>.*?</tr>", RegexOptions.Singleline);
+                    
+
                     var patchLinkList = new List<Patch>();
+                    var aliasList = new List<Dictionary<string, string>>();
+                    var aliasDict = new Dictionary<string, string>();
 
-                    foreach (Match rowMatch in rowsMatch)
+                    foreach (var player in roomInfo.Players)
                     {
-                        var columnsMatch = Regex.Matches(rowMatch.Value, @"<td[^>]*>(.*?)</td>", RegexOptions.Singleline);
-                        if (columnsMatch.Count >= 4)
-                        {
-                            string gameAliasHtml = WebUtility.HtmlDecode(columnsMatch[1].Groups[1].Value.Trim());
-                            var gameAliasMatch = Regex.Match(gameAliasHtml, @">([^<]+)<");
-                            string gameAlias = gameAliasMatch.Success ? gameAliasMatch.Groups[1].Value : gameAliasHtml;
-
-                            string gameName = WebUtility.HtmlDecode(columnsMatch[2].Groups[1].Value.Trim());
-
-                            string downloadLinkHtml = WebUtility.HtmlDecode(columnsMatch[3].Groups[1].Value.Trim());
-                            var downloadLinkMatch = Regex.Match(downloadLinkHtml, @"href=\""(.*?)\""");
-                            string downloadLink = downloadLinkMatch.Success ? downloadLinkMatch.Groups[1].Value.Trim() : "No File";
-
-                            if (string.IsNullOrEmpty(downloadLink) || downloadLink.Equals("No File"))
+                        aliasDict = new Dictionary<string, string>
                             {
-                                continue;
-                            }
-
-                            Console.WriteLine(string.Format(Resource.UrlGamePatch, gameAlias, downloadLink));
-
-                            var patchLink = new Patch
-                            {
-                                GameAlias = gameAlias,
-                                GameName = gameName,
-                                PatchLink = baseUrl + downloadLink
+                                { player.Name, player.Game},
                             };
 
+                        aliasList.Add(aliasDict);
+                    }
+
+                    foreach (var download in roomInfo.Downloads)
+                    {
+                        foreach (var slot in roomInfo.Players)
+                        {
+                            var patchLink = new Patch
+                            {
+                                GameAlias = slot.Name,
+                                GameName = slot.Game,
+                                PatchLink = baseUrl + download.Download,
+                            };
                             patchLinkList.Add(patchLink);
+                            Console.WriteLine(string.Format(Resource.UrlGamePatch, patchLink.GameAlias, patchLink.PatchLink));
+
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(trackerUrl) && !string.IsNullOrEmpty(sphereTrackerUrl))
+
+                    if (!string.IsNullOrEmpty(tracker))
                     {
                         Declare.AddedChannelId.Add(channelId);
 
-                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, newUrl, trackerUrl, sphereTrackerUrl, silent);
+                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent);
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
-                        await TrackingDataManager.SetAliasAndGameStatusAsync(guildId, channelId, trackerUrl, silent);
-                        await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
-                        await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);
+                        await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
+                        await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
+                        /*                        await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
+                                                await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);*/
                         await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
                         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
 
