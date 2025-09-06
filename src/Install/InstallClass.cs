@@ -2,7 +2,6 @@
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Formats.Tar;
-using System.Globalization;
 using System.IO.Compression;
 
 public class InstallClass : Declare

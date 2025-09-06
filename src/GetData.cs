@@ -1,4 +1,4 @@
-﻿using Discord;
+﻿/*using Discord;
 using System;
 using System.Globalization;
 using System.Text.Json;
@@ -82,7 +82,7 @@ public static class GetData
         // 5) Récupérer et enrichir player_items_received
         var enriched = TrackerItemsEnricher.FetchAndEnrich(rootItem, roomPlayers, perGameIndexesForTracker);
 
-        /*// 6) Affichage des items reçus enrichis
+        *//*// 6) Affichage des items reçus enrichis
         Console.WriteLine("\nPlayer Items Received (enriched):");
         foreach (var team in enriched)
         {
@@ -100,7 +100,7 @@ public static class GetData
                                       $"Flags={it.Flags}");
                 }
             }
-        }*/
+        }*//*
 
         return enriched;
     }
@@ -693,3 +693,4 @@ public static class GetData
         }
     }
 }
+*/

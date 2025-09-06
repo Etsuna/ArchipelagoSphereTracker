@@ -1,9 +1,9 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using Discord;
 using Discord.WebSocket;
-using System;
-using System.Net;
-using System.Text.RegularExpressions;
+using System.Text.Json;
+using TrackerLib.Models;
+using TrackerLib.Services;
 
 public class UrlClass
 {
@@ -15,6 +15,13 @@ public class UrlClass
         string port = string.Empty;
         var silent = command.Data.Options.ElementAtOrDefault(3)?.Value as bool? ?? false;
         var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
+
+        if (newUrl == null)
+        {
+            message = "Is Null";
+            return message;
+        }
+
         var uri = new Uri(newUrl);
 
         baseUrl = $"{uri.Scheme}://{uri.Authority}";
@@ -24,7 +31,7 @@ public class UrlClass
 
         bool IsValidUrl(string url) => url.Contains(baseUrl + "/room");
 
-        var roomInfo = await GetData.RoomInfo(baseUrl, room);
+        var roomInfo = await RoomInfo(baseUrl, room);
 
         if (roomInfo == null)
         {
@@ -122,38 +129,37 @@ public class UrlClass
                         }
                     }
 
-                    
-
                     var patchLinkList = new List<Patch>();
-                    var aliasList = new List<Dictionary<string, string>>();
-                    var aliasDict = new Dictionary<string, string>();
+                    var aliasList = new List<(int slot, string alias, string game)>();
+                    var aliasSlot = 1;
 
                     foreach (var player in roomInfo.Players)
                     {
-                        aliasDict = new Dictionary<string, string>
-                            {
-                                { player.Name, player.Game},
-                            };
-
-                        aliasList.Add(aliasDict);
+                        var aliasInfo = (aliasSlot, player.Name, player.Game);
+                        aliasList.Add(aliasInfo);
+                        aliasSlot++;
                     }
 
                     foreach (var download in roomInfo.Downloads)
                     {
-                        foreach (var slot in roomInfo.Players)
+                        aliasList.Where(x => x.slot == download.Slot).ToList().ForEach(slot =>
                         {
                             var patchLink = new Patch
                             {
-                                GameAlias = slot.Name,
-                                GameName = slot.Game,
+                                GameAlias = slot.alias,
+                                GameName = slot.game,
                                 PatchLink = baseUrl + download.Download,
                             };
                             patchLinkList.Add(patchLink);
                             Console.WriteLine(string.Format(Resource.UrlGamePatch, patchLink.GameAlias, patchLink.PatchLink));
-
-                        }
+                        });
                     }
 
+                    var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker);
+                    var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
+
+                    // 2) Seed (une seule fois typiquement) : importe chaque datapackage et mappe Game->Dataset
+                    await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
 
                     if (!string.IsNullOrEmpty(tracker))
                     {
@@ -209,5 +215,28 @@ public class UrlClass
         await BotCommands.RegisterCommandsAsync();
         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
         return message;
+    }
+
+    public static async Task<RoomStatus?> RoomInfo(string baseUrl, string roomId)
+    {
+        var url = $"{baseUrl.TrimEnd('/')}/api/room_status/{roomId}";
+        using var http = new HttpClient();
+        var json = await http.GetStringAsync(url);
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip
+        };
+
+        var room = JsonSerializer.Deserialize<RoomStatus>(json, options);
+
+        if (room is null)
+        {
+            Console.WriteLine("Failed to fetch or parse room status.");
+            return null;
+        }
+
+        return room;
     }
 }

@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS AliasChoicesTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     GuildId   TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
+    Slot      INTEGER NOT NULL,
     Alias     TEXT NOT NULL,
     Game      TEXT
 );
@@ -138,14 +139,13 @@ CREATE TABLE IF NOT EXISTS HintStatusTable (
 CREATE TABLE IF NOT EXISTS ApWorldListTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     Title TEXT NOT NULL
-    -- (Item) retiré: non utilisé par ton code de lecture
 );
 
 CREATE TABLE IF NOT EXISTS ApWorldItemTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     ApWorldListTableId INTEGER,
     Text TEXT NOT NULL,
-    Link TEXT, -- nullable: ton code le permet
+    Link TEXT,
     FOREIGN KEY (ApWorldListTableId) REFERENCES ApWorldListTable(Id) ON DELETE CASCADE
 );
 
@@ -162,6 +162,73 @@ CREATE TABLE IF NOT EXISTS ProgramIdTable (
 CREATE TABLE IF NOT EXISTS TelemetryTable (
     Date TEXT PRIMARY KEY
 );
+
+-- =====================================================================
+-- 🧩 Datapackage store (Items/Locations + groupes)
+-- =====================================================================
+
+CREATE TABLE IF NOT EXISTS DatapackageItems(
+    GuildId    TEXT NOT NULL,
+    ChannelId  TEXT NOT NULL,
+    DatasetKey TEXT NOT NULL,
+    Id         INTEGER NOT NULL,
+    Name       TEXT NOT NULL,
+    PRIMARY KEY (GuildId, ChannelId, DatasetKey, Id),
+    UNIQUE (GuildId, ChannelId, DatasetKey, Name)
+);
+CREATE INDEX IF NOT EXISTS IX_DatapackageItems_GCD_Name 
+    ON DatapackageItems(GuildId, ChannelId, DatasetKey, Name);
+
+CREATE TABLE IF NOT EXISTS DatapackageItemGroups(
+    GuildId    TEXT NOT NULL,
+    ChannelId  TEXT NOT NULL,
+    DatasetKey TEXT NOT NULL,
+    GroupName  TEXT NOT NULL,
+    ItemId     INTEGER NOT NULL,
+    PRIMARY KEY (GuildId, ChannelId, DatasetKey, GroupName, ItemId),
+    FOREIGN KEY (GuildId, ChannelId, DatasetKey, ItemId)
+        REFERENCES DatapackageItems(GuildId, ChannelId, DatasetKey, Id)
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+CREATE TABLE IF NOT EXISTS DatapackageLocations(
+    GuildId    TEXT NOT NULL,
+    ChannelId  TEXT NOT NULL,
+    DatasetKey TEXT NOT NULL,
+    Id         INTEGER NOT NULL,
+    Name       TEXT NOT NULL,
+    PRIMARY KEY (GuildId, ChannelId, DatasetKey, Id),
+    UNIQUE (GuildId, ChannelId, DatasetKey, Name)
+);
+CREATE INDEX IF NOT EXISTS IX_DatapackageLocations_GCD_Name 
+    ON DatapackageLocations(GuildId, ChannelId, DatasetKey, Name);
+
+CREATE TABLE IF NOT EXISTS DatapackageLocationGroups(
+    GuildId    TEXT NOT NULL,
+    ChannelId  TEXT NOT NULL,
+    DatasetKey TEXT NOT NULL,
+    GroupName  TEXT NOT NULL,
+    LocationId INTEGER NOT NULL,
+    PRIMARY KEY (GuildId, ChannelId, DatasetKey, GroupName, LocationId),
+    FOREIGN KEY (GuildId, ChannelId, DatasetKey, LocationId)
+        REFERENCES DatapackageLocations(GuildId, ChannelId, DatasetKey, Id)
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+-- Associer un jeu (par salon) au datapackage (checksum/datasetKey)
+CREATE TABLE IF NOT EXISTS DatapackageGameMap(
+    GuildId    TEXT NOT NULL,
+    ChannelId  TEXT NOT NULL,
+    GameName   TEXT NOT NULL,
+    DatasetKey TEXT NOT NULL,
+    ImportedAt TEXT NOT NULL,
+    PRIMARY KEY (GuildId, ChannelId, GameName)
+);
+
+CREATE INDEX IF NOT EXISTS IX_DatapackageGameMap_GC_Game
+  ON DatapackageGameMap(GuildId, ChannelId, GameName);
 
 -- ==========================
 -- Index & contraintes

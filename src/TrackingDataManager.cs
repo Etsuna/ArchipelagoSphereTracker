@@ -1,23 +1,12 @@
-﻿using Archipelago.MultiClient.Net;
-using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Models;
-using Archipelago.MultiClient.Net.Packets;
-using ArchipelagoSphereTracker.src.Resources;
+﻿using ArchipelagoSphereTracker.src.Resources;
 using Discord;
 using Discord.WebSocket;
-using HtmlAgilityPack;
 using Sprache;
-using System;
 using System.Collections.Concurrent;
 using System.Globalization;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Numerics;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Channels;
-using static GetData;
-using static System.Net.Mime.MediaTypeNames;
+using TrackerLib.Services;
+using static System.Net.WebRequestMethods;
 
 
 public static class TrackingDataManager
@@ -28,16 +17,6 @@ public static class TrackingDataManager
     }
 
     private static readonly ConcurrentDictionary<string, byte> InFlight = new();
-
-    public record NetworkHintDto(
-        int finding_player,
-        int receiving_player,
-        long item,
-        int item_flags,
-        long location,
-        bool found,
-        string? entrance
-    );
 
     public static void StartTracking()
     {
@@ -179,7 +158,7 @@ public static class TrackingDataManager
                                         }
                                     }
                                     Console.WriteLine(string.Format(Resource.TDMCheckingItems, channelCheck.Name));
-                                    await GetTableDataAsync(guild, channel, baseUrl, room, silent);
+                                    await GetTableDataAsync(guild, channel, baseUrl, tracker, silent);
                                 }
                                 finally
                                 {
@@ -199,24 +178,29 @@ public static class TrackingDataManager
         }, token);
     }
 
-    public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string room, bool silent)
-    {
-        var receivedItem = await Data(baseUrl, room);
+    private static readonly HttpClient _http = new HttpClient(); // renommé
 
-        if (receivedItem == null)
+    public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent)
+    {
+        // A) Contexte préchargé (1 hit BDD)
+        var ctx = await ProcessingContextLoader.LoadAsync(guild, channel, silent).ConfigureAwait(false);
+
+        var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
+        var json = await _http.GetStringAsync(url).ConfigureAwait(false); // utilise _http
+
+        // C) Enrichissements pure RAM
+        var receivedItems = TrackerItemsEnricherFast.Enrich(ctx, json);
+        var hints = TrackerHintsEnricherFast.Enrich(ctx, json);
+
+        if (receivedItems.Count == 0 && hints.Count == 0)
         {
-            Console.WriteLine("Aucun item publié.");
+            Console.WriteLine("Aucun item/hint publié.");
             return;
         }
 
-       /* if (hints == null)
-        {
-            Console.WriteLine("Aucun item publié.");
-            return;
-        }*/
-
-       await ProcessItemsTableAsync(guild, channel, receivedItem, silent);
-       //await ProcessHintTableAsync(guild, channel, hints, silent);
+        // D) On appelle TES méthodes existantes (aucun changement de signature)
+        await ProcessItemsTableAsync(guild, channel, receivedItems, silent);
+        await ProcessHintTableAsync(guild, channel, hints, silent);
     }
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
@@ -261,41 +245,20 @@ public static class TrackingDataManager
         return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
     }
 
-    private static async Task ProcessItemsTableAsync(string guild, string channel, List<TrackerItemsEnricher.EnrichedTeamItems> receivedItem, bool silent)
+    private static async Task ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent)
     {
         var channelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
         var existingKeys = new HashSet<string>(await DisplayItemCommands.GetExistingKeysAsync(guild, channel));
         var newItems = new List<DisplayedItem>();
         var ownItemCount = 0;
 
-        foreach (var received in receivedItem)
+        foreach (var di in receivedItem)
         {
-            foreach (var player in received.Players)
+            var key = $"{di.Finder}|{di.Receiver}|{di.Item}|{di.Location}|{di.Game}|{di.Flag}";
+            if (!existingKeys.Contains(key))
             {
-                foreach (var it in player.Items)
-                {
-                    if(it.FromPlayerName == "Player0")
-                    {
-                        continue;
-                    }
-
-                    var di = new DisplayedItem
-                    {
-                        Finder = it.FromPlayerName,
-                        Receiver = it.ToPlayerName,
-                        Item = it.ItemName,
-                        Location = it.LocationName,
-                        Game = it.FromPlayerGame,
-                        Flag = it.Flags.ToString(),
-                    };
-
-                    var key = $"{di.Finder}|{di.Receiver}|{di.Item}|{di.Location}|{di.Game}|{di.Flag}";
-                    if (!existingKeys.Contains(key))
-                    {
-                        ownItemCount++;
-                        newItems.Add(di);
-                    }
-                }
+                ownItemCount++;
+                newItems.Add(di);
             }
         }
 
@@ -347,7 +310,7 @@ public static class TrackingDataManager
         }
     }
 
-   /* private static async Task ProcessHintTableAsync(string guild, string channel, List<TrackerItemsEnricher.EnrichedTeamHints> hintsList, bool silent)
+    private static async Task ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent)
     {
         var existingList = await HintStatusCommands.GetHintStatus(guild, channel);
         var existingByKey = existingList.ToDictionary(MakeKey);
@@ -363,37 +326,20 @@ public static class TrackingDataManager
         }
 
         Console.WriteLine($"\n=== {hintsList.Count} hint(s) publié(s) ===");
-        foreach (var players in hintsList)
+        foreach (var hint in hintsList)
         {
-            foreach(var hints in players.Players)
+            var key = MakeKey(hint);
+            if (existingByKey.TryGetValue(key, out var existing))
             {
-                foreach(var h in hints.Hints)
+                if (!string.Equals(existing.Flag, hint.Flag.ToString(), StringComparison.Ordinal))
                 {
-                    var hint = new HintStatus
-                    {
-                        Finder = h.FinderName,
-                        Receiver = h.ReceiverName,
-                        Item = h.ItemName,
-                        Location = h.LocationName,
-                        Game = h.FinderGame,
-                        Entrance = h.Raw5 ?? string.Empty,
-                        Flag = h.Found.ToString()
-                    };
-
-                    var key = MakeKey(hint);
-                    if (existingByKey.TryGetValue(key, out var existing))
-                    {
-                        if (!string.Equals(existing.Flag, h.Found.ToString(), StringComparison.Ordinal))
-                        {
-                            existing.Flag = h.Found.ToString();
-                            hintsToUpdate.Add(existing);
-                        }
-                    }
-                    else
-                    {
-                        hintsToAdd.Add(hint);
-                    }
+                    existing.Flag = hint.Flag.ToString();
+                    hintsToUpdate.Add(existing);
                 }
+            }
+            else
+            {
+                hintsToAdd.Add(hint);
             }
         }
 
@@ -402,7 +348,7 @@ public static class TrackingDataManager
 
         if (hintsToUpdate.Count > 0)
             await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
-    }*/
+    }
 
     private static IEnumerable<string> ChunkMessages(IEnumerable<string> messages, int maxLength = 1900)
     {
@@ -430,12 +376,6 @@ public static class TrackingDataManager
         .Where(ch => char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch))
         .ToArray());
 
-    private static string Clean(HtmlNode? td)
-    {
-        if (td is null) return "";
-        var t = WebUtility.HtmlDecode(td.InnerText)?.Trim();
-        return string.IsNullOrEmpty(t) ? "" : t.Replace('\u00A0', ' ');
-    }
 
     private static string MakeKey(HintStatus h) =>
         $"{h.Finder}|{h.Receiver}|{h.Item}|{h.Location}|{h.Game}|{h.Flag}";
