@@ -6,8 +6,6 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text;
 using TrackerLib.Services;
-using static System.Net.WebRequestMethods;
-
 
 public static class TrackingDataManager
 {
@@ -369,12 +367,6 @@ public static class TrackingDataManager
         if (sb.Length > 0)
             yield return sb.ToString();
     }
-
-    private static string Normalize(string s) =>
-    new string((s ?? "").Trim().ToLowerInvariant()
-        .Where(ch => char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch))
-        .ToArray());
-
 
     private static string MakeKey(HintStatus h) =>
         $"{h.Finder}|{h.Receiver}|{h.Item}|{h.Location}|{h.Game}|{h.Flag}";

@@ -28,22 +28,6 @@ public static class ReceiverAliasesCommands
         return receivers;
     }
 
-    public static async Task<bool> CheckIfReceiverExists(string guildId, string channelId, string receiver)
-    {
-        await using var connection = await Db.OpenReadAsync();
-        using var command = new SQLiteCommand(@"
-            SELECT COUNT(*)
-            FROM ReceiverAliasesTable
-            WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Receiver = @Receiver;", connection);
-        command.Parameters.AddWithValue("@GuildId", guildId);
-        command.Parameters.AddWithValue("@ChannelId", channelId);
-        command.Parameters.AddWithValue("@Receiver", receiver);
-
-        var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
-        var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0L;
-        return count > 0;
-    }
-
     public static async Task<List<string>> GetUserIds(string guildId, string channelId)
     {
         var receivers = new List<string>();
