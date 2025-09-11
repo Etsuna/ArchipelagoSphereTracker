@@ -182,25 +182,26 @@ public static class TrackingDataManager
 
     public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent)
     {
-        // A) Contexte préchargé (1 hit BDD)
-        var ctx = await ProcessingContextLoader.LoadAsync(guild, channel, silent).ConfigureAwait(false);
+        // A) Contexte “one-shot” (1 open, 3 requêtes)
+        var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
 
+        // B) Fetch tracker JSON (HttpClient réutilisé)
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
-        var json = await _http.GetStringAsync(url).ConfigureAwait(false); // utilise _http
+        var json = await _http.GetStringAsync(url).ConfigureAwait(false);
 
-        // C) Enrichissements pure RAM
-        var receivedItems = TrackerItemsEnricherFast.Enrich(ctx, json);
-        var hints = TrackerHintsEnricherFast.Enrich(ctx, json);
+        // C) Parsing + enrichissement 100% mémoire (streaming)
+        var items = TrackerStreamParser.ParseItems(ctx, json);
+        var hints = TrackerStreamParser.ParseHints(ctx, json);
 
-        if (receivedItems.Count == 0 && hints.Count == 0)
+        if (items.Count == 0 && hints.Count == 0)
         {
             Console.WriteLine("Aucun item/hint publié.");
             return;
         }
 
-        // D) On appelle TES méthodes existantes (aucun changement de signature)
-        await ProcessItemsTableAsync(guild, channel, receivedItems, silent);
-        await ProcessHintTableAsync(guild, channel, hints, silent);
+        // D) Tes méthodes existantes (si possible, entoure leur contenu d'une transaction)
+        await ProcessItemsTableAsync(guild, channel, items, silent).ConfigureAwait(false);
+        await ProcessHintTableAsync(guild, channel, hints, silent).ConfigureAwait(false);
     }
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
@@ -210,6 +211,12 @@ public static class TrackingDataManager
             if (item.Finder == item.Receiver)
                 return string.Empty;
         }
+
+        if (item.Location == "-1" || item.Item == "-1")
+        {
+            return string.Empty;
+        }
+
         var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, item.Receiver);
         if (userIds.Count > 0)
         {
@@ -250,14 +257,12 @@ public static class TrackingDataManager
         var channelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
         var existingKeys = new HashSet<string>(await DisplayItemCommands.GetExistingKeysAsync(guild, channel));
         var newItems = new List<DisplayedItem>();
-        var ownItemCount = 0;
 
         foreach (var di in receivedItem)
         {
             var key = $"{di.Finder}|{di.Receiver}|{di.Item}|{di.Location}|{di.Game}|{di.Flag}";
             if (!existingKeys.Contains(key))
             {
-                ownItemCount++;
                 newItems.Add(di);
             }
         }
@@ -288,8 +293,8 @@ public static class TrackingDataManager
                     for (int i = 0; i < chunks.Count; i++)
                     {
                         string header = chunks.Count > 1
-                            ? $"**{Resource.ItemFor} {receiver} {mentions} ({group.Count() - ownItemCount}) [{i + 1}/{chunks.Count}]:**"
-                            : $"**{Resource.ItemFor} {receiver} {mentions} ({group.Count() - ownItemCount}):**";
+                            ? $"**{Resource.ItemFor} {receiver} {mentions} ({withHeader.Count}) [{i + 1}/{chunks.Count}]:**"
+                            : $"**{Resource.ItemFor} {receiver} {mentions} ({withHeader.Count}):**";
 
                         string finalMessage = header + "\n" + chunks[i];
 
