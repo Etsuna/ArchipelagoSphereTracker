@@ -62,7 +62,12 @@ namespace TrackerLib.Services
             name = "";
             if (string.IsNullOrWhiteSpace(game)) return false;
             if (!_gameToDataset.TryGetValue(game, out var ds) || string.IsNullOrWhiteSpace(ds)) return false;
-            return _itemsByDataset.TryGetValue(ds, out var dict) && dict.TryGetValue(itemId, out name);
+            if (_itemsByDataset.TryGetValue(ds, out var dict) && dict is not null && dict.TryGetValue(itemId, out var foundName))
+            {
+                name = foundName ?? "";
+                return true;
+            }
+            return false;
         }
 
         public bool TryGetLocationName(string game, long locationId, out string name)
@@ -70,7 +75,12 @@ namespace TrackerLib.Services
             name = "";
             if (string.IsNullOrWhiteSpace(game)) return false;
             if (!_gameToDataset.TryGetValue(game, out var ds) || string.IsNullOrWhiteSpace(ds)) return false;
-            return _locationsByDataset.TryGetValue(ds, out var dict) && dict.TryGetValue(locationId, out name);
+            if (_locationsByDataset.TryGetValue(ds, out var dict) && dict is not null && dict.TryGetValue(locationId, out var foundName))
+            {
+                name = foundName ?? "";
+                return true;
+            }
+            return false;
         }
     }
 

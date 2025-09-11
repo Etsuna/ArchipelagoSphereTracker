@@ -25,10 +25,6 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
-
-	<ItemGroup>
-		<EmbeddedResource Include="apworld/scan_items.apworld" />
-	</ItemGroup>
 	
 	<ItemGroup>
 		<EmbeddedResource Include="apworld/generate_templates.apworld" />
