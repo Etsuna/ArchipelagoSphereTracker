@@ -181,7 +181,7 @@
     <value>Alias mis à jour !</value>
   </data>
   <data name="TDPMEssageItemsNoMention" xml:space="preserve">
-    <value>{0} a envoyé {1} à {2} ({3})</value>
+    <value>**{0}** a envoyé **{1}** à **{2}** ({3})</value>
   </data>
   <data name="AliasEmpty" xml:space="preserve">
     <value>L’alias ne peut pas être vide.</value>

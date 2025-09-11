@@ -13,9 +13,9 @@ public static class ChannelsAndUrlsCommands
     public static async Task AddOrEditUrlChannelAsync(
         string guildId,
         string channelId,
-        string newUrl,
-        string? trackerUrl,
-        string? sphereTrackerUrl,
+        string baseUrl,
+        string room,
+        string? tracker,
         bool silent
         )
     {
@@ -26,15 +26,15 @@ public static class ChannelsAndUrlsCommands
                 using var command = conn.CreateCommand();
                 command.CommandText = @"
                     INSERT OR REPLACE INTO ChannelsAndUrlsTable
-                        (GuildId, ChannelId, Room, Tracker, SphereTracker, Silent)
+                        (GuildId, ChannelId, BaseUrl, Room, Tracker, Silent)
                     VALUES
-                        (@GuildId, @ChannelId, @Room, @Tracker, @SphereTracker, @Silent);";
+                        (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @Silent);";
 
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
-                command.Parameters.AddWithValue("@Room", newUrl);
-                command.Parameters.AddWithValue("@Tracker", trackerUrl ?? DefaultTrackerValue);
-                command.Parameters.AddWithValue("@SphereTracker", sphereTrackerUrl ?? DefaultTrackerValue);
+                command.Parameters.AddWithValue("@BaseUrl", new Uri(baseUrl).GetLeftPart(UriPartial.Authority));
+                command.Parameters.AddWithValue("@Room", room);
+                command.Parameters.AddWithValue("@Tracker", tracker ?? DefaultTrackerValue);
                 command.Parameters.AddWithValue("@Silent", silent);
 
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -103,7 +103,7 @@ public static class ChannelsAndUrlsCommands
     // ==========================
     // 🎯 GET URL AND TRACKER (READ)
     // ==========================
-    public static async Task<(string trackerUrl, string sphereTrackerUrl, string roomUrl, bool Silent)>
+    public static async Task<(string tracker, string baseUrl, string room, bool Silent)>
         GetTrackerUrlsAsync(string guildId, string channelId)
     {
         try
@@ -111,7 +111,7 @@ public static class ChannelsAndUrlsCommands
             await using var connection = await Db.OpenReadAsync();
 
             using var command = new SQLiteCommand(@"
-                SELECT Tracker, SphereTracker, Room, Silent
+                SELECT Tracker, BaseUrl, Room, Silent
                 FROM ChannelsAndUrlsTable
                 WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
 
@@ -123,7 +123,7 @@ public static class ChannelsAndUrlsCommands
             {
                 return (
                     reader["Tracker"]?.ToString() ?? string.Empty,
-                    reader["SphereTracker"]?.ToString() ?? string.Empty,
+                    reader["BaseUrl"]?.ToString() ?? string.Empty,
                     reader["Room"]?.ToString() ?? string.Empty,
                     reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"])
                 );

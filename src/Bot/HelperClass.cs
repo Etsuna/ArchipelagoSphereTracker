@@ -62,6 +62,33 @@ public class HelperClass
         return message;
     }
 
+    public static async Task<string> GetPort(string channelId, string guildId)
+    {
+        (var urlTracker, var urlSphereTracker, var room, var silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
+        string? port = null;
+
+        if (!string.IsNullOrEmpty(room))
+        {
+            using HttpClient client = new();
+            string pageContent = await client.GetStringAsync(room);
+
+            var match = Regex.Match(pageContent, @"/connect archipelago\.gg:(\d+)", RegexOptions.Singleline);
+            if (match.Success)
+            {
+                port = match.Groups[1].Value;
+            }
+            else
+            {
+                port = string.Empty;
+            }
+        }
+        else
+        {
+            port = string.Empty;
+        }
+        return port;
+    }
+
     public static async Task<string> StatusGameList(string message, string channelId, string guildId)
     {
         var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");

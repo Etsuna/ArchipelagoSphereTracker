@@ -202,7 +202,7 @@
     <comment>Aliases Updated!</comment>
   </data>
   <data name="TDPMEssageItemsNoMention" xml:space="preserve">
-    <value>{0} sent {1} to {2} ({3})</value>
+    <value>**{0}** sent **{1}** to **{2}** ({3})</value>
     <comment>{item.Finder} sent {item.Item} to {item.Receiver} ({item.Location}</comment>
   </data>
   <data name="AliasEmpty" xml:space="preserve">

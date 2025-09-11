@@ -16,7 +16,7 @@ public static class HintStatusCommands
             using var command = conn.CreateCommand();
             command.CommandText = @"
                 UPDATE HintStatusTable
-                SET Found = @Found
+                SET Flag = @Flag
                 WHERE GuildId = @GuildId
                   AND ChannelId = @ChannelId
                   AND Finder = @Finder
@@ -34,7 +34,7 @@ public static class HintStatusCommands
             var pLocation = command.Parameters.Add("@Location", System.Data.DbType.String);
             var pGame = command.Parameters.Add("@Game", System.Data.DbType.String);
             var pEntrance = command.Parameters.Add("@Entrance", System.Data.DbType.String);
-            var pFound = command.Parameters.Add("@Found", System.Data.DbType.String);
+            var pFlag = command.Parameters.Add("@Flag", System.Data.DbType.String);
 
             command.Prepare();
 
@@ -46,7 +46,7 @@ public static class HintStatusCommands
                 pLocation.Value = s.Location ?? (object)DBNull.Value;
                 pGame.Value = s.Game ?? (object)DBNull.Value;
                 pEntrance.Value = s.Entrance ?? (object)DBNull.Value;
-                pFound.Value = s.Found ?? (object)DBNull.Value;
+                pFlag.Value = s.Flag ?? (object)DBNull.Value;
 
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
@@ -63,7 +63,7 @@ public static class HintStatusCommands
 
         await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
-            SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
+            SELECT Finder, Receiver, Item, Location, Game, Entrance, Flag
             FROM HintStatusTable
             WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Receiver = @Receiver;", connection);
 
@@ -82,7 +82,7 @@ public static class HintStatusCommands
                 Location = reader["Location"]?.ToString() ?? string.Empty,
                 Game = reader["Game"]?.ToString() ?? string.Empty,
                 Entrance = reader["Entrance"]?.ToString() ?? string.Empty,
-                Found = reader["Found"]?.ToString() ?? string.Empty
+                Flag = reader["Flag"]?.ToString() ?? string.Empty
             });
         }
 
@@ -99,7 +99,7 @@ public static class HintStatusCommands
 
         await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
-            SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
+            SELECT Finder, Receiver, Item, Location, Game, Entrance, Flag
             FROM HintStatusTable
             WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Finder = @Finder;", connection);
 
@@ -118,7 +118,7 @@ public static class HintStatusCommands
                 Location = reader["Location"]?.ToString() ?? string.Empty,
                 Game = reader["Game"]?.ToString() ?? string.Empty,
                 Entrance = reader["Entrance"]?.ToString() ?? string.Empty,
-                Found = reader["Found"]?.ToString() ?? string.Empty
+                Flag = reader["Flag"]?.ToString() ?? string.Empty
             });
         }
 
@@ -134,7 +134,7 @@ public static class HintStatusCommands
 
         await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
-            SELECT Finder, Receiver, Item, Location, Game, Entrance, Found
+            SELECT Finder, Receiver, Item, Location, Game, Entrance, Flag
             FROM HintStatusTable
             WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
 
@@ -152,7 +152,7 @@ public static class HintStatusCommands
                 Location = reader["Location"]?.ToString() ?? string.Empty,
                 Game = reader["Game"]?.ToString() ?? string.Empty,
                 Entrance = reader["Entrance"]?.ToString() ?? string.Empty,
-                Found = reader["Found"]?.ToString() ?? string.Empty
+                Flag = reader["Flag"]?.ToString() ?? string.Empty
             });
         }
 
@@ -174,9 +174,9 @@ public static class HintStatusCommands
                 using var command = conn.CreateCommand();
                 command.CommandText = @"
                     INSERT OR REPLACE INTO HintStatusTable
-                        (GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Entrance, Found)
+                        (GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Entrance, Flag)
                     VALUES
-                        (@GuildId, @ChannelId, @Finder, @Receiver, @Item, @Location, @Game, @Entrance, @Found);";
+                        (@GuildId, @ChannelId, @Finder, @Receiver, @Item, @Location, @Game, @Entrance, @Flag);";
 
                 var pGuild = command.Parameters.Add("@GuildId", System.Data.DbType.String);
                 var pChannel = command.Parameters.Add("@ChannelId", System.Data.DbType.String);
@@ -186,7 +186,7 @@ public static class HintStatusCommands
                 var pLocation = command.Parameters.Add("@Location", System.Data.DbType.String);
                 var pGame = command.Parameters.Add("@Game", System.Data.DbType.String);
                 var pEntrance = command.Parameters.Add("@Entrance", System.Data.DbType.String);
-                var pFound = command.Parameters.Add("@Found", System.Data.DbType.String);
+                var pFlag = command.Parameters.Add("@Flag", System.Data.DbType.String);
 
                 command.Prepare();
 
@@ -200,7 +200,7 @@ public static class HintStatusCommands
                     pLocation.Value = (object?)s.Location ?? DBNull.Value;
                     pGame.Value = (object?)s.Game ?? DBNull.Value;
                     pEntrance.Value = (object?)s.Entrance ?? DBNull.Value;
-                    pFound.Value = (object?)s.Found ?? DBNull.Value;
+                    pFlag.Value = (object?)s.Flag ?? DBNull.Value;
 
                     await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }

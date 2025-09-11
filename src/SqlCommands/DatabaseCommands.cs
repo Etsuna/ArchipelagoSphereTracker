@@ -374,23 +374,30 @@ public static class DatabaseCommands
     // ==========================
     // 🎯 RECLAIM SPACE (VACUUM) — sérialisé, hors transaction
     // ==========================
-    public static async Task ReclaimSpaceAsync()
+    public static async Task ReclaimSpaceAsync( long walTruncateThresholdBytes = 128L * 1024 * 1024)
     {
         try
         {
-            await Task.Delay(3000);
+            var dbPath = Declare.DatabaseFile;
+            await Task.Delay(2000);
+
+            var walPath = dbPath + "-wal";
+            long walSize = 0;
+            if (File.Exists(walPath))
+                walSize = new FileInfo(walPath).Length;
 
             await Db.WriteGate.WaitAsync();
             try
             {
                 await using var connection = await Db.OpenWriteAsync();
-                using (var chk = new SQLiteCommand("PRAGMA wal_checkpoint(TRUNCATE);", connection))
+
+                using (var cmd = new SQLiteCommand("PRAGMA wal_autocheckpoint=2000;", connection))
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                var checkpointMode = walSize > walTruncateThresholdBytes ? "TRUNCATE" : "PASSIVE";
+                using (var chk = new SQLiteCommand($"PRAGMA wal_checkpoint({checkpointMode});", connection))
                     await chk.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-                using (var vacuum = new SQLiteCommand("VACUUM;", connection))
-                    await vacuum.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-                Console.WriteLine("Checkpoint + VACUUM Done.");
+                Console.WriteLine($"Checkpoint {checkpointMode} (wal={walSize / 1024 / 1024} MB) done.");
             }
             finally
             {
