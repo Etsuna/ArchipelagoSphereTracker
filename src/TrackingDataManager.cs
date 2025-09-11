@@ -318,11 +318,9 @@ public static class TrackingDataManager
 
         if (hintsList == null || hintsList.Count == 0)
         {
-            Console.WriteLine("Aucun hint publié.");
             return;
         }
 
-        Console.WriteLine($"\n=== {hintsList.Count} hint(s) publié(s) ===");
         foreach (var hint in hintsList)
         {
             var key = MakeKey(hint);
