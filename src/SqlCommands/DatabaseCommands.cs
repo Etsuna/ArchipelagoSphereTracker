@@ -287,6 +287,46 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"
+                    DELETE FROM DatapackageGameMap
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"
+                    DELETE FROM DatapackageItemGroups
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"
+                    DELETE FROM DatapackageItems
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"
+                    DELETE FROM DatapackageLocationGroups
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"
+                    DELETE FROM DatapackageLocations
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });
 
             Console.WriteLine(Resource.DeleteChannelDataAsyncDeleteSuccessful);
@@ -359,6 +399,31 @@ public static class DatabaseCommands
 
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM HintStatusTable WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM DatapackageGameMap WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM DatapackageItemGroups WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM DatapackageItems WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM DatapackageLocationGroups WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM DatapackageLocations WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });

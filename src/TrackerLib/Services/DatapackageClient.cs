@@ -102,36 +102,5 @@ namespace TrackerLib.Services
                 if (ownClient) http?.Dispose();
             }
         }
-
-        public static async Task<Dictionary<string, DatapackageIndex>> FetchManyAsync(
-            string baseUrl,
-            IEnumerable<string> checksums,
-            int maxConcurrency = 6,
-            CancellationToken ct = default)
-        {
-            var result = new Dictionary<string, DatapackageIndex>(StringComparer.OrdinalIgnoreCase);
-            using var http = new HttpClient();
-            using var sem = new SemaphoreSlim(maxConcurrency);
-
-            var tasks = new List<Task>();
-            foreach (var sum in checksums)
-            {
-                await sem.WaitAsync(ct);
-                tasks.Add(Task.Run(async () =>
-                {
-                    try
-                    {
-                        var idx = await FetchOneAsync(baseUrl, sum, http, ct);
-                        lock (result) result[sum] = idx;
-                    }
-                    finally
-                    {
-                        sem.Release();
-                    }
-                }, ct));
-            }
-            await Task.WhenAll(tasks);
-            return result;
-        }
     }
 }

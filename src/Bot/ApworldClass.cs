@@ -31,7 +31,6 @@ public class ApworldClass : Declare
             await response.Content.CopyToAsync(fs);
         }
         CustomApworldClass.GenerateYamls();
-        CustomApworldClass.GenerateItems();
         message = string.Format(Resource.ApworldFileSent, attachment.Filename);
         return message;
     }

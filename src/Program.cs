@@ -87,7 +87,6 @@ class Program
             await BackupRestoreClass.RestoreBackup();
 
             CustomApworldClass.GenerateYamls();
-            CustomApworldClass.GenerateItems();
 
             return;
         }
@@ -106,7 +105,6 @@ class Program
             }
 
             CustomApworldClass.GenerateYamls();
-            CustomApworldClass.GenerateItems();
         }
 
         string version = Declare.IsArchipelagoMode ? $"AST v{Declare.BotVersion} - Archipelago v{Declare.Version}" : $"AST v{Declare.BotVersion}";

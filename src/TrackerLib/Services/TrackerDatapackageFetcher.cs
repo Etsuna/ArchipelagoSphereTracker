@@ -64,7 +64,6 @@ namespace TrackerLib.Services
                     continue;
 
                 var link = $"{baseUrl.TrimEnd('/')}/api/datapackage/{checksum}";
-                // import + map (gameName→datasetKey) persistés
                 await DatapackageStore.ImportAsync(
                     link, guildId, channelId,
                     datasetKey: checksum,
