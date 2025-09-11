@@ -75,10 +75,8 @@ namespace TrackerLib.Services
                         {
                             var (finderAlias, finderGame) = ctx.SlotAliasGame(from);
 
-                            // 🔑 Item name → dataset du RECEIVER
                             var itemName = ctx.TryGetItemName(receiverGame, itemId, out var iname) ? iname : itemId.ToString();
 
-                            // 🔑 Location name → dataset du FINDER
                             var locName = ctx.TryGetLocationName(finderGame, locId, out var lname) ? lname : locId.ToString();
 
                             list.Add(new DisplayedItem
@@ -87,7 +85,7 @@ namespace TrackerLib.Services
                                 Receiver = receiverAlias,
                                 Item = itemName,
                                 Location = locName,
-                                Game = finderGame,  // pour Items, on garde le jeu du finder (comme avant)
+                                Game = finderGame,
                                 Flag = flags.ToString()
                             });
                         }
@@ -143,8 +141,8 @@ namespace TrackerLib.Services
                                 if (reader.TokenType == JsonTokenType.EndArray) break;
                                 if (reader.TokenType != JsonTokenType.StartArray) { SkipValue(ref reader); continue; }
 
-                                reader.Read(); var from = ReadInt(ref reader);   // FINDER
-                                reader.Read(); var to = ReadInt(ref reader);   // RECEIVER
+                                reader.Read(); var from = ReadInt(ref reader);
+                                reader.Read(); var to = ReadInt(ref reader);
                                 reader.Read(); var locId = ReadInt64(ref reader);
                                 reader.Read(); var itemId = ReadInt64(ref reader);
                                 reader.Read(); var found = ReadBool(ref reader);
@@ -166,14 +164,11 @@ namespace TrackerLib.Services
                         {
                             if (to != receiverSlot) continue;
 
-                            // ✅ finder = from, receiver = to
                             var (finderAlias, finderGame) = ctx.SlotAliasGame(to);
                             var receiverAlias = ctx.SlotAlias(from);
                             var receiverGame = ctx.SlotGame(from);
 
-                            // 🔑 Item = dataset du RECEIVER
                             var itemName = ctx.TryGetItemName(receiverGame, itemId, out var iname) ? iname : itemId.ToString();
-                            // 🔑 Location = dataset du FINDER
                             var locName = ctx.TryGetLocationName(finderGame, locId, out var lname) ? lname : locId.ToString();
 
                             var entrance = string.IsNullOrWhiteSpace(ent) ? "Vanilla" : ent;
@@ -184,7 +179,7 @@ namespace TrackerLib.Services
                                 Receiver = receiverAlias,
                                 Item = itemName,
                                 Location = locName,
-                                Game = finderGame,             // Game = finder
+                                Game = finderGame, 
                                 Entrance = entrance,
                                 Flag = found ? "True" : "False"
                             });

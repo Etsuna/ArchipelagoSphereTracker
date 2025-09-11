@@ -169,8 +169,7 @@ public class UrlClass
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                         await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
                         await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
-                        /*                        await TrackingDataManager.CheckGameStatusAsync(guildId, channelId, trackerUrl, silent);
-                                                await TrackingDataManager.GetTableDataAsync(guildId, channelId, sphereTrackerUrl, silent);*/
+                        await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent);
                         await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
                         await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
                         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);

@@ -9,20 +9,16 @@ namespace TrackerLib.Services
         public string ChannelId { get; init; } = "";
         public bool Silent { get; init; }
 
-        // Slots 1-based → index = slot-1
         public List<(string Alias, string Game)> SlotIndex { get; } = new();
 
-        // Game → DatasetKey (checksum)
         private readonly Dictionary<string, string> _gameToDataset =
             new(StringComparer.OrdinalIgnoreCase);
 
-        // Dictionnaires par dataset (pour éviter tout écrasement inter-jeux)
         private readonly Dictionary<string, Dictionary<long, string>> _itemsByDataset =
             new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Dictionary<long, string>> _locationsByDataset =
             new(StringComparer.OrdinalIgnoreCase);
 
-        // --- Alimentation par le loader ---
         public void SetGameDataset(string game, string datasetKey)
         {
             if (!string.IsNullOrWhiteSpace(game) && !string.IsNullOrWhiteSpace(datasetKey))
@@ -45,7 +41,6 @@ namespace TrackerLib.Services
             foreach (var (id, name) in rows) dict[id] = name ?? "";
         }
 
-        // --- Helpers utilisés par les parsers ---
 
         public string SlotAlias(int slot)
             => (slot > 0 && slot - 1 < SlotIndex.Count)
@@ -91,7 +86,6 @@ namespace TrackerLib.Services
 
             await using var cn = await Db.OpenReadAsync().ConfigureAwait(false);
 
-            // 1) Slots (Alias/Game)
             var games = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             {
                 const string sql = @"SELECT Slot, Alias, Game
@@ -124,7 +118,6 @@ namespace TrackerLib.Services
 
             if (games.Count == 0) return ctx;
 
-            // 2) Game → DatasetKey
             var datasetKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             {
                 const string sql = @"
@@ -150,7 +143,6 @@ namespace TrackerLib.Services
 
             if (datasetKeys.Count == 0) return ctx;
 
-            // 3a) Items par DatasetKey
             {
                 const string sql = @"
                     SELECT i.DatasetKey, i.Id, i.Name
@@ -161,7 +153,6 @@ namespace TrackerLib.Services
                 cmd.Parameters.AddWithValue("@G", guildId);
                 cmd.Parameters.AddWithValue("@C", channelId);
 
-                // Regrouper par dataset
                 var buffer = new Dictionary<string, List<(long, string)>>(StringComparer.OrdinalIgnoreCase);
                 await using var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
                 while (await r.ReadAsync().ConfigureAwait(false))
@@ -176,7 +167,6 @@ namespace TrackerLib.Services
                 foreach (var (ds, rows) in buffer) ctx.SetDatasetItems(ds, rows);
             }
 
-            // 3b) Locations par DatasetKey
             {
                 const string sql = @"
                     SELECT l.DatasetKey, l.Id, l.Name

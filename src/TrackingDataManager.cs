@@ -178,18 +178,15 @@ public static class TrackingDataManager
         }, token);
     }
 
-    private static readonly HttpClient _http = new HttpClient(); // renommé
+    private static readonly HttpClient _http = new HttpClient(); 
 
     public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent)
     {
-        // A) Contexte “one-shot” (1 open, 3 requêtes)
         var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
 
-        // B) Fetch tracker JSON (HttpClient réutilisé)
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
         var json = await _http.GetStringAsync(url).ConfigureAwait(false);
 
-        // C) Parsing + enrichissement 100% mémoire (streaming)
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
 
@@ -199,7 +196,6 @@ public static class TrackingDataManager
             return;
         }
 
-        // D) Tes méthodes existantes (si possible, entoure leur contenu d'une transaction)
         await ProcessItemsTableAsync(guild, channel, items, silent).ConfigureAwait(false);
         await ProcessHintTableAsync(guild, channel, hints, silent).ConfigureAwait(false);
     }
