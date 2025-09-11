@@ -206,7 +206,7 @@ public static class TrackingDataManager
                 return string.Empty;
         }
 
-        if (item.Location == "-1" || item.Item == "-1")
+        if (int.TryParse(item.Location, out var loc) && loc < 0 || int.TryParse(item.Item, out var itm) && itm < 0)
         {
             return string.Empty;
         }
