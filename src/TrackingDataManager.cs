@@ -228,9 +228,7 @@ public static class TrackingDataManager
 
                 if (!string.IsNullOrWhiteSpace(getGameName))
                 {
-                    var isFiller = await ItemsCommands.IsFillerAsync(guild, channel, getGameName, item.Item);
-
-                    if (isFiller)
+                    if (item.Flag is "0")
                     {
                         return string.Empty;
                     }

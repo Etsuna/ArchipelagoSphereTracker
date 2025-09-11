@@ -10,6 +10,12 @@ public static class SlashCommandDefinitions
             new SlashCommandBuilder().WithName("get-aliases").WithDescription(Resource.SCGetAliasesDescription),
 
             new SlashCommandBuilder()
+            .WithName("add-alias")
+            .WithDescription(Resource.SCAddAliasDescription)
+            .AddOption(AliasOption("alias"))
+            .AddOption(BooleanOption(Resource.SCAddAliasSkipMention, Resource.SCAddAliasSkipMentionDescription)),
+
+            new SlashCommandBuilder()
                 .WithName("delete-alias")
                 .WithDescription(Resource.SCDeleteAliasDescription)
                 .AddOption(AliasOption("added-alias")),
@@ -145,23 +151,6 @@ public static class SlashCommandDefinitions
                 new SlashCommandBuilder().WithName("test-generate").WithDescription(Resource.SCTestGenerateDescription)
             });
         }
-
-        if (Declare.IsArchipelagoMode)
-        {
-            commands.Add(new SlashCommandBuilder()
-            .WithName("add-alias")
-            .WithDescription(Resource.SCAddAliasDescription)
-            .AddOption(AliasOption("alias"))
-            .AddOption(BooleanOption(Resource.SCAddAliasSkipMention, Resource.SCAddAliasSkipMentionDescription)));
-        }
-        else
-        {
-            commands.Add(new SlashCommandBuilder()
-            .WithName("add-alias")
-            .WithDescription(Resource.SCAddAliasDescription)
-            .AddOption(AliasOption("alias")));
-        }
-
         return commands;
     }
 
