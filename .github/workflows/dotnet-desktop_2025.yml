@@ -21,12 +21,6 @@ jobs:
           - os: ubuntu-latest
             rid: linux-x64
             configuration: Release
-          - os: windows-2025
-            rid: win-arm64
-            configuration: Release
-          - os: ubuntu-latest
-            rid: linux-arm64
-            configuration: Release
 
     runs-on: ${{ matrix.os }}
 
