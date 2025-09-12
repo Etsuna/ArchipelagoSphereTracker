@@ -108,12 +108,10 @@ CREATE TABLE IF NOT EXISTS GameStatusTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     GuildId      TEXT NOT NULL,
     ChannelId    TEXT NOT NULL,
-    Hashtag      TEXT,
     Name         TEXT,
     Game         TEXT,
-    Status       TEXT,
     Checks       TEXT,
-    Percent      TEXT,
+    Total        TEXT,
     LastActivity TEXT
 );
 

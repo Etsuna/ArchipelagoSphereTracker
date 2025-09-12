@@ -12,9 +12,9 @@ class Program
     {
         Env.Load();
 #if DEBUG
-        args = new string[] { "--normalmode" };
+        //args = new string[] { "--normalmode" };
         //args = new string[] { "--install" };
-        //args = new string[] { "--archipelagoMode" };
+        args = new string[] { "--archipelagoMode" };
 #endif
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";

@@ -157,7 +157,7 @@
     <value>Vérification du statut de jeu pour le canal {0}...</value>
   </data>
   <data name="TDMCheckingItems" xml:space="preserve">
-    <value>Vérification des items pour le canal {0}</value>
+    <value>Vérification des items pour le canal {0}...</value>
   </data>
   <data name="TDMChannelNoLongerExists" xml:space="preserve">
     <value>Le canal n'existe plus, suppression des informations du canal : {0}.</value>
@@ -607,7 +607,7 @@
     <value>Dossier restauré : {0}</value>
   </data>
   <data name="CAGeneratingYamlTemplates" xml:space="preserve">
-    <value>📦 Génération de modèles YAML…</value>
+    <value>📦 Génération de modèles YAML...</value>
   </data>
   <data name="CAEmbededError" xml:space="preserve">
     <value>❌ Impossible de trouver la ressource intégrée : {0}</value>
@@ -632,15 +632,6 @@
   </data>
   <data name="CAException" xml:space="preserve">
     <value>❌ Exception : {0} - {1}</value>
-  </data>
-  <data name="CAGeneratedItemJson" xml:space="preserve">
-    <value>📦 Génération des modèles JSON de catégories d'Items…</value>
-  </data>
-  <data name="CAScanItemsApworldError" xml:space="preserve">
-    <value>❌ Le fichier 'scan_items.apworld' n’a pas été écrit correctement.</value>
-  </data>
-  <data name="CAJsonNotfound" xml:space="preserve">
-    <value>⚠️ Aucun fichier JSON trouvé pour la synchronisation.</value>
   </data>
   <data name="InstallNewVersion" xml:space="preserve">
     <value>Nouvelle version détectée {0}</value>
@@ -751,10 +742,7 @@
     <value>Suppression par GuildId réussie !</value>
   </data>
   <data name="IsFillerAsyncNoResultFound" xml:space="preserve">
-    <value>Aucun résultat trouvé pour le jeu '{0}' et l'item '{1}'</value>
-  </data>
-  <data name="SyncItemsFromJsonAsyncSyncComplete" xml:space="preserve">
-    <value>✅ Synchronisation terminée avec succès.</value>
+    <value>Aucun résultat trouvé pour le jeu '{0}' et l'item '{1}'.</value>
   </data>
   <data name="GetUserAliasesWithItemsAsyncNoItem" xml:space="preserve">
     <value>Pas d'item.</value>
@@ -826,10 +814,10 @@
     <value>Déplacement du dossier des joueurs terminé.</value>
   </data>
   <data name="NotFound" xml:space="preserve">
-    <value>Non trouvé</value>
+    <value>Non trouvé.</value>
   </data>
   <data name="PatchSetForThisThread" xml:space="preserve">
-    <value>**Patches configurés pour ce fil:**</value>
+    <value>**Patches configurés pour ce fil.**</value>
   </data>
   <data name="NoPatchForThisThread" xml:space="preserve">
     <value>Aucun patch configuré pour ce fil.</value>
@@ -844,6 +832,6 @@
     <value>Items pour</value>
   </data>
   <data name="CheckPlayerMinMax" xml:space="preserve">
-    <value>Joueurs minimum &gt; joueurs maximum. Impossible d’ajouter cet archipel. Le nombre maximum de joueurs est défini sur {0}</value>
+    <value>Joueurs minimum &gt; joueurs maximum. Impossible d’ajouter cet archipel. Le nombre maximum de joueurs est défini sur {0}.</value>
   </data>
 </root>

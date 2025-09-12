@@ -20,12 +20,10 @@ public class DisplayedItem
 
 public class GameStatus
 {
-    public string Hashtag { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Game { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
     public string Checks { get; set; } = string.Empty;
-    public string Percent { get; set; } = string.Empty;
+    public string Total { get; set; } = string.Empty;
     public string LastActivity { get; set; } = string.Empty;
 }
 

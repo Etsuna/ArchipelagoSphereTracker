@@ -176,7 +176,7 @@ public static class TrackingDataManager
         }, token);
     }
 
-    private static readonly HttpClient _http = new HttpClient(); 
+    private static readonly HttpClient _http = new HttpClient();
 
     public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent)
     {
@@ -187,15 +187,16 @@ public static class TrackingDataManager
 
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
+        var statuses = TrackerStreamParser.ParseGameStatus(ctx, json);
 
-        if (items.Count == 0 && hints.Count == 0)
+        if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0)
         {
-            Console.WriteLine("Aucun item/hint publié.");
             return;
         }
 
         await ProcessItemsTableAsync(guild, channel, items, silent).ConfigureAwait(false);
         await ProcessHintTableAsync(guild, channel, hints, silent).ConfigureAwait(false);
+        await ProcessGameStatusTableAsync(guild, channel, statuses, silent).ConfigureAwait(false);
     }
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
@@ -343,6 +344,78 @@ public static class TrackingDataManager
 
         if (hintsToUpdate.Count > 0)
             await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
+    }
+
+    private static async Task ProcessGameStatusTableAsync(string guild, string channel, List<GameStatus> statuses, bool silent)
+    {
+        if (statuses == null || statuses.Count == 0)
+            return;
+
+        var previous = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guild, channel).ConfigureAwait(false);
+        var prevByKey = previous.ToDictionary(
+            x => MakeKey(x.Name, x.Game),
+            x => x,
+            StringComparer.Ordinal);
+
+        var newlyCompleted = new List<GameStatus>();
+
+        foreach (var cur in statuses)
+        {
+            var key = MakeKey(cur.Name, cur.Game);
+
+            bool prevComplete = prevByKey.TryGetValue(key, out var prev)
+                && IsComplete(prev.Checks, prev.Total);
+
+            bool nowComplete = IsComplete(cur.Checks, cur.Total);
+
+            if (!prevComplete && nowComplete)
+            {
+                newlyCompleted.Add(cur);
+            }
+        }
+
+        await GameStatusCommands.UpdateGameStatusBatchAsync(guild, channel, statuses).ConfigureAwait(false);
+
+        if (newlyCompleted.Count > 0)
+        {
+            foreach (var done in newlyCompleted)
+            {
+                bool canAnnounce = !silent;
+
+                if (silent)
+                {
+                    var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, done.Name);
+                    canAnnounce = userIds.Count > 0;
+                }
+
+                if (canAnnounce)
+                {
+                    string text = string.Format(Resource.TDMGoalComplete, done.Name, done.Game);
+
+                    await RateLimitGuards.SendMessageGate.WaitAsync();
+                    try
+                    {
+                        await BotCommands.SendMessageAsync(text, channel);
+                    }
+                    finally
+                    {
+                        RateLimitGuards.SendMessageGate.Release();
+                    }
+
+                    await Task.Delay(1100);
+                }
+            }
+        }
+    }
+
+    private static string MakeKey(string? name, string? game)
+        => $"{name ?? ""}|{game ?? ""}";
+
+    private static bool IsComplete(string? checksStr, string? totalStr)
+    {
+        if (!int.TryParse(checksStr, out var checks)) checks = 0;
+        if (!int.TryParse(totalStr, out var total)) total = 0;
+        return total > 0 && checks >= total;
     }
 
     private static IEnumerable<string> ChunkMessages(IEnumerable<string> messages, int maxLength = 1900)

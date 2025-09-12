@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Text.Json;
 
 namespace TrackerLib.Services
@@ -190,6 +191,74 @@ namespace TrackerLib.Services
             return list;
         }
 
+        public static List<GameStatus> ParseGameStatus(ProcessingContext ctx, string json)
+        {
+            var list = new List<GameStatus>(64);
+
+            // 1) Récupère les times par slot depuis activity_timers
+            var activityBySlot = ParseActivityTimersMap(json);
+
+            // 2) Parcours player_checks_counts
+            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
+                new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
+
+            if (!MoveToProperty(ref reader, "player_checks_counts", JsonTokenType.StartArray))
+                return list;
+
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonTokenType.EndArray) break;
+                if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
+
+                if (!MoveToProperty(ref reader, "players", JsonTokenType.StartArray))
+                {
+                    SkipObject(ref reader);
+                    continue;
+                }
+
+                while (reader.Read())
+                {
+                    if (reader.TokenType == JsonTokenType.EndArray) break;
+                    if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
+
+                    int slot = 0;
+                    int found = 0;
+                    int total = 0;
+
+                    while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+                    {
+                        if (reader.TokenType != JsonTokenType.PropertyName) { SkipValue(ref reader); continue; }
+                        var prop = reader.GetString(); reader.Read();
+
+                        if (prop == "player") slot = ReadInt(ref reader);
+                        else if (prop == "found") found = ReadInt(ref reader);
+                        else if (prop == "total") total = ReadInt(ref reader);
+                        else SkipValue(ref reader);
+                    }
+
+                    if (slot > 0)
+                    {
+                        var alias = ctx.SlotAlias(slot) ?? string.Empty;
+                        var game = ctx.SlotGame(slot) ?? string.Empty;
+                        var last = activityBySlot.TryGetValue(slot, out var t) ? t : null; 
+
+                        list.Add(new GameStatus
+                        {
+                            Name = alias,
+                            Game = game,
+                            Checks = found.ToString(CultureInfo.InvariantCulture),
+                            Total = total.ToString(CultureInfo.InvariantCulture),
+                            LastActivity = last ?? string.Empty
+                        });
+                    }
+                }
+            }
+
+            return list;
+        }
+
+
+
         // ---------- helpers JSON ----------
         private static bool MoveToProperty(ref Utf8JsonReader r, string name, JsonTokenType expectStart)
         {
@@ -248,5 +317,64 @@ namespace TrackerLib.Services
             };
         private static string ReadString(ref Utf8JsonReader r)
             => r.TokenType == JsonTokenType.String ? (r.GetString() ?? "") : "";
+
+        private static Dictionary<int, string?> ParseActivityTimersMap(string json)
+        {
+            var map = new Dictionary<int, string?>(64);
+            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
+                new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
+
+            if (!MoveToProperty(ref reader, "activity_timers", JsonTokenType.StartArray))
+                return map;
+
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonTokenType.EndArray) break;
+                if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
+
+                if (!MoveToProperty(ref reader, "players", JsonTokenType.StartArray))
+                {
+                    SkipObject(ref reader);
+                    continue;
+                }
+
+                while (reader.Read())
+                {
+                    if (reader.TokenType == JsonTokenType.EndArray) break;
+                    if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
+
+                    int slot = 0;
+                    string? time = null;
+
+                    while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+                    {
+                        if (reader.TokenType != JsonTokenType.PropertyName) { SkipValue(ref reader); continue; }
+                        var prop = reader.GetString(); reader.Read();
+
+                        if (prop == "player")
+                        {
+                            slot = ReadInt(ref reader);
+                        }
+                        else if (prop == "time")
+                        {
+                            if (reader.TokenType == JsonTokenType.Null)
+                                time = null;
+                            else
+                                time = ReadString(ref reader); // déjà la chaîne RFC1123 depuis l'API
+                        }
+                        else
+                        {
+                            SkipValue(ref reader);
+                        }
+                    }
+
+                    if (slot > 0)
+                        map[slot] = string.IsNullOrEmpty(time) ? null : time;
+                }
+            }
+
+            return map;
+        }
+
     }
 }

@@ -286,7 +286,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à This command must be executed in a thread.
+        ///   Recherche une chaîne localisée semblable à This command must be executed in a thread..
         /// </summary>
         internal static string BotCommandThread {
             get {
@@ -403,7 +403,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Rom Backup completed.
+        ///   Recherche une chaîne localisée semblable à Rom Backup completed..
         /// </summary>
         internal static string BRRomBackupCompleted {
             get {
@@ -448,15 +448,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à 📦 Generating Items Category JSON templates....
-        /// </summary>
-        internal static string CAGeneratedItemJson {
-            get {
-                return ResourceManager.GetString("CAGeneratedItemJson", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à ❌ The file &apos;generate_templates.apworld&apos; was not written correctly..
         /// </summary>
         internal static string CAGenerateTemplateApworldError {
@@ -475,29 +466,11 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à ⚠️ No JSON file found for synchronization..
-        /// </summary>
-        internal static string CAJsonNotfound {
-            get {
-                return ResourceManager.GetString("CAJsonNotfound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à ❌ Launcher not found: {0}.
         /// </summary>
         internal static string CALauncherNotFound {
             get {
                 return ResourceManager.GetString("CALauncherNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ❌ The file &apos;scan_items.apworld&apos; was not written correctly..
-        /// </summary>
-        internal static string CAScanItemsApworldError {
-            get {
-                return ResourceManager.GetString("CAScanItemsApworldError", resourceCulture);
             }
         }
         
@@ -520,7 +493,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {Declare.MaxPlayer}..
+        ///   Recherche une chaîne localisée semblable à Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}..
         /// </summary>
         internal static string CheckPlayerMinMax {
             get {
@@ -529,7 +502,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Complet list for this thread.
+        ///   Recherche une chaîne localisée semblable à Complet list for this thread..
         /// </summary>
         internal static string CompletListForThisThread {
             get {
@@ -817,7 +790,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à **{0}&apos;s** **{1}** is at **{2}** in **{3}&apos;s** World.
+        ///   Recherche une chaîne localisée semblable à **{0}&apos;s** **{1}** is at **{2}** in **{3}&apos;s** World..
         /// </summary>
         internal static string HintItem {
             get {
@@ -853,7 +826,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à No hint found for this receiver.
+        ///   Recherche une chaîne localisée semblable à No hint found for this receiver..
         /// </summary>
         internal static string HintNoHintFoundForReceiver {
             get {
@@ -862,7 +835,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à No hint found for this finder.
+        ///   Recherche une chaîne localisée semblable à No hint found for this finder..
         /// </summary>
         internal static string HintNoHintFoundFromFinder {
             get {
@@ -1240,7 +1213,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Run the program in Archipelago mode. Not supported on arm64.
+        ///   Recherche une chaîne localisée semblable à Run the program in Archipelago mode. Not supported on arm64..
         /// </summary>
         internal static string ProgramArchipelagoMode {
             get {
@@ -1276,7 +1249,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Run installation process, needed only for --ArchipelagoMode. Not supported on arm64&quot;.
+        ///   Recherche une chaîne localisée semblable à Run installation process, needed only for --ArchipelagoMode. Not supported on arm64..
         /// </summary>
         internal static string ProgramInstall {
             get {
@@ -1339,7 +1312,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Clean for Alias {0} completed.
+        ///   Recherche une chaîne localisée semblable à Clean for Alias {0} completed..
         /// </summary>
         internal static string RACClean {
             get {
@@ -1861,15 +1834,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à ✅ Synchronization completed successfully..
-        /// </summary>
-        internal static string SyncItemsFromJsonAsyncSyncComplete {
-            get {
-                return ResourceManager.GetString("SyncItemsFromJsonAsyncSyncComplete", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à Aliases Updated!.
         /// </summary>
         internal static string TDMAliasUpdated {
@@ -2095,7 +2059,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à You can&apos;t have more than {0} players.
+        ///   Recherche une chaîne localisée semblable à You can&apos;t have more than {0} players..
         /// </summary>
         internal static string UrlMaxPlayers {
             get {

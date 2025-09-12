@@ -97,16 +97,12 @@ public class GenerationClass : Declare
                 var zipFileName = Path.GetFileName(zipFile);
                 var zipFilePath = Path.GetFullPath(zipFile);
 
-                ZipFile.ExtractToDirectory(zipFilePath, outputFolder);
                 await command.FollowupWithFileAsync(zipFile, zipFileName);
             }
             else
             {
                 await command.FollowupAsync(Resource.GenerationZipNotFound);
             }
-
-            if (playersFolder != null) Directory.Delete(playersFolder, true);
-            Directory.Delete(outputFolder, true);
         }
         else
         {
@@ -121,7 +117,7 @@ public class GenerationClass : Declare
             return Resource.GenerationWrongZipFormat;
 
         var playersFolder = Path.Combine(PlayersPath, channelId, "zip");
-        var outputFolder = Path.Combine(OutputPath, channelId, "zip");
+        var outputFolder = Path.Combine(OutputPath, channelId);
         var filePath = Path.Combine(playersFolder, attachment.Filename);
 
         if (Directory.Exists(playersFolder)) Directory.Delete(playersFolder, true);
@@ -129,23 +125,28 @@ public class GenerationClass : Declare
 
         Directory.CreateDirectory(playersFolder);
 
-        using var response = await Declare.HttpClient.GetAsync(attachment.Url);
-        using var fs = new FileStream(filePath, FileMode.Create);
-        await response.Content.CopyToAsync(fs);
+        using (var response = await Declare.HttpClient.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead))
+        {
+            response.EnsureSuccessStatusCode();
+            using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                await response.Content.CopyToAsync(fs);
+            }
+        }
 
-        ZipFile.ExtractToDirectory(filePath, playersFolder);
+        ZipFile.ExtractToDirectory(filePath, playersFolder , true);
+
+        File.Delete(filePath);
 
         foreach (var file in Directory.GetFiles(playersFolder))
         {
-            if (!file.EndsWith(".yaml"))
+            if (!file.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
             {
                 var fileName = Path.GetFileName(file);
                 await command.FollowupAsync(string.Format(Resource.GenerationNotAYamlFileIntoZip, fileName) + "\n");
                 File.Delete(file);
             }
         }
-
-        File.Delete(filePath);
 
         if (!Directory.GetFiles(playersFolder, "*.yaml").Any())
         {
@@ -160,7 +161,7 @@ public class GenerationClass : Declare
 
         return message;
     }
-
+    
     public static string TestGenerate(SocketSlashCommand command, string message, string channelId)
     {
         var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
@@ -181,22 +182,38 @@ public class GenerationClass : Declare
 
     public static string Generate(SocketSlashCommand command, string message, string channelId)
     {
-        var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
-        var outputFolder = Path.Combine(OutputPath, channelId, "yaml");
+        var playersFolder = Path.Combine(PlayersPath, channelId, "yaml"); // harmoniser avec GenerateWithZip si besoin
+        var outputFolder = Path.Combine(OutputPath, channelId);
 
-        if (Directory.Exists(outputFolder)) Directory.Delete(outputFolder, true);
+        try
+        {
+            if (Directory.Exists(outputFolder))
+                Directory.Delete(outputFolder, true);
 
-        Directory.CreateDirectory(playersFolder);
+            Directory.CreateDirectory(playersFolder);
+            Directory.CreateDirectory(outputFolder); // au cas où le lanceur ne le crée pas
 
-        if (!Directory.GetFiles(playersFolder, "*.yaml").Any())
-            return Resource.GenerationNoYaml;
+            var hasYaml = Directory.EnumerateFiles(playersFolder, "*.yaml").Any()
+                       || Directory.EnumerateFiles(playersFolder, "*.yml").Any();
 
-        var launcherPath = GetLauncherPath();
-        var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
-        var startInfo = CreateProcessStartInfo(launcherPath, arguments);
+            if (!hasYaml)
+                return Resource.GenerationNoYaml;
 
-        _ = RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
+            var launcherPath = GetLauncherPath();
+            if (string.IsNullOrWhiteSpace(launcherPath) || !File.Exists(launcherPath))
+                return string.Format(Resource.CALauncherNotFound, launcherPath);
 
-        return message;
+            var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
+            var startInfo = CreateProcessStartInfo(launcherPath, arguments);
+
+            _ = RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
+            return message;
+        }
+        catch (Exception ex)
+        {
+            _ = command.FollowupAsync(string.Format(Resource.GenerationError, ex.Message));
+            return "Resource.GenerationErrorShort";
+        }
     }
+
 }

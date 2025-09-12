@@ -158,7 +158,6 @@ public class UrlClass
                     var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker);
                     var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
 
-                    // 2) Seed (une seule fois typiquement) : importe chaque datapackage et mappe Game->Dataset
                     await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
 
                     if (!string.IsNullOrEmpty(tracker))
@@ -202,6 +201,20 @@ public class UrlClass
         if (string.IsNullOrEmpty(channelId))
         {
             await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guildId);
+            if (channelId != null)
+            {
+                var playersPath = Path.Combine(Declare.PlayersPath, channelId);
+                if (Directory.Exists(playersPath))
+                {
+                    Directory.Delete(playersPath, true);
+                }
+
+                var outputPath = Path.Combine(Declare.OutputPath, channelId);
+                if (Directory.Exists(outputPath))
+                {
+                    Directory.Delete(outputPath, true);
+                }
+            }
             await DatabaseCommands.ReclaimSpaceAsync();
         }
         else
