@@ -195,10 +195,8 @@ namespace TrackerLib.Services
         {
             var list = new List<GameStatus>(64);
 
-            // 1) Récupère les times par slot depuis activity_timers
             var activityBySlot = ParseActivityTimersMap(json);
 
-            // 2) Parcours player_checks_counts
             var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
                 new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
 
@@ -360,7 +358,7 @@ namespace TrackerLib.Services
                             if (reader.TokenType == JsonTokenType.Null)
                                 time = null;
                             else
-                                time = ReadString(ref reader); // déjà la chaîne RFC1123 depuis l'API
+                                time = ReadString(ref reader);
                         }
                         else
                         {

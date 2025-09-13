@@ -834,4 +834,28 @@
   <data name="CheckPlayerMinMax" xml:space="preserve">
     <value>Joueurs minimum &gt; joueurs maximum. Impossible d’ajouter cet archipel. Le nombre maximum de joueurs est défini sur {0}.</value>
   </data>
+  <data name="Every" xml:space="preserve">
+    <value>Toutes les</value>
+  </data>
+  <data name="Hour" xml:space="preserve">
+    <value>heures</value>
+  </data>
+  <data name="EveryDay" xml:space="preserve">
+    <value>Tous les jours</value>
+  </data>
+  <data name="CheckFrequency" xml:space="preserve">
+    <value>frequence-check</value>
+  </data>
+  <data name="CheckFrequencyDesc" xml:space="preserve">
+    <value>Fréquence de vérification, 5m par défaut.</value>
+  </data>
+  <data name="TDMSkippingCheck" xml:space="preserve">
+    <value>Vérification ignorée pour: {0} ({1} minutes).</value>
+  </data>
+  <data name="CheckFrequencyUpdated" xml:space="preserve">
+    <value>La fréquence de vérification a été mise à jour : {0}</value>
+  </data>
+  <data name="ErrorCheckFrequencyUpdate" xml:space="preserve">
+    <value>Erreur lors de la mise à jour de la fréquence de vérification.</value>
+  </data>
 </root>

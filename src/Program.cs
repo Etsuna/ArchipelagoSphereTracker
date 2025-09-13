@@ -20,7 +20,6 @@ class Program
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-        var arm64 = RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
 
 
         if (!isWindows && !isLinux)
@@ -39,12 +38,6 @@ class Program
 
         if (args[0].ToLower() == "--archipelagomode")
         {
-            if (arm64)
-            {
-                Console.WriteLine(Resource.ProgramArm64NotSupported);
-                return;
-            }
-
             Console.WriteLine(Resource.ArchipelagoModeStarted);
             Declare.IsArchipelagoMode = true;
         }
@@ -75,12 +68,6 @@ class Program
 
         if (args[0].ToLower() == "--install")
         {
-            if (arm64)
-            {
-                Console.WriteLine(Resource.ProgramArm64NotSupported);
-                return;
-            }
-
             Console.WriteLine(Resource.ProgramInstallationMode);
             await BackupRestoreClass.Backup();
             await InstallClass.Install(currentVersion, isWindows, isLinux);

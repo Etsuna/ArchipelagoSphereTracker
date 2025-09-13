@@ -182,7 +182,7 @@ public class GenerationClass : Declare
 
     public static string Generate(SocketSlashCommand command, string message, string channelId)
     {
-        var playersFolder = Path.Combine(PlayersPath, channelId, "yaml"); // harmoniser avec GenerateWithZip si besoin
+        var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
         var outputFolder = Path.Combine(OutputPath, channelId);
 
         try
@@ -191,7 +191,7 @@ public class GenerationClass : Declare
                 Directory.Delete(outputFolder, true);
 
             Directory.CreateDirectory(playersFolder);
-            Directory.CreateDirectory(outputFolder); // au cas où le lanceur ne le crée pas
+            Directory.CreateDirectory(outputFolder);
 
             var hasYaml = Directory.EnumerateFiles(playersFolder, "*.yaml").Any()
                        || Directory.EnumerateFiles(playersFolder, "*.yml").Any();

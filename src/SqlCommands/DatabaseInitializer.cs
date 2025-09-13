@@ -27,12 +27,14 @@ public class DatabaseInitializer
 -- ==========================
 CREATE TABLE IF NOT EXISTS ChannelsAndUrlsTable (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId      TEXT NOT NULL,
-    ChannelId    TEXT NOT NULL,
-    BaseUrl      TEXT NOT NULL,
-    Room         TEXT NOT NULL,
-    Tracker      TEXT NOT NULL,
-    Silent       BOOLEAN
+    GuildId        TEXT NOT NULL,
+    ChannelId      TEXT NOT NULL,
+    BaseUrl        TEXT NOT NULL,
+    Room           TEXT NOT NULL,
+    Tracker        TEXT NOT NULL,
+    CheckFrequency TEXT NOT NULL,
+    LastCheck      TEXT,
+    Silent         BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS UrlAndChannelPatchTable (

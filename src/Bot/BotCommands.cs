@@ -157,6 +157,7 @@ public static class BotCommands
             "status-games-list" => await HelperClass.StatusGameList(message, channelId, guildId),
             "info" => await HelperClass.Info(message, channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, message, channelId, guildId),
+            "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, message, channelId, guildId),
             _ => Resource.BotCommandChannel
         };
     }

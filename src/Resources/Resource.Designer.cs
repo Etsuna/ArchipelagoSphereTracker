@@ -493,6 +493,33 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à check-frequency.
+        /// </summary>
+        internal static string CheckFrequency {
+            get {
+                return ResourceManager.GetString("CheckFrequency", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Check frequency, default 5m..
+        /// </summary>
+        internal static string CheckFrequencyDesc {
+            get {
+                return ResourceManager.GetString("CheckFrequencyDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The verification frequency has been updated: {0}.
+        /// </summary>
+        internal static string CheckFrequencyUpdated {
+            get {
+                return ResourceManager.GetString("CheckFrequencyUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}..
         /// </summary>
         internal static string CheckPlayerMinMax {
@@ -525,6 +552,33 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string DeleteChannelDataByGuildIdAsyncDeletionGuildIdSuccessful {
             get {
                 return ResourceManager.GetString("DeleteChannelDataByGuildIdAsyncDeletionGuildIdSuccessful", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Error while updating the verification frequency..
+        /// </summary>
+        internal static string ErrorCheckFrequencyUpdate {
+            get {
+                return ResourceManager.GetString("ErrorCheckFrequencyUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every.
+        /// </summary>
+        internal static string Every {
+            get {
+                return ResourceManager.GetString("Every", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every day.
+        /// </summary>
+        internal static string EveryDay {
+            get {
+                return ResourceManager.GetString("EveryDay", resourceCulture);
             }
         }
         
@@ -849,6 +903,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string HintNoUrl {
             get {
                 return ResourceManager.GetString("HintNoUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à hour.
+        /// </summary>
+        internal static string Hour {
+            get {
+                return ResourceManager.GetString("Hour", resourceCulture);
             }
         }
         
@@ -1956,6 +2019,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string TDMSettingsAliasesGamesStatus {
             get {
                 return ResourceManager.GetString("TDMSettingsAliasesGamesStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Check skipped for: {0} ({1} minutes)..
+        /// </summary>
+        internal static string TDMSkippingCheck {
+            get {
+                return ResourceManager.GetString("TDMSkippingCheck", resourceCulture);
             }
         }
         

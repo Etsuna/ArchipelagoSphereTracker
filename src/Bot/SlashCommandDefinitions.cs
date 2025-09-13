@@ -21,6 +21,23 @@ public static class SlashCommandDefinitions
                 .AddOption(AliasOption("added-alias")),
 
             new SlashCommandBuilder()
+                .WithName("update-frequency-check")
+                .WithDescription(Resource.CheckFrequency)
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName(Resource.CheckFrequency)
+                    .WithDescription(Resource.CheckFrequencyDesc)
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .AddChoice($"{Resource.Every} 5 minutes", "5m")
+                    .AddChoice($"{Resource.Every} 15 minutes", "15m")
+                    .AddChoice($"{Resource.Every} 30 minutes", "30m")
+                    .AddChoice($"{Resource.Every} {Resource.Hour}", "1h")
+                    .AddChoice($"{Resource.Every} 6 {Resource.Hour}", "6h")
+                    .AddChoice($"{Resource.Every} 12 {Resource.Hour}", "12h")
+                    .AddChoice($"{Resource.Every} 18 {Resource.Hour}", "18h")
+                    .AddChoice($"{Resource.EveryDay}", "1d")),
+
+            new SlashCommandBuilder()
                 .WithName("add-url")
                 .WithDescription(Resource.SCAddUrlDescription)
                 .AddOption("url", ApplicationCommandOptionType.String, Resource.SCUrlToTrack, isRequired: true)
@@ -32,7 +49,20 @@ public static class SlashCommandDefinitions
                     .WithRequired(true)
                     .AddChoice(Resource.SCThreadPublic, "Public")
                     .AddChoice(Resource.SCThreadPrivate, "Private"))
-                .AddOption(BooleanOption(Resource.SCSilentOption, Resource.SCSilentDescription)),
+                .AddOption(BooleanOption(Resource.SCSilentOption, Resource.SCSilentDescription))
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName(Resource.CheckFrequency)
+                    .WithDescription(Resource.CheckFrequencyDesc)
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .AddChoice($"{Resource.Every} 5 minutes", "5m")
+                    .AddChoice($"{Resource.Every} 15 minutes", "15m")
+                    .AddChoice($"{Resource.Every} 30 minutes", "30m")
+                    .AddChoice($"{Resource.Every} {Resource.Hour}", "1h")
+                    .AddChoice($"{Resource.Every} 6 {Resource.Hour}", "6h")
+                    .AddChoice($"{Resource.Every} 12 {Resource.Hour}", "12h")
+                    .AddChoice($"{Resource.Every} 18 {Resource.Hour}", "18h")
+                    .AddChoice($"{Resource.EveryDay}", "1d")),
 
             new SlashCommandBuilder().WithName("delete-url").WithDescription(Resource.SCDeleteUrlDescription),
             new SlashCommandBuilder().WithName("status-games-list").WithDescription(Resource.SCStatusGameListDescription),

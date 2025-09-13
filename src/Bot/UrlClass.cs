@@ -1,9 +1,11 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using Discord;
 using Discord.WebSocket;
+using System;
 using System.Text.Json;
 using TrackerLib.Models;
 using TrackerLib.Services;
+
 
 public class UrlClass
 {
@@ -13,8 +15,10 @@ public class UrlClass
         string? tracker = string.Empty;
         string? room = string.Empty;
         string port = string.Empty;
+
         var silent = command.Data.Options.ElementAtOrDefault(3)?.Value as bool? ?? false;
         var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
+        var checkFrequencyStr = command.Data.Options.ElementAtOrDefault(4)?.Value as string ?? "5m";
 
         if (newUrl == null)
         {
@@ -23,51 +27,42 @@ public class UrlClass
         }
 
         var uri = new Uri(newUrl);
-
         baseUrl = $"{uri.Scheme}://{uri.Authority}";
-
         var segments = uri.AbsolutePath.Trim('/').Split('/');
         room = segments.Length > 1 ? segments[^1] : "";
 
         bool IsValidUrl(string url) => url.Contains(baseUrl + "/room");
 
         var roomInfo = await RoomInfo(baseUrl, room);
-
         if (roomInfo == null)
         {
             message = "Room Not Found";
             return message;
         }
 
-        tracker = roomInfo.Tracker != null ? roomInfo.Tracker : tracker;
+        tracker = roomInfo.Tracker ?? tracker;
         port = !string.IsNullOrEmpty(roomInfo.LastPort.ToString()) ? roomInfo.LastPort.ToString() : port;
 
-        async Task<bool> CanAddUrlAsync(string guildId, string channelId)
+        async Task<bool> CanAddUrlAsync(string gId, string cId)
         {
-            var checkIfChannelExistsAsync = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
-            return !checkIfChannelExistsAsync;
+            var exists = await DatabaseCommands.CheckIfChannelExistsAsync(gId, cId, "ChannelsAndUrlsTable");
+            return !exists;
         }
 
         async Task<(bool isValid, string message)> IsAllUrlIsValidAsync()
         {
             if (!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId))
-            {
                 return (false, Resource.UrlCheckMaxTread);
-            }
 
             var playersCount = roomInfo.Players.Count;
-
-            if(playersCount > Declare.MaxPlayer)
-            {
+            if (playersCount > Declare.MaxPlayer)
                 return (false, string.Format(Resource.CheckPlayerMinMax, Declare.MaxPlayer));
-            }
 
             return (true, string.Empty);
         }
 
         if (await CanAddUrlAsync(guildId, channelId))
         {
-
             if (string.IsNullOrEmpty(newUrl))
             {
                 message = Resource.URLEmpty;
@@ -79,7 +74,6 @@ public class UrlClass
             else
             {
                 var (isValid, errorMessage) = await IsAllUrlIsValidAsync();
-
                 if (!isValid)
                 {
                     message = errorMessage;
@@ -103,29 +97,21 @@ public class UrlClass
                     );
 
                     await thread.SendMessageAsync(string.Format(Resource.UrlThredCreated, thread.Name));
-
                     channelId = thread.Id.ToString();
 
                     if (type == ThreadType.PrivateThread)
                     {
-                        IGuildUser? user = command.User as IGuildUser;
-                        if (user == null)
-                        {
-                            message = Resource.UrlPrivateThreadUserNotFound;
-                        }
-                        else
-                        {
+                        if (command.User is IGuildUser user)
                             await thread.AddUserAsync(user);
-                        }
+                        else
+                            message = Resource.UrlPrivateThreadUserNotFound;
                     }
                     else
                     {
                         await foreach (var memberBatch in channel.GetUsersAsync())
                         {
                             foreach (var member in memberBatch)
-                            {
                                 await thread.AddUserAsync(member);
-                            }
                         }
                     }
 
@@ -135,8 +121,7 @@ public class UrlClass
 
                     foreach (var player in roomInfo.Players)
                     {
-                        var aliasInfo = (aliasSlot, player.Name, player.Game);
-                        aliasList.Add(aliasInfo);
+                        aliasList.Add((aliasSlot, player.Name, player.Game));
                         aliasSlot++;
                     }
 
@@ -157,14 +142,13 @@ public class UrlClass
 
                     var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker);
                     var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
-
                     await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
 
                     if (!string.IsNullOrEmpty(tracker))
                     {
                         Declare.AddedChannelId.Add(channelId);
 
-                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent);
+                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr);
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                         await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
                         await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
@@ -172,6 +156,7 @@ public class UrlClass
                         await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
                         await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
                         await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
+                        await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
 
                         Declare.AddedChannelId.Remove(channelId);
                     }
@@ -196,7 +181,7 @@ public class UrlClass
 
     public static async Task<string> DeleteChannelAndUrl(string? channelId, string guildId)
     {
-        string message = string.Empty;
+        string message;
 
         if (string.IsNullOrEmpty(channelId))
         {
@@ -204,16 +189,9 @@ public class UrlClass
             if (channelId != null)
             {
                 var playersPath = Path.Combine(Declare.PlayersPath, channelId);
-                if (Directory.Exists(playersPath))
-                {
-                    Directory.Delete(playersPath, true);
-                }
-
+                if (Directory.Exists(playersPath)) Directory.Delete(playersPath, true);
                 var outputPath = Path.Combine(Declare.OutputPath, channelId);
-                if (Directory.Exists(outputPath))
-                {
-                    Directory.Delete(outputPath, true);
-                }
+                if (Directory.Exists(outputPath)) Directory.Delete(outputPath, true);
             }
             await DatabaseCommands.ReclaimSpaceAsync();
         }
@@ -221,6 +199,7 @@ public class UrlClass
         {
             await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId);
             await DatabaseCommands.ReclaimSpaceAsync();
+            ChannelConfigCache.Remove(guildId, channelId);
         }
 
         message = Resource.URLDeleted;
@@ -242,13 +221,11 @@ public class UrlClass
         };
 
         var room = JsonSerializer.Deserialize<RoomStatus>(json, options);
-
         if (room is null)
         {
             Console.WriteLine("Failed to fetch or parse room status.");
             return null;
         }
-
         return room;
     }
 }

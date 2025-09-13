@@ -1073,4 +1073,36 @@
     <value>Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}.</value>
     <comment>Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}.</comment>
   </data>
+  <data name="Every" xml:space="preserve">
+    <value>Every</value>
+    <comment>Every</comment>
+  </data>
+  <data name="Hour" xml:space="preserve">
+    <value>hour</value>
+    <comment>hour</comment>
+  </data>
+  <data name="EveryDay" xml:space="preserve">
+    <value>Every day</value>
+    <comment>Every day</comment>
+  </data>
+  <data name="CheckFrequency" xml:space="preserve">
+    <value>check-frequency</value>
+    <comment>check-frequency</comment>
+  </data>
+  <data name="CheckFrequencyDesc" xml:space="preserve">
+    <value>Check frequency, default 5m.</value>
+    <comment>Check frequency, default 5m.</comment>
+  </data>
+  <data name="TDMSkippingCheck" xml:space="preserve">
+    <value>Check skipped for: {0} ({1} minutes).</value>
+    <comment>Check skipped for: {channelCheck.Name} ({checkFrequencyTs.TotalMinutes} minutes). </comment>
+  </data>
+  <data name="CheckFrequencyUpdated" xml:space="preserve">
+    <value>The verification frequency has been updated: {0}</value>
+    <comment>The verification frequency has been updated: {newFrequency}</comment>
+  </data>
+  <data name="ErrorCheckFrequencyUpdate" xml:space="preserve">
+    <value>Error while updating the verification frequency.</value>
+    <comment>Error while updating the verification frequency.</comment>
+  </data>
 </root>

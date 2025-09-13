@@ -1,7 +1,10 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord.WebSocket;
 using System.Data.SQLite;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using static TrackingDataManager;
 
 public static class ChannelsAndUrlsCommands
 {
@@ -10,14 +13,7 @@ public static class ChannelsAndUrlsCommands
     // ==========================
     // 🎯 Channel et URL (WRITE)
     // ==========================
-    public static async Task AddOrEditUrlChannelAsync(
-        string guildId,
-        string channelId,
-        string baseUrl,
-        string room,
-        string? tracker,
-        bool silent
-        )
+    public static async Task AddOrEditUrlChannelAsync(string guildId, string channelId, string baseUrl, string room, string? tracker, bool silent, string checkFrequency)
     {
         try
         {
@@ -25,20 +21,31 @@ public static class ChannelsAndUrlsCommands
             {
                 using var command = conn.CreateCommand();
                 command.CommandText = @"
-                    INSERT OR REPLACE INTO ChannelsAndUrlsTable
-                        (GuildId, ChannelId, BaseUrl, Room, Tracker, Silent)
-                    VALUES
-                        (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @Silent);";
+                        INSERT OR REPLACE INTO ChannelsAndUrlsTable
+                            (GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, Silent)
+                        VALUES
+                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent);";
 
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 command.Parameters.AddWithValue("@BaseUrl", new Uri(baseUrl).GetLeftPart(UriPartial.Authority));
                 command.Parameters.AddWithValue("@Room", room);
                 command.Parameters.AddWithValue("@Tracker", tracker ?? DefaultTrackerValue);
+                command.Parameters.AddWithValue("@CheckFrequency", string.IsNullOrWhiteSpace(checkFrequency) ? "5m" : checkFrequency);
                 command.Parameters.AddWithValue("@Silent", silent);
 
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });
+
+            var cfg = new ChannelConfig(
+                Tracker: tracker ?? DefaultTrackerValue,
+                BaseUrl: new Uri(baseUrl).GetLeftPart(UriPartial.Authority),
+                Room: room,
+                Silent: silent,
+                CheckFrequency: CheckFrequencyParser.ParseOrDefault(checkFrequency, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5), null),
+                LastCheck: null
+            );
+            ChannelConfigCache.Upsert(guildId, channelId, cfg);
 
             Console.WriteLine(Resource.AddOrEditUrlChannelAsyncSuccessful);
         }
@@ -51,11 +58,7 @@ public static class ChannelsAndUrlsCommands
     // ==================================================
     // 🎯 Ajout / Edition des patches pour un channel (WRITE)
     // ==================================================
-    public static async Task AddOrEditUrlChannelPathAsync(
-        string guildId,
-        string channelId,
-        List<Patch> patch
-        )
+    public static async Task AddOrEditUrlChannelPathAsync(string guildId, string channelId, List<Patch> patch)
     {
         try
         {
@@ -103,8 +106,7 @@ public static class ChannelsAndUrlsCommands
     // ==========================
     // 🎯 GET URL AND TRACKER (READ)
     // ==========================
-    public static async Task<(string tracker, string baseUrl, string room, bool Silent)>
-        GetTrackerUrlsAsync(string guildId, string channelId)
+    public static async Task<(string tracker, string baseUrl, string room, bool Silent)> GetTrackerUrlsAsync(string guildId, string channelId)
     {
         try
         {
@@ -303,5 +305,139 @@ public static class ChannelsAndUrlsCommands
         {
             Console.WriteLine($"Error while sending patches: {ex.Message}");
         }
+    }
+
+    // ==========================
+    // 🎯 GET URL + CheckFrequency + LastCheck (READ)
+    // ==========================
+    public static async Task<(string tracker, string baseUrl, string room, bool silent, string checkFrequency, string? lastCheck)> GetChannelConfigAsync(string guildId, string channelId)
+    {
+        try
+        {
+            await using var connection = await Db.OpenReadAsync();
+
+            using var command = new SQLiteCommand(@"
+                    SELECT Tracker, BaseUrl, Room, Silent, CheckFrequency, LastCheck
+                    FROM ChannelsAndUrlsTable
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
+
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            if (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                return (
+                    reader["Tracker"]?.ToString() ?? string.Empty,
+                    reader["BaseUrl"]?.ToString() ?? string.Empty,
+                    reader["Room"]?.ToString() ?? string.Empty,
+                    reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]),
+                    reader["CheckFrequency"]?.ToString() ?? "5m",
+                    reader["LastCheck"] as string
+                );
+            }
+
+            return (string.Empty, string.Empty, string.Empty, false, "5m", null);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while retrieving channel config: {ex.Message}");
+            return (string.Empty, string.Empty, string.Empty, false, "5m", null);
+        }
+    }
+
+    // =================================================
+    // 🎯 SHOULD RUN CHECKS (READ)
+    // =================================================
+    public static (bool ShouldRun, TimeSpan CherckFrequency) ShouldRunChecks(string checkFrequencyStr, string? lastCheckStr)
+    {
+        var minCheckFrequency = TimeSpan.FromMinutes(5);
+        var checkFrequency = CheckFrequencyParser.ParseOrDefault(checkFrequencyStr, minCheckFrequency, minCheckFrequency, null);
+
+        if (string.IsNullOrWhiteSpace(lastCheckStr))
+            return (true, checkFrequency);
+
+        if (!DateTimeOffset.TryParse(lastCheckStr, CultureInfo.InvariantCulture,
+                                     DateTimeStyles.AssumeUniversal, out var last))
+            return (true, checkFrequency);
+
+        var shouldRun = (DateTimeOffset.UtcNow - last) >= checkFrequency;
+        return (shouldRun, checkFrequency);
+    }
+
+    // =================================================
+    // 🎯 UPDATE LAST CHECK (WRITE)
+    // =================================================
+    public static async Task UpdateLastCheckAsync(string guildId, string channelId)
+    {
+        try
+        {
+            var nowIso = DateTimeOffset.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+
+            await Db.WriteAsync(async conn =>
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                        UPDATE ChannelsAndUrlsTable
+                        SET LastCheck = @LastCheck
+                        WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                cmd.Parameters.AddWithValue("@LastCheck", nowIso);
+                cmd.Parameters.AddWithValue("@GuildId", guildId);
+                cmd.Parameters.AddWithValue("@ChannelId", channelId);
+                await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
+
+            if (ChannelConfigCache.TryGet(guildId, channelId, out var cfg))
+            {
+                ChannelConfigCache.Upsert(guildId, channelId, cfg with { LastCheck = DateTimeOffset.UtcNow });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while updating LastCheck: {ex.Message}");
+        }
+    }
+
+    public static async Task<string> UpdateFrequencyCheck(SocketSlashCommand command, string message, string channelId, string guildId)
+    {
+        try
+        {
+            var newFrequency = command.Data.Options.FirstOrDefault()?.Value?.ToString();
+
+            if (string.IsNullOrWhiteSpace(newFrequency))
+            {
+                newFrequency = "5m";
+            }
+
+            await Db.WriteAsync(async conn =>
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                UPDATE ChannelsAndUrlsTable
+                SET CheckFrequency = @CheckFrequency
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+
+                cmd.Parameters.AddWithValue("@CheckFrequency", newFrequency);
+                cmd.Parameters.AddWithValue("@GuildId", guildId);
+                cmd.Parameters.AddWithValue("@ChannelId", channelId);
+
+                await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
+
+            if (ChannelConfigCache.TryGet(guildId, channelId, out var cfg))
+            {
+                var parsed = CheckFrequencyParser.ParseOrDefault(newFrequency, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5), null);
+                ChannelConfigCache.Upsert(guildId, channelId, cfg with { CheckFrequency = parsed });
+            }
+
+            message = string.Format(Resource.CheckFrequencyUpdated, newFrequency);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while updating CheckFrequency: {ex.Message}");
+            message = Resource.ErrorCheckFrequencyUpdate;
+        }
+
+        return message;
     }
 }
