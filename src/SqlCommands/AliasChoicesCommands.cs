@@ -63,9 +63,6 @@ public static class AliasChoicesCommands
                     command.Parameters.AddWithValue("@Slot", games.slot);
                     command.Parameters.AddWithValue("@Alias", games.alias);
                     command.Parameters.AddWithValue("@Game", games.game);
-                    
-
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }

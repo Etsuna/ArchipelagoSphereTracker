@@ -858,4 +858,25 @@
   <data name="ErrorCheckFrequencyUpdate" xml:space="preserve">
     <value>Erreur lors de la mise à jour de la fréquence de vérification.</value>
   </data>
+  <data name="BDDUpdated" xml:space="preserve">
+    <value>Base de données mise à jour pour votre fil. Fréquence de vérification définie à 5m. Modifiable via /update-frequency-check.</value>
+  </data>
+  <data name="SkipBDDMigration" xml:space="preserve">
+    <value>Le fichier de base de données est introuvable. La migration a été ignorée.</value>
+  </data>
+  <data name="CheckingBDDVersion" xml:space="preserve">
+    <value>🔄 Vérification de la version de la base...</value>
+  </data>
+  <data name="NoBddVersionTable" xml:space="preserve">
+    <value>Pas de table BddVersion : migration nécessaire.</value>
+  </data>
+  <data name="BDDUpToDate" xml:space="preserve">
+    <value>Base de données à jour.</value>
+  </data>
+  <data name="BDDForceUpdate" xml:space="preserve">
+    <value>Base en version {0} : migration forcée vers {1}.</value>
+  </data>
+  <data name="RoomNotFound" xml:space="preserve">
+    <value>Erreur lors de la migration de votre thread. Veuillez supprimer votre fil et réajouter l’URL.</value>
+  </data>
 </root>

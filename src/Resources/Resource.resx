@@ -1105,4 +1105,32 @@
     <value>Error while updating the verification frequency.</value>
     <comment>Error while updating the verification frequency.</comment>
   </data>
+  <data name="BDDUpdated" xml:space="preserve">
+    <value>The database has been updated for your thread. The Frequency check has been set to 5m, you can change it with the command /update-frequency-check.</value>
+    <comment>The database has been updated for your thread. The Frequency check has been set to 5m, you can change it with the command /update-frequency-check</comment>
+  </data>
+  <data name="SkipBDDMigration" xml:space="preserve">
+    <value>Database file not found. Skipping migration.</value>
+    <comment>Database file not found. Skipping migration.</comment>
+  </data>
+  <data name="CheckingBDDVersion" xml:space="preserve">
+    <value>🔄 Checking database version...</value>
+    <comment>🔄 Checking database version...</comment>
+  </data>
+  <data name="NoBddVersionTable" xml:space="preserve">
+    <value>No BddVersion Table: migration required.</value>
+    <comment>No BddVersion Table: migration required.</comment>
+  </data>
+  <data name="BDDUpToDate" xml:space="preserve">
+    <value>BDD Up To Date.</value>
+    <comment>BDD Up To Date.</comment>
+  </data>
+  <data name="BDDForceUpdate" xml:space="preserve">
+    <value>Database at version {0}: forced migration to {1}.</value>
+    <comment>Database at version {bddVersion}: forced migration to {Declare.BddVersion}</comment>
+  </data>
+  <data name="RoomNotFound" xml:space="preserve">
+    <value>Error during the migration of your thread. Please delete your thread and re-add the URL.</value>
+    <comment>Error during the migration of your thread. Please delete your thread and re-add the URL.</comment>
+  </data>
 </root>

@@ -232,6 +232,33 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Database at version {0}: forced migration to {1}..
+        /// </summary>
+        internal static string BDDForceUpdate {
+            get {
+                return ResourceManager.GetString("BDDForceUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The database has been updated for your thread. The Frequency check has been set to 5m, you can change it with the command /update-frequency-check..
+        /// </summary>
+        internal static string BDDUpdated {
+            get {
+                return ResourceManager.GetString("BDDUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à BDD Up To Date..
+        /// </summary>
+        internal static string BDDUpToDate {
+            get {
+                return ResourceManager.GetString("BDDUpToDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Channel : {0} (ID: {1}).
         /// </summary>
         internal static string BotChannelId {
@@ -516,6 +543,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string CheckFrequencyUpdated {
             get {
                 return ResourceManager.GetString("CheckFrequencyUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 🔄 Checking database version....
+        /// </summary>
+        internal static string CheckingBDDVersion {
+            get {
+                return ResourceManager.GetString("CheckingBDDVersion", resourceCulture);
             }
         }
         
@@ -1204,6 +1240,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à No BddVersion Table: migration required..
+        /// </summary>
+        internal static string NoBddVersionTable {
+            get {
+                return ResourceManager.GetString("NoBddVersionTable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à ❌ No file selected..
         /// </summary>
         internal static string NoFileSelected {
@@ -1452,6 +1497,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string RCRecapAndCleanDescription {
             get {
                 return ResourceManager.GetString("RCRecapAndCleanDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Error during the migration of your thread. Please delete your thread and re-add the URL..
+        /// </summary>
+        internal static string RoomNotFound {
+            get {
+                return ResourceManager.GetString("RoomNotFound", resourceCulture);
             }
         }
         
@@ -1893,6 +1947,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string SendAllPatchesForChannelAsyncPathLink {
             get {
                 return ResourceManager.GetString("SendAllPatchesForChannelAsyncPathLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Database file not found. Skipping migration..
+        /// </summary>
+        internal static string SkipBDDMigration {
+            get {
+                return ResourceManager.GetString("SkipBDDMigration", resourceCulture);
             }
         }
         

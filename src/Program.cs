@@ -48,7 +48,7 @@ class Program
             Declare.IsArchipelagoMode = false;
         }
 
-        if(args[0].ToLower() == "")
+        if (args[0].ToLower() == "")
         {
             ShowHelp();
             return;
@@ -102,10 +102,10 @@ class Program
         {
             GatewayIntents =
             GatewayIntents.Guilds |
-            GatewayIntents.GuildMessages | 
-            GatewayIntents.MessageContent, 
-                UseInteractionSnowflakeDate = false,
-                ResponseInternalTimeCheck = false
+            GatewayIntents.GuildMessages |
+            GatewayIntents.MessageContent,
+            UseInteractionSnowflakeDate = false,
+            ResponseInternalTimeCheck = false
         };
 
         Declare.Client = new DiscordSocketClient(config);
@@ -141,6 +141,36 @@ class Program
     {
         await BotCommands.RegisterCommandsAsync();
         Console.WriteLine(Resource.ProgramBotIsConnected);
+
+        if (!File.Exists(Declare.DatabaseFile))
+        {
+            Console.WriteLine(Resource.SkipBDDMigration);
+        }
+        else
+        {
+            Console.WriteLine(Resource.CheckingBDDVersion);
+            string bddVersion = await DBMigration.GetCurrentDbVersionAsync();
+
+            if (bddVersion == "-1")
+            {
+                Console.WriteLine(Resource.NoBddVersionTable);
+                await DBMigration.Migrate_4_to_5Async();
+                await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+                await DBMigration.DropLegacyTablesAsync();
+            }
+            else if (bddVersion == Declare.BddVersion)
+            {
+                Console.WriteLine(Resource.BDDUpToDate);
+            }
+            else
+            {
+                Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
+                await DBMigration.Migrate_4_to_5Async();
+                await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+                await DBMigration.DropLegacyTablesAsync();
+            }
+        }
+
         TrackingDataManager.StartTracking();
     }
 }

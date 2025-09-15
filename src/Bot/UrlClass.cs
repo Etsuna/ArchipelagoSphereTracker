@@ -2,6 +2,7 @@
 using Discord;
 using Discord.WebSocket;
 using System;
+using System.Net;
 using System.Text.Json;
 using TrackerLib.Models;
 using TrackerLib.Services;
@@ -181,18 +182,10 @@ public class UrlClass
 
     public static async Task<string> DeleteChannelAndUrl(string? channelId, string guildId)
     {
-        string message;
-
         if (string.IsNullOrEmpty(channelId))
         {
             await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guildId);
-            if (channelId != null)
-            {
-                var playersPath = Path.Combine(Declare.PlayersPath, channelId);
-                if (Directory.Exists(playersPath)) Directory.Delete(playersPath, true);
-                var outputPath = Path.Combine(Declare.OutputPath, channelId);
-                if (Directory.Exists(outputPath)) Directory.Delete(outputPath, true);
-            }
+
             await DatabaseCommands.ReclaimSpaceAsync();
         }
         else
@@ -200,32 +193,94 @@ public class UrlClass
             await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId);
             await DatabaseCommands.ReclaimSpaceAsync();
             ChannelConfigCache.Remove(guildId, channelId);
+
+            var playersPath = Path.Combine(Declare.PlayersPath, channelId);
+            if (Directory.Exists(playersPath))
+                Directory.Delete(playersPath, true);
+
+            var outputPath = Path.Combine(Declare.OutputPath, channelId);
+            if (Directory.Exists(outputPath))
+                Directory.Delete(outputPath, true);
         }
 
-        message = Resource.URLDeleted;
-        await BotCommands.RegisterCommandsAsync();
-        await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
+        var message = Resource.URLDeleted;
+        await Task.WhenAll(
+            BotCommands.RegisterCommandsAsync(),
+            Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false)
+        ).ConfigureAwait(false);
+
         return message;
     }
 
-    public static async Task<RoomStatus?> RoomInfo(string baseUrl, string roomId)
+    private static readonly HttpClient Http = new HttpClient
     {
-        var url = $"{baseUrl.TrimEnd('/')}/api/room_status/{roomId}";
-        using var http = new HttpClient();
-        var json = await http.GetStringAsync(url);
+        Timeout = TimeSpan.FromSeconds(5)
+    };
 
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            ReadCommentHandling = JsonCommentHandling.Skip
-        };
+    private static TimeSpan Backoff(int attempt)
+    {
+        var baseMs = 250 * (int)Math.Pow(2, attempt - 1);
+        var jitter = Random.Shared.Next(0, 200);
+        return TimeSpan.FromMilliseconds(baseMs + jitter);
+    }
 
-        var room = JsonSerializer.Deserialize<RoomStatus>(json, options);
-        if (room is null)
-        {
-            Console.WriteLine("Failed to fetch or parse room status.");
+    public static async Task<RoomStatus?> RoomInfo(string baseUrl, string roomId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(roomId))
             return null;
+
+        if (!Uri.TryCreate(baseUrl.TrimEnd('/') + "/", UriKind.Absolute, out var baseUri))
+            return null;
+
+        var url = new Uri(baseUri, $"api/room_status/{roomId.Trim()}");
+
+        for (int attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                using var req = new HttpRequestMessage(HttpMethod.Get, url);
+                using var res = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+
+                if (res.StatusCode == HttpStatusCode.NotFound)
+                    return null;
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    if ((int)res.StatusCode >= 500 && attempt < 3)
+                    {
+                        await Task.Delay(Backoff(attempt), ct).ConfigureAwait(false);
+                        continue;
+                    }
+                    return null;
+                }
+
+                var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                return JsonSerializer.Deserialize<RoomStatus>(json);
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                if (attempt < 3)
+                {
+                    await Task.Delay(Backoff(attempt), ct).ConfigureAwait(false);
+                    continue;
+                }
+                return null;
+            }
+            catch (HttpRequestException)
+            {
+                if (attempt < 3)
+                {
+                    await Task.Delay(Backoff(attempt), ct).ConfigureAwait(false);
+                    continue;
+                }
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
-        return room;
+
+        return null;
     }
 }
