@@ -198,9 +198,9 @@ public static class DBMigration
 
     public class GuildChannelMapping
     {
-        public string GuildId { get; set; }
-        public string ChannelId { get; set; }
-        public string Room { get; set; }
+        public string GuildId { get; set; } = string.Empty;
+        public string ChannelId { get; set; } = string.Empty;
+        public string Room { get; set; } = string.Empty;
         public bool Silent { get; set; }
 
     }
@@ -208,8 +208,8 @@ public static class DBMigration
     public class DisplayedItem_Old
     {
         public int Id { get; set; }
-        public string GuildId { get; set; }
-        public string ChannelId { get; set; }
+        public string GuildId { get; set; } = string.Empty;
+        public string ChannelId { get; set; } = string.Empty;
         public string? Sphere { get; set; }
         public string? Finder { get; set; }
         public string? Receiver { get; set; }
