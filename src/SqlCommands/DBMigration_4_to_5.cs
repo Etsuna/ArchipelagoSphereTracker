@@ -126,9 +126,7 @@ public static class DBMigration
                             await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
 
                             await MigrateTableData(guildId, channelId, silent, baseUrl, tracker, OldDisplayedItems);
-
                             await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
-                            await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
 
                             await BotCommands.SendMessageAsync(Resource.BDDUpdated, channelId);
 
