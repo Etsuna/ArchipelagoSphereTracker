@@ -51,7 +51,7 @@ public class YamlClass : Declare
             File.Delete(filePath);
         }
 
-        using (var response = await Declare.HttpClient.GetAsync(attachment.Url))
+        using (var response = await HttpClient.GetAsync(attachment.Url))
             if (response.IsSuccessStatusCode)
             {
                 await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))

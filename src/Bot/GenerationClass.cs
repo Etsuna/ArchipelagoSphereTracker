@@ -125,7 +125,7 @@ public class GenerationClass : Declare
 
         Directory.CreateDirectory(playersFolder);
 
-        using (var response = await Declare.HttpClient.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead))
+        using (var response = await HttpClient.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead))
         {
             response.EnsureSuccessStatusCode();
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -134,7 +134,7 @@ public class GenerationClass : Declare
             }
         }
 
-        ZipFile.ExtractToDirectory(filePath, playersFolder , true);
+        ZipFile.ExtractToDirectory(filePath, playersFolder, true);
 
         File.Delete(filePath);
 
@@ -161,7 +161,7 @@ public class GenerationClass : Declare
 
         return message;
     }
-    
+
     public static string TestGenerate(SocketSlashCommand command, string message, string channelId)
     {
         var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");

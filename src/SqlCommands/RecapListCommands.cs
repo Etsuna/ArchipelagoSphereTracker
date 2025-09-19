@@ -151,7 +151,7 @@ public static class RecapListCommands
             command.Parameters.AddWithValue("@UserId", userId);
 
             var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
-            var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0L;
+            var count = result != null && result != DBNull.Value ? Convert.ToInt64(result) : 0L;
             return count > 0;
         }
         catch (Exception ex)
@@ -182,7 +182,7 @@ public static class RecapListCommands
             command.Parameters.AddWithValue("@Alias", alias);
 
             var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
-            var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0L;
+            var count = result != null && result != DBNull.Value ? Convert.ToInt64(result) : 0L;
             return count > 0;
         }
         catch (Exception ex)

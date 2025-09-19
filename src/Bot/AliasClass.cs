@@ -70,7 +70,7 @@ public class AliasClass
                     message = string.Format(Resource.AliasNotFound, alias);
                     foreach (var value in getUserId.Select(x => x.UserId))
                     {
-                        if (value == command.User.Id.ToString() || (guildUser != null && guildUser.GuildPermissions.Administrator))
+                        if (value == command.User.Id.ToString() || guildUser != null && guildUser.GuildPermissions.Administrator)
                         {
                             await ReceiverAliasesCommands.DeleteReceiverAlias(guildId, channelId, alias);
 

@@ -1,4 +1,5 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using System.Data.SQLite;
 using TrackerLib.Services;
 
@@ -113,7 +114,7 @@ public static class DBMigration
                             });
                         }
 
-                        var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker);
+                        var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
                         var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
                         await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
 
@@ -225,7 +226,7 @@ public static class DBMigration
             checkCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='BddVersion';";
             var exists = (await checkCmd.ExecuteScalarAsync())?.ToString();
             if (string.IsNullOrEmpty(exists))
-                return "-1"; 
+                return "-1";
         }
 
         using (var cmd = conn.CreateCommand())
@@ -499,7 +500,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
         using (var vacuum = conn.CreateCommand())
         {
             vacuum.CommandText = "VACUUM;";
-            vacuum.ExecuteNonQuery(); 
+            vacuum.ExecuteNonQuery();
         }
     }
 
@@ -508,7 +509,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
         using var check = conn.CreateCommand();
         check.CommandText = "SELECT 1 FROM sqlite_master WHERE type='table' AND name=@n;";
         check.Parameters.AddWithValue("@n", name);
-        return (await check.ExecuteScalarAsync().ConfigureAwait(false)) != null;
+        return await check.ExecuteScalarAsync().ConfigureAwait(false) != null;
     }
     private static async Task TryRenameAsync(SQLiteConnection conn, string from, string to)
     {
@@ -551,5 +552,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
             }
         });
     }
-
 }

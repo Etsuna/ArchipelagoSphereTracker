@@ -136,10 +136,10 @@ public class HelperClass
                     {
                         int checks = int.TryParse(game.Checks, out var c) ? c : 0;
                         int total = int.TryParse(game.Total, out var t) ? t : 0;
-                        double percent = (total > 0)
+                        double percent = total > 0
                             ? (double)checks / total * 100.0
                             : 0.0;
-                        string gameStatus = (checks != total)
+                        string gameStatus = checks != total
                             ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percent) + "\n"
                             : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percent) + "\n";
 
@@ -158,10 +158,10 @@ public class HelperClass
                 {
                     int checks = int.TryParse(game.Checks, out var c) ? c : 0;
                     int total = int.TryParse(game.Total, out var t) ? t : 0;
-                    double percent = (total > 0)
+                    double percent = total > 0
                         ? (double)checks / total * 100.0
                         : 0.0;
-                    string gameStatus = (checks != total)
+                    string gameStatus = checks != total
                         ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percent) + "\n"
                         : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percent) + "\n";
 

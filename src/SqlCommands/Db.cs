@@ -15,7 +15,7 @@ public static class Db
         var conn = new SQLiteConnection(ReadCS);
         await conn.OpenAsync();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"PRAGMA foreign_keys=ON; PRAGMA temp_store=MEMORY; PRAGMA busy_timeout=5000;";
+        cmd.CommandText = @"PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA temp_store=MEMORY; PRAGMA busy_timeout=5000; PRAGMA cache_size=-20000; PRAGMA mmap_size=268435456;";
         cmd.ExecuteNonQuery();
         return conn;
     }

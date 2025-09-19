@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace TrackerLib.Services
+namespace ArchipelagoSphereTracker.src.TrackerLib.Services
 {
     public static class TrackerStreamParser
     {
@@ -310,11 +310,11 @@ namespace TrackerLib.Services
                 JsonTokenType.True => true,
                 JsonTokenType.False => false,
                 JsonTokenType.Number => r.TryGetInt32(out var n) && n != 0,
-                JsonTokenType.String => bool.TryParse(r.GetString(), out var b) ? b : (r.GetString() == "1"),
+                JsonTokenType.String => bool.TryParse(r.GetString(), out var b) ? b : r.GetString() == "1",
                 _ => false
             };
         private static string ReadString(ref Utf8JsonReader r)
-            => r.TokenType == JsonTokenType.String ? (r.GetString() ?? "") : "";
+            => r.TokenType == JsonTokenType.String ? r.GetString() ?? "" : "";
 
         private static Dictionary<int, string?> ParseActivityTimersMap(string json)
         {

@@ -189,7 +189,7 @@ public static class DatabaseCommands
             command.Parameters.AddWithValue("@ChannelId", channelId);
 
             var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
-            var count = (result != null && result != DBNull.Value) ? Convert.ToInt64(result) : 0L;
+            var count = result != null && result != DBNull.Value ? Convert.ToInt64(result) : 0L;
             return count > 0;
         }
         catch (Exception ex)
@@ -439,7 +439,7 @@ public static class DatabaseCommands
     // ==========================
     // 🎯 RECLAIM SPACE (VACUUM) — sérialisé, hors transaction
     // ==========================
-    public static async Task ReclaimSpaceAsync( long walTruncateThresholdBytes = 128L * 1024 * 1024)
+    public static async Task ReclaimSpaceAsync(long walTruncateThresholdBytes = 128L * 1024 * 1024)
     {
         try
         {

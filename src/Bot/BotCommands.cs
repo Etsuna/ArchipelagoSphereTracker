@@ -119,7 +119,7 @@ public static class BotCommands
                 if (isThread)
                 {
                     message = await HandleThreadedCommand(command, guildUser, "", alias, realAlias, channelId, guildId);
-                    await SendPaginatedMessageAsync(command, message, maxLength); 
+                    await SendPaginatedMessageAsync(command, message, maxLength);
                 }
                 else
                 {
@@ -222,10 +222,10 @@ public static class BotCommands
 
         Func<Task<IEnumerable<string>>> fetcher = name switch
         {
-        "alias" => async () => (await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId)).AsEnumerable(),
+            "alias" => async () => (await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId)).AsEnumerable(),
 
-        "added-alias" => async () =>
-                    (await ReceiverAliasesCommands.GetReceiver(guildId, channelId)).Distinct(StringComparer.OrdinalIgnoreCase).AsEnumerable(),
+            "added-alias" => async () =>
+                        (await ReceiverAliasesCommands.GetReceiver(guildId, channelId)).Distinct(StringComparer.OrdinalIgnoreCase).AsEnumerable(),
 
             "yamlfile" => () => Task.FromResult(
                     Directory.Exists(YamlPath(channelId))
@@ -275,3 +275,4 @@ public static class BotCommands
 
     #endregion
 }
+

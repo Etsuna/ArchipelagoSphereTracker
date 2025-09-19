@@ -4,10 +4,19 @@ using System.Data.SQLite;
 using System.Globalization;
 using static TrackingDataManager;
 
-
 public static class ChannelConfigCache
 {
     private static readonly ConcurrentDictionary<string, ChannelConfig> _map = new();
+    private static readonly ConcurrentDictionary<string, TimeSpan> _jitter = new();
+    private static readonly TimeSpan _maxJitter = TimeSpan.FromSeconds(60);
+
+    private static TimeSpan GetJitter(string key)
+        => _jitter.GetOrAdd(
+            key,
+            _ => TimeSpan.FromMilliseconds(
+                Random.Shared.NextInt64(0, (long)_maxJitter.TotalMilliseconds)
+            )
+        );
 
     public static string Key(string guildId, string channelId) => $"{guildId}:{channelId}";
 
@@ -75,16 +84,17 @@ public static class ChannelConfigCache
     public static (bool ShouldRun, TimeSpan CheckFrequency) ShouldRunChecks(in ChannelConfig cfg)
     {
         if (cfg.LastCheck is null) return (true, cfg.CheckFrequency);
-        var should = (DateTimeOffset.UtcNow - cfg.LastCheck.Value) >= cfg.CheckFrequency;
+        var key = $"{cfg.Room}:{cfg.BaseUrl}:{cfg.Tracker}";
+        var should = DateTimeOffset.UtcNow - cfg.LastCheck.Value + GetJitter(key) >= cfg.CheckFrequency;
         return (should, cfg.CheckFrequency);
     }
 }
 
-    public readonly record struct ChannelConfig(
-    string Tracker,
-    string BaseUrl,
-    string Room,
-    bool Silent,
-    TimeSpan CheckFrequency,
-    DateTimeOffset? LastCheck
-    );
+public readonly record struct ChannelConfig(
+string Tracker,
+string BaseUrl,
+string Room,
+bool Silent,
+TimeSpan CheckFrequency,
+DateTimeOffset? LastCheck
+);

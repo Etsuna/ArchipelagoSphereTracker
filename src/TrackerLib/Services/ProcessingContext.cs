@@ -1,6 +1,6 @@
 ﻿using System.Data.SQLite;
 
-namespace TrackerLib.Services
+namespace ArchipelagoSphereTracker.src.TrackerLib.Services
 {
     // Contexte runtime pour un guild/channel donné
     public sealed class ProcessingContext
@@ -43,17 +43,17 @@ namespace TrackerLib.Services
 
 
         public string SlotAlias(int slot)
-            => (slot > 0 && slot - 1 < SlotIndex.Count)
+            => slot > 0 && slot - 1 < SlotIndex.Count
                ? SlotIndex[slot - 1].Alias
                : $"Player{Math.Max(1, slot)}";
 
         public (string Alias, string Game) SlotAliasGame(int slot)
-            => (slot > 0 && slot - 1 < SlotIndex.Count)
+            => slot > 0 && slot - 1 < SlotIndex.Count
                ? SlotIndex[slot - 1]
                : ($"Player{Math.Max(1, slot)}", "");
 
         public string SlotGame(int slot)
-            => (slot > 0 && slot - 1 < SlotIndex.Count)
+            => slot > 0 && slot - 1 < SlotIndex.Count
                ? SlotIndex[slot - 1].Game
                : "";
 
@@ -110,7 +110,7 @@ namespace TrackerLib.Services
                 await using var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
                 while (await r.ReadAsync().ConfigureAwait(false))
                 {
-                    var slot = (int)((r["Slot"] is long L) ? L : Convert.ToInt64(r["Slot"]));
+                    var slot = (int)(r["Slot"] is long L ? L : Convert.ToInt64(r["Slot"]));
                     var alias = r["Alias"]?.ToString() ?? $"Player{slot}";
                     var game = r["Game"]?.ToString() ?? "";
                     rows.Add((slot, alias, game));
@@ -169,7 +169,7 @@ namespace TrackerLib.Services
                 {
                     var ds = r["DatasetKey"]?.ToString() ?? "";
                     if (string.IsNullOrWhiteSpace(ds)) continue;
-                    var id = (r["Id"] is long L) ? L : Convert.ToInt64(r["Id"]);
+                    var id = r["Id"] is long L ? L : Convert.ToInt64(r["Id"]);
                     var name = r["Name"]?.ToString() ?? "";
                     if (!buffer.TryGetValue(ds, out var list)) buffer[ds] = list = new List<(long, string)>();
                     list.Add((id, name));
@@ -193,7 +193,7 @@ namespace TrackerLib.Services
                 {
                     var ds = r["DatasetKey"]?.ToString() ?? "";
                     if (string.IsNullOrWhiteSpace(ds)) continue;
-                    var id = (r["Id"] is long L) ? L : Convert.ToInt64(r["Id"]);
+                    var id = r["Id"] is long L ? L : Convert.ToInt64(r["Id"]);
                     var name = r["Name"]?.ToString() ?? "";
                     if (!buffer.TryGetValue(ds, out var list)) buffer[ds] = list = new List<(long, string)>();
                     list.Add((id, name));

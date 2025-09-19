@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 
 class Program
 {
+    public static bool SetBddVersion = false;
     static async Task Main(string[] args)
     {
         Env.Load();
@@ -62,6 +63,12 @@ class Program
             Console.WriteLine($"  --NormalMode        {Resource.ProgramNormalMode}");
             Console.WriteLine();
             Console.WriteLine(Resource.ProgramHelp);
+        }
+
+        if (!File.Exists(Declare.DatabaseFile))
+        {
+            Console.WriteLine(Resource.SkipBDDMigration);
+            SetBddVersion = true;
         }
 
         await DatabaseInitializer.InitializeDatabaseAsync();
@@ -142,9 +149,9 @@ class Program
         await BotCommands.RegisterCommandsAsync();
         Console.WriteLine(Resource.ProgramBotIsConnected);
 
-        if (!File.Exists(Declare.DatabaseFile))
+        if (SetBddVersion)
         {
-            Console.WriteLine(Resource.SkipBDDMigration);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else
         {

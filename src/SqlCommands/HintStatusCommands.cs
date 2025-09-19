@@ -1,5 +1,4 @@
 ﻿using System.Data.SQLite;
-using System.Text.RegularExpressions;
 
 public static class HintStatusCommands
 {

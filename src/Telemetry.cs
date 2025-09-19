@@ -14,7 +14,7 @@ public static class Telemetry
 
     public static async Task SendDailyTelemetryAsync(string programId, bool check = true)
     {
-        if(!Declare.TelemetryEnabled)
+        if (!Declare.TelemetryEnabled)
         {
             return;
         }
@@ -54,5 +54,4 @@ public static class Telemetry
         {
         }
     }
-
 }

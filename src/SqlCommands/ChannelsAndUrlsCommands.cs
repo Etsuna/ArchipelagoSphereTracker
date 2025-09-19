@@ -361,7 +361,7 @@ public static class ChannelsAndUrlsCommands
                                      DateTimeStyles.AssumeUniversal, out var last))
             return (true, checkFrequency);
 
-        var shouldRun = (DateTimeOffset.UtcNow - last) >= checkFrequency;
+        var shouldRun = DateTimeOffset.UtcNow - last >= checkFrequency;
         return (shouldRun, checkFrequency);
     }
 

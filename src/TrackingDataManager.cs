@@ -1,4 +1,5 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Discord;
 using Discord.WebSocket;
 using Sprache;
@@ -6,21 +7,22 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using TrackerLib.Services;
 
 public static class TrackingDataManager
 {
     public static class RateLimitGuards
     {
-        public static readonly SemaphoreSlim SendMessageGate = new(1, 1);
+        private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> _guildSendGates = new();
+        public static SemaphoreSlim GetGuildSendGate(ulong guildId, int parallelismPerGuild = 2)
+            => _guildSendGates.GetOrAdd(guildId, _ => new SemaphoreSlim(parallelismPerGuild, parallelismPerGuild));
     }
 
     private static readonly ConcurrentDictionary<string, byte> InFlight = new();
 
     public static void StartTracking()
     {
-        const int MaxGuildsParallel = 10;
-        const int MaxChannelsParallel = 2;
+        const int MaxGuildsParallel = 24;
+        const int MaxChannelsParallel = 6;
 
         if (Declare.Cts != null)
         {
@@ -128,14 +130,14 @@ public static class TrackingDataManager
                                             {
                                                 if (Declare.WarnedThreads.Contains(thread.Id.ToString()))
                                                 {
-                                                    await RateLimitGuards.SendMessageGate.WaitAsync(ctChan);
+                                                    await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
                                                     try
                                                     {
                                                         await BotCommands.SendMessageAsync(string.Format(Resource.TDMNewMessageOnThread, thread.Name), thread.Id.ToString());
                                                     }
                                                     finally
                                                     {
-                                                        RateLimitGuards.SendMessageGate.Release();
+                                                        RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
                                                     }
                                                     Declare.WarnedThreads.Remove(thread.Id.ToString());
                                                 }
@@ -149,7 +151,7 @@ public static class TrackingDataManager
                                                     DateTimeOffset localDeletionDate = TimeZoneInfo.ConvertTime(deletionDate, frenchTimeZone);
                                                     string formattedDeletionDate = localDeletionDate.ToString("dddd d MMMM yyyy à HH'h'mm", CultureInfo.GetCultureInfo("fr-FR"));
 
-                                                    await RateLimitGuards.SendMessageGate.WaitAsync(ctChan);
+                                                    await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
                                                     try
                                                     {
                                                         await BotCommands.SendMessageAsync(
@@ -158,7 +160,7 @@ public static class TrackingDataManager
                                                     }
                                                     finally
                                                     {
-                                                        RateLimitGuards.SendMessageGate.Release();
+                                                        RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
                                                     }
 
                                                     Declare.WarnedThreads.Add(thread.Id.ToString());
@@ -185,7 +187,7 @@ public static class TrackingDataManager
                                             return;
                                         }
                                         Console.WriteLine(string.Format(Resource.TDMCheckingItems, channelCheck.Name));
-                                        await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent);
+                                        await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
 
                                         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guild, channel);
                                     }
@@ -208,14 +210,17 @@ public static class TrackingDataManager
         }, token);
     }
 
-    private static readonly HttpClient _http = new HttpClient();
+    internal static readonly HttpClient Http = new HttpClient();
 
-    public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent)
+    public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent)
+        => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None);
+
+    public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan)
     {
         var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
 
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
-        var json = await _http.GetStringAsync(url).ConfigureAwait(false);
+        var json = await Http.GetStringAsync(url);
 
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
@@ -228,12 +233,12 @@ public static class TrackingDataManager
 
         if (statuses.Count > 0)
         {
-            await ProcessGameStatusTableAsync(guild, channel, statuses, silent).ConfigureAwait(false);
+            await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
         }
 
         if (items.Count > 0)
         {
-            await ProcessItemsTableAsync(guild, channel, items, silent).ConfigureAwait(false);
+            await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
         }
 
         if (hints.Count > 0)
@@ -288,7 +293,7 @@ public static class TrackingDataManager
         return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
     }
 
-    private static async Task ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent)
+    private static async Task ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent, CancellationToken ctChan)
     {
         var channelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
         var existingKeys = new HashSet<string>(await DisplayItemCommands.GetExistingKeysAsync(guild, channel));
@@ -310,6 +315,8 @@ public static class TrackingDataManager
 
             if (channelExists)
             {
+                ulong guildIdLong = ulong.Parse(guild);
+
                 var groupedByReceiver = newItems.GroupBy(item => item.Receiver ?? "Inconnu");
 
                 foreach (var group in groupedByReceiver)
@@ -334,14 +341,14 @@ public static class TrackingDataManager
 
                         string finalMessage = header + "\n" + chunks[i];
 
-                        await RateLimitGuards.SendMessageGate.WaitAsync();
+                        await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
                         try
                         {
                             await BotCommands.SendMessageAsync(finalMessage, channel);
                         }
                         finally
                         {
-                            RateLimitGuards.SendMessageGate.Release();
+                            RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
                         }
 
                         await Task.Delay(1100);
@@ -389,7 +396,7 @@ public static class TrackingDataManager
             await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
     }
 
-    private static async Task ProcessGameStatusTableAsync(string guild, string channel, List<GameStatus> statuses, bool silent)
+    private static async Task ProcessGameStatusTableAsync(string guild, string channel, List<GameStatus> statuses, bool silent, CancellationToken ctChan)
     {
         if (statuses == null || statuses.Count == 0)
             return;
@@ -438,16 +445,17 @@ public static class TrackingDataManager
 
                 if (canAnnounce)
                 {
+                    uint guildIdLong = uint.Parse(guild);
                     string text = string.Format(Resource.TDMGoalComplete, done.Name, done.Game);
 
-                    await RateLimitGuards.SendMessageGate.WaitAsync();
+                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
                     try
                     {
                         await BotCommands.SendMessageAsync(text, channel);
                     }
                     finally
                     {
-                        RateLimitGuards.SendMessageGate.Release();
+                        RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
                     }
 
                     await Task.Delay(1100);

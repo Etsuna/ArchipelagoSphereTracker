@@ -1,14 +1,14 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace TrackerLib.Services
+namespace ArchipelagoSphereTracker.src.TrackerLib.Services
 {
     public static class TrackerDatapackageFetcher
     {
-        public static async Task<TrackerRoot> getRoots(string baseUrl, string trackerId)
+        public static async Task<TrackerRoot> getRoots(string baseUrl, string trackerId, HttpClient? http = null)
         {
             var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{trackerId}";
-            using var http = new HttpClient();
+            http ??= new HttpClient();
             var json = await http.GetStringAsync(url);
 
             var options = new JsonSerializerOptions
@@ -20,7 +20,7 @@ namespace TrackerLib.Services
             var rootTracker = JsonSerializer.Deserialize<TrackerRoot>(json, options)
                                ?? throw new InvalidOperationException("Empty tracker payload");
 
-            return (rootTracker);
+            return rootTracker;
         }
 
         public static IDictionary<string, string> GetDatapackageChecksums(TrackerRoot root)

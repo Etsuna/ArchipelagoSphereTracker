@@ -1,4 +1,5 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Discord;
 using Discord.WebSocket;
 using System;
@@ -141,7 +142,7 @@ public class UrlClass
                         });
                     }
 
-                    var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker);
+                    var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
                     var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
                     await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
 

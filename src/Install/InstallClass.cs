@@ -67,7 +67,7 @@ public class InstallClass : Declare
         static async Task InstallInnoExtractor()
         {
             Console.WriteLine(string.Format(Resource.InstallDLInnoExtractor, DownloadInnoExtractor));
-            HttpResponseMessage responseDownloadInnoExtractor = await Declare.HttpClient.GetAsync(DownloadInnoExtractor);
+            HttpResponseMessage responseDownloadInnoExtractor = await HttpClient.GetAsync(DownloadInnoExtractor);
 
             if (!responseDownloadInnoExtractor.IsSuccessStatusCode)
             {
@@ -92,7 +92,7 @@ public class InstallClass : Declare
         static async Task DownloadArchipelagoForWindows()
         {
             Console.WriteLine(string.Format(Resource.InstallDLArchipelagoWindows, DownloadWinUrl));
-            HttpResponseMessage responseDownloadWinUrl = await Declare.HttpClient.GetAsync(DownloadWinUrl);
+            HttpResponseMessage responseDownloadWinUrl = await HttpClient.GetAsync(DownloadWinUrl);
 
             if (!responseDownloadWinUrl.IsSuccessStatusCode)
             {
@@ -153,7 +153,7 @@ public class InstallClass : Declare
         static void MoveAppFileToArchipelagoFolder()
         {
             Console.WriteLine(Resource.InstallMoveArchipelagoFiles);
-            
+
             if (Directory.Exists(AppPath))
             {
                 foreach (string file in Directory.GetFiles(AppPath, "*", SearchOption.AllDirectories))
@@ -237,7 +237,7 @@ public class InstallClass : Declare
         static async Task DownloadAndExtractArchipelagoForLinux()
         {
             Console.WriteLine(string.Format(Resource.InstallDlArchipelagoLinux, DownloadLinuxUrl));
-            HttpResponseMessage responseDownloadLinuxUrl = await Declare.HttpClient.GetAsync(DownloadLinuxUrl);
+            HttpResponseMessage responseDownloadLinuxUrl = await HttpClient.GetAsync(DownloadLinuxUrl);
 
             if (!responseDownloadLinuxUrl.IsSuccessStatusCode)
             {
