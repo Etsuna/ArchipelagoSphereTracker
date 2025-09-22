@@ -184,11 +184,12 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             var list = new List<GameStatus>(64);
 
             var activityBySlot = ParseActivityTimersMap(json);
+            var foundBySlot = ParseChecksDoneCountsMap(json);
 
             var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
                 new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
 
-            if (!MoveToProperty(ref reader, "player_checks_counts", JsonTokenType.StartArray))
+            if (!MoveToProperty(ref reader, "player_locations_total", JsonTokenType.StartArray))
                 return list;
 
             while (reader.Read())
@@ -202,7 +203,6 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
 
                     int slot = 0;
-                    int found = 0;
                     int total = 0;
 
                     while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
@@ -211,8 +211,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                         var prop = reader.GetString(); reader.Read();
 
                         if (prop == "player") slot = ReadInt(ref reader);
-                        else if (prop == "found") found = ReadInt(ref reader);
-                        else if (prop == "total") total = ReadInt(ref reader);
+                        else if (prop == "total_locations") total = ReadInt(ref reader);
                         else SkipValue(ref reader);
                     }
 
@@ -220,7 +219,8 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     {
                         var alias = ctx.SlotAlias(slot) ?? string.Empty;
                         var game = ctx.SlotGame(slot) ?? string.Empty;
-                        var last = activityBySlot.TryGetValue(slot, out var t) ? t : null; 
+                        var last = activityBySlot.TryGetValue(slot, out var t) ? t : null;
+                        var found = foundBySlot.TryGetValue(slot, out var c) ? c : 0;
 
                         list.Add(new GameStatus
                         {
@@ -235,6 +235,57 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             }
 
             return list;
+        }
+
+
+        private static Dictionary<int, int> ParseChecksDoneCountsMap(string json)
+        {
+            var result = new Dictionary<int, int>();
+            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
+                new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
+
+            if (!MoveToProperty(ref reader, "player_checks_done", JsonTokenType.StartArray))
+                return result;
+
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonTokenType.EndArray) break;
+                if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
+
+                int slot = 0;
+                int count = 0;
+
+                while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+                {
+                    if (reader.TokenType != JsonTokenType.PropertyName) { SkipValue(ref reader); continue; }
+                    var prop = reader.GetString(); reader.Read();
+
+                    if (prop == "player")
+                    {
+                        slot = ReadInt(ref reader);
+                    }
+                    else if (prop == "locations" && reader.TokenType == JsonTokenType.StartArray)
+                    {
+                        // Compter les éléments du tableau sans les stocker
+                        count = 0;
+                        while (reader.Read())
+                        {
+                            if (reader.TokenType == JsonTokenType.EndArray) break;
+                            SkipValue(ref reader); // on ignore la valeur
+                            count++;
+                        }
+                    }
+                    else
+                    {
+                        SkipValue(ref reader);
+                    }
+                }
+
+                if (slot > 0)
+                    result[slot] = count;
+            }
+
+            return result;
         }
 
 

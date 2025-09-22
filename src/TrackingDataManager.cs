@@ -445,7 +445,7 @@ public static class TrackingDataManager
 
                 if (canAnnounce)
                 {
-                    uint guildIdLong = uint.Parse(guild);
+                    ulong guildIdLong = ulong.Parse(guild);
                     string text = string.Format(Resource.TDMGoalComplete, done.Name, done.Game);
 
                     await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
