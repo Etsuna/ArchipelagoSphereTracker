@@ -21,12 +21,6 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                 if (reader.TokenType == JsonTokenType.EndArray) break;
                 if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
 
-                if (!MoveToProperty(ref reader, "players", JsonTokenType.StartArray))
-                {
-                    SkipObject(ref reader);
-                    continue;
-                }
-
                 while (reader.Read())
                 {
                     if (reader.TokenType == JsonTokenType.EndArray) break;
@@ -110,12 +104,6 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             {
                 if (reader.TokenType == JsonTokenType.EndArray) break;
                 if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
-
-                if (!MoveToProperty(ref reader, "players", JsonTokenType.StartArray))
-                {
-                    SkipObject(ref reader);
-                    continue;
-                }
 
                 while (reader.Read())
                 {
@@ -207,12 +195,6 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             {
                 if (reader.TokenType == JsonTokenType.EndArray) break;
                 if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
-
-                if (!MoveToProperty(ref reader, "players", JsonTokenType.StartArray))
-                {
-                    SkipObject(ref reader);
-                    continue;
-                }
 
                 while (reader.Read())
                 {
@@ -329,12 +311,6 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             {
                 if (reader.TokenType == JsonTokenType.EndArray) break;
                 if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
-
-                if (!MoveToProperty(ref reader, "players", JsonTokenType.StartArray))
-                {
-                    SkipObject(ref reader);
-                    continue;
-                }
 
                 while (reader.Read())
                 {

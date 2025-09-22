@@ -7,7 +7,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
     {
         public static async Task<TrackerRoot> getRoots(string baseUrl, string trackerId, HttpClient? http = null)
         {
-            var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{trackerId}";
+            var url = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{trackerId}";
             http ??= new HttpClient();
             var json = await http.GetStringAsync(url);
 
