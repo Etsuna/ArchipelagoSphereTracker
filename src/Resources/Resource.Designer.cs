@@ -2113,7 +2113,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Waiting 5 minutes before the next check....
+        ///   Recherche une chaîne localisée semblable à Waiting 1 minutes before the next check....
         /// </summary>
         internal static string TDMWaitingCheck {
             get {

@@ -169,7 +169,7 @@
     <value>Serveur introuvable {0}, suppression des informations.</value>
   </data>
   <data name="TDMWaitingCheck" xml:space="preserve">
-    <value>Attente de 5 minutes avant la prochaine vérification...</value>
+    <value>Attente de 1 minutes avant la prochaine vérification...</value>
   </data>
   <data name="TDMTrackingCanceled" xml:space="preserve">
     <value>Tracking annulé.</value>

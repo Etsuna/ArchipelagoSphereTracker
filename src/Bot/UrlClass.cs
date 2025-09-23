@@ -2,12 +2,9 @@
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Discord;
 using Discord.WebSocket;
-using System;
 using System.Net;
 using System.Text.Json;
 using TrackerLib.Models;
-using TrackerLib.Services;
-
 
 public class UrlClass
 {

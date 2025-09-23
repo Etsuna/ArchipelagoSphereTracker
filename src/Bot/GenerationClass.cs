@@ -6,7 +6,6 @@ using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
 
-
 public class GenerationClass : Declare
 {
     private static string GetLauncherPath()

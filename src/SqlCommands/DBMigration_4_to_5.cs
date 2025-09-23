@@ -1,7 +1,6 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using System.Data.SQLite;
-using TrackerLib.Services;
 
 public static class DBMigration
 {

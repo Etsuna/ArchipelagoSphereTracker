@@ -200,7 +200,7 @@ public static class TrackingDataManager
 
                     Console.WriteLine(Resource.TDMWaitingCheck);
                     await DatabaseCommands.ReclaimSpaceAsync();
-                    await Task.Delay(300000);
+                    await Task.Delay(60000);
                 }
             }
             catch (TaskCanceledException)

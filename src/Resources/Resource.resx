@@ -186,8 +186,8 @@
     <comment>Server not found {guild}, deleting the information.</comment>
   </data>
   <data name="TDMWaitingCheck" xml:space="preserve">
-    <value>Waiting 5 minutes before the next check...</value>
-    <comment>Waiting 5 minutes before the next check...</comment>
+    <value>Waiting 1 minutes before the next check...</value>
+    <comment>Waiting 1 minutes before the next check...</comment>
   </data>
   <data name="TDMTrackingCanceled" xml:space="preserve">
     <value>Tracking canceled.</value>
