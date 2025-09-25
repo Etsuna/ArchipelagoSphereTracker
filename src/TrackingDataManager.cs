@@ -222,9 +222,12 @@ public static class TrackingDataManager
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
         var json = await Http.GetStringAsync(url);
 
+        var urlStatic = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{tracker}";
+        var jsonStatic = await Http.GetStringAsync(urlStatic);
+
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
-        var statuses = TrackerStreamParser.ParseGameStatus(ctx, json);
+        var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, jsonStatic);
 
         if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0)
         {

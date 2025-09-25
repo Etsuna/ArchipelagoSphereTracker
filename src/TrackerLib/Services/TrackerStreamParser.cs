@@ -179,14 +179,14 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             return list;
         }
 
-        public static List<GameStatus> ParseGameStatus(ProcessingContext ctx, string json)
+        public static List<GameStatus> ParseGameStatus(ProcessingContext ctx, string json, string jsonStatic)
         {
             var list = new List<GameStatus>(64);
 
             var activityBySlot = ParseActivityTimersMap(json);
             var foundBySlot = ParseChecksDoneCountsMap(json);
 
-            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
+            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(jsonStatic),
                 new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
 
             if (!MoveToProperty(ref reader, "player_locations_total", JsonTokenType.StartArray))
