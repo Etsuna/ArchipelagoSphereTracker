@@ -1,22 +1,25 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using System.Data.SQLite;
+using System.Net.Http;
+using System.Threading;
 
 public static class DBMigration
 {
-    public static async Task Migrate_4_to_5Async()
+    public static async Task Migrate_4_to_5Async(CancellationToken ct = default)
     {
         var guildList = await GetAllGuildChannelMappingsAsync();
-        await Task.Delay(1000);
+        await Task.Delay(1000, ct);
         var OldDisplayedItems = await GetAllDisplayedItemsAsync();
-        await Task.Delay(1000);
+        await Task.Delay(1000, ct);
 
         await RunSchemaUpgradeAsync();
-        await Task.Delay(1000);
-
+        await Task.Delay(1000, ct);
 
         foreach (var guild in guildList)
         {
+            ct.ThrowIfCancellationRequested();
+
             Console.WriteLine($"Migrate Guild: {guild.GuildId}, Channel: {guild.ChannelId}, Room: {guild.Room}");
 
             string guildId = guild.GuildId;
@@ -94,12 +97,14 @@ public static class DBMigration
 
                         foreach (var player in roomInfo.Players)
                         {
+                            ct.ThrowIfCancellationRequested();
                             aliasList.Add((aliasSlot, player.Name, player.Game));
                             aliasSlot++;
                         }
 
                         foreach (var download in roomInfo.Downloads)
                         {
+                            ct.ThrowIfCancellationRequested();
                             aliasList.Where(x => x.slot == download.Slot).ToList().ForEach(slot =>
                             {
                                 var patchLink = new Patch
@@ -125,7 +130,7 @@ public static class DBMigration
                             await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                             await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
 
-                            await MigrateTableData(guildId, channelId, silent, baseUrl, tracker, OldDisplayedItems);
+                            await MigrateTableData(guildId, channelId, silent, baseUrl, tracker, OldDisplayedItems, ct);
                             await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
 
                             await BotCommands.SendMessageAsync(Resource.BDDUpdated, channelId);
@@ -146,12 +151,12 @@ public static class DBMigration
 
     private static readonly HttpClient _http = new HttpClient();
 
-    public static async Task MigrateTableData(string guild, string channel, bool silent, string baseUrl, string tracker, List<DisplayedItem_Old> oldDisplayedItems)
+    public static async Task MigrateTableData(string guild, string channel, bool silent, string baseUrl, string tracker, List<DisplayedItem_Old> oldDisplayedItems, CancellationToken ct = default)
     {
         var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
 
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
-        var json = await _http.GetStringAsync(url).ConfigureAwait(false);
+        var json = await _http.GetStringAsync(url, ct).ConfigureAwait(false);
 
         var newDisplayItems = TrackerStreamParser.ParseItems(ctx, json);
 

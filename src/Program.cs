@@ -158,10 +158,12 @@ class Program
             Console.WriteLine(Resource.CheckingBDDVersion);
             string bddVersion = await DBMigration.GetCurrentDbVersionAsync();
 
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
             if (bddVersion == "-1")
             {
                 Console.WriteLine(Resource.NoBddVersionTable);
-                await DBMigration.Migrate_4_to_5Async();
+                await DBMigration.Migrate_4_to_5Async(cts.Token);
                 await DBMigration.SetDbVersionAsync(Declare.BddVersion);
                 await DBMigration.DropLegacyTablesAsync();
             }
@@ -172,7 +174,7 @@ class Program
             else
             {
                 Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
-                await DBMigration.Migrate_4_to_5Async();
+                await DBMigration.Migrate_4_to_5Async(cts.Token);
                 await DBMigration.SetDbVersionAsync(Declare.BddVersion);
                 await DBMigration.DropLegacyTablesAsync();
             }

@@ -4,7 +4,10 @@ using System.Text.Json.Serialization;
 
 public static class DatapackageStore
 {
-    private static readonly HttpClient Http = new HttpClient();
+    private static readonly HttpClient Http = new HttpClient
+    {
+        Timeout = TimeSpan.FromSeconds(10)
+    };
 
     // ---- Modèle du JSON attendu ----
     private sealed class Datapackage
@@ -26,61 +29,81 @@ public static class DatapackageStore
     /// Importe un datapackage depuis une URL http(s) ou un chemin local.
     /// truncate=true : purge d'abord Datapackage* (Items/ItemGroups/Locations/LocationGroups) pour (guildId, channelId, datasetKey).
     /// </summary>
-    public static async Task ImportAsync(string pathOrUrl, string guildId, string channelId, string datasetKey, bool truncate = false, string? gameName = null)
+    public static async Task ImportAsync(string pathOrUrl, string guildId, string channelId, string datasetKey, bool truncate = false, string? gameName = null, CancellationToken ct = default)
     {
-        // 1) Récupérer les octets (URL ou fichier)
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(30)); 
+
         byte[] payload;
         if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var uri) &&
             (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
         {
-            payload = await Http.GetByteArrayAsync(uri).ConfigureAwait(false);
+            using var req = new HttpRequestMessage(HttpMethod.Get, uri);
+            using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
+            resp.EnsureSuccessStatusCode();
+            payload = await resp.Content.ReadAsByteArrayAsync(cts.Token).ConfigureAwait(false);
         }
         else
         {
             if (!File.Exists(pathOrUrl))
                 throw new FileNotFoundException($"JSON introuvable: {pathOrUrl}");
-            payload = await File.ReadAllBytesAsync(pathOrUrl).ConfigureAwait(false);
+
+            using var fs = new FileStream(pathOrUrl, FileMode.Open, FileAccess.Read, FileShare.Read, 128 * 1024, useAsync: true);
+            if (fs.Length > 64L * 1024 * 1024) 
+                throw new InvalidOperationException("Datapackage trop volumineux");
+
+            payload = new byte[fs.Length];
+            int off = 0;
+            while (off < payload.Length)
+            {
+                ct.ThrowIfCancellationRequested();
+                var read = await fs.ReadAsync(payload.AsMemory(off), cts.Token).ConfigureAwait(false);
+                if (read == 0) break;
+                off += read;
+            }
         }
 
-        // 2) Parser le JSON
         var data = JsonSerializer.Deserialize<Datapackage>(payload)
                    ?? throw new InvalidOperationException("JSON invalide (désérialisation nulle)");
 
-        // 3) Import en transaction
         await using var connection = await Db.OpenWriteAsync().ConfigureAwait(false);
-        await using var tx = connection.BeginTransaction(); // SQLiteTransaction
+        await using var tx = connection.BeginTransaction();
 
-        // Optionnel : purge pour ce triplet (Guild, Channel, Dataset)
         if (truncate)
         {
+            ct.ThrowIfCancellationRequested();
             await ExecAsync(connection, tx,
                 @"DELETE FROM DatapackageItemGroups WHERE GuildId=@G AND ChannelId=@C AND DatasetKey=@D;",
                 ("@G", guildId), ("@C", channelId), ("@D", datasetKey));
+            ct.ThrowIfCancellationRequested();
             await ExecAsync(connection, tx,
                 @"DELETE FROM DatapackageLocationGroups WHERE GuildId=@G AND ChannelId=@C AND DatasetKey=@D;",
                 ("@G", guildId), ("@C", channelId), ("@D", datasetKey));
+            ct.ThrowIfCancellationRequested();
             await ExecAsync(connection, tx,
                 @"DELETE FROM DatapackageItems WHERE GuildId=@G AND ChannelId=@C AND DatasetKey=@D;",
                 ("@G", guildId), ("@C", channelId), ("@D", datasetKey));
+            ct.ThrowIfCancellationRequested();
             await ExecAsync(connection, tx,
                 @"DELETE FROM DatapackageLocations WHERE GuildId=@G AND ChannelId=@C AND DatasetKey=@D;",
                 ("@G", guildId), ("@C", channelId), ("@D", datasetKey));
         }
 
-
         // ----- Items -----
         await using (var insertItem = new SQLiteCommand(
             @"INSERT OR IGNORE INTO DatapackageItems (GuildId, ChannelId, DatasetKey, Id, Name)
-      VALUES (@G, @C, @D, @Id, @Name);", connection, tx))
+              VALUES (@G, @C, @D, @Id, @Name);", connection, tx))
         {
             insertItem.Parameters.Add("@G", System.Data.DbType.String);
             insertItem.Parameters.Add("@C", System.Data.DbType.String);
             insertItem.Parameters.Add("@D", System.Data.DbType.String);
-            insertItem.Parameters.Add("@Id", System.Data.DbType.Int64);   // <— Int64
+            insertItem.Parameters.Add("@Id", System.Data.DbType.Int64);
             insertItem.Parameters.Add("@Name", System.Data.DbType.String);
 
             foreach (var kv in data.ItemNameToId)
             {
+                ct.ThrowIfCancellationRequested();
+
                 if (!TryGetLong(kv.Value, out var id))
                 {
                     Console.WriteLine($"[WARN] Item '{kv.Key}' a un id invalide: {kv.Value.GetRawText()}");
@@ -90,8 +113,9 @@ public static class DatapackageStore
                 insertItem.Parameters["@G"].Value = guildId;
                 insertItem.Parameters["@C"].Value = channelId;
                 insertItem.Parameters["@D"].Value = datasetKey;
-                insertItem.Parameters["@Id"].Value = id;     // long
+                insertItem.Parameters["@Id"].Value = id;
                 insertItem.Parameters["@Name"].Value = kv.Key;
+
                 await insertItem.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
         }
@@ -99,18 +123,22 @@ public static class DatapackageStore
         // ----- ItemGroups -----
         await using (var insertItemGroup = new SQLiteCommand(
             @"INSERT OR IGNORE INTO DatapackageItemGroups (GuildId, ChannelId, DatasetKey, GroupName, ItemId)
-      VALUES (@G, @C, @D, @Group, @ItemId);", connection, tx))
+              VALUES (@G, @C, @D, @Group, @ItemId);", connection, tx))
         {
             insertItemGroup.Parameters.Add("@G", System.Data.DbType.String);
             insertItemGroup.Parameters.Add("@C", System.Data.DbType.String);
             insertItemGroup.Parameters.Add("@D", System.Data.DbType.String);
             insertItemGroup.Parameters.Add("@Group", System.Data.DbType.String);
-            insertItemGroup.Parameters.Add("@ItemId", System.Data.DbType.Int64); // <— Int64
+            insertItemGroup.Parameters.Add("@ItemId", System.Data.DbType.Int64);
 
             foreach (var (groupName, names) in data.ItemNameGroups)
             {
+                ct.ThrowIfCancellationRequested();
+
                 foreach (var name in names)
                 {
+                    ct.ThrowIfCancellationRequested();
+
                     if (!TryGetId(data.ItemNameToId, name, out var id))
                     {
                         Console.WriteLine($"[WARN] Item group '{groupName}' contient '{name}' sans id valide");
@@ -121,7 +149,8 @@ public static class DatapackageStore
                     insertItemGroup.Parameters["@C"].Value = channelId;
                     insertItemGroup.Parameters["@D"].Value = datasetKey;
                     insertItemGroup.Parameters["@Group"].Value = groupName;
-                    insertItemGroup.Parameters["@ItemId"].Value = id; // long
+                    insertItemGroup.Parameters["@ItemId"].Value = id;
+
                     await insertItemGroup.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             }
@@ -130,16 +159,18 @@ public static class DatapackageStore
         // ----- Locations -----
         await using (var insertLoc = new SQLiteCommand(
             @"INSERT OR IGNORE INTO DatapackageLocations (GuildId, ChannelId, DatasetKey, Id, Name)
-      VALUES (@G, @C, @D, @Id, @Name);", connection, tx))
+              VALUES (@G, @C, @D, @Id, @Name);", connection, tx))
         {
             insertLoc.Parameters.Add("@G", System.Data.DbType.String);
             insertLoc.Parameters.Add("@C", System.Data.DbType.String);
             insertLoc.Parameters.Add("@D", System.Data.DbType.String);
-            insertLoc.Parameters.Add("@Id", System.Data.DbType.Int64);   // <— Int64
+            insertLoc.Parameters.Add("@Id", System.Data.DbType.Int64);
             insertLoc.Parameters.Add("@Name", System.Data.DbType.String);
 
             foreach (var kv in data.LocationNameToId)
             {
+                ct.ThrowIfCancellationRequested();
+
                 if (!TryGetLong(kv.Value, out var id))
                 {
                     Console.WriteLine($"[WARN] Location '{kv.Key}' a un id invalide: {kv.Value.GetRawText()}");
@@ -149,8 +180,9 @@ public static class DatapackageStore
                 insertLoc.Parameters["@G"].Value = guildId;
                 insertLoc.Parameters["@C"].Value = channelId;
                 insertLoc.Parameters["@D"].Value = datasetKey;
-                insertLoc.Parameters["@Id"].Value = id;     // long
+                insertLoc.Parameters["@Id"].Value = id;
                 insertLoc.Parameters["@Name"].Value = kv.Key;
+
                 await insertLoc.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
         }
@@ -158,18 +190,22 @@ public static class DatapackageStore
         // ----- LocationGroups -----
         await using (var insertLocGroup = new SQLiteCommand(
             @"INSERT OR IGNORE INTO DatapackageLocationGroups (GuildId, ChannelId, DatasetKey, GroupName, LocationId)
-      VALUES (@G, @C, @D, @Group, @LocId);", connection, tx))
+              VALUES (@G, @C, @D, @Group, @LocId);", connection, tx))
         {
             insertLocGroup.Parameters.Add("@G", System.Data.DbType.String);
             insertLocGroup.Parameters.Add("@C", System.Data.DbType.String);
             insertLocGroup.Parameters.Add("@D", System.Data.DbType.String);
             insertLocGroup.Parameters.Add("@Group", System.Data.DbType.String);
-            insertLocGroup.Parameters.Add("@LocId", System.Data.DbType.Int64); // <— Int64
+            insertLocGroup.Parameters.Add("@LocId", System.Data.DbType.Int64);
 
             foreach (var (groupName, names) in data.LocationNameGroups)
             {
+                ct.ThrowIfCancellationRequested();
+
                 foreach (var name in names)
                 {
+                    ct.ThrowIfCancellationRequested();
+
                     if (!TryGetId(data.LocationNameToId, name, out var id))
                     {
                         Console.WriteLine($"[WARN] Location group '{groupName}' contient '{name}' sans id valide");
@@ -180,23 +216,27 @@ public static class DatapackageStore
                     insertLocGroup.Parameters["@C"].Value = channelId;
                     insertLocGroup.Parameters["@D"].Value = datasetKey;
                     insertLocGroup.Parameters["@Group"].Value = groupName;
-                    insertLocGroup.Parameters["@LocId"].Value = id; // long
+                    insertLocGroup.Parameters["@LocId"].Value = id;
+
                     await insertLocGroup.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             }
         }
 
+        // Mapping jeu -> dataset
         if (!string.IsNullOrWhiteSpace(gameName))
         {
+            ct.ThrowIfCancellationRequested();
+
             await ExecAsync(connection, tx,
                 @"INSERT INTO DatapackageGameMap(GuildId, ChannelId, GameName, DatasetKey, ImportedAt)
-              VALUES (@G, @C, @Game, @D, @Now)
-              ON CONFLICT(GuildId, ChannelId, GameName) DO UPDATE SET
-                DatasetKey = excluded.DatasetKey,
-                ImportedAt = excluded.ImportedAt;",
+                  VALUES (@G, @C, @Game, @D, @Now)
+                  ON CONFLICT(GuildId, ChannelId, GameName) DO UPDATE SET
+                    DatasetKey = excluded.DatasetKey,
+                    ImportedAt = excluded.ImportedAt;",
                 ("@G", guildId),
                 ("@C", channelId),
-                ("@Game", gameName),
+                ("@Game", gameName!),
                 ("@D", datasetKey),
                 ("@Now", DateTime.UtcNow.ToString("o")));
         }

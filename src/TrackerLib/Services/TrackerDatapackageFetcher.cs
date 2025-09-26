@@ -7,9 +7,13 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
     {
         public static async Task<TrackerRoot> getRoots(string baseUrl, string trackerId, HttpClient? http = null)
         {
+            CancellationToken ct = default;
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
             var url = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{trackerId}";
             http ??= new HttpClient();
-            var json = await http.GetStringAsync(url);
+
+            var json = await http.GetStringAsync(url, ct).ConfigureAwait(false);
 
             var options = new JsonSerializerOptions
             {
@@ -64,11 +68,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     continue;
 
                 var link = $"{baseUrl.TrimEnd('/')}/api/datapackage/{checksum}";
-                await DatapackageStore.ImportAsync(
-                    link, guildId, channelId,
-                    datasetKey: checksum,
-                    truncate: false,
-                    gameName: game);
+                await DatapackageStore.ImportAsync(link, guildId, channelId, datasetKey: checksum, truncate: false, gameName: game);
             }
         }
     }

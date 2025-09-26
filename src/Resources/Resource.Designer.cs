@@ -907,6 +907,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à New Hint: **{0}&apos;s** **{1}** is at **{2}** in **{3}&apos;s** World..
+        /// </summary>
+        internal static string HintItemNew {
+            get {
+                return ResourceManager.GetString("HintItemNew", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Hint Update : **{0}&apos;s** **{1}** is at **{2}** in **{3}&apos;s** World..
+        /// </summary>
+        internal static string HintItemUpdated {
+            get {
+                return ResourceManager.GetString("HintItemUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Alias not specified..
         /// </summary>
         internal static string HintNoAlias {

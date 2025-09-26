@@ -210,7 +210,10 @@ public static class TrackingDataManager
         }, token);
     }
 
-    internal static readonly HttpClient Http = new HttpClient();
+    internal static readonly HttpClient Http = new HttpClient
+    {
+        Timeout = TimeSpan.FromSeconds(30)
+    };
 
     public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent)
         => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None);
@@ -219,35 +222,37 @@ public static class TrackingDataManager
     {
         var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
 
-        var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
-        var json = await Http.GetStringAsync(url);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctChan);
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
 
+        var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
         var urlStatic = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{tracker}";
-        var jsonStatic = await Http.GetStringAsync(urlStatic);
+
+        string json, jsonStatic;
+        try
+        {
+            json = await Http.GetStringAsync(url, cts.Token);
+            jsonStatic = await Http.GetStringAsync(urlStatic, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"[TDM] Serveur indisponible ou lent pour {baseUrl}. Abandon de la passe.");
+            return;
+        }
+        catch (HttpRequestException hre)
+        {
+            Console.WriteLine($"[TDM] Erreur HTTP pour {baseUrl}: {hre.Message}");
+            return;
+        }
 
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
         var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, jsonStatic);
+        if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0) return;
 
-        if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0)
-        {
-            return;
-        }
-
-        if (statuses.Count > 0)
-        {
-            await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
-        }
-
-        if (items.Count > 0)
-        {
-            await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
-        }
-
-        if (hints.Count > 0)
-        {
-            await ProcessHintTableAsync(guild, channel, hints, silent).ConfigureAwait(false);
-        }
+        if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
+        if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
+        if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent).ConfigureAwait(false);
     }
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
@@ -393,10 +398,52 @@ public static class TrackingDataManager
         }
 
         if (hintsToAdd.Count > 0)
+        {
             await HintStatusCommands.AddHintStatusAsync(guild, channel, hintsToAdd);
 
+            foreach(var hint in hintsToAdd)
+            {
+                if (!silent && hint.Finder != hint.Receiver)
+                {
+                    ulong guildIdLong = ulong.Parse(guild);
+                    string text = string.Format(Resource.HintItemNew, hint.Finder, hint.Item, hint.Receiver, hint.Location);
+                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync();
+                    try
+                    {
+                        await BotCommands.SendMessageAsync(text, channel);
+                    }
+                    finally
+                    {
+                        RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                    }
+                    await Task.Delay(1100);
+                }
+            }
+        }
+
         if (hintsToUpdate.Count > 0)
+        {
             await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
+
+            foreach (var hint in hintsToUpdate)
+            {
+                if (!silent && hint.Finder != hint.Receiver)
+                {
+                    ulong guildIdLong = ulong.Parse(guild);
+                    string text = string.Format(Resource.HintItemUpdated, hint.Finder, hint.Item, hint.Receiver, hint.Location);
+                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync();
+                    try
+                    {
+                        await BotCommands.SendMessageAsync(text, channel);
+                    }
+                    finally
+                    {
+                        RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                    }
+                    await Task.Delay(1100);
+                }
+            }
+        }
     }
 
     private static async Task ProcessGameStatusTableAsync(string guild, string channel, List<GameStatus> statuses, bool silent, CancellationToken ctChan)
@@ -545,5 +592,5 @@ public static class TrackingDataManager
     }
 
     private static string MakeKey(HintStatus h) =>
-        $"{h.Finder}|{h.Receiver}|{h.Item}|{h.Location}|{h.Game}|{h.Flag}";
+        $"{h.Finder}|{h.Receiver}|{h.Item}|{h.Location}|{h.Game}";
 }

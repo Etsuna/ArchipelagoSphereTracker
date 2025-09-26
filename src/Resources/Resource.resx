@@ -1133,4 +1133,12 @@
     <value>Error during the migration of your thread. Please delete your thread and re-add the URL.</value>
     <comment>Error during the migration of your thread. Please delete your thread and re-add the URL.</comment>
   </data>
+  <data name="HintItemUpdated" xml:space="preserve">
+    <value>Hint Update : **{0}'s** **{1}** is at **{2}** in **{3}'s** World.</value>
+    <comment>**{item.Receiver}'s** **{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World.@MutedRule(PunctuationLead)@MutedRule(PunctuationTail)</comment>
+  </data>
+  <data name="HintItemNew" xml:space="preserve">
+    <value>New Hint: **{0}'s** **{1}** is at **{2}** in **{3}'s** World.</value>
+    <comment>New Hint: **{item.Receiver}'s** **{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World.@MutedRule(PunctuationLead)@MutedRule(PunctuationTail)</comment>
+  </data>
 </root>
