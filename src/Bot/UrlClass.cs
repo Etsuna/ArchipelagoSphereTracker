@@ -139,15 +139,14 @@ public class UrlClass
                         });
                     }
 
-                    var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
-                    var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
-                    await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
-
                     if (!string.IsNullOrEmpty(tracker))
                     {
                         Declare.AddedChannelId.Add(channelId);
 
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr);
+                        var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
+                        var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
+                        await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                         await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
                         await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
