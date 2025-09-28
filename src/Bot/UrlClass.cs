@@ -153,7 +153,7 @@ public class UrlClass
                         await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent);
                         await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
                         await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
-                        await Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false);
+                        await Telemetry.SendTelemetryAsync(Declare.ProgramID, false);
                         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
 
                         Declare.AddedChannelId.Remove(channelId);
@@ -203,7 +203,7 @@ public class UrlClass
         var message = Resource.URLDeleted;
         await Task.WhenAll(
             BotCommands.RegisterCommandsAsync(),
-            Telemetry.SendDailyTelemetryAsync(Declare.ProgramID, false)
+            Telemetry.SendTelemetryAsync(Declare.ProgramID, false)
         ).ConfigureAwait(false);
 
         return message;

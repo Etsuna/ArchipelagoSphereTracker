@@ -2,55 +2,54 @@
 
 public static class TelemetryCommands
 {
-    // ==========================
-    // 🎯 Telemetry Has Been Sent Today (READ)
-    // ==========================
-    public static async Task<bool> HasTelemetryBeenSentTodayAsync()
+    public static async Task<bool> HasTelemetryBeenSentWithinAsync(int seconds)
     {
-        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
-
         try
         {
             await using var connection = await Db.OpenReadAsync();
-            using var command = new SQLiteCommand(
-                "SELECT 1 FROM TelemetryTable WHERE Date = @Date LIMIT 1;", connection);
-            command.Parameters.AddWithValue("@Date", today);
+            using var cmd = new SQLiteCommand(
+                "SELECT Date FROM TelemetryTable LIMIT 1;", connection);
 
-            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
-            return result != null;
+            var val = await cmd.ExecuteScalarAsync().ConfigureAwait(false) as string;
+            if (string.IsNullOrEmpty(val)) return false;
+
+            if (!DateTime.TryParse(val, null, System.Globalization.DateTimeStyles.AdjustToUniversal, out var last))
+                return false;
+
+            var elapsed = DateTime.UtcNow - last;
+            return elapsed.TotalSeconds < seconds;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error while checking telemetry: {ex.Message}");
             return false;
         }
     }
 
-    // ==========================
-    // 🎯 Mark Telemetry As Sent (WRITE)
-    // ==========================
     public static async Task MarkTelemetryAsSentAsync()
     {
-        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
-
+        var nowIso = DateTime.UtcNow.ToString("o");
         try
         {
             await Db.WriteAsync(async conn =>
             {
-                using (var deleteCmd = new SQLiteCommand("DELETE FROM TelemetryTable;", conn))
-                    await deleteCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                using (var create = new SQLiteCommand(
+                    "CREATE TABLE IF NOT EXISTS TelemetryTable (Date TEXT NOT NULL);", conn))
+                    await create.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                using (var insertCmd = new SQLiteCommand(
-                    "INSERT INTO TelemetryTable (Date) VALUES (@Date);", conn))
+                using (var clear = new SQLiteCommand("DELETE FROM TelemetryTable;", conn))
+                    await clear.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                using (var insert = new SQLiteCommand(
+                    "INSERT INTO TelemetryTable (Date) VALUES (@v);", conn))
                 {
-                    insertCmd.Parameters.AddWithValue("@Date", today);
-                    await insertCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    insert.Parameters.AddWithValue("@v", nowIso);
+                    await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             });
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error while saving telemetry: {ex.Message}");
+            // silencieux
         }
     }
 }

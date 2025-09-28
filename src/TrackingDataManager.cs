@@ -38,14 +38,10 @@ public static class TrackingDataManager
             {
                 await ChannelConfigCache.LoadAllAsync();
 
-                var programID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable");
-
                 while (!token.IsCancellationRequested)
                 {
                     var getAllGuild = await DatabaseCommands.GetAllGuildsAsync("ChannelsAndUrlsTable");
                     var uniqueGuilds = getAllGuild.Distinct().ToList();
-
-                    await Telemetry.SendDailyTelemetryAsync(programID);
 
                     await Parallel.ForEachAsync(
                         uniqueGuilds,
@@ -199,6 +195,7 @@ public static class TrackingDataManager
                         });
 
                     Console.WriteLine(Resource.TDMWaitingCheck);
+                    await Telemetry.SendTelemetryAsync(Declare.ProgramID);
                     await DatabaseCommands.ReclaimSpaceAsync();
                     await Task.Delay(60000);
                 }

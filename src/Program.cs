@@ -22,7 +22,6 @@ class Program
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
-
         if (!isWindows && !isLinux)
         {
             Console.WriteLine(Resource.ProgramOSNotSupported);
@@ -72,6 +71,7 @@ class Program
         }
 
         await DatabaseInitializer.InitializeDatabaseAsync();
+        Declare.ProgramID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable");
 
         if (args[0].ToLower() == "--install")
         {
