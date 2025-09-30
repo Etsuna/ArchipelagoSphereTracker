@@ -403,7 +403,7 @@ public static class TrackingDataManager
                 if (!silent && hint.Finder != hint.Receiver)
                 {
                     ulong guildIdLong = ulong.Parse(guild);
-                    string text = string.Format(Resource.HintItemNew, hint.Finder, hint.Item, hint.Receiver, hint.Location);
+                    string text = string.Format(Resource.HintItemNew, hint.Receiver, hint.Item, hint.Location, hint.Finder);
                     await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync();
                     try
                     {
