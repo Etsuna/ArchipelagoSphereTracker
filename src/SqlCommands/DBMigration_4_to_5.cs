@@ -535,17 +535,23 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
     {
         await Db.WriteAsync(async conn =>
         {
-            string[] legacyTables =
+            using (var fkOff = conn.CreateCommand())
             {
-                "ChannelsAndUrlsTable_legacy",
-                "UrlAndChannelPatchTable_legacy",
-                "AliasChoicesTable_legacy",
-                "DisplayedItemTable_legacy",
-                "GameStatusTable_legacy",
-                "HintStatusTable_legacy"
-            };
+                fkOff.CommandText = "PRAGMA foreign_keys = OFF;";
+                fkOff.ExecuteNonQuery();
+            }
 
-            foreach (var table in legacyTables)
+            string[] dropsInOrder =
+            {
+            "UrlAndChannelPatchTable_legacy", 
+            "AliasChoicesTable_legacy",
+            "DisplayedItemTable_legacy",
+            "GameStatusTable_legacy",
+            "HintStatusTable_legacy",
+            "ChannelsAndUrlsTable_legacy" 
+        };
+
+            foreach (var table in dropsInOrder)
             {
                 if (await TableExistsAsync(conn, table))
                 {
@@ -553,6 +559,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
                     cmd.CommandText = $"DROP TABLE IF EXISTS \"{table}\";";
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
+            }
+
+            using (var fkOn = conn.CreateCommand())
+            {
+                fkOn.CommandText = "PRAGMA foreign_keys = ON;";
+                fkOn.ExecuteNonQuery();
             }
         });
     }
