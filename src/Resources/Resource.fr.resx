@@ -315,9 +315,6 @@
   <data name="HelperPort" xml:space="preserve">
     <value>Port : {0}</value>
   </data>
-  <data name="HelperPortNotFound" xml:space="preserve">
-    <value>Port introuvable.</value>
-  </data>
   <data name="HelperGameStatusWithSilent" xml:space="preserve">
     <value>Statut pour tous les jeux, fil silencieux, uniquement pour les alias ajoutés :</value>
   </data>
@@ -884,5 +881,11 @@
   </data>
   <data name="HintItemNew" xml:space="preserve">
     <value>Nouvel Indice : L'item **{1}** de **{0}** se trouve à **{2}** dans le monde de **{3}**.</value>
+  </data>
+  <data name="HelperCheckFrequency" xml:space="preserve">
+    <value>Frequency Check: {0}</value>
+  </data>
+  <data name="HelperLastCheck" xml:space="preserve">
+    <value>Dernière Vérification: {0}</value>
   </data>
 </root>

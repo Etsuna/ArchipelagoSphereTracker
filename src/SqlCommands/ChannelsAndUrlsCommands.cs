@@ -106,16 +106,17 @@ public static class ChannelsAndUrlsCommands
     // ==========================
     // 🎯 GET URL AND TRACKER (READ)
     // ==========================
-    public static async Task<(string tracker, string baseUrl, string room, bool Silent)> GetTrackerUrlsAsync(string guildId, string channelId)
+    public static async Task<(string tracker, string baseUrl, string room, bool Silent, string CheckFrenquency, DateTimeOffset? LastCheck)>
+    GetTrackerUrlsAsync(string guildId, string channelId)
     {
         try
         {
             await using var connection = await Db.OpenReadAsync();
 
             using var command = new SQLiteCommand(@"
-                SELECT Tracker, BaseUrl, Room, Silent
-                FROM ChannelsAndUrlsTable
-                WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
+            SELECT Tracker, BaseUrl, Room, Silent, CheckFrequency, LastCheck
+            FROM ChannelsAndUrlsTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
 
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@ChannelId", channelId);
@@ -123,20 +124,30 @@ public static class ChannelsAndUrlsCommands
             using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
-                return (
-                    reader["Tracker"]?.ToString() ?? string.Empty,
-                    reader["BaseUrl"]?.ToString() ?? string.Empty,
-                    reader["Room"]?.ToString() ?? string.Empty,
-                    reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"])
-                );
+                var tracker = reader["Tracker"]?.ToString() ?? string.Empty;
+                var baseUrl = reader["BaseUrl"]?.ToString() ?? string.Empty;
+                var room = reader["Room"]?.ToString() ?? string.Empty;
+                var silent = reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]);
+                var checkFreq = reader["CheckFrequency"]?.ToString() ?? string.Empty;
+
+                DateTimeOffset? lastCheck = null;
+                var lastCheckS = reader["LastCheck"] as string;
+                if (!string.IsNullOrWhiteSpace(lastCheckS) &&
+                    DateTimeOffset.TryParse(lastCheckS, CultureInfo.InvariantCulture,
+                                            DateTimeStyles.AssumeUniversal, out var dt))
+                {
+                    lastCheck = dt;
+                }
+
+                return (tracker, baseUrl, room, silent, checkFreq, lastCheck);
             }
 
-            return (string.Empty, string.Empty, string.Empty, false);
+            return (string.Empty, string.Empty, string.Empty, false, string.Empty, null);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error while retrieving tracker URLs: {ex.Message}");
-            return (string.Empty, string.Empty, string.Empty, false);
+            return (string.Empty, string.Empty, string.Empty, false, string.Empty, null);
         }
     }
 

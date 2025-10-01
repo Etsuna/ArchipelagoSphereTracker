@@ -381,10 +381,6 @@
     <value>Port: {0}</value>
     <comment>Port: {port}</comment>
   </data>
-  <data name="HelperPortNotFound" xml:space="preserve">
-    <value>Port not found.</value>
-    <comment>Port not found.</comment>
-  </data>
   <data name="HelperGameStatusWithSilent" xml:space="preserve">
     <value>Status for all games, Thread is silent, Only for added aliases:</value>
     <comment>Status for all games, Thread is silent, Only for added aliases:</comment>
@@ -1140,5 +1136,13 @@
   <data name="HintItemNew" xml:space="preserve">
     <value>New Hint: **{0}'s** **{1}** is at **{2}** in **{3}'s** World.</value>
     <comment>New Hint: **{item.Receiver}'s** **{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World.@MutedRule(PunctuationLead)@MutedRule(PunctuationTail)</comment>
+  </data>
+  <data name="HelperCheckFrequency" xml:space="preserve">
+    <value>Frequency Check: {0}</value>
+    <comment>Frequency Check: {frequencyCheck}</comment>
+  </data>
+  <data name="HelperLastCheck" xml:space="preserve">
+    <value>Last Check: {0}</value>
+    <comment>Last Check: {lastCheck}</comment>
   </data>
 </root>

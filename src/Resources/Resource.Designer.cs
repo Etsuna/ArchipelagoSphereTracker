@@ -736,6 +736,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Frequency Check: {0}.
+        /// </summary>
+        internal static string HelperCheckFrequency {
+            get {
+                return ResourceManager.GetString("HelperCheckFrequency", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à ~~{0} - {1} - {2}%~~.
         /// </summary>
         internal static string HelperGameStatusDone {
@@ -781,6 +790,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Last Check: {0}.
+        /// </summary>
+        internal static string HelperLastCheck {
+            get {
+                return ResourceManager.GetString("HelperLastCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Receiver ID not specified..
         /// </summary>
         internal static string HelperNoId {
@@ -822,15 +840,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string HelperPort {
             get {
                 return ResourceManager.GetString("HelperPort", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Port not found..
-        /// </summary>
-        internal static string HelperPortNotFound {
-            get {
-                return ResourceManager.GetString("HelperPortNotFound", resourceCulture);
             }
         }
         

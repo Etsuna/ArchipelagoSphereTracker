@@ -29,64 +29,26 @@ public class HelperClass
 
     public static async Task<string> Info(string message, string channelId, string guildId)
     {
-        (var urlTracker, var urlSphereTracker, var room, var silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
+        (var tracker, var baseUrl, var room, var silent, var CheckFrequency, var LastCheck) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
 
-        if (!string.IsNullOrEmpty(room))
+        var roomInfo = await UrlClass.RoomInfo(baseUrl, room);
+
+        if (roomInfo != null)
         {
-            using HttpClient client = new();
-            string pageContent = await client.GetStringAsync(room);
-
-            string? port = null;
-            var match = Regex.Match(pageContent, @"/connect archipelago\.gg:(\d+)", RegexOptions.Singleline);
-
             message += Resource.HelperInfos + "\n";
-            message += string.Format(Resource.HelperRoom, room) + "\n";
-            message += string.Format(Resource.HelperUrlTracker, urlTracker) + "\n";
-            message += string.Format(Resource.HelperUrlSphereTracker, urlSphereTracker) + "\n";
+            message += string.Format(Resource.HelperRoom, $"{baseUrl}/room/{room}") + "\n";
+            message += string.Format(Resource.HelperUrlTracker, $"{baseUrl}/tracker/{tracker}") + "\n";
+            message += string.Format(Resource.HelperUrlSphereTracker, $"{baseUrl}/sphere_tracker/{tracker}") + "\n";
             message += string.Format(Resource.HelperSilent, TranslateBool(silent)) + "\n";
-
-            if (match.Success)
-            {
-                port = match.Groups[1].Value;
-                message += string.Format(Resource.HelperPort, port) + "\n";
-            }
-            else
-            {
-                message += Resource.HelperPortNotFound + "\n";
-            }
+            message += string.Format(Resource.HelperCheckFrequency, CheckFrequency) + "\n";
+            message += string.Format(Resource.HelperLastCheck, LastCheck) + "\n";
+            message += string.Format(Resource.HelperPort, roomInfo.LastPort) + "\n";
         }
         else
         {
             message = Resource.NoUrlRegistered;
         }
         return message;
-    }
-
-    public static async Task<string> GetPort(string channelId, string guildId)
-    {
-        (var urlTracker, var urlSphereTracker, var room, var silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
-        string? port = null;
-
-        if (!string.IsNullOrEmpty(room))
-        {
-            using HttpClient client = new();
-            string pageContent = await client.GetStringAsync(room);
-
-            var match = Regex.Match(pageContent, @"/connect archipelago\.gg:(\d+)", RegexOptions.Singleline);
-            if (match.Success)
-            {
-                port = match.Groups[1].Value;
-            }
-            else
-            {
-                port = string.Empty;
-            }
-        }
-        else
-        {
-            port = string.Empty;
-        }
-        return port;
     }
 
     public static async Task<string> StatusGameList(string message, string channelId, string guildId)
@@ -99,7 +61,7 @@ public class HelperClass
         }
 
         var getGameStatusForGuildAndChannelAsync = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guildId, channelId);
-        var (urlTracker, urlSphereTracker, room, silent) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
+        var (urlTracker, urlSphereTracker, room, silent, CheckFrequency, LastCheck) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 
         if (silent)
