@@ -106,7 +106,7 @@ public static class ChannelsAndUrlsCommands
     // ==========================
     // 🎯 GET URL AND TRACKER (READ)
     // ==========================
-    public static async Task<(string tracker, string baseUrl, string room, bool Silent, string CheckFrenquency, DateTimeOffset? LastCheck)>
+    public static async Task<(string tracker, string baseUrl, string room, bool Silent, string CheckFrenquency, string? LastCheck)>
     GetTrackerUrlsAsync(string guildId, string channelId)
     {
         try
@@ -130,13 +130,14 @@ public static class ChannelsAndUrlsCommands
                 var silent = reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]);
                 var checkFreq = reader["CheckFrequency"]?.ToString() ?? string.Empty;
 
-                DateTimeOffset? lastCheck = null;
+                var lastCheck = string.Empty;
                 var lastCheckS = reader["LastCheck"] as string;
                 if (!string.IsNullOrWhiteSpace(lastCheckS) &&
                     DateTimeOffset.TryParse(lastCheckS, CultureInfo.InvariantCulture,
                                             DateTimeStyles.AssumeUniversal, out var dt))
                 {
-                    lastCheck = dt;
+                    var language = CultureInfo.GetCultureInfo($"{Declare.Language}-{Declare.Language.ToUpperInvariant()}");
+                    lastCheck = dt.ToString("dd MMMM yyyy HH:mm:ss 'GMT'zzz", language);
                 }
 
                 return (tracker, baseUrl, room, silent, checkFreq, lastCheck);
