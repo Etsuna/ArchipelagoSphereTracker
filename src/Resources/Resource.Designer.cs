@@ -79,6 +79,42 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} d ago.
+        /// </summary>
+        internal static string AgoD {
+            get {
+                return ResourceManager.GetString("AgoD", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} h ago.
+        /// </summary>
+        internal static string AgoH {
+            get {
+                return ResourceManager.GetString("AgoH", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} min ago.
+        /// </summary>
+        internal static string AgoM {
+            get {
+                return ResourceManager.GetString("AgoM", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} s ago.
+        /// </summary>
+        internal static string AgoS {
+            get {
+                return ResourceManager.GetString("AgoS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Alias added: {0} is now associated with &lt;@{1}&gt; and its recap has been generated..
         /// </summary>
         internal static string AliasAdded {
@@ -736,7 +772,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Frequency Check: {0}.
+        ///   Recherche une chaîne localisée semblable à Frequency Check: {0}..
         /// </summary>
         internal static string HelperCheckFrequency {
             get {
@@ -790,7 +826,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Last Check: {0}.
+        ///   Recherche une chaîne localisée semblable à Last Check: {0}..
         /// </summary>
         internal static string HelperLastCheck {
             get {

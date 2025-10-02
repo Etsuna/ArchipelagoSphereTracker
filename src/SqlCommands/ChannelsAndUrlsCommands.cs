@@ -130,14 +130,29 @@ public static class ChannelsAndUrlsCommands
                 var silent = reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]);
                 var checkFreq = reader["CheckFrequency"]?.ToString() ?? string.Empty;
 
+                static string SinceAgo(DateTimeOffset dt)
+                {
+                    var diff = DateTimeOffset.UtcNow - dt.ToUniversalTime();
+                    if (diff.TotalSeconds < 60) return string.Format(Resource.AgoS, (int)diff.TotalSeconds);
+                    if (diff.TotalMinutes < 60) return string.Format(Resource.AgoM, (int)diff.TotalMinutes);
+                    if (diff.TotalHours < 24) return string.Format(Resource.AgoH, (int)diff.TotalHours);
+                    return string.Format(Resource.AgoD, (int)diff.TotalDays);
+                }
+
                 var lastCheck = string.Empty;
                 var lastCheckS = reader["LastCheck"] as string;
+
                 if (!string.IsNullOrWhiteSpace(lastCheckS) &&
                     DateTimeOffset.TryParse(lastCheckS, CultureInfo.InvariantCulture,
                                             DateTimeStyles.AssumeUniversal, out var dt))
                 {
                     var language = CultureInfo.GetCultureInfo($"{Declare.Language}-{Declare.Language.ToUpperInvariant()}");
-                    lastCheck = dt.ToString("dd MMMM yyyy HH:mm:ss 'GMT'zzz", language);
+                    var dtUtc = dt.ToUniversalTime();
+
+                    var formatted = dtUtc.ToString("dd MMMM yyyy HH:mm:ss 'GMT'zzz", language);
+                    var since = SinceAgo(dtUtc);
+
+                    lastCheck = $"{since}";
                 }
 
                 return (tracker, baseUrl, room, silent, checkFreq, lastCheck);

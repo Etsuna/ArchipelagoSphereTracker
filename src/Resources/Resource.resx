@@ -1138,11 +1138,27 @@
     <comment>New Hint: **{item.Receiver}'s** **{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World.@MutedRule(PunctuationLead)@MutedRule(PunctuationTail)</comment>
   </data>
   <data name="HelperCheckFrequency" xml:space="preserve">
-    <value>Frequency Check: {0}</value>
-    <comment>Frequency Check: {frequencyCheck}</comment>
+    <value>Frequency Check: {0}.</value>
+    <comment>Frequency Check: {frequencyCheck}.</comment>
   </data>
   <data name="HelperLastCheck" xml:space="preserve">
-    <value>Last Check: {0}</value>
-    <comment>Last Check: {lastCheck}</comment>
+    <value>Last Check: {0}.</value>
+    <comment>Last Check: {lastCheck}.</comment>
+  </data>
+  <data name="AgoS" xml:space="preserve">
+    <value>{0} s ago</value>
+    <comment>{time} s ago</comment>
+  </data>
+  <data name="AgoM" xml:space="preserve">
+    <value>{0} min ago</value>
+    <comment>{time} min ago</comment>
+  </data>
+  <data name="AgoH" xml:space="preserve">
+    <value>{0} h ago</value>
+    <comment>{time} h ago</comment>
+  </data>
+  <data name="AgoD" xml:space="preserve">
+    <value>{0} d ago</value>
+    <comment>{time} d ago</comment>
   </data>
 </root>
