@@ -134,17 +134,21 @@ class Program
 
         await Task.Delay(-1);
 
-        static async Task OnConnected()
-        {
-            await Task.Delay(TimeSpan.FromSeconds(10));
-            if (Declare.Cts == null || Declare.Cts.IsCancellationRequested)
-                TrackingDataManager.StartTracking();
-        }
-
         static Task OnDisconnected(Exception _)
         {
             Declare.Cts?.Cancel();
             return Task.CompletedTask;
+        }
+
+        static Task OnConnected()
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(10000); 
+                if (Declare.Cts == null || Declare.Cts.IsCancellationRequested)
+                    TrackingDataManager.StartTracking();
+            });
+            return Task.CompletedTask; 
         }
     }
 
@@ -159,9 +163,11 @@ class Program
         return Task.CompletedTask;
     }
 
-    static async Task ReadyAsync()
+    static Task ReadyAsync()
     {
-        await BotCommands.RegisterCommandsAsync();
+        _ = Task.Run(async () =>
+        {
+            await BotCommands.RegisterCommandsAsync();
         Console.WriteLine(Resource.ProgramBotIsConnected);
 
         if (SetBddVersion)
@@ -195,6 +201,8 @@ class Program
             }
         }
 
-        TrackingDataManager.StartTracking();
+            TrackingDataManager.StartTracking();
+        });
+        return Task.CompletedTask;
     }
 }
