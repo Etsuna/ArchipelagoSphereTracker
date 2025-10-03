@@ -25,9 +25,7 @@ public static class TrackingDataManager
         const int MaxChannelsParallel = 6;
 
         if (Declare.Cts != null)
-        {
             Declare.Cts.Cancel();
-        }
 
         Declare.Cts = new CancellationTokenSource();
         var token = Declare.Cts.Token;
@@ -40,21 +38,33 @@ public static class TrackingDataManager
 
                 while (!token.IsCancellationRequested)
                 {
+                    if (Declare.Client.ConnectionState != ConnectionState.Connected)
+                    {
+                        await Task.Delay(5000, token);
+                        continue;
+                    }
+
                     var getAllGuild = await DatabaseCommands.GetAllGuildsAsync("ChannelsAndUrlsTable");
                     var uniqueGuilds = getAllGuild.Distinct().ToList();
 
                     await Parallel.ForEachAsync(
                         uniqueGuilds,
-                        new ParallelOptions { MaxDegreeOfParallelism = MaxGuildsParallel },
+                        new ParallelOptions { MaxDegreeOfParallelism = MaxGuildsParallel, CancellationToken = token },
                         async (guild, ctGuild) =>
                         {
-                            var guildCheck = Declare.Client.GetGuild(ulong.Parse(guild));
+                            var guildId = ulong.Parse(guild);
+
+                            var guildCheck = Declare.Client.GetGuild(guildId);
                             if (guildCheck == null)
                             {
-                                Console.WriteLine(string.Format(Resource.TDMServerNotFound, guild));
-                                await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guild);
-                                await DatabaseCommands.ReclaimSpaceAsync();
-                                Console.WriteLine(Resource.TDMDeletionCompleted);
+                                var restGuild = await Declare.Client.Rest.GetGuildAsync(guildId);
+                                if (restGuild == null)
+                                {
+                                    Console.WriteLine(string.Format(Resource.TDMServerNotFound, guild));
+                                    await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guild);
+                                    await DatabaseCommands.ReclaimSpaceAsync();
+                                    Console.WriteLine(Resource.TDMDeletionCompleted);
+                                }
                                 return;
                             }
 
@@ -67,7 +77,7 @@ public static class TrackingDataManager
 
                             await Parallel.ForEachAsync(
                                 channelsToProcess,
-                                new ParallelOptions { MaxDegreeOfParallelism = MaxChannelsParallel },
+                                new ParallelOptions { MaxDegreeOfParallelism = MaxChannelsParallel, CancellationToken = token },
                                 async (channel, ctChan) =>
                                 {
                                     var key = $"{guild}:{channel}";
@@ -84,7 +94,11 @@ public static class TrackingDataManager
                                             if (string.IsNullOrWhiteSpace(tracker) || string.IsNullOrWhiteSpace(baseUrl))
                                                 return;
 
-                                            var checkFrequency = CheckFrequencyParser.ParseOrDefault(checkFrequencyStr, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5), null);
+                                            var checkFrequency = CheckFrequencyParser.ParseOrDefault(
+                                                checkFrequencyStr,
+                                                TimeSpan.FromMinutes(5),
+                                                TimeSpan.FromMinutes(5),
+                                                null);
 
                                             DateTimeOffset? last = null;
                                             if (!string.IsNullOrWhiteSpace(lastCheckStr) &&
@@ -98,20 +112,32 @@ public static class TrackingDataManager
                                             ChannelConfigCache.Upsert(guild, channel, cfg);
                                         }
 
-                                        var channelCheck = guildCheck.GetChannel(ulong.Parse(channel));
-                                        if (channelCheck == null)
+                                        var channelId = ulong.Parse(channel);
+                                        var guildChannel = guildCheck.GetChannel(channelId) as SocketGuildChannel; 
+                                        var thread = guildCheck.ThreadChannels.FirstOrDefault(t => t.Id == channelId);
+
+                                        if (guildChannel is null && thread is null)
                                         {
-                                            Console.WriteLine(string.Format(Resource.TDMChannelNoLongerExists, channel));
-                                            await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
-                                            await DatabaseCommands.ReclaimSpaceAsync();
-                                            Console.WriteLine(Resource.TDMDeletionCompleted);
-                                            ChannelConfigCache.Remove(guild, channel);
+                                            var restChan = await Declare.Client.Rest.GetChannelAsync(channelId);
+                                            if (restChan == null)
+                                            {
+                                                Console.WriteLine(string.Format(Resource.TDMChannelNoLongerExists, channel));
+                                                await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
+                                                await DatabaseCommands.ReclaimSpaceAsync();
+                                                Console.WriteLine(Resource.TDMDeletionCompleted);
+                                                ChannelConfigCache.Remove(guild, channel);
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine($"[TDM] REST confirme l'existence du canal {channelId}, on saute cette passe.");
+                                            }
                                             return;
                                         }
 
-                                        Console.WriteLine(string.Format(Resource.TDMChannelStillExists, channelCheck.Name));
+                                        var nameForLog = thread?.Name ?? guildChannel!.Name;
+                                        Console.WriteLine(string.Format(Resource.TDMChannelStillExists, nameForLog));
 
-                                        if (guildCheck.GetChannel(ulong.Parse(channel)) is SocketThreadChannel thread)
+                                        if (thread != null)
                                         {
                                             var messages = await thread.GetMessagesAsync(1).FlattenAsync();
                                             var lastMessage = messages.FirstOrDefault();
@@ -179,10 +205,11 @@ public static class TrackingDataManager
                                         var (shouldRun, checkFrequencyTs) = ChannelConfigCache.ShouldRunChecks(cfg);
                                         if (!shouldRun)
                                         {
-                                            Console.WriteLine(string.Format(Resource.TDMSkippingCheck, channelCheck.Name, checkFrequencyTs.TotalMinutes));
+                                            Console.WriteLine(string.Format(Resource.TDMSkippingCheck, nameForLog, checkFrequencyTs.TotalMinutes));
                                             return;
                                         }
-                                        Console.WriteLine(string.Format(Resource.TDMCheckingItems, channelCheck.Name));
+
+                                        Console.WriteLine(string.Format(Resource.TDMCheckingItems, nameForLog));
                                         await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
 
                                         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guild, channel);
@@ -197,7 +224,7 @@ public static class TrackingDataManager
                     Console.WriteLine(Resource.TDMWaitingCheck);
                     await Telemetry.SendTelemetryAsync(Declare.ProgramID);
                     await DatabaseCommands.ReclaimSpaceAsync();
-                    await Task.Delay(60000);
+                    await Task.Delay(60000, token); 
                 }
             }
             catch (TaskCanceledException)
@@ -249,7 +276,7 @@ public static class TrackingDataManager
 
         if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
         if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
-        if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent).ConfigureAwait(false);
+        if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent, ctChan).ConfigureAwait(false);
     }
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
@@ -261,29 +288,22 @@ public static class TrackingDataManager
         }
 
         if (int.TryParse(item.Location, out var loc) && loc < 0 || int.TryParse(item.Item, out var itm) && itm < 0)
-        {
             return string.Empty;
-        }
 
         var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, item.Receiver);
         if (userIds.Count > 0)
         {
-            if (silent)
-            {
-                if (item.Finder == item.Receiver)
-                    return string.Empty;
-            }
+            if (silent && item.Finder == item.Receiver)
+                return string.Empty;
 
             if (userIds.Any(x => x.IsEnabled.Equals(true)))
             {
                 var getGameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver);
-
                 if (!string.IsNullOrWhiteSpace(getGameName))
                 {
                     if (item.Flag is "0")
-                    {
                         return string.Empty;
-                    }
+
                     return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
                 }
             }
@@ -292,9 +312,8 @@ public static class TrackingDataManager
         }
 
         if (silent)
-        {
             return string.Empty;
-        }
+
         return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
     }
 
@@ -308,9 +327,7 @@ public static class TrackingDataManager
         {
             var key = $"{di.Finder}|{di.Receiver}|{di.Item}|{di.Location}|{di.Game}|{di.Flag}";
             if (!existingKeys.Contains(key))
-            {
                 newItems.Add(di);
-            }
         }
 
         if (newItems.Count != 0)
@@ -356,14 +373,14 @@ public static class TrackingDataManager
                             RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
                         }
 
-                        await Task.Delay(1100);
+                        await Task.Delay(1100, ctChan);
                     }
                 }
             }
         }
     }
 
-    private static async Task ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent)
+    private static async Task ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent, CancellationToken ctChan = default)
     {
         var existingList = await HintStatusCommands.GetHintStatus(guild, channel);
         var existingByKey = existingList.ToDictionary(MakeKey);
@@ -371,11 +388,8 @@ public static class TrackingDataManager
         var hintsToAdd = new List<HintStatus>();
         var hintsToUpdate = new List<HintStatus>();
 
-
         if (hintsList == null || hintsList.Count == 0)
-        {
             return;
-        }
 
         foreach (var hint in hintsList)
         {
@@ -398,13 +412,13 @@ public static class TrackingDataManager
         {
             await HintStatusCommands.AddHintStatusAsync(guild, channel, hintsToAdd);
 
-            foreach(var hint in hintsToAdd)
+            foreach (var hint in hintsToAdd)
             {
                 if (!silent && hint.Finder != hint.Receiver)
                 {
                     ulong guildIdLong = ulong.Parse(guild);
                     string text = string.Format(Resource.HintItemNew, hint.Receiver, hint.Item, hint.Location, hint.Finder);
-                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync();
+                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
                     try
                     {
                         await BotCommands.SendMessageAsync(text, channel);
@@ -413,7 +427,7 @@ public static class TrackingDataManager
                     {
                         RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
                     }
-                    await Task.Delay(1100);
+                    await Task.Delay(1100, ctChan);
                 }
             }
         }
@@ -428,7 +442,7 @@ public static class TrackingDataManager
                 {
                     ulong guildIdLong = ulong.Parse(guild);
                     string text = string.Format(Resource.HintItemUpdated, hint.Finder, hint.Item, hint.Receiver, hint.Location);
-                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync();
+                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
                     try
                     {
                         await BotCommands.SendMessageAsync(text, channel);
@@ -437,7 +451,7 @@ public static class TrackingDataManager
                     {
                         RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
                     }
-                    await Task.Delay(1100);
+                    await Task.Delay(1100, ctChan);
                 }
             }
         }
@@ -486,9 +500,7 @@ public static class TrackingDataManager
                 }
 
                 if (previous.Count == 0)
-                {
                     canAnnounce = false;
-                }
 
                 if (canAnnounce)
                 {
@@ -505,7 +517,7 @@ public static class TrackingDataManager
                         RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
                     }
 
-                    await Task.Delay(1100);
+                    await Task.Delay(1100, ctChan);
                 }
             }
         }

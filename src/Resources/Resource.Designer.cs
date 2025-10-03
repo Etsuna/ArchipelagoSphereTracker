@@ -601,7 +601,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Complet list for this thread..
+        ///   Recherche une chaîne localisée semblable à Complet list of patches for this thread..
         /// </summary>
         internal static string CompletListForThisThread {
             get {

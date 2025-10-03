@@ -122,6 +122,8 @@ class Program
         Declare.Client.Ready += ReadyAsync;
         Declare.Client.MessageReceived += BotCommands.MessageReceivedAsync;
         Declare.Client.JoinedGuild += OnGuildJoined;
+        Declare.Client.Connected += OnConnected;
+        Declare.Client.Disconnected += OnDisconnected;
 
         await Declare.Client.SetCustomStatusAsync(version);
 
@@ -131,6 +133,19 @@ class Program
         await Declare.Client.StartAsync();
 
         await Task.Delay(-1);
+
+        static async Task OnConnected()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10));
+            if (Declare.Cts == null || Declare.Cts.IsCancellationRequested)
+                TrackingDataManager.StartTracking();
+        }
+
+        static Task OnDisconnected(Exception _)
+        {
+            Declare.Cts?.Cancel();
+            return Task.CompletedTask;
+        }
     }
 
     private static async Task OnGuildJoined(SocketGuild guild)

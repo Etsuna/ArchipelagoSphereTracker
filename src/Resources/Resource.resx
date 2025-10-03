@@ -1054,8 +1054,8 @@
     <comment>No patch found for this thread.</comment>
   </data>
   <data name="CompletListForThisThread" xml:space="preserve">
-    <value>Complet list for this thread.</value>
-    <comment>Complet list for this thread.</comment>
+    <value>Complet list of patches for this thread.</value>
+    <comment>Complet list of patches for this thread.</comment>
   </data>
   <data name="NoRecordFoundForGuilChannel" xml:space="preserve">
     <value>No record found for the specified GuildId and ChannelId.</value>
