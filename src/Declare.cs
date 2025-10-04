@@ -14,7 +14,7 @@ public class Declare
 
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();
     public static List<string> AddedChannelId = new List<string>();
-    public static readonly int MaxPlayer = 1800;
+    public static readonly int MaxPlayer = 100;
     public static bool IsArchipelagoMode { get; set; } = false;
 
 
