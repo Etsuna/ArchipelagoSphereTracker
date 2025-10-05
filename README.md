@@ -4,6 +4,9 @@
 
 Un bot Discord conçu pour être lié a la room pour Archipelago (Exemple : https://archipelago.gg/room/trackerID).
 
+Un bot déjà configuré en Normal Mode peut être ajouté à votre discord : https://discord.com/oauth2/authorize?client_id=1408901673522430047
+Si vous voulez votre propre bot, téléchargez la dernière release.
+
 ## Fonctionnalités Actuelles
 ### Mode Normal et Mode Archipelago
 * Multi-Discord et Multi-Channel
@@ -142,6 +145,9 @@ Elle permet de mieux comprendre l’adoption du programme, d’évaluer son util
 <details open>
 <summary>🇬🇧 English</summary>
 A Discord bot designed to be linked to an Archipelago room (example: https://archipelago.gg/room/trackerID).
+
+An already configured bot in Normal Mode can be added to your Discord: https://discord.com/oauth2/authorize?client_id=1408901673522430047
+If you want your own bot, download the latest release.
 
 ## Current Features
 ### Normal Mode and Archipelago Mode
