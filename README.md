@@ -144,6 +144,7 @@ Elle permet de mieux comprendre l’adoption du programme, d’évaluer son util
 
 <details open>
 <summary>🇬🇧 English</summary>
+
 A Discord bot designed to be linked to an Archipelago room (example: https://archipelago.gg/room/trackerID).
 
 An already configured bot in Normal Mode can be added to your Discord: https://discord.com/oauth2/authorize?client_id=1408901673522430047
