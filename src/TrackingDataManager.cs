@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using Sprache;
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -252,22 +253,47 @@ public static class TrackingDataManager
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
         var urlStatic = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{tracker}";
 
-        string json, jsonStatic;
-        try
+        async Task<(string? body, HttpStatusCode? code, bool reachable)> TryFetch(string u, CancellationToken ct)
         {
-            json = await Http.GetStringAsync(url, cts.Token);
-            jsonStatic = await Http.GetStringAsync(urlStatic, cts.Token);
+            try
+            {
+                var resp = await Http.GetAsync(u, ct).ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    if (resp.StatusCode == HttpStatusCode.NotFound) return (null, HttpStatusCode.NotFound, true);
+                    return (null, resp.StatusCode, true);
+                }
+                var text = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return (text, resp.StatusCode, true);
+            }
+            catch (OperationCanceledException) { return (null, null, false); }
+            catch (HttpRequestException) { return (null, null, false); }
         }
-        catch (OperationCanceledException)
+
+        var (b1, c1, r1) = await TryFetch(url, cts.Token);
+        var (b2, c2, r2) = await TryFetch(urlStatic, cts.Token);
+
+        if (c1 == HttpStatusCode.NotFound && c2 == HttpStatusCode.NotFound)
+        {
+            Console.WriteLine($"[TDM] 404 pour {url} et {urlStatic}. Suppression des données du fil.");
+            await DatabaseCommands.DeleteChannelDataAsync(guild, channel).ConfigureAwait(false);
+            return;
+        }
+
+        if (!r1 && !r2)
         {
             Console.WriteLine($"[TDM] Serveur indisponible ou lent pour {baseUrl}. Abandon de la passe.");
             return;
         }
-        catch (HttpRequestException hre)
+
+        if (b1 is null && b2 is null && (c1 != HttpStatusCode.NotFound || c2 != HttpStatusCode.NotFound))
         {
-            Console.WriteLine($"[TDM] Erreur HTTP pour {baseUrl}: {hre.Message}");
+            Console.WriteLine($"[TDM] Erreur HTTP pour {url} ou {urlStatic} (codes: {(c1?.ToString() ?? "N/A")}, {(c2?.ToString() ?? "N/A")}).");
             return;
         }
+
+        var json = b1 ?? "{}";
+        var jsonStatic = b2 ?? "{}";
 
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
