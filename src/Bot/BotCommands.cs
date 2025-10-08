@@ -177,8 +177,8 @@ public static class BotCommands
             "apworlds-info" => await ApworldClass.ApworldsInfo(command, ""),
             "backup-apworld" => await ApworldClass.BackupApworld(command, ""),
             "send-apworld" => await ApworldClass.SendApworld(command, ""),
-            "generate" => GenerationClass.Generate(command, "", channelId),
-            "test-generate" => GenerationClass.TestGenerate(command, "", channelId),
+            "generate" => await GenerationClass.GenerateAsync(command, "", channelId),
+            "test-generate" => await GenerationClass.TestGenerateAsync(command, "", channelId),
             "generate-with-zip" => await GenerationClass.GenerateWithZip(command, "", channelId),
             _ => Resource.BotCommandThread
         };

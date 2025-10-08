@@ -265,7 +265,7 @@ public static class TrackingDataManager
         }
         catch (HttpRequestException hre)
         {
-            Console.WriteLine($"[TDM] Erreur HTTP pour {baseUrl}: {hre.Message}");
+            Console.WriteLine($"[TDM] Erreur HTTP pour {url}: {hre.Message}");
             return;
         }
 

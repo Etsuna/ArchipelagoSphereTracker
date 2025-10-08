@@ -30,7 +30,7 @@ public class GenerationClass : Declare
         };
     }
 
-    private static async Task RunGenerationProcessAsync(ProcessStartInfo startInfo, SocketSlashCommand command, string? outputFolder = null, string? playersFolder = null)
+    private static async Task<string> RunGenerationProcessAsync(ProcessStartInfo startInfo, SocketSlashCommand command, string? outputFolder = null, string? playersFolder = null)
     {
         bool errorDetected = false;
         StringBuilder errorMessage = new();
@@ -78,16 +78,14 @@ public class GenerationClass : Declare
 
         if (errorDetected)
         {
-            await command.FollowupAsync(errorMessage.ToString());
-            return;
+            return errorMessage.ToString();
         }
 
         if (!string.IsNullOrEmpty(outputFolder))
         {
             if (!Directory.Exists(outputFolder))
             {
-                await command.FollowupAsync(string.Format(Resource.GenerationOutputFolderNotExists, outputFolder));
-                return;
+                return string.Format(Resource.GenerationOutputFolderNotExists, outputFolder);
             }
 
             var zipFile = Directory.GetFiles(outputFolder, "*.zip", SearchOption.TopDirectoryOnly).FirstOrDefault();
@@ -100,13 +98,15 @@ public class GenerationClass : Declare
             }
             else
             {
-                await command.FollowupAsync(Resource.GenerationZipNotFound);
+                return Resource.GenerationZipNotFound;
             }
         }
         else
         {
-            await command.FollowupAsync(Resource.GenerationTestSuccessful);
+            return Resource.GenerationTestSuccessful;
         }
+
+        return string.Empty;
     }
 
     public static async Task<string> GenerateWithZip(SocketSlashCommand command, string message, string channelId)
@@ -149,19 +149,19 @@ public class GenerationClass : Declare
 
         if (!Directory.GetFiles(playersFolder, "*.yaml").Any())
         {
-            await command.FollowupAsync(Resource.GenerationNoYamlIntoZip);
+            return Resource.GenerationNoYamlIntoZip;
         }
 
         var launcherPath = GetLauncherPath();
         var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
         var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
-        _ = RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
+        message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
 
         return message;
     }
 
-    public static string TestGenerate(SocketSlashCommand command, string message, string channelId)
+    public static async Task<string> TestGenerateAsync(SocketSlashCommand command, string message, string channelId)
     {
         var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
 
@@ -174,12 +174,12 @@ public class GenerationClass : Declare
         var arguments = $"--player_files_path \"{playersFolder}\" --skip_output";
         var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
-        _ = RunGenerationProcessAsync(startInfo, command);
+        message = await RunGenerationProcessAsync(startInfo, command);
 
         return message;
     }
 
-    public static string Generate(SocketSlashCommand command, string message, string channelId)
+    public static async Task<string> GenerateAsync(SocketSlashCommand command, string message, string channelId)
     {
         var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
         var outputFolder = Path.Combine(OutputPath, channelId);
@@ -205,13 +205,12 @@ public class GenerationClass : Declare
             var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
             var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
-            _ = RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
+            message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
             return message;
         }
         catch (Exception ex)
         {
-            _ = command.FollowupAsync(string.Format(Resource.GenerationError, ex.Message));
-            return "Resource.GenerationErrorShort";
+            return string.Format(Resource.GenerationError, ex.Message);
         }
     }
 
