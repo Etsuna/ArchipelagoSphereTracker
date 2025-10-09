@@ -179,7 +179,7 @@ public class HelperClass
 
             if (filteredItems.Any())
             {
-                message = string.Format(Resource.HelperItemsFor, userId) + $"\n{BuildItemMessage(filteredItems, listByLine)}";
+                message = string.Format(Resource.HelperItemsFor, $"<@{userId}>") + $"\n{BuildItemMessage(filteredItems, listByLine)}";
             }
             else
             {

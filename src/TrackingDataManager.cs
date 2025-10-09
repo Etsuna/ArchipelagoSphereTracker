@@ -239,10 +239,10 @@ public static class TrackingDataManager
         Timeout = TimeSpan.FromSeconds(30)
     };
 
-    public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent)
-        => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None);
+    public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, bool sendAsTextFile)
+        => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None, sendAsTextFile);
 
-    public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan)
+    public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan, bool sendAsTextFile = false)
     {
         var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
 
@@ -276,7 +276,7 @@ public static class TrackingDataManager
 
         if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
         if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
-        if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent, ctChan).ConfigureAwait(false);
+        if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent, ctChan, sendAsTextFile).ConfigureAwait(false);
     }
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
@@ -380,7 +380,7 @@ public static class TrackingDataManager
         }
     }
 
-    private static async Task ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent, CancellationToken ctChan = default)
+    private static async Task ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent, CancellationToken ctChan = default, bool sendAsTextFile = false)
     {
         var existingList = await HintStatusCommands.GetHintStatus(guild, channel);
         var existingByKey = existingList.ToDictionary(MakeKey);
@@ -412,50 +412,126 @@ public static class TrackingDataManager
         {
             await HintStatusCommands.AddHintStatusAsync(guild, channel, hintsToAdd);
 
-            foreach (var hint in hintsToAdd)
+            if (!silent)
             {
-                if (!silent && hint.Finder != hint.Receiver)
+                ulong guildIdLong = ulong.Parse(guild);
+
+                var eligible = hintsToAdd.Where(h => h.Finder != h.Receiver).ToList();
+                if (eligible.Count > 0)
                 {
-                    ulong guildIdLong = ulong.Parse(guild);
-                    string text = string.Format(Resource.HintItemNew, hint.Receiver, hint.Item, hint.Location, hint.Finder);
-                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
-                    try
+                    static IEnumerable<string> BuildUnifiedLines(IEnumerable<HintStatus> hints)
                     {
-                        await BotCommands.SendMessageAsync(text, channel);
+                        foreach (var g in hints.GroupBy(h => h.Receiver))
+                        {
+                            yield return $"{Resource.HintNew}: {g.Key}:"; 
+                            foreach (var h in g)
+                                yield return string.Format(Resource.HintItemNew, h.Item, h.Location, h.Finder);
+                            yield return string.Empty;
+                        }
                     }
-                    finally
+
+                    var allLines = BuildUnifiedLines(eligible);
+
+                    if (sendAsTextFile)
                     {
-                        RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                        string content = string.Join("\n", allLines);
+                        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content.Replace("**", "")));
+                        string fileName = $"hints_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
+
+                        await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
+                        try
+                        {
+                            await BotCommands.SendFileAsync(channel, ms, fileName);
+                        }
+                        finally
+                        {
+                            RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                        }
+                        await Task.Delay(1100, ctChan);
                     }
-                    await Task.Delay(1100, ctChan);
+                    else
+                    {
+                        foreach (var chunk in ChunkMessages(allLines, 1900))
+                        {
+                            await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
+                            try
+                            {
+                                await BotCommands.SendMessageAsync(chunk, channel);
+                            }
+                            finally
+                            {
+                                RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                            }
+                            await Task.Delay(1100, ctChan);
+                        }
+                    }
                 }
             }
         }
 
+        // --- UPDATED HINTS ---
         if (hintsToUpdate.Count > 0)
         {
             await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
 
-            foreach (var hint in hintsToUpdate)
+            if (!silent)
             {
-                if (!silent && hint.Finder != hint.Receiver)
+                ulong guildIdLong = ulong.Parse(guild);
+
+                var eligible = hintsToUpdate.Where(h => h.Finder != h.Receiver).ToList();
+                if (eligible.Count > 0)
                 {
-                    ulong guildIdLong = ulong.Parse(guild);
-                    string text = string.Format(Resource.HintItemUpdated, hint.Finder, hint.Item, hint.Receiver, hint.Location);
-                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
-                    try
+                    static IEnumerable<string> BuildUnifiedLinesUpdated(IEnumerable<HintStatus> hints)
                     {
-                        await BotCommands.SendMessageAsync(text, channel);
+                        foreach (var g in hints.GroupBy(h => h.Receiver))
+                        {
+                            yield return $"{Resource.HintUpdated}: {g.Key}'s :";
+                            foreach (var h in g)
+                                yield return string.Format(Resource.HintItemNew, h.Item, h.Location, h.Finder);
+                            yield return string.Empty;
+                        }
                     }
-                    finally
+
+                    var allLines = BuildUnifiedLinesUpdated(eligible);
+
+                    if (sendAsTextFile)
                     {
-                        RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                        string content = string.Join("\n", allLines);
+                        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                        string fileName = $"hints_updated_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
+
+                        await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
+                        try
+                        {
+                            await BotCommands.SendFileAsync(channel, ms, fileName);
+                        }
+                        finally
+                        {
+                            RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                        }
+                        await Task.Delay(1100, ctChan);
                     }
-                    await Task.Delay(1100, ctChan);
+                    else
+                    {
+                        foreach (var chunk in ChunkMessages(allLines, 1900))
+                        {
+                            await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
+                            try
+                            {
+                                await BotCommands.SendMessageAsync(chunk, channel);
+                            }
+                            finally
+                            {
+                                RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                            }
+                            await Task.Delay(1100, ctChan);
+                        }
+                    }
                 }
             }
         }
     }
+
 
     private static async Task ProcessGameStatusTableAsync(string guild, string channel, List<GameStatus> statuses, bool silent, CancellationToken ctChan)
     {

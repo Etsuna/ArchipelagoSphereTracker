@@ -952,7 +952,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à New Hint: **{0}&apos;s** **{1}** is at **{2}** in **{3}&apos;s** World..
+        ///   Recherche une chaîne localisée semblable à **{0}** is at **{1}** in **{2}&apos;s** World..
         /// </summary>
         internal static string HintItemNew {
             get {
@@ -961,11 +961,20 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Hint Update : **{0}&apos;s** **{1}** is at **{2}** in **{3}&apos;s** World..
+        ///   Recherche une chaîne localisée semblable à **{0}** is at **{1}** in **{2}&apos;s** World..
         /// </summary>
         internal static string HintItemUpdated {
             get {
                 return ResourceManager.GetString("HintItemUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à New Hint.
+        /// </summary>
+        internal static string HintNew {
+            get {
+                return ResourceManager.GetString("HintNew", resourceCulture);
             }
         }
         
@@ -1002,6 +1011,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string HintNoUrl {
             get {
                 return ResourceManager.GetString("HintNoUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Hint Updated.
+        /// </summary>
+        internal static string HintUpdated {
+            get {
+                return ResourceManager.GetString("HintUpdated", resourceCulture);
             }
         }
         
