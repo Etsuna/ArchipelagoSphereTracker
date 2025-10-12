@@ -4,7 +4,7 @@ using Discord.Commands;
 public class Declare
 {
     public static string Version = "0.6.3";
-    public static string BotVersion = "5.1.0";
+    public static string BotVersion = "5.1.1";
     public static string InnoExtractorVersion = "1.9";
     public static string BddVersion = "5.0.0";
 

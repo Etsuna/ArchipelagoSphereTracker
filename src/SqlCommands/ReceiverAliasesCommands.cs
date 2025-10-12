@@ -177,15 +177,16 @@ public static class ReceiverAliasesCommands
             var items = new List<(string Item, long? Flag)>();
 
             const string itemsQuery = @"
-            SELECT i.Item,
-                   MAX(d.Flag) AS Flag
-            FROM RecapListItemsTable i
-            LEFT JOIN DisplayedItemTable d
-              ON d.GuildId = @GuildId
-             AND d.ChannelId = @ChannelId
-             AND d.Item = i.Item
-            WHERE i.RecapListTableId = @RecapListTableId
-            GROUP BY i.Item;";
+                SELECT i.Item,
+                       d.Flag
+                FROM RecapListItemsTable i
+                LEFT JOIN (
+                  SELECT Item, MAX(Flag) AS Flag
+                  FROM DisplayedItemTable
+                  WHERE GuildId = @GuildId AND ChannelId = @ChannelId
+                  GROUP BY Item
+                ) d ON d.Item = i.Item
+                WHERE i.RecapListTableId = @RecapListTableId;";
 
             using var itemCommand = new SQLiteCommand(itemsQuery, connection);
             itemCommand.Parameters.AddWithValue("@RecapListTableId", recapListTableId);
