@@ -14,7 +14,7 @@ public class RecapAndCleanClass
     bool deleteAfter,
     bool includeAllAliases,
     bool returnRecap,
-    Func<Dictionary<string, List<string>>, string, string, string?, string>? buildMessage)
+    Func<SocketSlashCommand, Dictionary<string, List<(string Item, long? Flag)>>, string, string, string?, string>? buildMessage)
     {
         var userId = command.User.Id.ToString();
 
@@ -50,7 +50,7 @@ public class RecapAndCleanClass
             if (buildMessage is null)
                 return Resource.RACBuildMessageError;
 
-            message = buildMessage(aliasesWithItems, userId, alias!, includeAllAliases ? null : alias);
+            message = buildMessage(command, aliasesWithItems, userId, alias!, includeAllAliases ? null : alias);
         }
 
         if (deleteAfter)
@@ -95,24 +95,93 @@ public class RecapAndCleanClass
         return await HandleRecapOrClean(command, message, alias, channelId, guildId, isAliasRequired: true, deleteAfter: true, includeAllAliases: false, returnRecap: true, buildMessage: BuildRecapMessage);
     }
 
-    public static string BuildRecapMessage(Dictionary<string, List<string>> data, string userId, string alias, string? filterAlias)
+    public sealed record RecapItem(string Item, long? Flag);
+
+    private static string FlagLabel(long? f) => f switch
+    {
+        0 => Resource.Filler,
+        1 => Resource.Progression,
+        2 => Resource.Useful,
+        3 => Resource.Required,
+        4 => Resource.Trap,
+        null => string.Empty,
+        _ => string.Format(Resource.Unknown, f)
+    };
+
+    private static int Rank(long? f) => f switch
+    {
+        3 => 0,
+        1 => 1,
+        2 => 2,
+        0 => 3,
+        4 => 4,
+        null => int.MaxValue,
+        _ => int.MaxValue - 1
+    };
+
+    public static string BuildRecapMessage(
+    SocketSlashCommand command,
+    Dictionary<string, List<(string Item, long? Flag)>> data,
+    string userId,
+    string alias,
+    string? filterAlias)
     {
         var sb = new StringBuilder(string.Format(Resource.RACDetailsForUser, userId));
         sb.AppendLine();
 
-        var toProcess = filterAlias != null
-            ? data.Where(d => d.Key == filterAlias)
-            : data;
+        bool listByLine = command.Data.Options
+            .FirstOrDefault(o => o.Name == "list-by-line")?.Value as bool? ?? false;
+
+        var toProcess = filterAlias != null ? data.Where(d => d.Key == filterAlias) : data;
+        bool firstSection = true;
 
         foreach (var sub in toProcess)
         {
-            var grouped = sub.Value != null && sub.Value.Any()
-                ? string.Join(", ", sub.Value
-                    .GroupBy(x => x)
-                    .Select(g => g.Count() > 1 ? $"{g.Key} x {g.Count()}" : g.Key))
-                : Resource.HelperNoItems;
+            if (listByLine && !firstSection) sb.AppendLine(); 
+            firstSection = false;
 
-            sb.AppendLine(string.Format(Resource.RACBuildMessage, sub.Key, grouped));
+            sb.AppendLine($"**{sub.Key}**"); 
+
+            var items = sub.Value ?? new List<(string, long?)>();
+        
+            if (items.Count == 0)
+            {
+                sb.AppendLine(Resource.HelperNoItems);
+                continue;
+            }
+
+            var byFlag = items
+            .GroupBy(x => x.Flag)
+            .OrderBy(g => Rank(g.Key))
+            .ThenBy(g => g.Key);
+
+            bool firstFlag = true;
+
+            foreach (var fg in byFlag)
+            {
+                if (listByLine && !firstFlag) sb.AppendLine();
+                firstFlag = false;
+
+                var groupedItems = fg
+                    .GroupBy(x => x.Item)
+                    .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => g.Count() > 1 ? $"{g.Key} x {g.Count()}" : g.Key)
+                    .ToList();
+
+                var label = FlagLabel(fg.Key);
+                if (!string.IsNullOrEmpty(label))
+                    sb.AppendLine($"**{label}:**");
+
+                if (listByLine)
+                {
+                    foreach (var s in groupedItems)
+                        sb.AppendLine(s);
+                }
+                else
+                {
+                    sb.AppendLine(string.Join(", ", groupedItems));
+                }
+            }
         }
 
         return sb.ToString();

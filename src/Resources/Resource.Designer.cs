@@ -655,6 +655,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Filler.
+        /// </summary>
+        internal static string Filler {
+            get {
+                return ResourceManager.GetString("Filler", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à ❌ **Error** : {0}.
         /// </summary>
         internal static string GenerationError {
@@ -1321,6 +1330,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à N/A.
+        /// </summary>
+        internal static string NA {
+            get {
+                return ResourceManager.GetString("NA", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à No BddVersion Table: migration required..
         /// </summary>
         internal static string NoBddVersionTable {
@@ -1483,6 +1501,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Progression.
+        /// </summary>
+        internal static string Progression {
+            get {
+                return ResourceManager.GetString("Progression", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à **{0}** : {1}.
         /// </summary>
         internal static string RACBuildMessage {
@@ -1578,6 +1605,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string RCRecapAndCleanDescription {
             get {
                 return ResourceManager.GetString("RCRecapAndCleanDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Required.
+        /// </summary>
+        internal static string Required {
+            get {
+                return ResourceManager.GetString("Required", resourceCulture);
             }
         }
         
@@ -2212,6 +2248,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Trap.
+        /// </summary>
+        internal static string Trap {
+            get {
+                return ResourceManager.GetString("Trap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unknown({0}).
+        /// </summary>
+        internal static string Unknown {
+            get {
+                return ResourceManager.GetString("Unknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à URL already set for this channel. Remove the URL before adding a new one..
         /// </summary>
         internal static string URLAlreadySet {
@@ -2316,6 +2370,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string UrlThredCreated {
             get {
                 return ResourceManager.GetString("UrlThredCreated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Useful.
+        /// </summary>
+        internal static string Useful {
+            get {
+                return ResourceManager.GetString("Useful", resourceCulture);
             }
         }
         

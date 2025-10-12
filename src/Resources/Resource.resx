@@ -1169,4 +1169,32 @@
     <value>Hint Updated</value>
     <comment>Hint Updated</comment>
   </data>
+  <data name="Filler" xml:space="preserve">
+    <value>Filler</value>
+    <comment>Filler</comment>
+  </data>
+  <data name="Progression" xml:space="preserve">
+    <value>Progression</value>
+    <comment>Progression</comment>
+  </data>
+  <data name="Useful" xml:space="preserve">
+    <value>Useful</value>
+    <comment>Useful</comment>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>Required</value>
+    <comment>Required</comment>
+  </data>
+  <data name="Trap" xml:space="preserve">
+    <value>Trap</value>
+    <comment>Trap</comment>
+  </data>
+  <data name="NA" xml:space="preserve">
+    <value>N/A</value>
+    <comment>N/A</comment>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>Unknown({0})</value>
+    <comment>Unknown({f})</comment>
+  </data>
 </root>

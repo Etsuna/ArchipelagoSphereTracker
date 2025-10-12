@@ -66,7 +66,7 @@ public static class SlashCommandDefinitions
 
             new SlashCommandBuilder().WithName("delete-url").WithDescription(Resource.SCDeleteUrlDescription),
             new SlashCommandBuilder().WithName("status-games-list").WithDescription(Resource.SCStatusGameListDescription),
-            new SlashCommandBuilder().WithName("recap-all").WithDescription(Resource.SCRecapAllDescription),
+            
             new SlashCommandBuilder().WithName("info").WithDescription(Resource.SCInfoDescription),
 
             new SlashCommandBuilder()
@@ -74,10 +74,15 @@ public static class SlashCommandDefinitions
                 .WithDescription(Resource.SCGetPatchDescription)
                 .AddOption(AliasOption("alias")),
 
+             new SlashCommandBuilder()
+                .WithName("recap-all").WithDescription(Resource.SCRecapAllDescription)
+                .AddOption(BooleanOption("list-by-line", Resource.SCListByLineDescription)),
+
             new SlashCommandBuilder()
                 .WithName("recap")
                 .WithDescription(Resource.SCRecapDescription)
-                .AddOption(AliasOption("added-alias")),
+                .AddOption(AliasOption("added-alias"))
+                .AddOption(BooleanOption("list-by-line", Resource.SCListByLineDescription)),
 
             new SlashCommandBuilder()
                 .WithName("recap-and-clean")

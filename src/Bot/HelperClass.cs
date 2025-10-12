@@ -138,58 +138,99 @@ public class HelperClass
         return message;
     }
 
-    public static async Task<string> ListItems(SocketSlashCommand command, string? userId, string message, string? alias, string channelId, string guildId)
+    private static int? ToFlagCode(string? s) => int.TryParse(s, out var v) ? v : (int?)null;
+
+    private static string FlagLabel(long? f) => f switch
+    {
+        0 => Resource.Filler,
+        1 => Resource.Progression,
+        2 => Resource.Useful,
+        3 => Resource.Required,
+        4 => Resource.Trap,
+        null => string.Empty,
+        _ => string.Format(Resource.Unknown, f)
+    };
+
+    private static int Rank(long? f) => f switch
+    {
+        3 => 0,
+        1 => 1,
+        2 => 2,
+        0 => 3,
+        4 => 4,
+        null => int.MaxValue,
+        _ => int.MaxValue - 1
+    };
+
+    public static async Task<string> ListItems(
+    SocketSlashCommand command, string? userId, string message,
+    string? alias, string channelId, string guildId)
     {
         bool listByLine = command.Data.Options.FirstOrDefault(o => o.Name == "list-by-line")?.Value as bool? ?? false;
 
-        string BuildItemMessage(IEnumerable<IGrouping<string, DisplayedItem>> filteredItems, bool listByLine)
+        string BuildItemMessageByFlag(IEnumerable<DisplayedItem> items, bool listByLine)
         {
-            var messageBuilder = new StringBuilder();
-            bool isFirst = true;
+            var sb = new StringBuilder();
 
-            foreach (var groupedItem in filteredItems)
+            var byFlag = items
+             .GroupBy(i => ToFlagCode(i.Flag))
+             .OrderBy(g => Rank(g.Key))
+             .ThenBy(g => g.Key);
+
+            bool firstFlag = true;
+            foreach (var fg in byFlag)
             {
-                if (!isFirst)
+                if (!firstFlag) sb.AppendLine();
+                firstFlag = false;
+
+                if(FlagLabel(fg.Key) != string.Empty)
                 {
-                    messageBuilder.Append(listByLine ? "\n" : ", ");
+                    sb.AppendLine($"**{FlagLabel(fg.Key)}:**");
                 }
-                messageBuilder.Append(groupedItem.Count() > 1
-                    ? $"{groupedItem.Key} x {groupedItem.Count()}"
-                    : groupedItem.Key);
-                isFirst = false;
+
+                var groupedItems = fg
+                    .GroupBy(x => x.Item)
+                    .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => g.Count() > 1 ? $"{g.Key} x {g.Count()}" : g.Key)
+                    .ToList();
+
+                if (groupedItems.Count == 0)
+                {
+                    sb.AppendLine(Resource.HelperNoItems);
+                    continue;
+                }
+
+                if (listByLine)
+                    groupedItems.ForEach(s => sb.AppendLine(s));
+                else
+                    sb.AppendLine(string.Join(", ", groupedItems));
             }
 
-            return messageBuilder.ToString();
+            return sb.ToString();
         }
 
         var checkIfChannelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "DisplayedItemTable");
-
-        if (checkIfChannelExists)
+        if (!checkIfChannelExists)
         {
-            if (string.IsNullOrWhiteSpace(alias))
-            {
-                return Resource.AliasEmpty;
-            }
+            await command.FollowupAsync(Resource.NoUrlRegistered);
+            return message;
+        }
 
-            var getGameStatusTextsAsync = await DisplayItemCommands.GetUserItemsGroupedAsync(guildId, channelId, alias);
-            var filteredItems = getGameStatusTextsAsync
-                        .GroupBy(item => item.Item)
-                        .OrderBy(group => group.Key);
+        if (string.IsNullOrWhiteSpace(alias))
+            return Resource.AliasEmpty;
 
+        var items = await DisplayItemCommands.GetUserItemsGroupedAsync(guildId, channelId, alias);
 
-            if (filteredItems.Any())
-            {
-                message = string.Format(Resource.HelperItemsFor, $"<@{userId}>") + $"\n{BuildItemMessage(filteredItems, listByLine)}";
-            }
-            else
-            {
-                await command.FollowupAsync(Resource.HelperNoItems);
-            }
+        if (items.Any())
+        {
+            var body = BuildItemMessageByFlag(items, listByLine);
+            message = string.Format(Resource.HelperItemsFor, $"<@{userId}>") + "\n" + body;
         }
         else
         {
-            await command.FollowupAsync(Resource.NoUrlRegistered);
+            await command.FollowupAsync(Resource.HelperNoItems);
         }
+
         return message;
     }
 

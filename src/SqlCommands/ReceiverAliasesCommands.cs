@@ -144,21 +144,21 @@ public static class ReceiverAliasesCommands
     // ==========================
     // 🎯 USER ALIASES + ITEMS (READ)
     // ==========================
-    public static async Task<Dictionary<string, List<string>>> GetUserAliasesWithItemsAsync(
-        string guildId,
-        string channelId,
-        string userId,
-        string specificAlias = ""
-        )
+    public static async Task<Dictionary<string, List<(string Item, long? Flag)>>> GetUserAliasesWithItemsAsync(
+    string guildId,
+    string channelId,
+    string userId,
+    string specificAlias = ""
+)
     {
-        var aliasesWithItems = new Dictionary<string, List<string>>();
+        var aliasesWithItems = new Dictionary<string, List<(string Item, long? Flag)>>();
 
         await using var connection = await Db.OpenReadAsync();
 
         const string aliasQuery = @"
-            SELECT Alias, RecapListTable.Id AS RecapListTableId
-            FROM RecapListTable
-            WHERE UserId = @UserId AND GuildId = @GuildId AND ChannelId = @ChannelId;";
+        SELECT Alias, RecapListTable.Id AS RecapListTableId
+        FROM RecapListTable
+        WHERE UserId = @UserId AND GuildId = @GuildId AND ChannelId = @ChannelId;";
 
         using var command = new SQLiteCommand(aliasQuery, connection);
         command.Parameters.AddWithValue("@UserId", userId);
@@ -174,28 +174,45 @@ public static class ReceiverAliasesCommands
             if (!string.IsNullOrEmpty(specificAlias) && alias != specificAlias)
                 continue;
 
-            var items = new List<string>();
+            var items = new List<(string Item, long? Flag)>();
 
             const string itemsQuery = @"
-                SELECT Item
-                FROM RecapListItemsTable
-                WHERE RecapListTableId = @RecapListTableId;";
+            SELECT i.Item,
+                   MAX(d.Flag) AS Flag
+            FROM RecapListItemsTable i
+            LEFT JOIN DisplayedItemTable d
+              ON d.GuildId = @GuildId
+             AND d.ChannelId = @ChannelId
+             AND d.Item = i.Item
+            WHERE i.RecapListTableId = @RecapListTableId
+            GROUP BY i.Item;";
+
             using var itemCommand = new SQLiteCommand(itemsQuery, connection);
             itemCommand.Parameters.AddWithValue("@RecapListTableId", recapListTableId);
+            itemCommand.Parameters.AddWithValue("@GuildId", guildId);
+            itemCommand.Parameters.AddWithValue("@ChannelId", channelId);
 
             using var itemReader = await itemCommand.ExecuteReaderAsync().ConfigureAwait(false);
             while (await itemReader.ReadAsync().ConfigureAwait(false))
             {
                 var item = itemReader["Item"] as string;
-                items.Add(!string.IsNullOrEmpty(item) ? item : Resource.GetUserAliasesWithItemsAsyncNoItem);
+                var flagObj = itemReader["Flag"];
+                long? flag = flagObj == DBNull.Value ? (long?)null : Convert.ToInt64(flagObj);
+
+                items.Add(!string.IsNullOrEmpty(item)
+                    ? (item, flag)
+                    : (Resource.GetUserAliasesWithItemsAsyncNoItem, (long?)null));
             }
 
             if (!string.IsNullOrEmpty(alias))
-                aliasesWithItems[alias] = items.Count > 0 ? items : new List<string> { Resource.GetUserAliasesWithItemsAsyncNoItem };
+                aliasesWithItems[alias] = items.Count > 0
+                    ? items
+                    : new List<(string, long?)> { (Resource.GetUserAliasesWithItemsAsyncNoItem, null) };
             else
                 Console.WriteLine(string.Format(Resource.GetUserAliasesWithItemsAsyncNoAlias, userId));
         }
 
         return aliasesWithItems;
     }
+
 }

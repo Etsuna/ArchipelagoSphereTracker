@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using System.Data.SQLite;
 
 public static class DisplayItemCommands
 {
@@ -32,40 +33,38 @@ public static class DisplayItemCommands
     }
 
     public static async Task<List<DisplayedItem>> GetUserItemsGroupedAsync(
-        string guildId,
-        string channelId,
-        string receiver
-        )
+     string guildId,
+     string channelId,
+     string receiver)
     {
         var itemsFromDb = new List<DisplayedItem>();
 
         await using var connection = await Db.OpenReadAsync();
-        using (var command = new SQLiteCommand(@"
-            SELECT GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag
-            FROM DisplayedItemTable
-            WHERE GuildId = @GuildId
-              AND ChannelId = @ChannelId
-              AND Receiver = @Receiver;", connection))
-        {
-            command.Parameters.AddWithValue("@GuildId", guildId);
-            command.Parameters.AddWithValue("@ChannelId", channelId);
-            command.Parameters.AddWithValue("@Receiver", receiver);
+        using var command = new SQLiteCommand(@"
+        SELECT GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag
+        FROM DisplayedItemTable
+        WHERE GuildId = @GuildId
+          AND ChannelId = @ChannelId
+          AND Receiver = @Receiver;", connection);
 
-            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
-            while (await reader.ReadAsync().ConfigureAwait(false))
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        command.Parameters.AddWithValue("@Receiver", receiver);
+
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
+        {
+            itemsFromDb.Add(new DisplayedItem
             {
-                itemsFromDb.Add(new DisplayedItem
-                {
-                    GuildId = reader["GuildId"]?.ToString() ?? string.Empty,
-                    ChannelId = reader["ChannelId"]?.ToString() ?? string.Empty,
-                    Flag = reader["Flag"]?.ToString() ?? string.Empty,
-                    Finder = reader["Finder"]?.ToString() ?? string.Empty,
-                    Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
-                    Item = reader["Item"]?.ToString() ?? string.Empty,
-                    Location = reader["Location"]?.ToString() ?? string.Empty,
-                    Game = reader["Game"]?.ToString() ?? string.Empty,
-                });
-            }
+                GuildId = reader["GuildId"]?.ToString() ?? string.Empty,
+                ChannelId = reader["ChannelId"]?.ToString() ?? string.Empty,
+                Finder = reader["Finder"]?.ToString() ?? string.Empty,
+                Receiver = reader["Receiver"]?.ToString() ?? string.Empty,
+                Item = reader["Item"]?.ToString() ?? string.Empty,
+                Location = reader["Location"]?.ToString() ?? string.Empty,
+                Game = reader["Game"]?.ToString() ?? string.Empty,
+                Flag = reader["Flag"]?.ToString() ?? string.Empty, 
+            });
         }
 
         return itemsFromDb;

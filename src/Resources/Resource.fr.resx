@@ -906,4 +906,25 @@
   <data name="HintUpdated" xml:space="preserve">
     <value>Indice actualisé</value>
   </data>
+  <data name="Filler" xml:space="preserve">
+    <value>Remplissage</value>
+  </data>
+  <data name="Progression" xml:space="preserve">
+    <value>Progression</value>
+  </data>
+  <data name="Useful" xml:space="preserve">
+    <value>Utile</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>Obligatoire</value>
+  </data>
+  <data name="Trap" xml:space="preserve">
+    <value>Piège</value>
+  </data>
+  <data name="NA" xml:space="preserve">
+    <value>S/O</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>Inconnu({f})</value>
+  </data>
 </root>
