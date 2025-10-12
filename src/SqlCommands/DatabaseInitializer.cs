@@ -234,46 +234,61 @@ CREATE INDEX IF NOT EXISTS IX_DatapackageGameMap_GC_Game
 -- Index & contraintes
 -- ==========================
 
--- Accès fréquents par guilde+channel
+-- Uniques
+CREATE UNIQUE INDEX IF NOT EXISTS uq_recalias
+  ON RecapListTable(GuildId, ChannelId, UserId, Alias);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_aliaschoices
+  ON AliasChoicesTable(GuildId, ChannelId, Alias);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_gamestatus_name
+  ON GameStatusTable(GuildId, ChannelId, Name);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_url_patch
+  ON UrlAndChannelPatchTable(ChannelsAndUrlsTableId, Alias);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
+  ON DisplayedItemTable(GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag);
+
+-- Accès de base
 CREATE INDEX IF NOT EXISTS idx_channels_guild_channel
   ON ChannelsAndUrlsTable(GuildId, ChannelId);
 
-CREATE INDEX IF NOT EXISTS idx_displayeditem_guild_channel
-  ON DisplayedItemTable(GuildId, ChannelId);
+-- DisplayedItem (requêtes principales)
+CREATE INDEX IF NOT EXISTS idx_displayeditem_gci_flag
+  ON DisplayedItemTable(GuildId, ChannelId, Item, Flag DESC);
+CREATE INDEX IF NOT EXISTS idx_displayeditem_rcv_item
+  ON DisplayedItemTable(GuildId, ChannelId, Receiver, Item);
+CREATE INDEX IF NOT EXISTS idx_displayeditem_finder_item
+  ON DisplayedItemTable(GuildId, ChannelId, Finder, Item);
 
-CREATE INDEX IF NOT EXISTS idx_displayeditem_receiver
-  ON DisplayedItemTable(GuildId, ChannelId, Receiver);
+-- RecapListItems (sélection + join sur Item)
+CREATE INDEX IF NOT EXISTS idx_recapitems_tableid_item
+  ON RecapListItemsTable(RecapListTableId, Item);
 
-CREATE INDEX IF NOT EXISTS idx_displayeditem_finder
-  ON DisplayedItemTable(GuildId, ChannelId, Finder);
-
-CREATE INDEX IF NOT EXISTS idx_displayeditem_game_item
-  ON DisplayedItemTable(Game, Item);
-
+-- ReceiverAliases (couverture par user et par receiver)
+CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcur
+  ON ReceiverAliasesTable(GuildId, ChannelId, UserId, Receiver);
 CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcr
   ON ReceiverAliasesTable(GuildId, ChannelId, Receiver);
 
-CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcu
-  ON ReceiverAliasesTable(GuildId, ChannelId, UserId);
+-- ApWorldItemTable: SELECT … WHERE ApWorldListTableId = ?
+CREATE INDEX IF NOT EXISTS idx_apworlditem_listid
+  ON ApWorldItemTable(ApWorldListTableId);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_recalias
-  ON RecapListTable(GuildId, ChannelId, UserId, Alias);
+-- HintStatusTable: mêmes patterns que DisplayedItemTable
+CREATE INDEX IF NOT EXISTS idx_hintstatus_gcr_item
+  ON HintStatusTable(GuildId, ChannelId, Receiver, Item);
 
--- pour REPLACE sur AliasChoices
-CREATE UNIQUE INDEX IF NOT EXISTS uq_aliaschoices
-  ON AliasChoicesTable(GuildId, ChannelId, Alias);
+CREATE INDEX IF NOT EXISTS idx_hintstatus_gcf_item
+  ON HintStatusTable(GuildId, ChannelId, Finder, Item);
 
--- pour REPLACE sur GameStatus
-CREATE UNIQUE INDEX IF NOT EXISTS uq_gamestatus_name
-  ON GameStatusTable(GuildId, ChannelId, Name);
+CREATE INDEX IF NOT EXISTS idx_apworldlist_title
+  ON ApWorldListTable(Title);
 
--- pour REPLACE sur UrlAndChannelPatch
-CREATE UNIQUE INDEX IF NOT EXISTS uq_url_patch
-  ON UrlAndChannelPatchTable(ChannelsAndUrlsTableId, Alias);
-
--- Unicité d’un DisplayedItem (pour INSERT OR IGNORE)
-CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
-  ON DisplayedItemTable(GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag);
+DROP INDEX IF EXISTS idx_displayeditem_guild_channel;
+DROP INDEX IF EXISTS idx_displayeditem_receiver;
+DROP INDEX IF EXISTS idx_displayeditem_finder;
+DROP INDEX IF EXISTS idx_displayeditem_game_item;
+DROP INDEX IF EXISTS idx_recapitems_tableid;
+DROP INDEX IF EXISTS idx_receiveraliases_gcu;
+DROP INDEX IF EXISTS idx_displayeditem_gci;  
 ";
         cmd.ExecuteNonQuery();
 
