@@ -1197,4 +1197,8 @@
     <value>Unknown({0})</value>
     <comment>Unknown({f})</comment>
   </data>
+  <data name="DownloadAndInstall" xml:space="preserve">
+    <value>Download and Install Archipelago version {0} before to install the bot in Archipelago Mode.</value>
+    <comment>Download and Install Archipelago version {Version} before to install the bot in Archipelago Mode.</comment>
+  </data>
 </root>

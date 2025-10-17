@@ -925,6 +925,9 @@
     <value>S/O</value>
   </data>
   <data name="Unknown" xml:space="preserve">
-    <value>Inconnu({f})</value>
+    <value>Inconnu({0})</value>
+  </data>
+  <data name="DownloadAndInstall" xml:space="preserve">
+    <value>Téléchargez et installez la version d'Archipelago {0} avant d'installer le bot avec le mode Archipelago.</value>
   </data>
 </root>

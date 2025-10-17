@@ -6,7 +6,9 @@ using System.IO.Compression;
 
 public class InstallClass : Declare
 {
-    public static async Task Install(string currentVersion, bool isWindows, bool isLinux)
+    public static string? ArchipelagoPath { get; set; } = string.Empty;
+
+    public static async Task<bool> Install(string currentVersion, bool isWindows, bool isLinux)
     {
         var message = string.IsNullOrEmpty(currentVersion)
             ? string.Format(Resource.InstallNewVersion, Version)
@@ -28,14 +30,41 @@ public class InstallClass : Declare
 
         if (isWindows)
         {
-            if (Directory.Exists(TempExtractPath))
-                Directory.Delete(TempExtractPath, true);
+#pragma warning disable CA1416 // Valider la compatibilité de la plateforme
+            ArchipelagoPath = AppLocator.GetArchipelagoPath();
+#pragma warning restore CA1416 // Valider la compatibilité de la plateforme
 
-            await InstallInnoExtractor();
-            await DownloadArchipelagoForWindows();
-            await ExtractArchipelagoForWindows();
-            MoveAppFileToArchipelagoFolder();
-            await InstallVcRedist();
+            if (string.IsNullOrEmpty(ArchipelagoPath))
+            {
+                Console.WriteLine(string.Format(Resource.DownloadAndInstall, Version));
+                Console.WriteLine(DownloadWinUrl);
+                return false;
+            }
+            else
+            {
+                string getArchipelagoPath = Path.Combine(ArchipelagoPath, "ArchipelagoLauncher.exe");
+
+                if (!File.Exists(getArchipelagoPath))
+                {
+                    Console.WriteLine(string.Format(Resource.DownloadAndInstall, Version));
+                    Console.WriteLine(DownloadWinUrl);
+                    return false;
+                }
+                else
+                {
+                    var info = FileVersionInfo.GetVersionInfo(getArchipelagoPath);
+                    string productVersion = info.ProductVersion ?? string.Empty;
+
+                    Console.WriteLine($"Product Version: {productVersion}");
+
+                    if (!string.IsNullOrEmpty(productVersion) && Version != productVersion)
+                    {
+                        Console.WriteLine(string.Format(Resource.DownloadAndInstall, Version));
+                        return false;
+                    }
+                    MoveAppFileToArchipelagoFolder();
+                }
+            }
         }
 
         if (isLinux)
@@ -64,108 +93,20 @@ public class InstallClass : Declare
 
         Console.WriteLine(Resource.InstallUpdateComplete);
 
-        static async Task InstallInnoExtractor()
-        {
-            Console.WriteLine(string.Format(Resource.InstallDLInnoExtractor, DownloadInnoExtractor));
-            HttpResponseMessage responseDownloadInnoExtractor = await HttpClient.GetAsync(DownloadInnoExtractor);
-
-            if (!responseDownloadInnoExtractor.IsSuccessStatusCode)
-            {
-                Console.WriteLine(string.Format(Resource.InstallDLInnoExtractorError, responseDownloadInnoExtractor.StatusCode));
-                return;
-            }
-
-            byte[] dataDownloadInnoExtractor = await responseDownloadInnoExtractor.Content.ReadAsByteArrayAsync();
-            await File.WriteAllBytesAsync(InnoExtractorZip, dataDownloadInnoExtractor);
-
-            Console.WriteLine(Resource.InstallDLTempExtraction);
-            ZipFile.ExtractToDirectory(InnoExtractorZip, TempExtractPath);
-
-            string? extractedMainFolder = Directory.GetDirectories(TempExtractPath).FirstOrDefault();
-            if (string.IsNullOrEmpty(extractedMainFolder))
-            {
-                Console.WriteLine(Resource.InstallDLTempExtractionError);
-                return;
-            }
-        }
-
-        static async Task DownloadArchipelagoForWindows()
-        {
-            Console.WriteLine(string.Format(Resource.InstallDLArchipelagoWindows, DownloadWinUrl));
-            HttpResponseMessage responseDownloadWinUrl = await HttpClient.GetAsync(DownloadWinUrl);
-
-            if (!responseDownloadWinUrl.IsSuccessStatusCode)
-            {
-                Console.WriteLine(string.Format(Resource.InstallDLArchipelagoError, responseDownloadWinUrl.StatusCode));
-                return;
-            }
-
-            byte[] dataDownloadWinUrl = await responseDownloadWinUrl.Content.ReadAsByteArrayAsync();
-            await File.WriteAllBytesAsync(Path.Combine(TempExtractPath, ArchipelagoWindowsSetup), dataDownloadWinUrl);
-        }
-
-        static async Task ExtractArchipelagoForWindows()
-        {
-            Console.WriteLine(Resource.InstallExtractingArchipelago);
-            var innoExtractPath = Path.Combine(TempExtractPath, InnoExtractorExe);
-            var archipelagoInstallerPath = Path.Combine(TempExtractPath, ArchipelagoWindowsSetup);
-
-            ProcessStartInfo psi = new ProcessStartInfo
-            {
-                FileName = innoExtractPath,
-                Arguments = $"--extract --output-dir \"{ExtractPath}\" \"{archipelagoInstallerPath}\"",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            };
-
-            try
-            {
-                using Process? proc = Process.Start(psi);
-                if (proc == null)
-                {
-                    Console.WriteLine(Resource.InstallUnableStartInnoExtractProcess);
-                    return;
-                }
-                string output = await proc.StandardOutput.ReadToEndAsync();
-                string error = await proc.StandardError.ReadToEndAsync();
-                await proc.WaitForExitAsync();
-
-                Console.WriteLine(output);
-
-                if (proc.ExitCode != 0)
-                {
-                    Console.WriteLine(string.Format(Resource.InstallInnoExtractError, proc.ExitCode));
-                    Console.WriteLine(error);
-                }
-                else
-                {
-                    Console.WriteLine(Resource.InstallInnoExtractorSuccessful);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(string.Format(Resource.InstallInnoExtractorException, ex.Message));
-            }
-        }
-
         static void MoveAppFileToArchipelagoFolder()
         {
             Console.WriteLine(Resource.InstallMoveArchipelagoFiles);
 
-            if (Directory.Exists(AppPath))
+            if (Directory.Exists(ArchipelagoPath))
             {
-                foreach (string file in Directory.GetFiles(AppPath, "*", SearchOption.AllDirectories))
+                foreach (string file in Directory.GetFiles(ArchipelagoPath, "*", SearchOption.AllDirectories))
                 {
-                    string relativePath = Path.GetRelativePath(AppPath, file);
+                    string relativePath = Path.GetRelativePath(ArchipelagoPath, file);
                     string destinationPath = Path.Combine(ExtractPath, relativePath);
 
                     Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
-                    File.Move(file, destinationPath, overwrite: true);
+                    File.Copy(file, destinationPath, overwrite: true);
                 }
-
-                Directory.Delete(AppPath, recursive: true);
 
                 Console.WriteLine(Resource.InstallMoveArchipelagoFilesSuccessful);
             }
@@ -173,65 +114,6 @@ public class InstallClass : Declare
             {
                 Console.WriteLine(Resource.InstallMoveArchipelagoFilesFailed);
             }
-        }
-
-        async Task InstallVcRedist()
-        {
-            if (!IsVcRedistInstalled())
-            {
-                Console.WriteLine(Resource.InstallVcRedistX64);
-
-                string vcRedistPath = Path.Combine(TempPath, VcRedistx64Setup);
-
-                if (File.Exists(vcRedistPath))
-                {
-                    var psivc_redist = new ProcessStartInfo
-                    {
-                        FileName = vcRedistPath,
-                        Arguments = "/install /quiet /norestart",
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                    };
-
-                    try
-                    {
-                        using Process process = Process.Start(psivc_redist)!;
-                        await process.WaitForExitAsync();
-
-                        if (process.ExitCode == 0)
-                        {
-                            Console.WriteLine(Resource.InstallVcRedistX64Successful);
-                        }
-                        else
-                        {
-                            Console.WriteLine(string.Format(Resource.InstallVcRedistX64Failed, process.ExitCode));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(string.Format(Resource.InstallVcRedistX64Exception, ex.Message));
-                    }
-                }
-                else
-                {
-                    Console.WriteLine(Resource.InstallVcRedistX64NotFound);
-                }
-            }
-            else
-            {
-                Console.WriteLine(Resource.InstallVcRedistX64AlreadyInstalled);
-            }
-        }
-
-        bool IsVcRedistInstalled()
-        {
-            const string keyPath = @"SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64";
-
-            using RegistryKey? key = Registry.LocalMachine.OpenSubKey(keyPath);
-            if (key == null) return false;
-
-            object? value = key.GetValue("Installed");
-            return value is int installed && installed == 1;
         }
 
         static async Task DownloadAndExtractArchipelagoForLinux()
@@ -262,5 +144,60 @@ public class InstallClass : Declare
 
         var proc = Process.GetCurrentProcess();
         Console.WriteLine(string.Format(Resource.InstallFreeMemory, proc.WorkingSet64 / 1024 / 1024));
+
+        return true;
+    }
+
+    public static class AppLocator
+    {
+        private const string AppIdKey = "{918BA46A-FAB8-460C-9DFF-AE691E1C865B}_is1";
+        private const string UninstallRoot = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
+
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+        public static string? GetArchipelagoPath()
+        {
+                foreach (var hive in new[] { RegistryHive.LocalMachine, RegistryHive.CurrentUser })
+                foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+                {
+                    using var baseKey = RegistryKey.OpenBaseKey(hive, view);
+                    using var key = baseKey.OpenSubKey($@"{UninstallRoot}\{AppIdKey}");
+                    var path = key?.GetValue("InstallLocation") as string
+                            ?? key?.GetValue("Inno Setup: App Path") as string;
+                    if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
+                        return path;
+                }
+
+            foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+            {
+                using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, view);
+                using var cmdKey = baseKey.OpenSubKey(@"archipelago\shell\open\command");
+                var cmd = cmdKey?.GetValue(null) as string;
+                var exe = ExtractFirstQuotedPath(cmd);
+                if (!string.IsNullOrEmpty(exe))
+                {
+                    var dir = Path.GetDirectoryName(exe);
+                    if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                        return dir;
+                }
+            }
+
+            return GetFallback();
+        }
+
+        private static string? GetFallback()
+        {
+            var fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Archipelago");
+            return Directory.Exists(fallback) ? fallback : null;
+        }
+
+        private static string? ExtractFirstQuotedPath(string? cmd)
+        {
+            if (string.IsNullOrEmpty(cmd)) return null;
+            int a = cmd.IndexOf('"');
+            if (a < 0) return null;
+            int b = cmd.IndexOf('"', a + 1);
+            if (b < 0) return null;
+            return cmd.Substring(a + 1, b - a - 1);
+        }
     }
 }

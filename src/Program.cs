@@ -13,9 +13,9 @@ class Program
     {
         Env.Load();
 #if DEBUG
-        args = new string[] { "--normalmode" };
+        //args = new string[] { "--normalmode" };
         //args = new string[] { "--install" };
-        //args = new string[] { "--archipelagoMode" };
+        args = new string[] { "--archipelagoMode" };
 #endif
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
@@ -77,7 +77,11 @@ class Program
         {
             Console.WriteLine(Resource.ProgramInstallationMode);
             await BackupRestoreClass.Backup();
-            await InstallClass.Install(currentVersion, isWindows, isLinux);
+            var installStatus = await InstallClass.Install(currentVersion, isWindows, isLinux);
+            if (!installStatus)
+            {
+                return;
+            }
             await BackupRestoreClass.RestoreBackup();
 
             CustomApworldClass.GenerateYamls();
@@ -94,7 +98,11 @@ class Program
             else
             {
                 await BackupRestoreClass.Backup();
-                await InstallClass.Install(currentVersion, isWindows, isLinux);
+                var installStatus = await InstallClass.Install(currentVersion, isWindows, isLinux);
+                if (!installStatus)
+                {
+                    return;
+                }
                 await BackupRestoreClass.RestoreBackup();
             }
 

@@ -628,6 +628,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Download and Install Archipelago version {0} before to install the bot in Archipelago Mode..
+        /// </summary>
+        internal static string DownloadAndInstall {
+            get {
+                return ResourceManager.GetString("DownloadAndInstall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Error while updating the verification frequency..
         /// </summary>
         internal static string ErrorCheckFrequencyUpdate {
