@@ -5,7 +5,9 @@ namespace AST.GUI
 {
     public static class EnvHelper
     {
-        private static readonly string EnvPath = Path.Combine(AppContext.BaseDirectory, ".env");
+        public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
+
+        private static readonly string EnvPath = Path.Combine(BasePath, ".env");
 
         public static bool EnvExists() => File.Exists(EnvPath);
 

@@ -12,13 +12,14 @@ namespace AST.GUI
     {
         private Process? _proc;
         private bool _closeScheduled;
+        public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
 
         public MainWindow()
         {
             InitializeComponent();
 
-            ExePathBox.Text = Path.Combine(AppContext.BaseDirectory, "ArchipelagoSphereTracker.exe");
-            DbPathBox.Text  = Path.Combine(AppContext.BaseDirectory, "AST.db");
+            ExePathBox.Text = Path.Combine(BasePath, "ArchipelagoSphereTracker.exe");
+            DbPathBox.Text  = Path.Combine(BasePath, "AST.db");
             this.Closing += MainWindow_Closing;
             Application.Current.SessionEnding += Current_SessionEnding;
             AppDomain.CurrentDomain.ProcessExit += (_, __) => KillChildHard();
@@ -113,7 +114,7 @@ namespace AST.GUI
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     CreateNoWindow = true,
-                    WorkingDirectory = Path.GetDirectoryName(ExePathBox.Text) ?? AppContext.BaseDirectory
+                    WorkingDirectory = Path.GetDirectoryName(ExePathBox.Text) ?? BasePath
                 };
 
                 _proc = new Process();
