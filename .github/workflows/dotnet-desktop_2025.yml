@@ -26,7 +26,7 @@ jobs:
 
     env:
       Solution_Name: ArchipelagoSphereTracker.csproj
-      SolitionGui_Name : ./Gui/AST-GUI.csproj
+      SolitionGui_Name : Gui/AST-GUI.csproj
 
     steps:
     - name: Checkout code
