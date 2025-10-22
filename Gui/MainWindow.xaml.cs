@@ -89,7 +89,7 @@ namespace AST.GUI
                 LogBox.ScrollToEnd();
         }
 
-        private async void StartBtn_Click(object sender, RoutedEventArgs e)
+        private void StartBtn_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -100,8 +100,8 @@ namespace AST.GUI
                 }
 
                 StartBtn.IsEnabled = false;
-                StopBtn.IsEnabled  = true;
-                StatusText.Text    = "Démarrage...";
+                StopBtn.IsEnabled = true;
+                StatusText.Text = "Démarrage...";
 
                 var mode = ((ComboBoxItem)ModeBox.SelectedItem).Content?.ToString() ?? "--NormalMode";
 
@@ -119,7 +119,7 @@ namespace AST.GUI
                 _proc = new Process();
                 _proc.StartInfo = psi;
                 _proc.OutputDataReceived += (s, a) => { if (a.Data != null) AppendLog(a.Data); };
-                _proc.ErrorDataReceived  += (s, a) => { if (a.Data != null) AppendLog(a.Data); };
+                _proc.ErrorDataReceived += (s, a) => { if (a.Data != null) AppendLog(a.Data); };
                 _proc.EnableRaisingEvents = true;
                 _proc.Exited += (s, a) =>
                 {
