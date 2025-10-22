@@ -20,6 +20,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Gui\**\*.cs" />
+	  <None Remove="Gui\**\*" />
+	  <EmbeddedResource Remove="Gui\**\*" />
+	  <Page Remove="Gui\**\*.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Update=".env">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
