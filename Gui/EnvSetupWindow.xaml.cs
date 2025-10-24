@@ -27,25 +27,25 @@ namespace AST.GUI
 
                 if (string.IsNullOrEmpty(token))
                 {
-                    MessageBox.Show("Token Discord requis.");
+                    MessageBox.Show(Resource.DiscordTokenRequired);
                     return;
                 }
 
                 var (ok, err) = await CheckDiscordBotTokenAsync(token, TimeSpan.FromSeconds(15));
                 if (!ok)
                 {
-                    MessageBox.Show($"Connexion Discord échouée: {err}");
+                    MessageBox.Show($"{Resource.ConnectionFailed}: {err}");
                     return;
                 }
 
                 EnvHelper.WriteEnv(token, lang);
-                MessageBox.Show($".env enregistré dans: {Path.Combine(EnvHelper.BasePath, ".env")}");
+                MessageBox.Show($"{Resource.EnvSave}: {Path.Combine(EnvHelper.BasePath, ".env")}");
                 DialogResult = true;
                 Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erreur: {ex.Message}");
+                MessageBox.Show($"{Resource.Error}: {ex.Message}");
             }
             finally
             {

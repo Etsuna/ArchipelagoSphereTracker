@@ -979,15 +979,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à **{0}** is at **{1}** in **{2}&apos;s** World..
-        /// </summary>
-        internal static string HintItemUpdated {
-            get {
-                return ResourceManager.GetString("HintItemUpdated", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à New Hint.
         /// </summary>
         internal static string HintNew {
@@ -1087,60 +1078,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Downloading {0}....
-        /// </summary>
-        internal static string InstallDLArchipelagoWindows {
-            get {
-                return ResourceManager.GetString("InstallDLArchipelagoWindows", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Downloading {0}....
-        /// </summary>
-        internal static string InstallDLInnoExtractor {
-            get {
-                return ResourceManager.GetString("InstallDLInnoExtractor", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Error: Unable to download InnoExtractor (code {0})..
-        /// </summary>
-        internal static string InstallDLInnoExtractorError {
-            get {
-                return ResourceManager.GetString("InstallDLInnoExtractorError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Temporary extraction....
-        /// </summary>
-        internal static string InstallDLTempExtraction {
-            get {
-                return ResourceManager.GetString("InstallDLTempExtraction", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Error: Unable to find the extracted folder!.
-        /// </summary>
-        internal static string InstallDLTempExtractionError {
-            get {
-                return ResourceManager.GetString("InstallDLTempExtractionError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Extracting Archipelago....
-        /// </summary>
-        internal static string InstallExtractingArchipelago {
-            get {
-                return ResourceManager.GetString("InstallExtractingArchipelago", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à 💾 RAM after cleanup: {0} MB.
         /// </summary>
         internal static string InstallFreeMemory {
@@ -1155,33 +1092,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string InstallImportApworldsDatabase {
             get {
                 return ResourceManager.GetString("InstallImportApworldsDatabase", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ❌ Error during extraction (code {0}):.
-        /// </summary>
-        internal static string InstallInnoExtractError {
-            get {
-                return ResourceManager.GetString("InstallInnoExtractError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ❌ Exception while running innoextract: {0}.
-        /// </summary>
-        internal static string InstallInnoExtractorException {
-            get {
-                return ResourceManager.GetString("InstallInnoExtractorException", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ✅ Extraction successful..
-        /// </summary>
-        internal static string InstallInnoExtractorSuccessful {
-            get {
-                return ResourceManager.GetString("InstallInnoExtractorSuccessful", resourceCulture);
             }
         }
         
@@ -1231,83 +1141,11 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à ❌ Unable to start the innoextract process..
-        /// </summary>
-        internal static string InstallUnableStartInnoExtractProcess {
-            get {
-                return ResourceManager.GetString("InstallUnableStartInnoExtractProcess", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à Update completed!.
         /// </summary>
         internal static string InstallUpdateComplete {
             get {
                 return ResourceManager.GetString("InstallUpdateComplete", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Installing vc_redist.x64....
-        /// </summary>
-        internal static string InstallVcRedistX64 {
-            get {
-                return ResourceManager.GetString("InstallVcRedistX64", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ✅ VC++ Redistributable already installed, no action needed..
-        /// </summary>
-        internal static string InstallVcRedistX64AlreadyInstalled {
-            get {
-                return ResourceManager.GetString("InstallVcRedistX64AlreadyInstalled", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ❌ Exception during VC++ installation: {0}.
-        /// </summary>
-        internal static string InstallVcRedistX64Exception {
-            get {
-                return ResourceManager.GetString("InstallVcRedistX64Exception", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ❌ VC++ installation error (code {0})..
-        /// </summary>
-        internal static string InstallVcRedistX64Failed {
-            get {
-                return ResourceManager.GetString("InstallVcRedistX64Failed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ⚠️ The file vc_redist.x64 was not found..
-        /// </summary>
-        internal static string InstallVcRedistX64NotFound {
-            get {
-                return ResourceManager.GetString("InstallVcRedistX64NotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ✅ VC++ Redistributable installed successfully (silent mode)..
-        /// </summary>
-        internal static string InstallVcRedistX64Successful {
-            get {
-                return ResourceManager.GetString("InstallVcRedistX64Successful", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No result found for the game &apos;{0}&apos; and the item &apos;{1}&apos;..
-        /// </summary>
-        internal static string IsFillerAsyncNoResultFound {
-            get {
-                return ResourceManager.GetString("IsFillerAsyncNoResultFound", resourceCulture);
             }
         }
         
@@ -1335,15 +1173,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string LanguageYes {
             get {
                 return ResourceManager.GetString("LanguageYes", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à N/A.
-        /// </summary>
-        internal static string NA {
-            get {
-                return ResourceManager.GetString("NA", resourceCulture);
             }
         }
         
@@ -1438,15 +1267,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Program Arm64 Not Supported.
-        /// </summary>
-        internal static string ProgramArm64NotSupported {
-            get {
-                return ResourceManager.GetString("ProgramArm64NotSupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à Bot is connected!.
         /// </summary>
         internal static string ProgramBotIsConnected {
@@ -1515,15 +1335,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string Progression {
             get {
                 return ResourceManager.GetString("Progression", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à **{0}** : {1}.
-        /// </summary>
-        internal static string RACBuildMessage {
-            get {
-                return ResourceManager.GetString("RACBuildMessage", resourceCulture);
             }
         }
         
@@ -2113,15 +1924,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Checking GameStatus for the channel {0}....
-        /// </summary>
-        internal static string TDMCheckingGameStatus {
-            get {
-                return ResourceManager.GetString("TDMCheckingGameStatus", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à Checking Items for the channel {0}....
         /// </summary>
         internal static string TDMCheckingItems {
@@ -2199,15 +2001,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string TDMServerNotFound {
             get {
                 return ResourceManager.GetString("TDMServerNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Setting Aliases and GameStatus for the channel {0}....
-        /// </summary>
-        internal static string TDMSettingsAliasesGamesStatus {
-            get {
-                return ResourceManager.GetString("TDMSettingsAliasesGamesStatus", resourceCulture);
             }
         }
         
@@ -2293,15 +2086,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Sphere_Tracker, Tracker, or the port not found. Addition canceled..
-        /// </summary>
-        internal static string UrlCanceled {
-            get {
-                return ResourceManager.GetString("UrlCanceled", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à You can&apos;t have more than 2 Threads. Delete one before adding a new room url please..
         /// </summary>
         internal static string UrlCheckMaxTread {
@@ -2334,15 +2118,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string UrlGamePatch {
             get {
                 return ResourceManager.GetString("UrlGamePatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à You can&apos;t have more than {0} players..
-        /// </summary>
-        internal static string UrlMaxPlayers {
-            get {
-                return ResourceManager.GetString("UrlMaxPlayers", resourceCulture);
             }
         }
         

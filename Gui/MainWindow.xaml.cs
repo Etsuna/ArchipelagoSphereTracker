@@ -12,7 +12,7 @@ namespace AST.GUI
     {
         private Process? _proc;
         private bool _closeScheduled;
-        public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
+        public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException(Resource.EnvIsNull);
 
         public MainWindow()
         {
@@ -96,13 +96,13 @@ namespace AST.GUI
             {
                 if (!File.Exists(ExePathBox.Text))
                 {
-                    MessageBox.Show("Binaire introuvable.");
+                    MessageBox.Show(Resource.BinaryNotFound);
                     return;
                 }
 
                 StartBtn.IsEnabled = false;
                 StopBtn.IsEnabled = true;
-                StatusText.Text = "Démarrage...";
+                StatusText.Text = Resource.Starting;
 
                 var mode = ((ComboBoxItem)ModeBox.SelectedItem).Content?.ToString() ?? "--NormalMode";
 
@@ -126,8 +126,8 @@ namespace AST.GUI
                 {
                     Dispatcher.Invoke(() =>
                     {
-                        AppendLog($"[process] terminé avec code {_proc?.ExitCode}");
-                        StatusText.Text = "Arrêté";
+                        AppendLog($"{Resource.ProcessStop} {_proc?.ExitCode}");
+                        StatusText.Text = Resource.Stop;
                         StartBtn.IsEnabled = true;
                         StopBtn.IsEnabled = false;
                     });
@@ -137,15 +137,15 @@ namespace AST.GUI
                 _proc.BeginOutputReadLine();
                 _proc.BeginErrorReadLine();
 
-                StatusText.Text = "En cours";
-                AppendLog($"[process] lancé: {psi.FileName} {psi.Arguments}");
+                StatusText.Text = Resource.Processing;
+                AppendLog($"{Resource.ProcessLaunched}: {psi.FileName} {psi.Arguments}");
             }
             catch (Exception ex)
             {
-                AppendLog("[error] " + ex);
+                AppendLog($"[{Resource.Error}] " + ex);
                 StartBtn.IsEnabled = true;
                 StopBtn.IsEnabled = false;
-                StatusText.Text = "Erreur";
+                StatusText.Text = Resource.Error;
             }
         }
 
@@ -155,26 +155,26 @@ namespace AST.GUI
             {
                 if (_proc != null && !_proc.HasExited)
                 {
-                    AppendLog("[process] arrêt demandé");
+                    AppendLog(Resource.StopRequested);
                     _proc.Kill(entireProcessTree: true);
                 }
             }
             catch (Exception ex)
             {
-                AppendLog("[error] " + ex.Message);
+                AppendLog($"[{Resource.Error}] " + ex.Message);
             }
         }
 
         private void Browse_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new OpenFileDialog { Filter = "Executables (*.exe)|*.exe|Tous les fichiers (*.*)|*.*" };
+            var dlg = new OpenFileDialog { Filter = Resource.ExeFilter };
             if (dlg.ShowDialog() == true)
                 ExePathBox.Text = dlg.FileName;
         }
 
         private void BrowseDb_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new OpenFileDialog { Filter = "SQLite DB (*.db)|*.db|Tous les fichiers (*.*)|*.*" };
+            var dlg = new OpenFileDialog { Filter = Resource.BddFilter };
             if (dlg.ShowDialog() == true)
                 DbPathBox.Text = dlg.FileName;
         }
