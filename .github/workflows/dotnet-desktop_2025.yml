@@ -27,6 +27,7 @@ jobs:
     env:
       Solution_Name: ArchipelagoSphereTracker.csproj
       SolutionGui_Name: Gui/AST-GUI.csproj
+      SolutionCheckUpdate_Name: CheckUpdate/CheckUpdate.csproj
 
     steps:
     - name: Checkout code
@@ -57,12 +58,18 @@ jobs:
       if: matrix.os == 'windows-2025'
       run: dotnet restore ${{ env.SolutionGui_Name }}
 
+    - name: Restore dependencies AST-CheckUpdate
+      run: dotnet restore ${{ env.SolutionCheckUpdate_Name }}
+
     - name: Build project AST
       run: dotnet build ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-restore /p:Version=${{ env.VERSION }}
 
     - name: Build project AST-GUI Windows
       if: matrix.os == 'windows-2025'
       run: dotnet build ${{ env.SolutionGui_Name }} --configuration ${{ matrix.configuration }} --no-restore /p:Version=${{ env.VERSION }}
+
+    - name: Build project AST-CheckUpdate
+      run: dotnet build ${{ env.SolutionCheckUpdate_Name }} --configuration ${{ matrix.configuration }} --no-restore /p:Version=${{ env.VERSION }}
 
     - name: Publish self-contained executable AST
       run: >
@@ -79,6 +86,17 @@ jobs:
       if: matrix.os == 'windows-2025'
       run: >
         dotnet publish ${{ env.SolutionGui_Name }}
+        -c ${{ matrix.configuration }}
+        -r ${{ matrix.rid }}
+        /p:SelfContained=true
+        /p:PublishSingleFile=true
+        /p:PublishTrimmed=false
+        /p:IncludeAllContentForSelfExtract=true
+        /p:Version=${{ env.VERSION }}
+
+    - name: Publish self-contained executable AST-CheckUpdate
+      run: >
+        dotnet publish ${{ env.SolutionCheckUpdate_Name }}
         -c ${{ matrix.configuration }}
         -r ${{ matrix.rid }}
         /p:SelfContained=true
@@ -203,6 +221,64 @@ jobs:
         certutil -delstore "TrustedPublisher" $($cert.Thumbprint)
         Remove-Item -Recurse -Force certificate
 
+    - name: Sign executable AST-CheckUpdate Windows
+      if: matrix.os == 'windows-2025'
+      shell: pwsh
+      env:
+        CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+      run: |
+        New-Item -ItemType Directory -Path certificate | Out-Null
+        Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
+        certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
+
+        $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
+                    Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+        if (-not $signtool) { throw "signtool.exe not found on runner." }
+
+        Write-Host "Using signtool: $signtool"
+        $sdkVersion = Split-Path (Split-Path $signtool -Parent) -Leaf
+        Write-Host "Detected Windows SDK: $sdkVersion"
+
+        $artifactDir = "CheckUpdate\bin\${{ matrix.configuration }}\net8.0\${{ matrix.rid }}\publish"
+        $targets = Get-ChildItem $artifactDir -Filter *.exe -ErrorAction SilentlyContinue
+        if (-not $targets) { throw "No EXE found to sign in $artifactDir" }
+
+        foreach ($exe in $targets) {
+          & $signtool sign /fd SHA256 /td SHA256 /tr "http://timestamp.sectigo.com/rfc3161" `
+            /f certificate\certificate.pfx /p $env:CODESIGN_PWD $exe.FullName
+        }
+
+        Remove-Item -Recurse -Force certificate
+
+    - name: Verify signature AST-CheckUpdate Windows
+      if: matrix.os == 'windows-2025'
+      shell: pwsh
+      env:
+        CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+      run: |
+        New-Item -ItemType Directory -Path certificate | Out-Null
+        Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
+        certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
+
+        $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2("certificate\certificate.pfx", $env:CODESIGN_PWD)
+        $cerPath = "certificate\codesign.cer"
+        [IO.File]::WriteAllBytes($cerPath, $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
+
+        certutil -addstore -f Root $cerPath
+        certutil -addstore -f "TrustedPublisher" $cerPath
+
+        $artifactDir = "CheckUpdate\bin\${{ matrix.configuration }}\net8.0\${{ matrix.rid }}\publish"
+        Get-ChildItem $artifactDir -Filter *.exe | ForEach-Object {
+          Write-Host "Verifying $($_.FullName)"
+          Get-AuthenticodeSignature $_.FullName | Format-List Status,StatusMessage,SignerCertificate,TimeStamperCertificate
+        }
+
+        certutil -delstore Root $($cert.Thumbprint)
+        certutil -delstore "TrustedPublisher" $($cert.Thumbprint)
+        Remove-Item -Recurse -Force certificate
+
     - name: Prepare upload folder AST
       shell: bash
       run: |
@@ -226,6 +302,18 @@ jobs:
         else
           echo "Branch build: copying all files"
           cp Gui/bin/Release/net8.0-windows/${{ matrix.rid }}/publish/* upload_dir/
+        fi
+
+    - name: Prepare upload folder AST-CheckUpdate
+      shell: bash
+      run: |
+        mkdir -p upload_dir
+        if [ "${{ github.ref_type }}" = "tag" ]; then
+          echo "Tag detected: copying files without .pdb"
+          find CheckUpdate/bin/Release/net8.0/${{ matrix.rid }}/publish/ -maxdepth 1 -type f ! -iname '*.pdb' -exec cp {} upload_dir/ \;
+        else
+          echo "Branch build: copying all files"
+          cp CheckUpdate/bin/Release/net8.0/${{ matrix.rid }}/publish/* upload_dir/
         fi
 
     - name: Copy command files (if any)
