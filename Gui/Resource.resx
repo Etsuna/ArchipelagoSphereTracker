@@ -153,4 +153,52 @@
     <value>SQLite DB (*.db)|*.db|All files (*.*)|*.*</value>
     <comment>SQLite DB (*.db)|*.db|All files (*.*)|*.*</comment>
   </data>
+  <data name="DataBase" xml:space="preserve">
+    <value>Database</value>
+    <comment>DataBase</comment>
+  </data>
+  <data name="DbFile" xml:space="preserve">
+    <value>DB File:</value>
+    <comment>DB File:</comment>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>Browse...</value>
+    <comment>Browse...</comment>
+  </data>
+  <data name="Reload" xml:space="preserve">
+    <value>Reload</value>
+    <comment>Reload</comment>
+  </data>
+  <data name="Binary" xml:space="preserve">
+    <value>Binary:</value>
+    <comment>Binary:</comment>
+  </data>
+  <data name="Inactive" xml:space="preserve">
+    <value>Inactive</value>
+    <comment>Inactive</comment>
+  </data>
+  <data name="StopBtn" xml:space="preserve">
+    <value>Stop</value>
+    <comment>Stop</comment>
+  </data>
+  <data name="StartBtn" xml:space="preserve">
+    <value>Start</value>
+    <comment>Start</comment>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Clear</value>
+    <comment>Clear</comment>
+  </data>
+  <data name="AutoScroll" xml:space="preserve">
+    <value>Auto Scroll</value>
+    <comment>Auto Scroll</comment>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Cancel</comment>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>Save</comment>
+  </data>
 </root>

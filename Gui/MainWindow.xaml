@@ -14,15 +14,15 @@
             <Button x:Name="StopBtn" Content="Arrêter" Width="100" Margin="0,0,8,0" Click="StopBtn_Click" IsEnabled="False"/>
             <TextBlock Text="Statut:" VerticalAlignment="Center" Margin="16,0,8,0"/>
             <TextBlock x:Name="StatusText" VerticalAlignment="Center" FontWeight="Bold" Text="Inactif"/>
-            <Separator Width="24" RenderTransformOrigin="1.567,0.559"/>
-            <TextBlock Text="Binaire:" VerticalAlignment="Center" Margin="8,0,8,0"/>
+            <Separator Width="24" RenderTransformOrigin="1.567,0.559" Margin="8,2,0,2"/>
+            <TextBlock x:Name="Binary" Text="Binaire:" VerticalAlignment="Center" Margin="8,0,8,0"/>
             <TextBox x:Name="ExePathBox" Width="341" VerticalAlignment="Center" Margin="0,0,8,0"/>
-            <Button Content="Parcourir..." Click="Browse_Click"/>
+            <Button x:Name="BrowseExe" Content="Parcourir..." Click="Browse_Click"/>
         </StackPanel>
 
         <TabControl>
             <!-- LOGS -->
-            <TabItem Header="Logs">
+            <TabItem x:Name="TabItemLogs" Header="Logs">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -32,7 +32,7 @@
                         <TextBox x:Name="LogBox" FontFamily="Consolas" FontSize="12" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"/>
                     </ScrollViewer>
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="8">
-                        <Button Content="Effacer" Click="ClearLog_Click"/>
+                        <Button x:Name="ClearLogs" Content="Effacer" Click="ClearLog_Click"/>
                         <TextBlock Text="  |  "/>
                         <CheckBox x:Name="AutoScrollCheck" IsChecked="True" Content="Défilement auto"/>
                     </StackPanel>
@@ -40,7 +40,7 @@
             </TabItem>
 
             <!-- DB Explorer -->
-            <TabItem Header="Base de données" Height="20" VerticalAlignment="Top">
+            <TabItem x:Name="TabItemBdd" Header="Base de données" Height="20" VerticalAlignment="Top">
                 <!-- Grille maître: barre du haut + moitié haute (3 listes) + moitié basse (onglets) -->
                 <Grid>
                     <Grid.RowDefinitions>
@@ -59,10 +59,10 @@
 
                     <!-- Barre fichier DB -->
                     <StackPanel Grid.Row="0" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="8,8,8,8">
-                        <TextBlock Text="Fichier DB:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="DbFile" Text="Fichier DB:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <TextBox x:Name="DbPathBox" Width="480" Margin="0,0,8,0"/>
-                        <Button Content="Parcourir..." Click="BrowseDb_Click" Margin="0,0,16,0"/>
-                        <Button Content="Recharger" Click="ReloadDb_Click"/>
+                        <Button x:Name="BrowseDbFile" Content="Parcourir..." Click="BrowseDb_Click" Margin="0,0,16,0"/>
+                        <Button x:Name="ReloadDb" Content="Recharger" Click="ReloadDb_Click"/>
                     </StackPanel>
 
                     <!-- Moitié haute: 3 listes côte à côte -->
@@ -82,7 +82,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <TextBlock Text="Channels / Threads" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <TextBlock Text="Threads" FontWeight="Bold" Margin="0,0,0,4"/>
                         <ListBox Grid.Row="1"
                      x:Name="ChannelList"
                      SelectionChanged="ChannelList_SelectionChanged"/>

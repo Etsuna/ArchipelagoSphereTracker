@@ -61,11 +61,29 @@ namespace AST.GUI {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Auto Scroll.
+        /// </summary>
+        internal static string AutoScroll {
+            get {
+                return ResourceManager.GetString("AutoScroll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à SQLite DB (*.db)|*.db|All files (*.*)|*.*.
         /// </summary>
         internal static string BddFilter {
             get {
                 return ResourceManager.GetString("BddFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Binary:.
+        /// </summary>
+        internal static string Binary {
+            get {
+                return ResourceManager.GetString("Binary", resourceCulture);
             }
         }
         
@@ -79,11 +97,56 @@ namespace AST.GUI {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Browse....
+        /// </summary>
+        internal static string Browse {
+            get {
+                return ResourceManager.GetString("Browse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Cancel.
+        /// </summary>
+        internal static string Cancel {
+            get {
+                return ResourceManager.GetString("Cancel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clear.
+        /// </summary>
+        internal static string Clear {
+            get {
+                return ResourceManager.GetString("Clear", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Discord connection failed..
         /// </summary>
         internal static string ConnectionFailed {
             get {
                 return ResourceManager.GetString("ConnectionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Database.
+        /// </summary>
+        internal static string DataBase {
+            get {
+                return ResourceManager.GetString("DataBase", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à DB File:.
+        /// </summary>
+        internal static string DbFile {
+            get {
+                return ResourceManager.GetString("DbFile", resourceCulture);
             }
         }
         
@@ -133,6 +196,15 @@ namespace AST.GUI {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Inactive.
+        /// </summary>
+        internal static string Inactive {
+            get {
+                return ResourceManager.GetString("Inactive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à In progress.
         /// </summary>
         internal static string Processing {
@@ -160,6 +232,33 @@ namespace AST.GUI {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Reload.
+        /// </summary>
+        internal static string Reload {
+            get {
+                return ResourceManager.GetString("Reload", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Save.
+        /// </summary>
+        internal static string Save {
+            get {
+                return ResourceManager.GetString("Save", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Start.
+        /// </summary>
+        internal static string StartBtn {
+            get {
+                return ResourceManager.GetString("StartBtn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Startup....
         /// </summary>
         internal static string Starting {
@@ -178,10 +277,18 @@ namespace AST.GUI {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Stop.
+        /// </summary>
+        internal static string StopBtn {
+            get {
+                return ResourceManager.GetString("StopBtn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à [process] stop requested.
         /// </summary>
-        internal static string StopRequested
-        {
+        internal static string StopRequested {
             get {
                 return ResourceManager.GetString("StopRequested", resourceCulture);
             }

@@ -1,10 +1,12 @@
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using DotNetEnv;
 
 namespace AST.GUI
 {
@@ -17,9 +19,26 @@ namespace AST.GUI
         public MainWindow()
         {
             InitializeComponent();
+            Env.Load();
+
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo((Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant());
 
             ExePathBox.Text = Path.Combine(BasePath, "ArchipelagoSphereTracker.exe");
             DbPathBox.Text  = Path.Combine(BasePath, "AST.db");
+
+            TabItemBdd.Header = Resource.DataBase;
+            DbFile.Text = Resource.DbFile;
+            BrowseDbFile.Content = Resource.Browse;
+            ReloadDb.Content = Resource.Reload;
+            BrowseExe.Content = Resource.Browse;
+            Binary.Text = Resource.Binary;
+            StatusText.Text = Resource.Inactive;
+            StopBtn.Content = Resource.StopBtn;
+            StartBtn.Content = Resource.StartBtn;
+            ClearLogs.Content = Resource.Clear;
+            AutoScrollCheck.Content = Resource.AutoScroll;
+
+
             this.Closing += MainWindow_Closing;
             Application.Current.SessionEnding += Current_SessionEnding;
             AppDomain.CurrentDomain.ProcessExit += (_, __) => KillChildHard();

@@ -22,8 +22,8 @@
         </ComboBox>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0" Grid.Row="4">
-            <Button Content="Annuler" Click="Cancel_Click" Margin="0,0,8,0" />
-            <Button Content="Enregistrer" Click="Save_Click"/>
+            <Button x:Name="BtnCancel" Content="Annuler" Click="Cancel_Click" Margin="0,0,8,0" />
+            <Button x:Name="BtnSave" Content="Enregistrer" Click="Save_Click"/>
         </StackPanel>
     </Grid>
 </Window>

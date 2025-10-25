@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -12,6 +13,9 @@ namespace AST.GUI
         public EnvSetupWindow()
         {
             InitializeComponent();
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName == "fr" ? "fr" : "en");
+            BtnCancel.Content = Resource.Cancel;
+            BtnSave.Content = Resource.Save;
             TokenBox.Focus();
         }
 
