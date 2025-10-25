@@ -24,13 +24,8 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    env:
-      Solution_Name: ArchipelagoSphereTracker.csproj
-      SolutionGui_Name: Gui/AST-GUI.csproj
-      SolutionCheckUpdate_Name: CheckUpdate/CheckUpdate.csproj
-
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v4
 
     - name: Setup .NET
@@ -38,123 +33,82 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    - name: Déterminer VERSION depuis le tag
+    - name: Compute VERSION from tag
       shell: bash
       run: |
         if [ "${{ github.ref_type }}" = "tag" ]; then
-          raw="${GITHUB_REF_NAME#v}"
-          base="${raw%%-*}"
-          VERSION="$base"
+          raw="${GITHUB_REF_NAME#v}"; VERSION="${raw%%-*}"
         else
           VERSION="0.0.0"
         fi
         echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-        echo "Version effective: $VERSION"
+        echo "Version: $VERSION"
 
-    - name: Restore dependencies AST
-      run: dotnet restore ${{ env.Solution_Name }}
+    - name: Define project list
+      shell: bash
+      run: |
+        {
+          echo 'PROJECTS<<EOF'
+          echo "ast:ArchipelagoSphereTracker.csproj"
+          echo "chk:CheckUpdate/CheckUpdate.csproj"
+          if [ "${{ matrix.os }}" = "windows-2025" ]; then
+            echo "gui:Gui/AST-GUI.csproj"
+          fi
+          echo 'EOF'
+        } >> "$GITHUB_ENV"
 
-    - name: Restore dependencies AST-GUI Windows
-      if: matrix.os == 'windows-2025'
-      run: dotnet restore ${{ env.SolutionGui_Name }}
+    - name: Publish all projects (self-contained, single-file)
+      shell: bash
+      run: |
+        set -euo pipefail
+        while IFS= read -r line; do
+          key="${line%%:*}"; proj="${line#*:}"
+          echo "Publish $proj -> artifacts/$key"
+          dotnet publish "$proj" \
+            -c "${{ matrix.configuration }}" \
+            -r "${{ matrix.rid }}" \
+            -o "artifacts/$key" \
+            /p:SelfContained=true \
+            /p:PublishSingleFile=true \
+            /p:PublishTrimmed=false \
+            /p:IncludeAllContentForSelfExtract=true \
+            /p:Version="${{ env.VERSION }}"
+        done <<< "$PROJECTS"
 
-    - name: Restore dependencies AST-CheckUpdate
-      run: dotnet restore ${{ env.SolutionCheckUpdate_Name }}
-
-    - name: Build project AST
-      run: dotnet build ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-restore /p:Version=${{ env.VERSION }}
-
-    - name: Build project AST-GUI Windows
-      if: matrix.os == 'windows-2025'
-      run: dotnet build ${{ env.SolutionGui_Name }} --configuration ${{ matrix.configuration }} --no-restore /p:Version=${{ env.VERSION }}
-
-    - name: Build project AST-CheckUpdate
-      run: dotnet build ${{ env.SolutionCheckUpdate_Name }} --configuration ${{ matrix.configuration }} --no-restore /p:Version=${{ env.VERSION }}
-
-    - name: Publish self-contained executable AST
-      run: >
-        dotnet publish ${{ env.Solution_Name }}
-        -c ${{ matrix.configuration }}
-        -r ${{ matrix.rid }}
-        /p:SelfContained=true
-        /p:PublishSingleFile=true
-        /p:PublishTrimmed=false
-        /p:IncludeAllContentForSelfExtract=true
-        /p:Version=${{ env.VERSION }}
-
-    - name: Publish self-contained executable AST-GUI Windows
-      if: matrix.os == 'windows-2025'
-      run: >
-        dotnet publish ${{ env.SolutionGui_Name }}
-        -c ${{ matrix.configuration }}
-        -r ${{ matrix.rid }}
-        /p:SelfContained=true
-        /p:PublishSingleFile=true
-        /p:PublishTrimmed=false
-        /p:IncludeAllContentForSelfExtract=true
-        /p:Version=${{ env.VERSION }}
-
-    - name: Publish self-contained executable AST-CheckUpdate
-      run: >
-        dotnet publish ${{ env.SolutionCheckUpdate_Name }}
-        -c ${{ matrix.configuration }}
-        -r ${{ matrix.rid }}
-        /p:SelfContained=true
-        /p:PublishSingleFile=true
-        /p:PublishTrimmed=false
-        /p:IncludeAllContentForSelfExtract=true
-        /p:Version=${{ env.VERSION }}
-
-    - name: Sign executable AST
+    - name: Code sign + verify (Windows)
       if: matrix.os == 'windows-2025'
       shell: pwsh
       env:
         CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD }}
         CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
       run: |
+        # Rebuild PFX from base64
         New-Item -ItemType Directory -Path certificate | Out-Null
         Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
         certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
 
+        # Pick latest signtool
         $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
                     Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
-        if (-not $signtool) { throw "signtool.exe not found on runner." }
-
+        if (-not $signtool) { throw "signtool.exe not found." }
         Write-Host "Using signtool: $signtool"
-        $sdkVersion = Split-Path (Split-Path $signtool -Parent) -Leaf
-        Write-Host "Detected Windows SDK: $sdkVersion"
 
-        $artifactDir = "bin\${{ matrix.configuration }}\net8.0\${{ matrix.rid }}\publish"
-        $targets = Get-ChildItem $artifactDir -Filter *.exe -ErrorAction SilentlyContinue
-        if (-not $targets) { throw "No EXE found to sign in $artifactDir" }
-
+        # Sign all EXEs in artifacts
+        $targets = Get-ChildItem -Path artifacts -Filter *.exe -Recurse -ErrorAction SilentlyContinue
+        if (-not $targets) { throw "No EXE found to sign in artifacts" }
         foreach ($exe in $targets) {
           & $signtool sign /fd SHA256 /td SHA256 /tr "http://timestamp.sectigo.com/rfc3161" `
             /f certificate\certificate.pfx /p $env:CODESIGN_PWD $exe.FullName
         }
 
-        Remove-Item -Recurse -Force certificate
-
-    - name: Verify signature AST Windows
-      if: matrix.os == 'windows-2025'
-      shell: pwsh
-      env:
-        CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
-      run: |
-        New-Item -ItemType Directory -Path certificate | Out-Null
-        Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
-        certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
-
+        # Verify signatures
         $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2("certificate\certificate.pfx", $env:CODESIGN_PWD)
         $cerPath = "certificate\codesign.cer"
         [IO.File]::WriteAllBytes($cerPath, $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
-
         certutil -addstore -f Root $cerPath
         certutil -addstore -f "TrustedPublisher" $cerPath
 
-        $artifactDir = "bin\${{ matrix.configuration }}\net8.0\${{ matrix.rid }}\publish"
-        Get-ChildItem $artifactDir -Filter *.exe | ForEach-Object {
+        Get-ChildItem -Path artifacts -Filter *.exe -Recurse | ForEach-Object {
           Write-Host "Verifying $($_.FullName)"
           Get-AuthenticodeSignature $_.FullName | Format-List Status,StatusMessage,SignerCertificate,TimeStamperCertificate
         }
@@ -163,169 +117,29 @@ jobs:
         certutil -delstore "TrustedPublisher" $($cert.Thumbprint)
         Remove-Item -Recurse -Force certificate
 
-    - name: Sign executable AST-GUI Windows
-      if: matrix.os == 'windows-2025'
-      shell: pwsh
-      env:
-        CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
-      run: |
-        New-Item -ItemType Directory -Path certificate | Out-Null
-        Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
-        certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
-
-        $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
-                    Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
-        if (-not $signtool) { throw "signtool.exe not found on runner." }
-
-        Write-Host "Using signtool: $signtool"
-        $sdkVersion = Split-Path (Split-Path $signtool -Parent) -Leaf
-        Write-Host "Detected Windows SDK: $sdkVersion"
-
-        $artifactDir = "Gui\bin\${{ matrix.configuration }}\net8.0-windows\${{ matrix.rid }}\publish"
-        $targets = Get-ChildItem $artifactDir -Filter *.exe -ErrorAction SilentlyContinue
-        if (-not $targets) { throw "No EXE found to sign in $artifactDir" }
-
-        foreach ($exe in $targets) {
-          & $signtool sign /fd SHA256 /td SHA256 /tr "http://timestamp.sectigo.com/rfc3161" `
-            /f certificate\certificate.pfx /p $env:CODESIGN_PWD $exe.FullName
-        }
-
-        Remove-Item -Recurse -Force certificate
-
-    - name: Verify signature AST-Gui Windows
-      if: matrix.os == 'windows-2025'
-      shell: pwsh
-      env:
-        CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
-      run: |
-        New-Item -ItemType Directory -Path certificate | Out-Null
-        Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
-        certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
-
-        $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2("certificate\certificate.pfx", $env:CODESIGN_PWD)
-        $cerPath = "certificate\codesign.cer"
-        [IO.File]::WriteAllBytes($cerPath, $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
-
-        certutil -addstore -f Root $cerPath
-        certutil -addstore -f "TrustedPublisher" $cerPath
-
-        $artifactDir = "Gui\bin\${{ matrix.configuration }}\net8.0-windows\${{ matrix.rid }}\publish"
-        Get-ChildItem $artifactDir -Filter *.exe | ForEach-Object {
-          Write-Host "Verifying $($_.FullName)"
-          Get-AuthenticodeSignature $_.FullName | Format-List Status,StatusMessage,SignerCertificate,TimeStamperCertificate
-        }
-
-        certutil -delstore Root $($cert.Thumbprint)
-        certutil -delstore "TrustedPublisher" $($cert.Thumbprint)
-        Remove-Item -Recurse -Force certificate
-
-    - name: Sign executable AST-CheckUpdate Windows
-      if: matrix.os == 'windows-2025'
-      shell: pwsh
-      env:
-        CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
-      run: |
-        New-Item -ItemType Directory -Path certificate | Out-Null
-        Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
-        certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
-
-        $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
-                    Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
-        if (-not $signtool) { throw "signtool.exe not found on runner." }
-
-        Write-Host "Using signtool: $signtool"
-        $sdkVersion = Split-Path (Split-Path $signtool -Parent) -Leaf
-        Write-Host "Detected Windows SDK: $sdkVersion"
-
-        $artifactDir = "CheckUpdate\bin\${{ matrix.configuration }}\net8.0\${{ matrix.rid }}\publish"
-        $targets = Get-ChildItem $artifactDir -Filter *.exe -ErrorAction SilentlyContinue
-        if (-not $targets) { throw "No EXE found to sign in $artifactDir" }
-
-        foreach ($exe in $targets) {
-          & $signtool sign /fd SHA256 /td SHA256 /tr "http://timestamp.sectigo.com/rfc3161" `
-            /f certificate\certificate.pfx /p $env:CODESIGN_PWD $exe.FullName
-        }
-
-        Remove-Item -Recurse -Force certificate
-
-    - name: Verify signature AST-CheckUpdate Windows
-      if: matrix.os == 'windows-2025'
-      shell: pwsh
-      env:
-        CODESIGN_PWD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        CODESIGN_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
-      run: |
-        New-Item -ItemType Directory -Path certificate | Out-Null
-        Set-Content -Path certificate\certificate.txt -Value $env:CODESIGN_BASE64
-        certutil -decode certificate\certificate.txt certificate\certificate.pfx > $null
-
-        $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2("certificate\certificate.pfx", $env:CODESIGN_PWD)
-        $cerPath = "certificate\codesign.cer"
-        [IO.File]::WriteAllBytes($cerPath, $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
-
-        certutil -addstore -f Root $cerPath
-        certutil -addstore -f "TrustedPublisher" $cerPath
-
-        $artifactDir = "CheckUpdate\bin\${{ matrix.configuration }}\net8.0\${{ matrix.rid }}\publish"
-        Get-ChildItem $artifactDir -Filter *.exe | ForEach-Object {
-          Write-Host "Verifying $($_.FullName)"
-          Get-AuthenticodeSignature $_.FullName | Format-List Status,StatusMessage,SignerCertificate,TimeStamperCertificate
-        }
-
-        certutil -delstore Root $($cert.Thumbprint)
-        certutil -delstore "TrustedPublisher" $($cert.Thumbprint)
-        Remove-Item -Recurse -Force certificate
-
-    - name: Prepare upload folder AST
+    - name: Prepare upload_dir
       shell: bash
       run: |
+        set -euo pipefail
         mkdir -p upload_dir
         if [ "${{ github.ref_type }}" = "tag" ]; then
-          echo "Tag detected: copying files without .pdb"
-          find bin/Release/net8.0/${{ matrix.rid }}/publish/ -maxdepth 1 -type f ! -iname '*.pdb' -exec cp {} upload_dir/ \;
+          echo "Tag: copy without .pdb"
+          find artifacts -type f ! -iname '*.pdb' -exec cp {} upload_dir/ \;
         else
-          echo "Branch build: copying all files"
-          cp bin/Release/net8.0/${{ matrix.rid }}/publish/* upload_dir/
+          echo "Branch: copy all files"
+          find artifacts -type f -exec cp {} upload_dir/ \;
         fi
 
-    - name: Prepare upload folder AST-Gui Windows
-      if: matrix.os == 'windows-2025'
-      shell: bash
-      run: |
-        mkdir -p upload_dir
-        if [ "${{ github.ref_type }}" = "tag" ]; then
-          echo "Tag detected: copying files without .pdb"
-          find Gui/bin/Release/net8.0-windows/${{ matrix.rid }}/publish/ -maxdepth 1 -type f ! -iname '*.pdb' -exec cp {} upload_dir/ \;
-        else
-          echo "Branch build: copying all files"
-          cp Gui/bin/Release/net8.0-windows/${{ matrix.rid }}/publish/* upload_dir/
-        fi
-
-    - name: Prepare upload folder AST-CheckUpdate
-      shell: bash
-      run: |
-        mkdir -p upload_dir
-        if [ "${{ github.ref_type }}" = "tag" ]; then
-          echo "Tag detected: copying files without .pdb"
-          find CheckUpdate/bin/Release/net8.0/${{ matrix.rid }}/publish/ -maxdepth 1 -type f ! -iname '*.pdb' -exec cp {} upload_dir/ \;
-        else
-          echo "Branch build: copying all files"
-          cp CheckUpdate/bin/Release/net8.0/${{ matrix.rid }}/publish/* upload_dir/
-        fi
-
-    - name: Copy command files (if any)
+    - name: Copy command files (if present)
       shell: bash
       run: |
         set -euo pipefail
         src="Install/${{ matrix.rid }}"
         if [ -d "$src" ] && compgen -G "$src/*" > /dev/null; then
           cp -r "$src/"* upload_dir/
-          echo "Copied command files from $src"
+          echo "Copied from $src"
         else
-          echo "No command files for $src — skipping."
+          echo "No command files for $src"
         fi
 
     - name: Upload artifact
@@ -334,11 +148,10 @@ jobs:
         name: ast-${{ matrix.rid }}${{ github.ref_type == 'tag' && format('-{0}', github.ref_name) || '' }}
         path: upload_dir/
 
-    - name: Create archive folder
+    - name: Create release_assets folder
       if: startsWith(github.ref, 'refs/tags/')
       shell: bash
-      run: |
-        mkdir -p release_assets
+      run: mkdir -p release_assets
 
     - name: Create ZIP archive (Windows)
       if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'windows-2025'
