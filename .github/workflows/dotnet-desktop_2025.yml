@@ -68,11 +68,11 @@ jobs:
             -c "${{ matrix.configuration }}" \
             -r "${{ matrix.rid }}" \
             -o "artifacts/$key" \
-            /p:SelfContained=true \
-            /p:PublishSingleFile=true \
-            /p:PublishTrimmed=false \
-            /p:IncludeAllContentForSelfExtract=true \
-            /p:Version="${{ env.VERSION }}"
+            -p:SelfContained=true \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=false \
+            -p:IncludeAllContentForSelfExtract=true \
+            -p:Version="${{ env.VERSION }}"
         done <<< "$PROJECTS"
 
     - name: Code sign + verify (Windows)
