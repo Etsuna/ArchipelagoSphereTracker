@@ -38,14 +38,16 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Déterminer VERSION depuis le tag
-      id: ver
       shell: bash
       run: |
         if [ "${{ github.ref_type }}" = "tag" ]; then
-          echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          raw="${GITHUB_REF_NAME#v}"
+          base="${raw%%-*}"
+          VERSION="$base"
         else
-          echo "VERSION=0.0.0" >> "$GITHUB_ENV"
+          VERSION="0.0.0"
         fi
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
         echo "Version effective: $VERSION"
 
     - name: Restore dependencies AST
