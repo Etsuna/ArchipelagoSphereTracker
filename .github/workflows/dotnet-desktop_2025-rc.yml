@@ -1,4 +1,4 @@
-name: .NET Core Self-Contained Build 2025
+name: .NET Core Self-Contained Build 2025 RC
 
 on:
   push:
