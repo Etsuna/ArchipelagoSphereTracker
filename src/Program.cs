@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 class Program
 {
     public static bool SetBddVersion = false;
+    static void Notify(string msg) => Console.WriteLine(msg);
     static async Task Main(string[] args)
     {
         Env.Load();
@@ -23,6 +24,12 @@ class Program
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+
+        await CheckUpdate.CheckAsync(
+            owner: "Etsuna",
+            repo: "ArchipelagoSphereTracker",
+            notify: Notify
+        );
 
         if (!isWindows && !isLinux)
         {
@@ -191,6 +198,14 @@ class Program
             Console.WriteLine(Resource.ProgramBotIsConnected);
 
             TrackingDataManager.StartTracking();
+#if RELEASE
+            if(Declare.TelemetryName != "AST")
+            {
+                UpdateReminder.Start();
+            }
+#else
+            UpdateReminder.Start();
+#endif
         });
         return Task.CompletedTask;
     }

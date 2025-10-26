@@ -50,7 +50,6 @@ jobs:
         {
           echo 'PROJECTS<<EOF'
           echo "ast:ArchipelagoSphereTracker.csproj"
-          echo "chk:CheckUpdate/CheckUpdate.csproj"
           if [ "${{ matrix.os }}" = "windows-2025" ]; then
             echo "gui:Gui/AST-GUI.csproj"
           fi

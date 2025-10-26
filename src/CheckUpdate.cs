@@ -47,6 +47,30 @@ public static class CheckUpdate
         }
     }
 
+    public static async Task<(bool newer, string current, string latest, Asset? asset)> TryGetLatestAsync(
+        string owner = "Etsuna", string repo = "ArchipelagoSphereTracker", CancellationToken ct = default)
+    {
+        var env = Environment.GetEnvironmentVariable("UPDATE_CHECK");
+        if (string.Equals(env, "false", StringComparison.OrdinalIgnoreCase))
+            return (false, GetLocalSemVer(), GetLocalSemVer(), null);
+
+        _http.DefaultRequestHeaders.UserAgent.Clear();
+        _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("AST", "1"));
+        _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+
+        using var res = await _http.GetAsync($"https://api.github.com/repos/{owner}/{repo}/releases/latest", ct);
+        res.EnsureSuccessStatusCode();
+
+        var rel = JsonSerializer.Deserialize<Release>(await res.Content.ReadAsStringAsync())
+                  ?? throw new InvalidOperationException("Invalid JSON");
+
+        var current = GetLocalSemVer();
+        var latest = Normalize(rel.tag_name);
+        var asset = PickAsset(rel.assets);
+
+        return (IsNewer(latest, current), current, latest, asset);
+    }
+
     private static string GetLocalSemVer()
     {
         // lit <Version>…</Version> comme InformationalVersion

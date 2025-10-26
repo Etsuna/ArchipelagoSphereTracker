@@ -41,6 +41,7 @@ public class Declare
     public static string TempExtractPath = Path.Combine(BasePath, "tempExtract");
     public static string BddPath = Path.Combine(BasePath, "AST.db");
     public static string ExternalFolder = Path.Combine(BasePath, "extern");
+
     public static string GenerateTemplatesPath = "ArchipelagoSphereTracker.apworld.generate_templates.apworld";
 
     public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
