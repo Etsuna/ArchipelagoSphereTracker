@@ -6,7 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PublishTrimmed>false</PublishTrimmed>
-		<Configurations>Debug;Release</Configurations>
+		<Configurations>Debug;Release;Testing;ArchipelagoMode</Configurations>
 		<Version Condition="'$(Version)'==''">0.0.0</Version>
 		<AssemblyVersion>$(Version)</AssemblyVersion>
 	</PropertyGroup>

@@ -4,6 +4,11 @@ using Discord.Commands;
 public class Declare
 {
     public static string Version = "0.6.4";
+#if RC
+    public static string ReleaseVersion = $"{Version}-rc2";
+#else
+    public static string ReleaseVersion = Version;
+#endif
     public static string BotVersion = "5.2.0";
     public static string BddVersion = "5.0.0";
 
@@ -27,9 +32,8 @@ public class Declare
 
     public static string BasePath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Environment.ProcessPath is null.");
 
-    public static string DownloadWinUrl = $"https://github.com/ArchipelagoMW/Archipelago/releases/download/{Version}/Setup.Archipelago.{Version}.exe";
-    public static string DownloadLinuxUrl = $"https://github.com/ArchipelagoMW/Archipelago/releases/download/{Version}/Archipelago_{Version}_linux-x86_64.tar.gz";
-    //public static string DownloadLinuxUrl = $"https://github.com/ArchipelagoMW/Archipelago/releases/download/0.6.4-rc1/Archipelago_0.6.4_linux-x86_64.tar.gz";
+    public static string DownloadWinUrl = $"https://github.com/ArchipelagoMW/Archipelago/releases/download/{ReleaseVersion}/Setup.Archipelago.{Version}.exe";
+    public static string DownloadLinuxUrl = $"https://github.com/ArchipelagoMW/Archipelago/releases/download/{ReleaseVersion}/Archipelago_{Version}_linux-x86_64.tar.gz";
 
     public static string ArchipelagoLinuxTarGz = $"Archipelago_{Version}_linux-x86_64.tar.gz";
 
