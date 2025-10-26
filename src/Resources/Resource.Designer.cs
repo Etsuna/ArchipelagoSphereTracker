@@ -637,6 +637,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Downloading the update:.
+        /// </summary>
+        internal static string DownloadUpdate {
+            get {
+                return ResourceManager.GetString("DownloadUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Error while updating the verification frequency..
         /// </summary>
         internal static string ErrorCheckFrequencyUpdate {
@@ -2064,6 +2073,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string Unknown {
             get {
                 return ResourceManager.GetString("Unknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Update available:.
+        /// </summary>
+        internal static string UpdateAvailable {
+            get {
+                return ResourceManager.GetString("UpdateAvailable", resourceCulture);
             }
         }
         

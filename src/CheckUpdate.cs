@@ -1,11 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Net.Http;
+﻿using ArchipelagoSphereTracker.src.Resources;
 using System.Net.Http.Headers;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 public static class CheckUpdate
 {
@@ -19,7 +15,6 @@ public static class CheckUpdate
         string repo = "ArchipelagoSphereTracker",
         Action<string>? notify = null)
     {
-        // opt-out possible via .env : UPDATE_CHECK=false
         var env = Environment.GetEnvironmentVariable("UPDATE_CHECK");
         if (string.Equals(env, "false", StringComparison.OrdinalIgnoreCase)) return;
 
@@ -41,8 +36,8 @@ public static class CheckUpdate
         {
             var asset = PickAsset(rel.assets);
             var msg =
-                $"Mise à jour disponible : {current} → {latest}" +
-                (asset is null ? "" : $"\nTéléchargement suggéré : {asset.browser_download_url}");
+                $"{Resource.UpdateAvailable} {current} → {latest}" +
+                (asset is null ? "" : $"\n{Resource.DownloadUpdate} {asset.browser_download_url}");
             (notify ?? Console.WriteLine)(msg);
         }
     }

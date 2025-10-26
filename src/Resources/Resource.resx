@@ -1101,4 +1101,12 @@
     <value>Download and Install Archipelago version {0} before to install the bot in Archipelago Mode.</value>
     <comment>Download and Install Archipelago version {Version} before to install the bot in Archipelago Mode.</comment>
   </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>Update available:</value>
+    <comment>Update available:</comment>
+  </data>
+  <data name="DownloadUpdate" xml:space="preserve">
+    <value>Downloading the update:</value>
+    <comment>Downloading the update:</comment>
+  </data>
 </root>

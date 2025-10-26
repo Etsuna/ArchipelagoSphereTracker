@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ArchipelagoSphereTracker.src.Resources;
+using Discord;
 
 public static class UpdateReminder
 {
@@ -44,7 +45,7 @@ public static class UpdateReminder
         }, token);
     }
 
-    private static async Task MaybeNotifyDailyAsync(string guild, string channel, string owner, string repo, CancellationToken ct)
+    public static async Task MaybeNotifyDailyAsync(string guild, string channel, string owner, string repo, CancellationToken ct)
     {
         var (newer, current, latest, asset) = await CheckUpdate.TryGetLatestAsync(owner, repo, ct);
         if (!newer) return;
@@ -57,8 +58,8 @@ public static class UpdateReminder
             TimeZoneInfo.ConvertTime(last.Value, Tz).Date == todayLocal)
             return;
 
-        var msg = $"Mise à jour disponible : {current} → {latest}" +
-                  (asset is null ? "" : $"\nTéléchargement suggéré : {asset.browser_download_url}");
+        var msg = $"{Resource.UpdateAvailable} {current} → {latest}" +
+                  (asset is null ? "" : $"\n{Resource.DownloadUpdate} {asset.browser_download_url}");
 
         ulong guildId = ulong.Parse(guild);
         await TrackingDataManager.RateLimitGuards.GetGuildSendGate(guildId).WaitAsync(ct);

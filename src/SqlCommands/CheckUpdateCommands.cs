@@ -1,7 +1,5 @@
-﻿using System;
-using System.Data.SQLite;
+﻿using System.Data.SQLite;
 using System.Globalization;
-using System.Threading.Tasks;
 
 public static class CheckUpdateCommands
 {
@@ -11,7 +9,7 @@ public static class CheckUpdateCommands
         {
             await using var connection = await Db.OpenReadAsync();
             using var cmd = new SQLiteCommand(
-                "SELECT LatestTag, LastSentUtc FROM UpdateAlertsTable WHERE Guild=@g AND Channel=@c LIMIT 1;",
+                "SELECT LatestTag, LastSentUtc FROM UpdateAlertsTable WHERE GuildId=@g AND ChannelId=@c LIMIT 1;",
                 connection);
 
             cmd.Parameters.AddWithValue("@g", guild);
@@ -51,20 +49,20 @@ public static class CheckUpdateCommands
             {
                 using (var create = new SQLiteCommand(
                     "CREATE TABLE IF NOT EXISTS UpdateAlertsTable (" +
-                    "Guild TEXT NOT NULL, " +
-                    "Channel TEXT NOT NULL, " +
+                    "GuildId TEXT NOT NULL, " +
+                    "ChannelId TEXT NOT NULL, " +
                     "LatestTag TEXT NULL, " +
                     "LastSentUtc TEXT NULL, " +
-                    "PRIMARY KEY(Guild, Channel)" +
+                    "PRIMARY KEY(GuildId, ChannelId)" +
                     ");", conn))
                 {
                     await create.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
 
                 using (var upsert = new SQLiteCommand(
-                    "INSERT INTO UpdateAlertsTable (Guild, Channel, LatestTag, LastSentUtc) " +
+                    "INSERT INTO UpdateAlertsTable (GuildId, ChannelId, LatestTag, LastSentUtc) " +
                     "VALUES (@g, @c, @t, @d) " +
-                    "ON CONFLICT(Guild, Channel) DO UPDATE SET " +
+                    "ON CONFLICT(GuildId, ChannelId) DO UPDATE SET " +
                     "LatestTag = excluded.LatestTag, " +
                     "LastSentUtc = excluded.LastSentUtc;", conn))
                 {
