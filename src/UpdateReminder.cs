@@ -63,13 +63,16 @@ public static class UpdateReminder
 
         ulong guildId = ulong.Parse(guild);
         await TrackingDataManager.RateLimitGuards.GetGuildSendGate(guildId).WaitAsync(ct);
-        try
+        if(Declare.TelemetryName != "AST")
         {
-            await BotCommands.SendMessageAsync(msg, channel);
-        }
-        finally
-        {
-            TrackingDataManager.RateLimitGuards.GetGuildSendGate(guildId).Release();
+            try
+            {
+                await BotCommands.SendMessageAsync(msg, channel);
+            }
+            finally
+            {
+                TrackingDataManager.RateLimitGuards.GetGuildSendGate(guildId).Release();
+            }
         }
 
         await UpdateAlertsCommands.UpsertAsync(guild, channel, latest, DateTimeOffset.UtcNow);

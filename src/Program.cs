@@ -198,14 +198,8 @@ class Program
             Console.WriteLine(Resource.ProgramBotIsConnected);
 
             TrackingDataManager.StartTracking();
-#if RELEASE
-            if(Declare.TelemetryName != "AST")
-            {
-                UpdateReminder.Start();
-            }
-#else
             UpdateReminder.Start();
-#endif
+
         });
         return Task.CompletedTask;
     }
