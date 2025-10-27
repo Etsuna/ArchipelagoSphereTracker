@@ -54,6 +54,7 @@ public static class UpdateReminder
         var todayLocal = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Tz).Date;
 
         if (rec is { LatestTag: var lastTag, LastSentUtc: var last } &&
+            last.HasValue &&
             string.Equals(lastTag, latest, StringComparison.Ordinal) &&
             TimeZoneInfo.ConvertTime(last.Value, Tz).Date == todayLocal)
             return;
