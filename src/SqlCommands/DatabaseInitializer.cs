@@ -230,6 +230,14 @@ CREATE TABLE IF NOT EXISTS DatapackageGameMap(
 CREATE INDEX IF NOT EXISTS IX_DatapackageGameMap_GC_Game
   ON DatapackageGameMap(GuildId, ChannelId, GameName);
 
+CREATE TABLE IF NOT EXISTS UpdateAlertsTable (
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    LatestTag TEXT NULL,
+    LastSentUtc TEXT NULL,
+    PRIMARY KEY(GuildId, ChannelId)
+);
+
 -- ==========================
 -- Index & contraintes
 -- ==========================
