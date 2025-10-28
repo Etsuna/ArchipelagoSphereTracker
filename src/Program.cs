@@ -9,18 +9,27 @@ using System.Runtime.InteropServices;
 class Program
 {
     public static bool SetBddVersion = false;
+    static void Notify(string msg) => Console.WriteLine(msg);
     static async Task Main(string[] args)
     {
         Env.Load();
-#if DEBUG
-        args = new string[] { "--normalmode" };
-        //args = new string[] { "--install" };
-        //args = new string[] { "--archipelagoMode" };
+#if ARCHIPELAGOMODE
+        args = ["--archipelagoMode"];
+#elif RC
+        args = ["--archipelagoMode"];
+#else
+        args = ["--normalmode"];
 #endif
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+
+        await CheckUpdate.CheckAsync(
+            owner: "Etsuna",
+            repo: "ArchipelagoSphereTracker",
+            notify: Notify
+        );
 
         if (!isWindows && !isLinux)
         {
@@ -69,15 +78,29 @@ class Program
             Console.WriteLine(Resource.SkipBDDMigration);
             SetBddVersion = true;
         }
+        else
+        {
+            await CheckBdd();
+        }
 
         await DatabaseInitializer.InitializeDatabaseAsync();
+
+        if (SetBddVersion)
+        {
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+        }
+
         Declare.ProgramID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable");
 
         if (args[0].ToLower() == "--install")
         {
             Console.WriteLine(Resource.ProgramInstallationMode);
             await BackupRestoreClass.Backup();
-            await InstallClass.Install(currentVersion, isWindows, isLinux);
+            var installStatus = await InstallClass.Install(currentVersion, isWindows, isLinux);
+            if (!installStatus)
+            {
+                return;
+            }
             await BackupRestoreClass.RestoreBackup();
 
             CustomApworldClass.GenerateYamls();
@@ -94,7 +117,11 @@ class Program
             else
             {
                 await BackupRestoreClass.Backup();
-                await InstallClass.Install(currentVersion, isWindows, isLinux);
+                var installStatus = await InstallClass.Install(currentVersion, isWindows, isLinux);
+                if (!installStatus)
+                {
+                    return;
+                }
                 await BackupRestoreClass.RestoreBackup();
             }
 
@@ -144,11 +171,11 @@ class Program
         {
             _ = Task.Run(async () =>
             {
-                await Task.Delay(10000); 
+                await Task.Delay(10000);
                 if (Declare.Cts == null || Declare.Cts.IsCancellationRequested)
                     TrackingDataManager.StartTracking();
             });
-            return Task.CompletedTask; 
+            return Task.CompletedTask;
         }
     }
 
@@ -168,41 +195,39 @@ class Program
         _ = Task.Run(async () =>
         {
             await BotCommands.RegisterCommandsAsync();
-        Console.WriteLine(Resource.ProgramBotIsConnected);
+            Console.WriteLine(Resource.ProgramBotIsConnected);
 
-        if (SetBddVersion)
+            TrackingDataManager.StartTracking();
+            UpdateReminder.Start();
+
+        });
+        return Task.CompletedTask;
+    }
+
+    private static async Task CheckBdd()
+    {
+        Console.WriteLine(Resource.CheckingBDDVersion);
+        string bddVersion = await DBMigration.GetCurrentDbVersionAsync();
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        if (bddVersion == "-1")
         {
+            Console.WriteLine(Resource.NoBddVersionTable);
+            await DBMigration.Migrate_4_to_5Async(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+            await DBMigration.DropLegacyTablesAsync();
+        }
+        else if (bddVersion == Declare.BddVersion)
+        {
+            Console.WriteLine(Resource.BDDUpToDate);
         }
         else
         {
-            Console.WriteLine(Resource.CheckingBDDVersion);
-            string bddVersion = await DBMigration.GetCurrentDbVersionAsync();
-
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-
-            if (bddVersion == "-1")
-            {
-                Console.WriteLine(Resource.NoBddVersionTable);
-                await DBMigration.Migrate_4_to_5Async(cts.Token);
-                await DBMigration.SetDbVersionAsync(Declare.BddVersion);
-                await DBMigration.DropLegacyTablesAsync();
-            }
-            else if (bddVersion == Declare.BddVersion)
-            {
-                Console.WriteLine(Resource.BDDUpToDate);
-            }
-            else
-            {
-                Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
-                await DBMigration.Migrate_4_to_5Async(cts.Token);
-                await DBMigration.SetDbVersionAsync(Declare.BddVersion);
-                await DBMigration.DropLegacyTablesAsync();
-            }
+            Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
+            await DBMigration.Migrate_4_to_5Async(cts.Token);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+            await DBMigration.DropLegacyTablesAsync();
         }
-
-            TrackingDataManager.StartTracking();
-        });
-        return Task.CompletedTask;
     }
 }

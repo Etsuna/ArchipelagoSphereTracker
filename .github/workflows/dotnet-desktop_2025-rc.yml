@@ -1,13 +1,11 @@
-name: .NET Core Self-Contained Build 2025
+name: .NET Core Self-Contained Build 2025 RC
 
 on:
   push:
-    branches: [ "main", "dev" ]
-    tags:
-      - 'v*.*.*'
-      - '!v*.*.*-*'
+    branches: [ "rc" ]
+    tags: [ "v*.*.*-rc*" ]
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: [ "rc" ]
 
 permissions:
   contents: write
@@ -19,10 +17,10 @@ jobs:
         include:
           - os: windows-2025
             rid: win-x64
-            configuration: Release
+            configuration: RC
           - os: ubuntu-latest
             rid: linux-x64
-            configuration: Release
+            configuration: RC
 
     runs-on: ${{ matrix.os }}
 

@@ -161,14 +161,6 @@
     <value>Thread deleted.</value>
     <comment>Thread deleted.</comment>
   </data>
-  <data name="TDMSettingsAliasesGamesStatus" xml:space="preserve">
-    <value>Setting Aliases and GameStatus for the channel {0}...</value>
-    <comment>Setting Aliases and GameStatus for the channel {channelCheck.Name}...</comment>
-  </data>
-  <data name="TDMCheckingGameStatus" xml:space="preserve">
-    <value>Checking GameStatus for the channel {0}...</value>
-    <comment>Checking GameStatus for the channel {channelCheck.Name}...</comment>
-  </data>
   <data name="TDMCheckingItems" xml:space="preserve">
     <value>Checking Items for the channel {0}...</value>
     <comment>Checking Items for the channel {channelCheck.Name}...</comment>
@@ -433,10 +425,6 @@
     <value>Details for &lt;@{0}&gt;</value>
     <comment>Details for &lt;@{userId}&gt;</comment>
   </data>
-  <data name="RACBuildMessage" xml:space="preserve">
-    <value>**{0}** : {1}</value>
-    <comment>**{sub.Key}** : {grouped}</comment>
-  </data>
   <data name="RACNoList" xml:space="preserve">
     <value>There is no list.</value>
     <comment>There is no list.</comment>
@@ -641,10 +629,6 @@
     <value>The link is incorrect; use the room URL.</value>
     <comment>The link is incorrect; use the room URL.</comment>
   </data>
-  <data name="UrlCanceled" xml:space="preserve">
-    <value>Sphere_Tracker, Tracker, or the port not found. Addition canceled.</value>
-    <comment>Sphere_Tracker, Tracker, or the port not found. Addition canceled.</comment>
-  </data>
   <data name="UrlThredCreated" xml:space="preserve">
     <value>The thread has been created: {0}, wait for the bot to be ready.</value>
     <comment>The thread has been created: {thread.Name}, wait for the bot to be ready.</comment>
@@ -825,42 +809,6 @@
     <value>Update completed!</value>
     <comment>Update completed!</comment>
   </data>
-  <data name="InstallDLInnoExtractor" xml:space="preserve">
-    <value>Downloading {0}...</value>
-    <comment>Downloading {DownloadInnoExtractor}...</comment>
-  </data>
-  <data name="InstallDLInnoExtractorError" xml:space="preserve">
-    <value>Error: Unable to download InnoExtractor (code {0}).</value>
-    <comment>Error: Unable to download InnoExtractor (code {responseDownloadInnoExtractor.StatusCode}).</comment>
-  </data>
-  <data name="InstallDLTempExtraction" xml:space="preserve">
-    <value>Temporary extraction...</value>
-    <comment>Temporary extraction...</comment>
-  </data>
-  <data name="InstallDLTempExtractionError" xml:space="preserve">
-    <value>Error: Unable to find the extracted folder!</value>
-    <comment>Error: Unable to find the extracted folder!</comment>
-  </data>
-  <data name="InstallExtractingArchipelago" xml:space="preserve">
-    <value>Extracting Archipelago...</value>
-    <comment>Extracting Archipelago...</comment>
-  </data>
-  <data name="InstallUnableStartInnoExtractProcess" xml:space="preserve">
-    <value>❌ Unable to start the innoextract process.</value>
-    <comment>❌ Unable to start the innoextract process.</comment>
-  </data>
-  <data name="InstallInnoExtractError" xml:space="preserve">
-    <value>❌ Error during extraction (code {0}):</value>
-    <comment>❌ Error during extraction (code {proc.ExitCode}):</comment>
-  </data>
-  <data name="InstallInnoExtractorSuccessful" xml:space="preserve">
-    <value>✅ Extraction successful.</value>
-    <comment>✅ Extraction successful.</comment>
-  </data>
-  <data name="InstallInnoExtractorException" xml:space="preserve">
-    <value>❌ Exception while running innoextract: {0}</value>
-    <comment>❌ Exception while running innoextract: {ex.Message}</comment>
-  </data>
   <data name="InstallMoveArchipelagoFiles" xml:space="preserve">
     <value>Moving Archipelago installer files...</value>
     <comment>Moving Archipelago installer files...</comment>
@@ -872,34 +820,6 @@
   <data name="InstallMoveArchipelagoFilesFailed" xml:space="preserve">
     <value>⚠️ Folder 'app\' not found after extraction.</value>
     <comment>⚠️ Folder 'app\\' not found after extraction.</comment>
-  </data>
-  <data name="InstallVcRedistX64" xml:space="preserve">
-    <value>Installing vc_redist.x64...</value>
-    <comment>Installing vc_redist.x64...</comment>
-  </data>
-  <data name="InstallVcRedistX64Successful" xml:space="preserve">
-    <value>✅ VC++ Redistributable installed successfully (silent mode).</value>
-    <comment>✅ VC++ Redistributable installed successfully (silent mode).</comment>
-  </data>
-  <data name="InstallVcRedistX64Failed" xml:space="preserve">
-    <value>❌ VC++ installation error (code {0}).</value>
-    <comment>❌ VC++ installation error (code {process.ExitCode}).</comment>
-  </data>
-  <data name="InstallVcRedistX64Exception" xml:space="preserve">
-    <value>❌ Exception during VC++ installation: {0}</value>
-    <comment>❌ Exception during VC++ installation: {ex.Message}</comment>
-  </data>
-  <data name="InstallVcRedistX64NotFound" xml:space="preserve">
-    <value>⚠️ The file vc_redist.x64 was not found.</value>
-    <comment>⚠️ The file vc_redist.x64 was not found.</comment>
-  </data>
-  <data name="InstallVcRedistX64AlreadyInstalled" xml:space="preserve">
-    <value>✅ VC++ Redistributable already installed, no action needed.</value>
-    <comment>✅ VC++ Redistributable already installed, no action needed.</comment>
-  </data>
-  <data name="InstallDLArchipelagoWindows" xml:space="preserve">
-    <value>Downloading {0}...</value>
-    <comment>Downloading {DownloadWinUrl}...</comment>
   </data>
   <data name="InstallDLArchipelagoError" xml:space="preserve">
     <value>Error: Unable to download Archipelago (code {0}).</value>
@@ -944,10 +864,6 @@
   <data name="DeleteChannelDataByGuildIdAsyncDeletionGuildIdSuccessful" xml:space="preserve">
     <value>Deletion by GuildId successful!</value>
     <comment>Deletion by GuildId successful!</comment>
-  </data>
-  <data name="IsFillerAsyncNoResultFound" xml:space="preserve">
-    <value>No result found for the game '{0}' and the item '{1}'.</value>
-    <comment>No result found for the game '{gameName}' and the item '{itemName}'.</comment>
   </data>
   <data name="GetUserAliasesWithItemsAsyncNoItem" xml:space="preserve">
     <value>No item.</value>
@@ -997,10 +913,6 @@
     <value>Program OS Not Supported</value>
     <comment>Program OS Not Supported</comment>
   </data>
-  <data name="ProgramArm64NotSupported" xml:space="preserve">
-    <value>Program Arm64 Not Supported</value>
-    <comment>Program Arm64 Not Supported</comment>
-  </data>
   <data name="ArchipelagoModeStarted" xml:space="preserve">
     <value>Archipelago Mode started.</value>
     <comment>Archipelago Mode started.</comment>
@@ -1032,10 +944,6 @@
   <data name="UrlCheckMaxTread" xml:space="preserve">
     <value>You can't have more than 2 Threads. Delete one before adding a new room url please.</value>
     <comment>You can't have more than 2 Threads. Delete one before adding a new room url please.</comment>
-  </data>
-  <data name="UrlMaxPlayers" xml:space="preserve">
-    <value>You can't have more than {0} players.</value>
-    <comment>You can't have more than {Declare.MaxPlayer} players.</comment>
   </data>
   <data name="BRPlayerFolderMoved" xml:space="preserve">
     <value>Players folder move completed.</value>
@@ -1129,10 +1037,6 @@
     <value>Error during the migration of your thread. Please delete your thread and re-add the URL.</value>
     <comment>Error during the migration of your thread. Please delete your thread and re-add the URL.</comment>
   </data>
-  <data name="HintItemUpdated" xml:space="preserve">
-    <value>**{0}** is at **{1}** in **{2}'s** World.</value>
-    <comment>**{item.Receiver}'s** **{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World.@MutedRule(PunctuationLead)@MutedRule(PunctuationTail)</comment>
-  </data>
   <data name="HintItemNew" xml:space="preserve">
     <value>**{0}** is at **{1}** in **{2}'s** World.</value>
     <comment>**{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World.@MutedRule(PunctuationLead)@MutedRule(PunctuationTail)</comment>
@@ -1189,12 +1093,20 @@
     <value>Trap</value>
     <comment>Trap</comment>
   </data>
-  <data name="NA" xml:space="preserve">
-    <value>N/A</value>
-    <comment>N/A</comment>
-  </data>
   <data name="Unknown" xml:space="preserve">
     <value>Unknown({0})</value>
     <comment>Unknown({f})</comment>
+  </data>
+  <data name="DownloadAndInstall" xml:space="preserve">
+    <value>Download and Install Archipelago version {0} before to install the bot in Archipelago Mode.</value>
+    <comment>Download and Install Archipelago version {Version} before to install the bot in Archipelago Mode.</comment>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>Update available:</value>
+    <comment>Update available:</comment>
+  </data>
+  <data name="DownloadUpdate" xml:space="preserve">
+    <value>Downloading the update:</value>
+    <comment>Downloading the update:</comment>
   </data>
 </root>

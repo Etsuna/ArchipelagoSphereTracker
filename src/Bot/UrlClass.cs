@@ -2,6 +2,7 @@
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Discord;
 using Discord.WebSocket;
+using System;
 using System.Net;
 using System.Text.Json;
 using TrackerLib.Models;
@@ -155,6 +156,10 @@ public class UrlClass
                         await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
                         await Telemetry.SendTelemetryAsync(Declare.ProgramID, false);
                         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
+                        if(Declare.TelemetryName != "AST")
+                        {
+                            await UpdateReminder.MaybeNotifyDailyAsync(guildId, channelId, "Etsuna", "ArchipelagoSphereTracker", CancellationToken.None);
+                        }
 
                         Declare.AddedChannelId.Remove(channelId);
                     }

@@ -1,0 +1,29 @@
+﻿<Window x:Class="AST.GUI.EnvSetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title=".env setup" SizeToContent="WidthAndHeight" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="DISCORD_TOKEN" Margin="0,0,0,4"/>
+        <PasswordBox x:Name="TokenBox" Width="360" Margin="0,0,0,12" Grid.Row="1"/>
+
+        <TextBlock Text="LANGUAGE" Grid.Row="2" Margin="0,0,0,4"/>
+        <ComboBox x:Name="LangCombo" Grid.Row="3" Width="120" SelectedIndex="0" HorizontalAlignment="Left">
+            <ComboBoxItem Content="en"/>
+            <ComboBoxItem Content="fr"/>
+        </ComboBox>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0" Grid.Row="4">
+            <Button x:Name="BtnCancel" Content="Annuler" Click="Cancel_Click" Margin="0,0,8,0" />
+            <Button x:Name="BtnSave" Content="Enregistrer" Click="Save_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

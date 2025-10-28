@@ -150,12 +150,6 @@
   <data name="TDMThreadDeleted" xml:space="preserve">
     <value>Fil supprimé.</value>
   </data>
-  <data name="TDMSettingsAliasesGamesStatus" xml:space="preserve">
-    <value>Déclarations des alias et du statut de jeu pour le canal {0}...</value>
-  </data>
-  <data name="TDMCheckingGameStatus" xml:space="preserve">
-    <value>Vérification du statut de jeu pour le canal {0}...</value>
-  </data>
   <data name="TDMCheckingItems" xml:space="preserve">
     <value>Vérification des items pour le canal {0}...</value>
   </data>
@@ -354,9 +348,6 @@
   <data name="RACDetailsForUser" xml:space="preserve">
     <value>Détails pour &lt;@{0}&gt;</value>
   </data>
-  <data name="RACBuildMessage" xml:space="preserve">
-    <value>**{0}** : {1}</value>
-  </data>
   <data name="RACNoList" xml:space="preserve">
     <value>Il n’y a pas de liste.</value>
   </data>
@@ -510,9 +501,6 @@
   <data name="URLNotValid" xml:space="preserve">
     <value>Le lien est incorrect, utilisez l’URL de la room.</value>
   </data>
-  <data name="UrlCanceled" xml:space="preserve">
-    <value>Sphere_Tracker, Tracker, ou le port est introuvable. Ajout annulé.</value>
-  </data>
   <data name="UrlThredCreated" xml:space="preserve">
     <value>Le fil a été créé : {0}, veuillez attendre que le bot soit prêt.</value>
   </data>
@@ -648,33 +636,6 @@
   <data name="InstallUpdateComplete" xml:space="preserve">
     <value>Mise à jour terminée !</value>
   </data>
-  <data name="InstallDLInnoExtractor" xml:space="preserve">
-    <value>Téléchargement {0}...</value>
-  </data>
-  <data name="InstallDLInnoExtractorError" xml:space="preserve">
-    <value>Erreur : Impossible de télécharger InnoExtractor (code {0}).</value>
-  </data>
-  <data name="InstallDLTempExtraction" xml:space="preserve">
-    <value>Extraction temporaire...</value>
-  </data>
-  <data name="InstallDLTempExtractionError" xml:space="preserve">
-    <value>Erreur : Impossible de trouver le dossier extrait !</value>
-  </data>
-  <data name="InstallExtractingArchipelago" xml:space="preserve">
-    <value>Extraction d’Archipelago...</value>
-  </data>
-  <data name="InstallUnableStartInnoExtractProcess" xml:space="preserve">
-    <value>❌ Impossible de démarrer le processus innoextract.</value>
-  </data>
-  <data name="InstallInnoExtractError" xml:space="preserve">
-    <value>❌ Erreur lors de l’extraction (code {0}) :</value>
-  </data>
-  <data name="InstallInnoExtractorSuccessful" xml:space="preserve">
-    <value>✅ Extraction réussie.</value>
-  </data>
-  <data name="InstallInnoExtractorException" xml:space="preserve">
-    <value>❌ Exception lors de l’exécution d’innoextract : {0}</value>
-  </data>
   <data name="InstallMoveArchipelagoFiles" xml:space="preserve">
     <value>Déplacement des fichiers d’installation d’Archipelago...</value>
   </data>
@@ -683,27 +644,6 @@
   </data>
   <data name="InstallMoveArchipelagoFilesFailed" xml:space="preserve">
     <value>⚠️ Dossier  'app\' introuvable après l’extraction.</value>
-  </data>
-  <data name="InstallVcRedistX64" xml:space="preserve">
-    <value>Installation de vc_redist.x64...</value>
-  </data>
-  <data name="InstallVcRedistX64Successful" xml:space="preserve">
-    <value>✅ VC++ Redistributable installé avec succès (mode silencieux).</value>
-  </data>
-  <data name="InstallVcRedistX64Failed" xml:space="preserve">
-    <value>❌ Erreur d’installation de VC++ (code {0}).</value>
-  </data>
-  <data name="InstallVcRedistX64Exception" xml:space="preserve">
-    <value>❌ Exception lors de l’installation de VC++ : {0}</value>
-  </data>
-  <data name="InstallVcRedistX64NotFound" xml:space="preserve">
-    <value>⚠️ Le fichier vc_redist.x64 est introuvable.</value>
-  </data>
-  <data name="InstallVcRedistX64AlreadyInstalled" xml:space="preserve">
-    <value>✅ VC++ Redistributable déjà installé, aucune action nécessaire.</value>
-  </data>
-  <data name="InstallDLArchipelagoWindows" xml:space="preserve">
-    <value>Téléchargement {0}...</value>
   </data>
   <data name="InstallDLArchipelagoError" xml:space="preserve">
     <value>Erreur : Impossible de télécharger Archipelago (code {0}).</value>
@@ -737,9 +677,6 @@
   </data>
   <data name="DeleteChannelDataByGuildIdAsyncDeletionGuildIdSuccessful" xml:space="preserve">
     <value>Suppression par GuildId réussie !</value>
-  </data>
-  <data name="IsFillerAsyncNoResultFound" xml:space="preserve">
-    <value>Aucun résultat trouvé pour le jeu '{0}' et l'item '{1}'.</value>
   </data>
   <data name="GetUserAliasesWithItemsAsyncNoItem" xml:space="preserve">
     <value>Pas d'item.</value>
@@ -777,9 +714,6 @@
   <data name="ProgramOSNotSupported" xml:space="preserve">
     <value>Système d’exploitation du programme non pris en charge</value>
   </data>
-  <data name="ProgramArm64NotSupported" xml:space="preserve">
-    <value>Programme Arm64 non pris en charge</value>
-  </data>
   <data name="ArchipelagoModeStarted" xml:space="preserve">
     <value>Mode Archipelago démarré.</value>
   </data>
@@ -803,9 +737,6 @@
   </data>
   <data name="UrlCheckMaxTread" xml:space="preserve">
     <value>Vous ne pouvez pas avoir plus de 2 threads. Supprimez-en un avant d’ajouter une nouvelle room url , s’il vous plaît.</value>
-  </data>
-  <data name="UrlMaxPlayers" xml:space="preserve">
-    <value>Vous ne pouvez pas avoir plus de {0} joueurs.</value>
   </data>
   <data name="BRPlayerFolderMoved" xml:space="preserve">
     <value>Déplacement du dossier des joueurs terminé.</value>
@@ -876,9 +807,6 @@
   <data name="RoomNotFound" xml:space="preserve">
     <value>Erreur lors de la migration de votre thread. Veuillez supprimer votre fil et réajouter l’URL.</value>
   </data>
-  <data name="HintItemUpdated" xml:space="preserve">
-    <value>L'item **{0}** se trouve à **{1}** dans le monde de **{2}**.</value>
-  </data>
   <data name="HintItemNew" xml:space="preserve">
     <value>L'item **{0}** se trouve à **{1}** dans le monde de **{2}**.</value>
   </data>
@@ -921,10 +849,16 @@
   <data name="Trap" xml:space="preserve">
     <value>Piège</value>
   </data>
-  <data name="NA" xml:space="preserve">
-    <value>S/O</value>
-  </data>
   <data name="Unknown" xml:space="preserve">
-    <value>Inconnu({f})</value>
+    <value>Inconnu({0})</value>
+  </data>
+  <data name="DownloadAndInstall" xml:space="preserve">
+    <value>Téléchargez et installez la version d'Archipelago {0} avant d'installer le bot avec le mode Archipelago.</value>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>Mise à jour disponible :</value>
+  </data>
+  <data name="DownloadUpdate" xml:space="preserve">
+    <value>Téléchargement de la mise à jour :</value>
   </data>
 </root>
