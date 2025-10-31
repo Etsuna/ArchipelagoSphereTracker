@@ -128,7 +128,7 @@ class Program
             CustomApworldClass.GenerateYamls();
         }
 
-        string version = Declare.IsArchipelagoMode ? $"AST v{Declare.BotVersion} - Archipelago v{Declare.Version}" : $"AST v{Declare.BotVersion}";
+        string version = Declare.IsArchipelagoMode ? $"AST v{Declare.BotVersion} - Archipelago v{Declare.ReleaseVersion}" : $"AST v{Declare.BotVersion}";
 
         Console.WriteLine(string.Format(Resource.ProgramStartingBot, version));
 
