@@ -113,7 +113,7 @@ public static class TrackingDataManager
                                         }
 
                                         var channelId = ulong.Parse(channel);
-                                        var guildChannel = guildCheck.GetChannel(channelId) as SocketGuildChannel; 
+                                        var guildChannel = guildCheck.GetChannel(channelId) as SocketGuildChannel;
                                         var thread = guildCheck.ThreadChannels.FirstOrDefault(t => t.Id == channelId);
 
                                         if (guildChannel is null && thread is null)
@@ -224,7 +224,7 @@ public static class TrackingDataManager
                     Console.WriteLine(Resource.TDMWaitingCheck);
                     await Telemetry.SendTelemetryAsync(Declare.ProgramID);
                     await DatabaseCommands.ReclaimSpaceAsync();
-                    await Task.Delay(60000, token); 
+                    await Task.Delay(60000, token);
                 }
             }
             catch (TaskCanceledException)
@@ -419,18 +419,38 @@ public static class TrackingDataManager
                 var eligible = hintsToAdd.Where(h => h.Finder != h.Receiver).ToList();
                 if (eligible.Count > 0)
                 {
-                    static IEnumerable<string> BuildUnifiedLines(IEnumerable<HintStatus> hints)
+                    static async IAsyncEnumerable<string> BuildUnifiedLinesAsync(IEnumerable<HintStatus> hints, bool sendAsTextFile, string guild, string channel)
                     {
                         foreach (var g in hints.GroupBy(h => h.Receiver))
                         {
-                            yield return $"{Resource.HintNew}: {g.Key}:"; 
+                            if (sendAsTextFile)
+                            {
+                                yield return $"{Resource.HintNew}: {g.Key}:";
+                            }
+                            else
+                            {
+                                var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, g.Key);
+                                var mentions = string.Join(" ", userIds.Select(x => x.UserId).Select(id => $"<@{id}>"));
+                                yield return $"{Resource.HintNew}: {g.Key} {mentions}:";
+                            }
                             foreach (var h in g)
-                                yield return string.Format(Resource.HintItemNew, h.Item, h.Location, h.Finder);
+                            {
+                                if (sendAsTextFile)
+                                {
+                                    yield return string.Format(Resource.HintItemNew, h.Item, h.Location, h.Finder);
+                                }
+                                else
+                                {
+                                    var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, h.Finder);
+                                    var mentions = string.Join(" ", userIds.Select(x => x.UserId).Select(id => $"<@{id}>"));
+                                    yield return string.Format(Resource.HintItemNew, h.Item, h.Location, $"{h.Finder} {mentions}");
+                                }
+                            }
                             yield return string.Empty;
                         }
                     }
 
-                    var allLines = BuildUnifiedLines(eligible);
+                    var allLines = BuildUnifiedLinesAsync(eligible, sendAsTextFile, guild, channel);
 
                     if (sendAsTextFile)
                     {
@@ -451,7 +471,7 @@ public static class TrackingDataManager
                     }
                     else
                     {
-                        foreach (var chunk in ChunkMessages(allLines, 1900))
+                        foreach (var chunk in ChunkMessages(allLines.ToEnumerable(), 1900))
                         {
                             await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
                             try
@@ -481,18 +501,38 @@ public static class TrackingDataManager
                 var eligible = hintsToUpdate.Where(h => h.Finder != h.Receiver).ToList();
                 if (eligible.Count > 0)
                 {
-                    static IEnumerable<string> BuildUnifiedLinesUpdated(IEnumerable<HintStatus> hints)
+                    static async IAsyncEnumerable<string> BuildUnifiedLinesUpdatedAsync(IEnumerable<HintStatus> hints, bool sendAsTextFile, string guild, string channel)
                     {
                         foreach (var g in hints.GroupBy(h => h.Receiver))
                         {
-                            yield return $"{Resource.HintUpdated}: {g.Key}'s :";
+                            if (sendAsTextFile)
+                            {
+                                yield return $"{Resource.HintUpdated}: {g.Key}'s :";
+                            }
+                            else
+                            {
+                                var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, g.Key);
+                                var mentions = string.Join(" ", userIds.Select(x => x.UserId).Select(id => $"<@{id}>"));
+                                yield return $"{Resource.HintUpdated}: {g.Key} {mentions}:";
+                            }
                             foreach (var h in g)
-                                yield return string.Format(Resource.HintItemNew, h.Item, h.Location, h.Finder);
+                            {
+                                if (sendAsTextFile)
+                                {
+                                    yield return string.Format(Resource.HintItemNew, h.Item, h.Location, h.Finder);
+                                }
+                                else
+                                {
+                                    var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, h.Finder);
+                                    var mentions = string.Join(" ", userIds.Select(x => x.UserId).Select(id => $"<@{id}>"));
+                                    yield return string.Format(Resource.HintItemNew, h.Item, h.Location, $"{h.Finder} {mentions}");
+                                }
+                            }
                             yield return string.Empty;
                         }
                     }
 
-                    var allLines = BuildUnifiedLinesUpdated(eligible);
+                    var allLines = BuildUnifiedLinesUpdatedAsync(eligible, sendAsTextFile, guild, channel);
 
                     if (sendAsTextFile)
                     {
@@ -513,7 +553,7 @@ public static class TrackingDataManager
                     }
                     else
                     {
-                        foreach (var chunk in ChunkMessages(allLines, 1900))
+                        foreach (var chunk in ChunkMessages(allLines.ToEnumerable(), 1900))
                         {
                             await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
                             try
