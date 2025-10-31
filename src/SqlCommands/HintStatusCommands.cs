@@ -53,18 +53,18 @@ public static class HintStatusCommands
     }
 
     public static async Task<List<HintStatus>> GetHintStatusForReceiver(
-        string guildId,
-        string channelId,
-        string receiverId
-        )
+    string guildId, string channelId, string receiverId)
     {
         var list = new List<HintStatus>();
 
         await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
-            SELECT Finder, Receiver, Item, Location, Game, Entrance, Flag
-            FROM HintStatusTable
-            WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Receiver = @Receiver;", connection);
+        SELECT Finder, Receiver, Item, Location, Game, Entrance, Flag
+        FROM HintStatusTable
+        WHERE GuildId = @GuildId
+          AND ChannelId = @ChannelId
+          AND Receiver = @Receiver
+          AND Flag = 'False';", connection);
 
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
@@ -89,18 +89,18 @@ public static class HintStatusCommands
     }
 
     public static async Task<List<HintStatus>> GetHintStatusForFinder(
-        string guildId,
-        string channelId,
-        string finderId
-        )
+        string guildId, string channelId, string finderId)
     {
         var list = new List<HintStatus>();
 
         await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
-            SELECT Finder, Receiver, Item, Location, Game, Entrance, Flag
-            FROM HintStatusTable
-            WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Finder = @Finder;", connection);
+        SELECT Finder, Receiver, Item, Location, Game, Entrance, Flag
+        FROM HintStatusTable
+        WHERE GuildId = @GuildId
+          AND ChannelId = @ChannelId
+          AND Finder = @Finder
+          AND Flag = 'False';", connection);
 
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
