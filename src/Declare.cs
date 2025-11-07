@@ -9,7 +9,7 @@ public class Declare
 #else
     public static string ReleaseVersion = Version;
 #endif
-    public static string BotVersion = "5.2.0";
+    public static string BotVersion = CheckUpdate.GetLocalSemVer();
     public static string BddVersion = "5.0.0";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;

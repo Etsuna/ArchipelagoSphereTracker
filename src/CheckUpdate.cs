@@ -66,7 +66,7 @@ public static class CheckUpdate
         return (IsNewer(latest, current), current, latest, asset);
     }
 
-    private static string GetLocalSemVer()
+    public static string GetLocalSemVer()
     {
         // lit <Version>…</Version> comme InformationalVersion
         var asm = Assembly.GetEntryAssembly()!;
