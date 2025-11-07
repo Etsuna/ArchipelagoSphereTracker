@@ -19,6 +19,8 @@ class Program
         args = ["--archipelagoMode"];
 #elif NORMALMODE
         args = ["--normalmode"];
+#elif DEBUG
+        args = ["--normalmode"];
 #endif
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
