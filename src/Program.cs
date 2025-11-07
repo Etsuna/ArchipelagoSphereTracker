@@ -17,7 +17,7 @@ class Program
         args = ["--archipelagoMode"];
 #elif RC
         args = ["--archipelagoMode"];
-#else
+#elif NORMALMODE
         args = ["--normalmode"];
 #endif
 
