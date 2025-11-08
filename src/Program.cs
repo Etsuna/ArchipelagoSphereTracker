@@ -23,6 +23,12 @@ class Program
         args = ["--normalmode"];
 #endif
 
+
+        if (Declare.ExportMetrics)
+        {
+            _ = Task.Run(() => MetricsServer.RunAsync());
+        }
+
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
