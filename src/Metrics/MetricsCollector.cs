@@ -40,7 +40,8 @@ public static class MetricsCollector
             await using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = """
-                    SELECT GuildId, ChannelId, Receiver, COUNT(*) AS Cnt
+                    SELECT GuildId, ChannelId, Receiver,
+                           COUNT(DISTINCT Item || '|' || IFNULL(Location,'')) AS Cnt
                     FROM DisplayedItemTable
                     GROUP BY GuildId, ChannelId, Receiver;
                     """;
