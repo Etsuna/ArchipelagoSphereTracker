@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Data.SQLite;
 
 public static class MetricsCollector
 {
@@ -11,12 +10,13 @@ public static class MetricsCollector
         {
             await using var conn = await Db.OpenReadAsync();
 
+            // GameStatusTable
             await using (var cmd = conn.CreateCommand())
             {
-                cmd.CommandText = @"
+                cmd.CommandText = """
                     SELECT GuildId, ChannelId, Name, Game, Total, Checks
                     FROM GameStatusTable;
-                ";
+                    """;
                 await using var rd = await cmd.ExecuteReaderAsync();
                 while (await rd.ReadAsync())
                 {
@@ -38,13 +38,14 @@ public static class MetricsCollector
                 }
             }
 
+            // DisplayedItemTable
             await using (var cmd = conn.CreateCommand())
             {
-                cmd.CommandText = @"
+                cmd.CommandText = """
                     SELECT GuildId, ChannelId, Receiver, COUNT(*) AS Cnt
                     FROM DisplayedItemTable
                     GROUP BY GuildId, ChannelId, Receiver;
-                ";
+                    """;
                 await using var rd = await cmd.ExecuteReaderAsync();
                 while (await rd.ReadAsync())
                 {
@@ -59,13 +60,14 @@ public static class MetricsCollector
                 }
             }
 
+            // HintStatusTable
             await using (var cmd = conn.CreateCommand())
             {
-                cmd.CommandText = @"
+                cmd.CommandText = """
                     SELECT GuildId, ChannelId, Receiver, COUNT(*) AS Cnt
                     FROM HintStatusTable
                     GROUP BY GuildId, ChannelId, Receiver;
-                ";
+                    """;
                 await using var rd = await cmd.ExecuteReaderAsync();
                 while (await rd.ReadAsync())
                 {
