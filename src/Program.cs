@@ -26,7 +26,7 @@ class Program
 
         if (Declare.ExportMetrics)
         {
-            _ = Task.Run(() => MetricsServer.RunAsync());
+            _ = Task.Run(() => MetricsHost.RunAsync());
         }
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";

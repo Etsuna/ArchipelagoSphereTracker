@@ -10,7 +10,6 @@ public static class MetricsCollector
         {
             await using var conn = await Db.OpenReadAsync();
 
-            // GameStatusTable
             await using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = """
@@ -38,7 +37,6 @@ public static class MetricsCollector
                 }
             }
 
-            // DisplayedItemTable
             await using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = """
@@ -60,7 +58,6 @@ public static class MetricsCollector
                 }
             }
 
-            // HintStatusTable
             await using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = """
