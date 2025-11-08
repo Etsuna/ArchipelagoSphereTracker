@@ -1,93 +1,34 @@
-﻿using System.Text;
-using System.Data.SQLite;
+﻿using System.Net;
+using System.Text;
 
-public static class MetricsCollector
+public static class MetricsServer
 {
-    public static async Task<string> BuildAsync()
+    public static async Task RunAsync()
     {
-        var sb = new StringBuilder();
+        var port = Environment.GetEnvironmentVariable("METRICS_PORT") ?? "8080";
+        var listener = new HttpListener();
+        listener.Prefixes.Add($"http://0.0.0.0:{port}/metrics/");
+        listener.Start();
+        Console.WriteLine($"[metrics] listening on {port}");
 
-        try
+        while (true)
         {
-            await using var conn = await Db.OpenReadAsync();
-
-            await using (var cmd = conn.CreateCommand())
+            var ctx = await listener.GetContextAsync();
+            if (ctx.Request.Url!.AbsolutePath != "/metrics")
             {
-                cmd.CommandText = @"
-                    SELECT GuildId, ChannelId, Name, Game, Total, Checks
-                    FROM GameStatusTable;
-                ";
-                await using var rd = await cmd.ExecuteReaderAsync();
-                while (await rd.ReadAsync())
-                {
-                    var guild = rd["GuildId"]?.ToString() ?? "";
-                    var channel = rd["ChannelId"]?.ToString() ?? "";
-                    var name = rd["Name"]?.ToString() ?? "";
-                    var game = rd["Game"]?.ToString() ?? "";
-                    var total = rd["Total"] is DBNull ? 0 : Convert.ToInt32(rd["Total"]);
-                    var checks = rd["Checks"] is DBNull ? 0 : Convert.ToInt32(rd["Checks"]);
-                    var ratio = total > 0 ? (double)checks / total : 0.0;
-
-                    sb.Append("archipelago_player_checks_total{");
-                    sb.Append($"guild=\"{Esc(guild)}\",channel=\"{Esc(channel)}\",player=\"{Esc(name)}\",game=\"{Esc(game)}\"}} ");
-                    sb.AppendLine(checks.ToString(System.Globalization.CultureInfo.InvariantCulture));
-
-                    sb.Append("archipelago_player_progress_ratio{");
-                    sb.Append($"guild=\"{Esc(guild)}\",channel=\"{Esc(channel)}\",player=\"{Esc(name)}\",game=\"{Esc(game)}\"}} ");
-                    sb.AppendLine(ratio.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                }
+                ctx.Response.StatusCode = 404;
+                ctx.Response.Close();
+                continue;
             }
 
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = @"
-                    SELECT GuildId, ChannelId, Receiver, COUNT(*) AS Cnt
-                    FROM DisplayedItemTable
-                    GROUP BY GuildId, ChannelId, Receiver;
-                ";
-                await using var rd = await cmd.ExecuteReaderAsync();
-                while (await rd.ReadAsync())
-                {
-                    var guild = rd["GuildId"]?.ToString() ?? "";
-                    var channel = rd["ChannelId"]?.ToString() ?? "";
-                    var receiver = rd["Receiver"]?.ToString() ?? "";
-                    var cnt = Convert.ToInt32(rd["Cnt"]);
+            var payload = await MetricsCollector.BuildAsync();
+            var bytes = Encoding.UTF8.GetBytes(payload);
 
-                    sb.Append("archipelago_items_received_total{");
-                    sb.Append($"guild=\"{Esc(guild)}\",channel=\"{Esc(channel)}\",receiver=\"{Esc(receiver)}\"}} ");
-                    sb.AppendLine(cnt.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                }
-            }
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = @"
-                    SELECT GuildId, ChannelId, Receiver, COUNT(*) AS Cnt
-                    FROM HintStatusTable
-                    GROUP BY GuildId, ChannelId, Receiver;
-                ";
-                await using var rd = await cmd.ExecuteReaderAsync();
-                while (await rd.ReadAsync())
-                {
-                    var guild = rd["GuildId"]?.ToString() ?? "";
-                    var channel = rd["ChannelId"]?.ToString() ?? "";
-                    var receiver = rd["Receiver"]?.ToString() ?? "";
-                    var cnt = Convert.ToInt32(rd["Cnt"]);
-
-                    sb.Append("archipelago_hints_total{");
-                    sb.Append($"guild=\"{Esc(guild)}\",channel=\"{Esc(channel)}\",receiver=\"{Esc(receiver)}\"}} ");
-                    sb.AppendLine(cnt.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                }
-            }
+            ctx.Response.StatusCode = 200;
+            ctx.Response.ContentType = "text/plain; version=0.0.4";
+            ctx.Response.ContentLength64 = bytes.Length;
+            await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+            ctx.Response.Close();
         }
-        catch (Exception ex)
-        {
-            sb.AppendLine($"# error: {ex.Message}");
-        }
-
-        return sb.ToString();
     }
-
-    private static string Esc(string s) =>
-        s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 }
