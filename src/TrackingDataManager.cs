@@ -4,9 +4,11 @@ using Discord;
 using Discord.WebSocket;
 using Sprache;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using static System.Net.Mime.MediaTypeNames;
 
 public static class TrackingDataManager
 {
@@ -212,7 +214,6 @@ public static class TrackingDataManager
                                         Console.WriteLine(string.Format(Resource.TDMCheckingItems, nameForLog));
                                         await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
 
-                                        await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guild, channel);
                                     }
                                     finally
                                     {
@@ -277,6 +278,29 @@ public static class TrackingDataManager
         if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
         if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
         if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent, ctChan, sendAsTextFile).ConfigureAwait(false);
+
+        await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guild, channel);
+
+        if (!sendAsTextFile)
+        {
+            if (statuses.Count != 0 && statuses.All(x => x.Checks == x.Total))
+            {
+                ulong guildIdLong = ulong.Parse(guild);
+                await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
+                try
+                {
+                    await BotCommands.SendMessageAsync(Resource.Allcheckdone, channel);
+                }
+                finally
+                {
+                    RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                }
+
+                await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
+                await DatabaseCommands.ReclaimSpaceAsync();
+                ChannelConfigCache.Remove(guild, channel);
+            }
+        }
     }
 
     private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)

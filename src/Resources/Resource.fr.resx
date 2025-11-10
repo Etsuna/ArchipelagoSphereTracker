@@ -861,4 +861,7 @@
   <data name="DownloadUpdate" xml:space="preserve">
     <value>Téléchargement de la mise à jour :</value>
   </data>
+  <data name="Allcheckdone" xml:space="preserve">
+    <value>Tous les joueurs ont complété leurs checks. Suppression automatique des informations dans la base de données.</value>
+  </data>
 </root>

@@ -205,6 +205,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à All players have completed their checks. Automatic deletion of the information from the database..
+        /// </summary>
+        internal static string Allcheckdone {
+            get {
+                return ResourceManager.GetString("Allcheckdone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à ❌ custom_worlds folder not found..
         /// </summary>
         internal static string ApworldCustomFolderNotFound {

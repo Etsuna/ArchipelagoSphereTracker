@@ -1109,4 +1109,8 @@
     <value>Downloading the update:</value>
     <comment>Downloading the update:</comment>
   </data>
+  <data name="Allcheckdone" xml:space="preserve">
+    <value>All players have completed their checks. Automatic deletion of the information from the database.</value>
+    <comment>All players have completed their checks. Automatic deletion of the information from the database.</comment>
+  </data>
 </root>
