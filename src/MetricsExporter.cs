@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Prometheus;
 using System.Data.SQLite;
 using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
-using Prometheus;
 
 public static class MetricsExporter
 {
@@ -29,70 +25,6 @@ public static class MetricsExporter
         Metrics.CreateGauge(
             "ast_channel_last_check_seconds",
             "Âge de LastCheck en secondes (NaN si nul ou invalide).",
-            new[] { "guild_id", "guild_name", "channel_id", "channel_name" });
-
-    // ==============
-    // DISPLAYED ITEMS
-    // ==============
-    private static readonly Gauge DisplayedItem =
-        Metrics.CreateGauge(
-            "ast_displayed_item",
-            "Ligne de DisplayedItemTable.",
-            new[]
-            {
-                "guild_id", "guild_name",
-                "channel_id", "channel_name",
-                "finder", "receiver", "item", "location", "game", "flag"
-            });
-
-    private static readonly Gauge DisplayedItemByFinder =
-        Metrics.CreateGauge(
-            "ast_displayed_items_by_finder",
-            "Nombre d’items trouvés par finder.",
-            new[] { "guild_id", "guild_name", "channel_id", "channel_name", "finder" });
-
-    private static readonly Gauge DisplayedItemByReceiver =
-        Metrics.CreateGauge(
-            "ast_displayed_items_by_receiver",
-            "Nombre d’items reçus par receiver.",
-            new[] { "guild_id", "guild_name", "channel_id", "channel_name", "receiver" });
-
-    private static readonly Gauge DisplayedItemTotal =
-        Metrics.CreateGauge(
-            "ast_displayed_items_total",
-            "Nombre d’items affichés dans le channel.",
-            new[] { "guild_id", "guild_name", "channel_id", "channel_name" });
-
-    // ==============
-    // HINTS
-    // ==============
-    private static readonly Gauge HintItem =
-        Metrics.CreateGauge(
-            "ast_hint_item",
-            "Ligne de HintStatusTable.",
-            new[]
-            {
-                "guild_id", "guild_name",
-                "channel_id", "channel_name",
-                "finder", "receiver", "item", "location", "game", "entrance", "flag"
-            });
-
-    private static readonly Gauge HintByFinder =
-        Metrics.CreateGauge(
-            "ast_hints_by_finder",
-            "Nombre de hints faits par finder.",
-            new[] { "guild_id", "guild_name", "channel_id", "channel_name", "finder" });
-
-    private static readonly Gauge HintByReceiver =
-        Metrics.CreateGauge(
-            "ast_hints_by_receiver",
-            "Nombre de hints reçus par receiver.",
-            new[] { "guild_id", "guild_name", "channel_id", "channel_name", "receiver" });
-
-    private static readonly Gauge HintTotal =
-        Metrics.CreateGauge(
-            "ast_hints_total",
-            "Nombre de hints dans le channel.",
             new[] { "guild_id", "guild_name", "channel_id", "channel_name" });
 
     // ==============
@@ -133,16 +65,6 @@ public static class MetricsExporter
     private static Dictionary<string, Gauge.Child> _channelInfo = new();
     private static Dictionary<string, Gauge.Child> _channelLastCheck = new();
 
-    private static Dictionary<string, Gauge.Child> _displayedItem = new();
-    private static Dictionary<string, Gauge.Child> _displayedItemByFinder = new();
-    private static Dictionary<string, Gauge.Child> _displayedItemByReceiver = new();
-    private static Dictionary<string, Gauge.Child> _displayedItemTotal = new();
-
-    private static Dictionary<string, Gauge.Child> _hintItem = new();
-    private static Dictionary<string, Gauge.Child> _hintByFinder = new();
-    private static Dictionary<string, Gauge.Child> _hintByReceiver = new();
-    private static Dictionary<string, Gauge.Child> _hintTotal = new();
-
     private static Dictionary<string, Gauge.Child> _gameStatusChecks = new();
     private static Dictionary<string, Gauge.Child> _gameStatusTotal = new();
     private static Dictionary<string, Gauge.Child> _gameStatusLastActivity = new();
@@ -172,16 +94,6 @@ public static class MetricsExporter
 
         var curChannelInfo = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
         var curChannelLastCheck = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
-
-        var curDisplayedItem = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
-        var curDisplayedItemByFinder = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
-        var curDisplayedItemByReceiver = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
-        var curDisplayedItemTotal = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
-
-        var curHintItem = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
-        var curHintByFinder = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
-        var curHintByReceiver = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
-        var curHintTotal = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
 
         var curGameStatusChecks = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
         var curGameStatusTotal = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
@@ -236,209 +148,6 @@ public static class MetricsExporter
                     }
                 }
                 curChannelLastCheck[guild + "|" + guildName + "|" + channel + "|" + channelName] = chLast;
-            }
-        }
-
-        // ====================
-        // DisplayedItemTable
-        // ====================
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = @"
-                SELECT GuildId, ChannelId, IFNULL(Finder,''), IFNULL(Receiver,''), IFNULL(Item,''), IFNULL(Location,''), IFNULL(Game,''), IFNULL(Flag,'')
-                FROM DisplayedItemTable;";
-            using var rdr = await cmd.ExecuteReaderAsync(ct);
-            while (await rdr.ReadAsync(ct))
-            {
-                var guild = rdr.GetString(0);
-                var channel = rdr.GetString(1);
-                var finder = rdr.GetString(2);
-                var receiver = rdr.GetString(3);
-                var item = rdr.GetString(4);
-                var location = rdr.GetString(5);
-                var game = rdr.GetString(6);
-                var flag = rdr.GetString(7);
-
-                var guildName = ResolveGuildName(guild) ?? "unknown";
-                var channelName = ResolveChannelName(guild, channel) ?? "unknown";
-
-                var key = string.Join("|", guild, guildName, channel, channelName, finder, receiver, item, location, game, flag);
-                var ch = DisplayedItem.WithLabels(guild, guildName, channel, channelName, finder, receiver, item, location, game, flag);
-                ch.Set(1);
-                curDisplayedItem[key] = ch;
-            }
-        }
-
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = @"
-                SELECT GuildId, ChannelId, IFNULL(Finder,''), COUNT(*) 
-                FROM DisplayedItemTable
-                GROUP BY GuildId, ChannelId, IFNULL(Finder,'');";
-            using var rdr = await cmd.ExecuteReaderAsync(ct);
-            while (await rdr.ReadAsync(ct))
-            {
-                var guild = rdr.GetString(0);
-                var channel = rdr.GetString(1);
-                var finder = rdr.GetString(2);
-                var cnt = rdr.GetInt64(3);
-
-                var guildName = ResolveGuildName(guild) ?? "unknown";
-                var channelName = ResolveChannelName(guild, channel) ?? "unknown";
-
-                var key = string.Join("|", guild, guildName, channel, channelName, finder);
-                var ch = DisplayedItemByFinder.WithLabels(guild, guildName, channel, channelName, finder);
-                ch.Set(cnt);
-                curDisplayedItemByFinder[key] = ch;
-            }
-        }
-
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = @"
-                SELECT GuildId, ChannelId, IFNULL(Receiver,''), COUNT(*) 
-                FROM DisplayedItemTable
-                GROUP BY GuildId, ChannelId, IFNULL(Receiver,'');";
-            using var rdr = await cmd.ExecuteReaderAsync(ct);
-            while (await rdr.ReadAsync(ct))
-            {
-                var guild = rdr.GetString(0);
-                var channel = rdr.GetString(1);
-                var receiver = rdr.GetString(2);
-                var cnt = rdr.GetInt64(3);
-
-                var guildName = ResolveGuildName(guild) ?? "unknown";
-                var channelName = ResolveChannelName(guild, channel) ?? "unknown";
-
-                var key = string.Join("|", guild, guildName, channel, channelName, receiver);
-                var ch = DisplayedItemByReceiver.WithLabels(guild, guildName, channel, channelName, receiver);
-                ch.Set(cnt);
-                curDisplayedItemByReceiver[key] = ch;
-            }
-        }
-
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = @"
-                SELECT GuildId, ChannelId, COUNT(*)
-                FROM DisplayedItemTable
-                GROUP BY GuildId, ChannelId;";
-            using var rdr = await cmd.ExecuteReaderAsync(ct);
-            while (await rdr.ReadAsync(ct))
-            {
-                var guild = rdr.GetString(0);
-                var channel = rdr.GetString(1);
-                var cnt = rdr.GetInt64(2);
-
-                var guildName = ResolveGuildName(guild) ?? "unknown";
-                var channelName = ResolveChannelName(guild, channel) ?? "unknown";
-
-                var key = string.Join("|", guild, guildName, channel, channelName);
-                var ch = DisplayedItemTotal.WithLabels(guild, guildName, channel, channelName);
-                ch.Set(cnt);
-                curDisplayedItemTotal[key] = ch;
-            }
-        }
-
-        // ====================
-        // HintStatusTable
-        // ====================
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = @"
-                SELECT GuildId, ChannelId, IFNULL(Finder,''), IFNULL(Receiver,''), IFNULL(Item,''), IFNULL(Location,''), IFNULL(Game,''), IFNULL(Entrance,''), IFNULL(Flag,'')
-                FROM HintStatusTable;";
-            using var rdr = await cmd.ExecuteReaderAsync(ct);
-            while (await rdr.ReadAsync(ct))
-            {
-                var guild = rdr.GetString(0);
-                var channel = rdr.GetString(1);
-                var finder = rdr.GetString(2);
-                var receiver = rdr.GetString(3);
-                var item = rdr.GetString(4);
-                var location = rdr.GetString(5);
-                var game = rdr.GetString(6);
-                var entrance = rdr.GetString(7);
-                var flag = rdr.GetString(8);
-
-                var guildName = ResolveGuildName(guild) ?? "unknown";
-                var channelName = ResolveChannelName(guild, channel) ?? "unknown";
-
-                var key = string.Join("|", guild, guildName, channel, channelName, finder, receiver, item, location, game, entrance, flag);
-                var ch = HintItem.WithLabels(guild, guildName, channel, channelName, finder, receiver, item, location, game, entrance, flag);
-                ch.Set(1);
-                curHintItem[key] = ch;
-            }
-        }
-
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = @"
-                SELECT GuildId, ChannelId, IFNULL(Finder,''), COUNT(*)
-                FROM HintStatusTable
-                GROUP BY GuildId, ChannelId, IFNULL(Finder,'');";
-            using var rdr = await cmd.ExecuteReaderAsync(ct);
-            while (await rdr.ReadAsync(ct))
-            {
-                var guild = rdr.GetString(0);
-                var channel = rdr.GetString(1);
-                var finder = rdr.GetString(2);
-                var cnt = rdr.GetInt64(3);
-
-                var guildName = ResolveGuildName(guild) ?? "unknown";
-                var channelName = ResolveChannelName(guild, channel) ?? "unknown";
-
-                var key = string.Join("|", guild, guildName, channel, channelName, finder);
-                var ch = HintByFinder.WithLabels(guild, guildName, channel, channelName, finder);
-                ch.Set(cnt);
-                curHintByFinder[key] = ch;
-            }
-        }
-
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = @"
-                SELECT GuildId, ChannelId, IFNULL(Receiver,''), COUNT(*)
-                FROM HintStatusTable
-                GROUP BY GuildId, ChannelId, IFNULL(Receiver,'');";
-            using var rdr = await cmd.ExecuteReaderAsync(ct);
-            while (await rdr.ReadAsync(ct))
-            {
-                var guild = rdr.GetString(0);
-                var channel = rdr.GetString(1);
-                var receiver = rdr.GetString(2);
-                var cnt = rdr.GetInt64(3);
-
-                var guildName = ResolveGuildName(guild) ?? "unknown";
-                var channelName = ResolveChannelName(guild, channel) ?? "unknown";
-
-                var key = string.Join("|", guild, guildName, channel, channelName, receiver);
-                var ch = HintByReceiver.WithLabels(guild, guildName, channel, channelName, receiver);
-                ch.Set(cnt);
-                curHintByReceiver[key] = ch;
-            }
-        }
-
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = @"
-                SELECT GuildId, ChannelId, COUNT(*)
-                FROM HintStatusTable
-                GROUP BY GuildId, ChannelId;";
-            using var rdr = await cmd.ExecuteReaderAsync(ct);
-            while (await rdr.ReadAsync(ct))
-            {
-                var guild = rdr.GetString(0);
-                var channel = rdr.GetString(1);
-                var cnt = rdr.GetInt64(2);
-
-                var guildName = ResolveGuildName(guild) ?? "unknown";
-                var channelName = ResolveChannelName(guild, channel) ?? "unknown";
-
-                var key = string.Join("|", guild, guildName, channel, channelName);
-                var ch = HintTotal.WithLabels(guild, guildName, channel, channelName);
-                ch.Set(cnt);
-                curHintTotal[key] = ch;
             }
         }
 
@@ -534,16 +243,6 @@ public static class MetricsExporter
             UnpublishMissing(_channelInfo, curChannelInfo);
             UnpublishMissing(_channelLastCheck, curChannelLastCheck);
 
-            UnpublishMissing(_displayedItem, curDisplayedItem);
-            UnpublishMissing(_displayedItemByFinder, curDisplayedItemByFinder);
-            UnpublishMissing(_displayedItemByReceiver, curDisplayedItemByReceiver);
-            UnpublishMissing(_displayedItemTotal, curDisplayedItemTotal);
-
-            UnpublishMissing(_hintItem, curHintItem);
-            UnpublishMissing(_hintByFinder, curHintByFinder);
-            UnpublishMissing(_hintByReceiver, curHintByReceiver);
-            UnpublishMissing(_hintTotal, curHintTotal);
-
             UnpublishMissing(_gameStatusChecks, curGameStatusChecks);
             UnpublishMissing(_gameStatusTotal, curGameStatusTotal);
             UnpublishMissing(_gameStatusLastActivity, curGameStatusLastActivity);
@@ -552,14 +251,6 @@ public static class MetricsExporter
 
             _channelInfo = curChannelInfo;
             _channelLastCheck = curChannelLastCheck;
-            _displayedItem = curDisplayedItem;
-            _displayedItemByFinder = curDisplayedItemByFinder;
-            _displayedItemByReceiver = curDisplayedItemByReceiver;
-            _displayedItemTotal = curDisplayedItemTotal;
-            _hintItem = curHintItem;
-            _hintByFinder = curHintByFinder;
-            _hintByReceiver = curHintByReceiver;
-            _hintTotal = curHintTotal;
             _gameStatusChecks = curGameStatusChecks;
             _gameStatusTotal = curGameStatusTotal;
             _gameStatusLastActivity = curGameStatusLastActivity;
