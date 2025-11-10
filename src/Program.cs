@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using DotNetEnv;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Prometheus;
 
 class Program
 {
@@ -201,6 +202,31 @@ class Program
 
             TrackingDataManager.StartTracking();
             UpdateReminder.Start();
+
+            if (Declare.ExportMetrics && !string.IsNullOrEmpty(Declare.MetricsPort))
+            {
+                var port = int.Parse(Declare.MetricsPort);
+
+                var metricsServer = new MetricServer(port: port);
+                metricsServer.Start();
+
+                var cts = new CancellationTokenSource();
+
+                _ = MetricsExporter.StartAsync(cts.Token);
+            }
+
+            MetricsExporter.ResolveGuildName = id =>
+            {
+                var g = Declare.Client.GetGuild(ulong.Parse(id));
+                return g?.Name;
+            };
+
+            MetricsExporter.ResolveChannelName = (gid, cid) =>
+            {
+                var g = Declare.Client.GetGuild(ulong.Parse(gid));
+                var ch = g?.GetChannel(ulong.Parse(cid));
+                return ch?.Name;
+            };
 
         });
         return Task.CompletedTask;
