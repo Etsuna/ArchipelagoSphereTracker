@@ -169,7 +169,7 @@ public static class ExcludedItemsCommands
     }
 
 
-    public static async Task<string> DeleteExcludedItemAsync(SocketSlashCommand command, string channelId, string guildId, string alias)
+    public static async Task<string> DeleteExcludedItemAsync(SocketSlashCommand command, string channelId, string guildId, string? alias)
     {
         var userId = command.User.Id.ToString();
         var item = command.Data.Options.ElementAtOrDefault(1)?.Value as string;
