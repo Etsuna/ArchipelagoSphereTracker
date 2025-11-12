@@ -129,26 +129,17 @@
   <data name="ProgramStartingBot" xml:space="preserve">
     <value>Lancement du bot… {0}</value>
   </data>
-  <data name="TDMNoMessageFound" xml:space="preserve">
-    <value>Aucun message trouvé, utilisation de la date de création du fil : {0}</value>
-  </data>
   <data name="TDMChannelStillExists" xml:space="preserve">
     <value>Le canal existe toujours : {0}</value>
   </data>
   <data name="TDMNewMessageOnThread" xml:space="preserve">
-    <value>Nouveau message dans le fil {0}, suppression automatique annulée.</value>
+    <value>Nouvel objet dans le fil {0}, suppression automatique annulée.</value>
   </data>
-  <data name="TDMNoMessage6Days" xml:space="preserve">
-    <value>Aucun message depuis 6 jours. Si aucun message n’est posté avant le {0} dans le fil {1}, il sera supprimé. Pensez à supprimer le fil ou l'URL si vous n’en avez plus besoin !</value>
-  </data>
-  <data name="TDMLastActivity" xml:space="preserve">
-    <value>Dernière activité : {0}</value>
+  <data name="TDMNoMessage7Days" xml:space="preserve">
+    <value>Aucun objet depuis 7 jours. Si aucun objet n’est trouvé avant le {0} dans le fil {1}, il sera supprimé. Pensez à supprimer le fil ou l'URL si vous n’en avez plus besoin !</value>
   </data>
   <data name="TDMNoActivity" xml:space="preserve">
-    <value>Aucune activité depuis 7 jours, suppression du fil...</value>
-  </data>
-  <data name="TDMThreadDeleted" xml:space="preserve">
-    <value>Fil supprimé.</value>
+    <value>Aucune activité depuis 14 jours, suppression des infos...</value>
   </data>
   <data name="TDMCheckingItems" xml:space="preserve">
     <value>Vérification des items pour le canal {0}...</value>
@@ -863,5 +854,11 @@
   </data>
   <data name="Allcheckdone" xml:space="preserve">
     <value>Tous les joueurs ont complété leurs checks. Suppression automatique des informations dans la base de données.</value>
+  </data>
+  <data name="Discord" xml:space="preserve">
+    <value>N’hésitez pas à rejoindre le Discord en cas de question ou de bug : https://discord.gg/5x2daKFH</value>
+  </data>
+  <data name="DiscordDesc" xml:space="preserve">
+    <value>Affiche le lien du Discord.</value>
   </data>
 </root>

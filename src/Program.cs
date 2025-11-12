@@ -113,9 +113,9 @@ class Program
 
         if (Declare.IsArchipelagoMode)
         {
-            if (currentVersion.Trim() == Declare.Version)
+            if (currentVersion.Trim() == Declare.ReleaseVersion)
             {
-                Console.WriteLine(string.Format(Resource.ProgramArchipelagoAlreadyInstalled, Declare.Version));
+                Console.WriteLine(string.Format(Resource.ProgramArchipelagoAlreadyInstalled, Declare.ReleaseVersion));
             }
             else
             {

@@ -637,6 +637,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/5x2daKFH.
+        /// </summary>
+        internal static string Discord {
+            get {
+                return ResourceManager.GetString("Discord", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Shows the Discord link..
+        /// </summary>
+        internal static string DiscordDesc {
+            get {
+                return ResourceManager.GetString("DiscordDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Download and Install Archipelago version {0} before to install the bot in Archipelago Mode..
         /// </summary>
         internal static string DownloadAndInstall {
@@ -1969,16 +1987,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Last activity : {0}.
-        /// </summary>
-        internal static string TDMLastActivity {
-            get {
-                return ResourceManager.GetString("TDMLastActivity", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à New message on the thread {0}, automatic deletion canceled..
+        ///   Recherche une chaîne localisée semblable à New item on the thread {0}, automatic deletion canceled..
         /// </summary>
         internal static string TDMNewMessageOnThread {
             get {
@@ -1987,7 +1996,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à No activity for 7 days, deleting the thread....
+        ///   Recherche une chaîne localisée semblable à No new item for 14 days, deleting all infos ....
         /// </summary>
         internal static string TDMNoActivity {
             get {
@@ -1996,20 +2005,11 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à No message for 6 days. If no message is posted before {0} on the thread {1}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!.
+        ///   Recherche une chaîne localisée semblable à No new item for 7 days. If no item is found before {0} on the thread {1}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!.
         /// </summary>
-        internal static string TDMNoMessage6Days {
+        internal static string TDMNoMessage7Days {
             get {
-                return ResourceManager.GetString("TDMNoMessage6Days", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No message found, using the thread creation date: {0}.
-        /// </summary>
-        internal static string TDMNoMessageFound {
-            get {
-                return ResourceManager.GetString("TDMNoMessageFound", resourceCulture);
+                return ResourceManager.GetString("TDMNoMessage7Days", resourceCulture);
             }
         }
         
@@ -2028,15 +2028,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string TDMSkippingCheck {
             get {
                 return ResourceManager.GetString("TDMSkippingCheck", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Thread deleted..
-        /// </summary>
-        internal static string TDMThreadDeleted {
-            get {
-                return ResourceManager.GetString("TDMThreadDeleted", resourceCulture);
             }
         }
         

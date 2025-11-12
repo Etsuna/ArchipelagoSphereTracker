@@ -133,33 +133,21 @@
     <value>Starting bot... {0}</value>
     <comment>Starting bot... {version}</comment>
   </data>
-  <data name="TDMNoMessageFound" xml:space="preserve">
-    <value>No message found, using the thread creation date: {0}</value>
-    <comment>No message found, using the thread creation date: {lastActivity}</comment>
-  </data>
   <data name="TDMChannelStillExists" xml:space="preserve">
     <value>The channel still exists: {0}</value>
     <comment>The channel still exists: {channelCheck.Name}</comment>
   </data>
   <data name="TDMNewMessageOnThread" xml:space="preserve">
-    <value>New message on the thread {0}, automatic deletion canceled.</value>
-    <comment>New message on the thread {thread.Name}, automatic deletion canceled.</comment>
+    <value>New item on the thread {0}, automatic deletion canceled.</value>
+    <comment>New item on the thread {thread.Name}, automatic deletion canceled.</comment>
   </data>
-  <data name="TDMNoMessage6Days" xml:space="preserve">
-    <value>No message for 6 days. If no message is posted before {0} on the thread {1}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</value>
-    <comment>No message for 6 days. If no message is posted before {formattedDeletionDate} on the thread {thread.Name}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</comment>
-  </data>
-  <data name="TDMLastActivity" xml:space="preserve">
-    <value>Last activity : {0}</value>
-    <comment>Last activity : {lastActivity}</comment>
+  <data name="TDMNoMessage7Days" xml:space="preserve">
+    <value>No new item for 7 days. If no item is found before {0} on the thread {1}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</value>
+    <comment>No new item for 7 days. If no item is found before {formattedDeletionDate} on the thread {thread.Name}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</comment>
   </data>
   <data name="TDMNoActivity" xml:space="preserve">
-    <value>No activity for 7 days, deleting the thread...</value>
-    <comment>No activity for 7 days, deleting the thread...</comment>
-  </data>
-  <data name="TDMThreadDeleted" xml:space="preserve">
-    <value>Thread deleted.</value>
-    <comment>Thread deleted.</comment>
+    <value>No new item for 14 days, deleting all infos ...</value>
+    <comment>No new item for 14 days, deleting all infos...</comment>
   </data>
   <data name="TDMCheckingItems" xml:space="preserve">
     <value>Checking Items for the channel {0}...</value>
@@ -1112,5 +1100,13 @@
   <data name="Allcheckdone" xml:space="preserve">
     <value>All players have completed their checks. Automatic deletion of the information from the database.</value>
     <comment>All players have completed their checks. Automatic deletion of the information from the database.</comment>
+  </data>
+  <data name="Discord" xml:space="preserve">
+    <value>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/5x2daKFH</value>
+    <comment>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/5x2daKFH</comment>
+  </data>
+  <data name="DiscordDesc" xml:space="preserve">
+    <value>Shows the Discord link.</value>
+    <comment>Shows the Discord link.</comment>
   </data>
 </root>

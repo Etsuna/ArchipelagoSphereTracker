@@ -4,11 +4,9 @@ using Discord;
 using Discord.WebSocket;
 using Sprache;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using static System.Net.Mime.MediaTypeNames;
 
 public static class TrackingDataManager
 {
@@ -118,6 +116,7 @@ public static class TrackingDataManager
                                         var guildChannel = guildCheck.GetChannel(channelId) as SocketGuildChannel;
                                         var thread = guildCheck.ThreadChannels.FirstOrDefault(t => t.Id == channelId);
 
+
                                         if (guildChannel is null && thread is null)
                                         {
                                             var restChan = await Declare.Client.Rest.GetChannelAsync(channelId);
@@ -137,78 +136,89 @@ public static class TrackingDataManager
                                         }
 
                                         var nameForLog = thread?.Name ?? guildChannel!.Name;
-                                        Console.WriteLine(string.Format(Resource.TDMChannelStillExists, nameForLog));
-
-                                        if (thread != null)
-                                        {
-                                            var messages = await thread.GetMessagesAsync(1).FlattenAsync();
-                                            var lastMessage = messages.FirstOrDefault();
-
-                                            DateTimeOffset lastActivity = lastMessage?.Timestamp ?? SnowflakeUtils.FromSnowflake(thread.Id);
-                                            if (lastMessage == null)
-                                                Console.WriteLine(string.Format(Resource.TDMNoMessageFound, lastActivity));
-
-                                            double daysInactive = (DateTimeOffset.UtcNow - lastActivity).TotalDays;
-
-                                            if (daysInactive < 6)
-                                            {
-                                                if (Declare.WarnedThreads.Contains(thread.Id.ToString()))
-                                                {
-                                                    await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
-                                                    try
-                                                    {
-                                                        await BotCommands.SendMessageAsync(string.Format(Resource.TDMNewMessageOnThread, thread.Name), thread.Id.ToString());
-                                                    }
-                                                    finally
-                                                    {
-                                                        RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
-                                                    }
-                                                    Declare.WarnedThreads.Remove(thread.Id.ToString());
-                                                }
-                                            }
-                                            else if (daysInactive < 7)
-                                            {
-                                                if (!Declare.WarnedThreads.Contains(thread.Id.ToString()))
-                                                {
-                                                    DateTimeOffset deletionDate = lastActivity.AddTicks(TimeSpan.TicksPerDay * 7);
-                                                    TimeZoneInfo frenchTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Paris");
-                                                    DateTimeOffset localDeletionDate = TimeZoneInfo.ConvertTime(deletionDate, frenchTimeZone);
-                                                    string formattedDeletionDate = localDeletionDate.ToString("dddd d MMMM yyyy à HH'h'mm", CultureInfo.GetCultureInfo("fr-FR"));
-
-                                                    await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
-                                                    try
-                                                    {
-                                                        await BotCommands.SendMessageAsync(
-                                                            string.Format(Resource.TDMNoMessage6Days, formattedDeletionDate, thread.Name),
-                                                            thread.ParentChannel.Id.ToString());
-                                                    }
-                                                    finally
-                                                    {
-                                                        RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
-                                                    }
-
-                                                    Declare.WarnedThreads.Add(thread.Id.ToString());
-                                                }
-                                            }
-                                            else
-                                            {
-                                                Console.WriteLine(string.Format(Resource.TDMLastActivity, lastActivity));
-                                                Console.WriteLine(Resource.TDMNoActivity);
-                                                await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
-                                                await DatabaseCommands.ReclaimSpaceAsync();
-                                                await thread.DeleteAsync();
-                                                Console.WriteLine(Resource.TDMThreadDeleted);
-                                                Declare.WarnedThreads.Remove(thread.Id.ToString());
-                                                ChannelConfigCache.Remove(guild, channel);
-                                                return;
-                                            }
-                                        }
 
                                         var (shouldRun, checkFrequencyTs) = ChannelConfigCache.ShouldRunChecks(cfg);
                                         if (!shouldRun)
                                         {
                                             Console.WriteLine(string.Format(Resource.TDMSkippingCheck, nameForLog, checkFrequencyTs.TotalMinutes));
                                             return;
+                                        }
+                                        Console.WriteLine(string.Format(Resource.TDMChannelStillExists, nameForLog));
+
+                                        if (thread != null)
+                                        {
+                                            var lastCheck = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(guild, channel);
+                                            if (lastCheck == null)
+                                            {
+                                                await ChannelsAndUrlsCommands.UpdateLastItemCheckAsync(guild, channel);
+                                                lastCheck = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(guild, channel);
+                                            }
+
+                                            double daysSince = (DateTimeOffset.UtcNow - lastCheck.Value).TotalDays;
+
+                                            if (daysSince < 7)
+                                            {
+                                                if (Declare.WarnedThreads.Contains(channel))
+                                                {
+                                                    await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
+                                                    try
+                                                    {
+                                                        await BotCommands.SendMessageAsync(string.Format(Resource.TDMNewMessageOnThread, thread.Name), channel);
+                                                    }
+                                                    finally
+                                                    {
+                                                        RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
+                                                    }
+                                                    Declare.WarnedThreads.Remove(channel);
+                                                }
+                                            }
+                                            else if (daysSince < 14)
+                                            {
+                                                if (!Declare.WarnedThreads.Contains(channel))
+                                                {
+                                                    var baseDate = lastCheck.Value;
+                                                    DateTimeOffset deletionDate = baseDate.AddDays(14);
+
+                                                    TimeZoneInfo frenchTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Paris");
+                                                    DateTimeOffset localDeletionDate = TimeZoneInfo.ConvertTime(deletionDate, frenchTimeZone);
+
+                                                    string formattedDeletionDate = localDeletionDate.ToString(
+                                                        "dddd d MMMM yyyy à HH'h'mm",
+                                                        CultureInfo.GetCultureInfo("fr-FR"));
+
+                                                    await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
+                                                    try
+                                                    {
+                                                        await BotCommands.SendMessageAsync(
+                                                            string.Format(Resource.TDMNoMessage7Days, formattedDeletionDate, thread.Name),channel);
+                                                    }
+                                                    finally
+                                                    {
+                                                        RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
+                                                    }
+
+                                                    Declare.WarnedThreads.Add(channel);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine(Resource.TDMNoActivity);
+                                                await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
+                                                try
+                                                {
+                                                    await BotCommands.SendMessageAsync(
+                                                        string.Format(Resource.TDMNoActivity, thread.Name), channel);
+                                                }
+                                                finally
+                                                {
+                                                    RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
+                                                }
+                                                await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
+                                                await DatabaseCommands.ReclaimSpaceAsync();
+                                                Declare.WarnedThreads.Remove(channel);
+                                                ChannelConfigCache.Remove(guild, channel);
+                                                return;
+                                            }
                                         }
 
                                         Console.WriteLine(string.Format(Resource.TDMCheckingItems, nameForLog));
@@ -358,6 +368,7 @@ public static class TrackingDataManager
         {
             await DisplayItemCommands.AddItemsAsync(newItems, guild, channel);
             await RecapListCommands.AddOrEditRecapListItemsForAllAsync(guild, channel, newItems);
+            await ChannelsAndUrlsCommands.UpdateLastItemCheckAsync(guild, channel);
 
             if (channelExists)
             {

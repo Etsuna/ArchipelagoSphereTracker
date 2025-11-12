@@ -121,6 +121,10 @@ public static class SlashCommandDefinitions
                     .WithType(ApplicationCommandOptionType.String)
                     .WithRequired(true)
                     .WithAutocomplete(true)),
+
+            new SlashCommandBuilder()
+                .WithName("discord")
+                .WithDescription(Resource.DiscordDesc)
         };
 
         if (Declare.IsArchipelagoMode)

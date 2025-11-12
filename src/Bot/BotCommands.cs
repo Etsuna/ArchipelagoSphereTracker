@@ -180,6 +180,7 @@ public static class BotCommands
             "generate" => await GenerationClass.GenerateAsync(command, "", channelId),
             "test-generate" => await GenerationClass.TestGenerateAsync(command, "", channelId),
             "generate-with-zip" => await GenerationClass.GenerateWithZip(command, "", channelId),
+            "discord" => Resource.Discord, 
             _ => Resource.BotCommandThread
         };
     }
