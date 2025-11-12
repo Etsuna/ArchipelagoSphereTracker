@@ -700,6 +700,33 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Item {0} added to the exclusion list from {1}..
+        /// </summary>
+        internal static string ExcludeItemAdded {
+            get {
+                return ResourceManager.GetString("ExcludeItemAdded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Item {0} removed from {1}..
+        /// </summary>
+        internal static string ExcludeItemDeleted {
+            get {
+                return ResourceManager.GetString("ExcludeItemDeleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No item {0} found for {1}..
+        /// </summary>
+        internal static string ExcludeItemNotFound {
+            get {
+                return ResourceManager.GetString("ExcludeItemNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Filler.
         /// </summary>
         internal static string Filler {
@@ -1564,6 +1591,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose an item.
+        /// </summary>
+        internal static string SCChooseAnItem {
+            get {
+                return ResourceManager.GetString("SCChooseAnItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Clean all recap items.
         /// </summary>
         internal static string SCCleanAllDescription {
@@ -1600,6 +1636,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Deletes the item from the exclusion list.
+        /// </summary>
+        internal static string SCDeleteExcludedItemDesc {
+            get {
+                return ResourceManager.GetString("SCDeleteExcludedItemDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Delete Url, clean Aliases and Recap.
         /// </summary>
         internal static string SCDeleteUrlDescription {
@@ -1632,6 +1677,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string SCDownloadYamlTemplateDescription {
             get {
                 return ResourceManager.GetString("SCDownloadYamlTemplateDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Excludes notifications for this item.
+        /// </summary>
+        internal static string SCExcludedItemDesc {
+            get {
+                return ResourceManager.GetString("SCExcludedItemDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Displays your excluded items list.
+        /// </summary>
+        internal static string SCExcludedItemListDesc {
+            get {
+                return ResourceManager.GetString("SCExcludedItemListDesc", resourceCulture);
             }
         }
         

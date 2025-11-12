@@ -1109,4 +1109,32 @@
     <value>Shows the Discord link.</value>
     <comment>Shows the Discord link.</comment>
   </data>
+  <data name="SCChooseAnItem" xml:space="preserve">
+    <value>Choose an item</value>
+    <comment>Choose an item</comment>
+  </data>
+  <data name="SCExcludedItemDesc" xml:space="preserve">
+    <value>Excludes notifications for this item</value>
+    <comment>Excludes notifications for this item</comment>
+  </data>
+  <data name="SCExcludedItemListDesc" xml:space="preserve">
+    <value>Displays your excluded items list</value>
+    <comment>Displays your excluded items list</comment>
+  </data>
+  <data name="SCDeleteExcludedItemDesc" xml:space="preserve">
+    <value>Deletes the item from the exclusion list</value>
+    <comment>Deletes the item from the exclusion list</comment>
+  </data>
+  <data name="ExcludeItemAdded" xml:space="preserve">
+    <value>Item {0} added to the exclusion list from {1}.</value>
+    <comment>Item {item} added to the exclusion list for {alias}.</comment>
+  </data>
+  <data name="ExcludeItemDeleted" xml:space="preserve">
+    <value>Item {0} removed from {1}.</value>
+    <comment>Item {item} removed from {alias}.</comment>
+  </data>
+  <data name="ExcludeItemNotFound" xml:space="preserve">
+    <value>No item {0} found for {1}.</value>
+    <comment>No item {item} found for {alias}.</comment>
+  </data>
 </root>

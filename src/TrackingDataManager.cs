@@ -116,7 +116,6 @@ public static class TrackingDataManager
                                         var guildChannel = guildCheck.GetChannel(channelId) as SocketGuildChannel;
                                         var thread = guildCheck.ThreadChannels.FirstOrDefault(t => t.Id == channelId);
 
-
                                         if (guildChannel is null && thread is null)
                                         {
                                             var restChan = await Declare.Client.Rest.GetChannelAsync(channelId);
@@ -321,19 +320,23 @@ public static class TrackingDataManager
                 return string.Empty;
         }
 
-        if (int.TryParse(item.Location, out var loc) && loc < 0 || int.TryParse(item.Item, out var itm) && itm < 0)
+        if ((int.TryParse(item.Location, out var loc) && loc < 0) || (int.TryParse(item.Item, out var itm) && itm < 0))
             return string.Empty;
 
-        var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, item.Receiver);
-        if (userIds.Count > 0)
+        var userInfos = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, item.Receiver);
+
+        if (userInfos.Count > 0)
         {
             if (silent && item.Finder == item.Receiver)
                 return string.Empty;
 
-            if (userIds.Any(x => x.IsEnabled.Equals(true)))
+            if (await ExcludedItemsCommands.IsItemExcludedForAnyUserAsync(guild, channel, item.Receiver, item.Item, userInfos))
+                return string.Empty;
+
+            if (userInfos.Any(x => x.IsEnabled))
             {
-                var getGameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver);
-                if (!string.IsNullOrWhiteSpace(getGameName))
+                var gameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver);
+                if (!string.IsNullOrWhiteSpace(gameName))
                 {
                     if (item.Flag is "0")
                         return string.Empty;

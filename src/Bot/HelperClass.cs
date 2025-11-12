@@ -101,9 +101,11 @@ public class HelperClass
                         double percent = total > 0
                             ? (double)checks / total * 100.0
                             : 0.0;
+                        string percentText = percent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                        
                         string gameStatus = checks != total
-                            ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percent) + "\n"
-                            : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percent) + "\n";
+                            ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percentText) + "\n"
+                            : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percentText) + "\n";
 
                         message += gameStatus;
                     }
@@ -123,9 +125,11 @@ public class HelperClass
                     double percent = total > 0
                         ? (double)checks / total * 100.0
                         : 0.0;
+                    string percentText = percent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
                     string gameStatus = checks != total
-                        ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percent) + "\n"
-                        : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percent) + "\n";
+                        ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percentText) + "\n"
+                        : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percentText) + "\n";
 
                     message += gameStatus;
                 }

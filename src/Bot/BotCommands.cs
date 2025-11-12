@@ -158,6 +158,9 @@ public static class BotCommands
             "info" => await HelperClass.Info(message, channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, message, channelId, guildId),
             "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, message, channelId, guildId),
+            "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, message, alias, channelId, guildId),
+            "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
+            "delete-excluded-item" => await ExcludedItemsCommands.DeleteExcludedItemAsync(command, channelId, guildId, alias),
             _ => Resource.BotCommandChannel
         };
     }
@@ -214,6 +217,7 @@ public static class BotCommands
         var input = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
         var channelId = interaction.ChannelId.ToString();
         var guildId = interaction.GuildId?.ToString() ?? "";
+        var addedAlias = interaction.Data.Options?.FirstOrDefault(o => o.Name == "added-alias")?.Value as string ?? "";
 
         if (string.IsNullOrWhiteSpace(channelId) || string.IsNullOrWhiteSpace(guildId))
         {
@@ -239,6 +243,10 @@ public static class BotCommands
                         : Enumerable.Empty<string>()),
 
             "apworldsinfo" => async () => (await ApWorldListCommands.GetAllTitles()).AsEnumerable(),
+
+            "items" => async () => (await ExcludedItemsCommands.GetItemNamesForAliasAsync(guildId, channelId, addedAlias)).AsEnumerable(),
+
+            "delete-items" => async () => (await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(guildId, channelId, addedAlias)).AsEnumerable(),
 
             _ => () => Task.FromResult(Enumerable.Empty<string>())
         };

@@ -124,7 +124,23 @@ public static class SlashCommandDefinitions
 
             new SlashCommandBuilder()
                 .WithName("discord")
-                .WithDescription(Resource.DiscordDesc)
+                .WithDescription(Resource.DiscordDesc),
+
+            new SlashCommandBuilder()
+                .WithName("excluded-item")
+                .WithDescription(Resource.SCExcludedItemDesc)
+                .AddOption(AliasOption("added-alias"))
+                .AddOption(ItemsOption("items")),
+
+             new SlashCommandBuilder()
+                .WithName("excluded-item-list")
+                .WithDescription(Resource.SCExcludedItemListDesc),
+
+            new SlashCommandBuilder()
+                .WithName("delete-excluded-item")
+                .WithDescription(Resource.SCDeleteExcludedItemDesc)
+                .AddOption(AliasOption("added-alias"))
+                .AddOption(ItemsOption("delete-items")),
         };
 
         if (Declare.IsArchipelagoMode)
@@ -212,6 +228,16 @@ public static class SlashCommandDefinitions
             .WithDescription(description)
             .WithType(ApplicationCommandOptionType.Boolean)
             .WithRequired(true);
+    }
+
+    private static SlashCommandOptionBuilder ItemsOption(string item)
+    {
+        return new SlashCommandOptionBuilder()
+            .WithName(item)
+            .WithDescription(Resource.SCChooseAnItem)
+            .WithType(ApplicationCommandOptionType.String)
+            .WithRequired(true)
+            .WithAutocomplete(true);
     }
 
     #endregion

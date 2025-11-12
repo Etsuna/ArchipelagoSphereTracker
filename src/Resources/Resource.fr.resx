@@ -861,4 +861,25 @@
   <data name="DiscordDesc" xml:space="preserve">
     <value>Affiche le lien du Discord.</value>
   </data>
+  <data name="SCChooseAnItem" xml:space="preserve">
+    <value>Choisissez un objet</value>
+  </data>
+  <data name="SCExcludedItemDesc" xml:space="preserve">
+    <value>Exclut les notifications pour cet item</value>
+  </data>
+  <data name="SCExcludedItemListDesc" xml:space="preserve">
+    <value>Affiche la liste de tes items exclus</value>
+  </data>
+  <data name="SCDeleteExcludedItemDesc" xml:space="preserve">
+    <value>Supprime l'objet de la liste d’exclusion</value>
+  </data>
+  <data name="ExcludeItemAdded" xml:space="preserve">
+    <value>l'objet {0} ajouté à la liste d’exclusion de {1}.</value>
+  </data>
+  <data name="ExcludeItemDeleted" xml:space="preserve">
+    <value>l'objet {0} supprimé de {1}.</value>
+  </data>
+  <data name="ExcludeItemNotFound" xml:space="preserve">
+    <value>Aucun objet {item} trouvé pour {alias}.</value>
+  </data>
 </root>
