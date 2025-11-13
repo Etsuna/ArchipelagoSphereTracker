@@ -1027,7 +1027,7 @@
   </data>
   <data name="HintItemNew" xml:space="preserve">
     <value>**{0}** is at **{1}** in **{2}'s** World.</value>
-    <comment>**{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World.@MutedRule(PunctuationLead)@MutedRule(PunctuationTail)</comment>
+    <comment>**{item.Item}** is at **{item.Location}** in **{item.Finder}'s** World.</comment>
   </data>
   <data name="HelperCheckFrequency" xml:space="preserve">
     <value>Frequency Check: {0}.</value>
@@ -1136,5 +1136,9 @@
   <data name="ExcludeItemNotFound" xml:space="preserve">
     <value>No item {0} found for {1}.</value>
     <comment>No item {item} found for {alias}.</comment>
+  </data>
+  <data name="HintItemUpdated" xml:space="preserve">
+    <value>**{0}** was found at **{1}** in **{2}'s** World.</value>
+    <comment>**{item.Item}** was found at **{item.Location}** in **{item.Finder}'s** World.</comment>
   </data>
 </root>

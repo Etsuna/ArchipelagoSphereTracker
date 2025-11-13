@@ -882,4 +882,7 @@
   <data name="ExcludeItemNotFound" xml:space="preserve">
     <value>Aucun objet {item} trouvé pour {alias}.</value>
   </data>
+  <data name="HintItemUpdated" xml:space="preserve">
+    <value>L'item **{0}** a été trouvé à **{1}** dans le monde de **{2}**.</value>
+  </data>
 </root>

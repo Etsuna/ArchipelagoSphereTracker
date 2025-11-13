@@ -19,6 +19,9 @@ public static class TrackingDataManager
 
     private static readonly ConcurrentDictionary<string, byte> InFlight = new();
 
+    private static readonly ConcurrentDictionary<ulong, int> MissingChannelPassCount = new ConcurrentDictionary<ulong, int>();
+    private const int MaxChecksBeforeDelete = 1 * 60;
+
     public static void StartTracking()
     {
         const int MaxGuildsParallel = 24;
@@ -126,10 +129,27 @@ public static class TrackingDataManager
                                                 await DatabaseCommands.ReclaimSpaceAsync();
                                                 Console.WriteLine(Resource.TDMDeletionCompleted);
                                                 ChannelConfigCache.Remove(guild, channel);
+
+                                                MissingChannelPassCount.TryRemove(channelId, out _);
                                             }
                                             else
                                             {
-                                                Console.WriteLine($"[TDM] REST confirme l'existence du canal {channelId}, on saute cette passe.");
+                                                var count = MissingChannelPassCount.AddOrUpdate(channelId, 1, (_, old) => old + 1);
+
+                                                if (count >= MaxChecksBeforeDelete)
+                                                {
+                                                    Console.WriteLine($"[TDM] Le canal {channelId} est introuvable côté gateway depuis {count} minutes, suppression des données.");
+                                                    await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
+                                                    await DatabaseCommands.ReclaimSpaceAsync();
+                                                    Console.WriteLine(Resource.TDMDeletionCompleted);
+                                                    ChannelConfigCache.Remove(guild, channel);
+
+                                                    MissingChannelPassCount.TryRemove(channelId, out _);
+                                                }
+                                                else
+                                                {
+                                                    Console.WriteLine($"[TDM] REST confirme l'existence du canal {channelId}, on saute cette passe ({count}/{MaxChecksBeforeDelete}).");
+                                                }
                                             }
                                             return;
                                         }
@@ -761,13 +781,13 @@ public static class TrackingDataManager
             {
                 if (sendAsTextFile)
                 {
-                    lines.Add(string.Format(Resource.HintItemNew, h.Item, h.Location, h.Finder));
+                    lines.Add(string.Format(Resource.HintItemUpdated, h.Item, h.Location, h.Finder));
                 }
                 else
                 {
                     var finderIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, h.Finder);
                     var finderMentions = string.Join(" ", finderIds.Select(x => $"<@{x.UserId}>"));
-                    lines.Add(string.Format(Resource.HintItemNew, h.Item, h.Location, $"{h.Finder} {finderMentions}"));
+                    lines.Add(string.Format(Resource.HintItemUpdated, h.Item, h.Location, $"{h.Finder} {finderMentions}"));
                 }
             }
 

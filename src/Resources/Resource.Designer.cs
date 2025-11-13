@@ -1042,6 +1042,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à **{0}** was found at **{1}** in **{2}&apos;s** World..
+        /// </summary>
+        internal static string HintItemUpdated {
+            get {
+                return ResourceManager.GetString("HintItemUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à New Hint.
         /// </summary>
         internal static string HintNew {
