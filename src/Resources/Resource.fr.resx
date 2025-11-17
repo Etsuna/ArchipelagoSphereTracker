@@ -880,7 +880,7 @@
     <value>l'objet {0} supprimé de {1}.</value>
   </data>
   <data name="ExcludeItemNotFound" xml:space="preserve">
-    <value>Aucun objet {item} trouvé pour {alias}.</value>
+    <value>Aucun objet {0} trouvé pour {1}.</value>
   </data>
   <data name="HintItemUpdated" xml:space="preserve">
     <value>L'item **{0}** a été trouvé à **{1}** dans le monde de **{2}**.</value>
