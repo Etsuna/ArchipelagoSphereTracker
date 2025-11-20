@@ -637,7 +637,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/5x2daKFH.
+        ///   Recherche une chaîne localisée semblable à Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/PJfWRKVyEW.
         /// </summary>
         internal static string Discord {
             get {

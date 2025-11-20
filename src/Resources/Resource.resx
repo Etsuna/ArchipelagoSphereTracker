@@ -1102,8 +1102,8 @@
     <comment>All players have completed their checks. Automatic deletion of the information from the database.</comment>
   </data>
   <data name="Discord" xml:space="preserve">
-    <value>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/5x2daKFH</value>
-    <comment>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/5x2daKFH</comment>
+    <value>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/PJfWRKVyEW</value>
+    <comment>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/PJfWRKVyEW</comment>
   </data>
   <data name="DiscordDesc" xml:space="preserve">
     <value>Shows the Discord link.</value>
