@@ -1321,6 +1321,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à List of players and their games for this thread:.
+        /// </summary>
+        internal static string PlayerAndGameList {
+            get {
+                return ResourceManager.GetString("PlayerAndGameList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Complete list of players for this room..
+        /// </summary>
+        internal static string PlayerList {
+            get {
+                return ResourceManager.GetString("PlayerList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Archipelago {0} is already installed..
         /// </summary>
         internal static string ProgramArchipelagoAlreadyInstalled {

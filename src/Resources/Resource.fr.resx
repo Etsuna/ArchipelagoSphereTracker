@@ -885,4 +885,10 @@
   <data name="HintItemUpdated" xml:space="preserve">
     <value>L'item **{0}** a été trouvé à **{1}** dans le monde de **{2}**.</value>
   </data>
+  <data name="PlayerAndGameList" xml:space="preserve">
+    <value>Liste des joueurs et de leurs jeux pour ce thread :</value>
+  </data>
+  <data name="PlayerList" xml:space="preserve">
+    <value>Liste complète des joueurs pour cette room.</value>
+  </data>
 </root>

@@ -1141,4 +1141,12 @@
     <value>**{0}** was found at **{1}** in **{2}'s** World.</value>
     <comment>**{item.Item}** was found at **{item.Location}** in **{item.Finder}'s** World.@MutedRule(PunctuationLead)@MutedRule(PunctuationTail)</comment>
   </data>
+  <data name="PlayerAndGameList" xml:space="preserve">
+    <value>List of players and their games for this thread:</value>
+    <comment>List of players and their games for this thread:</comment>
+  </data>
+  <data name="PlayerList" xml:space="preserve">
+    <value>Complete list of players for this room.</value>
+    <comment>Complete list of players for this room.</comment>
+  </data>
 </root>
