@@ -1528,6 +1528,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database)..
+        /// </summary>
+        internal static string RoomAlreadyExistInOtherThread {
+            get {
+                return ResourceManager.GetString("RoomAlreadyExistInOtherThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Error during the migration of your thread. Please delete your thread and re-add the URL..
         /// </summary>
         internal static string RoomNotFound {

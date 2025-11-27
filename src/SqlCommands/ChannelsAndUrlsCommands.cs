@@ -522,4 +522,33 @@ public static class ChannelsAndUrlsCommands
 
         return message;
     }
+
+    public static async Task<string?> GetChannelIdForRoomAsync(string guildId, string baseUrl, string room)
+    {
+        try
+        {
+            await using var connection = await Db.OpenReadAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+            SELECT ChannelId
+            FROM ChannelsAndUrlsTable
+            WHERE GuildId = @GuildId
+              AND BaseUrl = @BaseUrl
+              AND Room    = @Room
+            LIMIT 1;";
+
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@BaseUrl", new Uri(baseUrl).GetLeftPart(UriPartial.Authority));
+            command.Parameters.AddWithValue("@Room", room);
+
+            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+            return result?.ToString();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while checking room existence: {ex.Message}");
+            return null;
+        }
+    }
 }

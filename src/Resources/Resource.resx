@@ -1149,4 +1149,8 @@
     <value>Complete list of players for this room.</value>
     <comment>Complete list of players for this room.</comment>
   </data>
+  <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
+    <value>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</value>
+    <comment>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</comment>
+  </data>
 </root>

@@ -40,6 +40,14 @@ public class UrlClass
             return message;
         }
 
+        var existingChannelForRoom =  await ChannelsAndUrlsCommands.GetChannelIdForRoomAsync(guildId, baseUrl, room);
+
+        if (!string.IsNullOrEmpty(existingChannelForRoom) && existingChannelForRoom != channelId)
+        {
+            message = string.Format(Resource.RoomAlreadyExistInOtherThread, existingChannelForRoom);
+            return message;
+        }
+
         tracker = roomInfo.Tracker ?? tracker;
         port = !string.IsNullOrEmpty(roomInfo.LastPort.ToString()) ? roomInfo.LastPort.ToString() : port;
 

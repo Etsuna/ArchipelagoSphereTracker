@@ -891,4 +891,7 @@
   <data name="PlayerList" xml:space="preserve">
     <value>Liste complète des joueurs pour cette room.</value>
   </data>
+  <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
+    <value>La salle existe déjà dans un autre fil de discussion, supprimez d'abord le fil de discussion pour ajouter la même salle et attendez au moins une minute pour faire un autre ajout (le temps de nettoyer complètement les infos de la base de donnée).</value>
+  </data>
 </root>
