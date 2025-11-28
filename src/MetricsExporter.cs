@@ -57,6 +57,16 @@ public static class MetricsExporter
             "Ligne de AliasChoicesTable.",
             new[] { "guild_id", "guild_name", "channel_id", "channel_name", "slot", "alias", "game" });
 
+
+    // ==============
+    // OBJETS VÉRIFIÉS
+    // ==============
+    private static readonly Gauge LastItemsChecked =
+        Metrics.CreateGauge(
+            "ast_last_items_checked_timestamp",
+            "Horodatage Unix UTC du dernier contrôle des objets.",
+            Array.Empty<string>());
+
     // ==============
     // état interne pour dépublier
     // ==============
@@ -70,6 +80,8 @@ public static class MetricsExporter
     private static Dictionary<string, Gauge.Child> _gameStatusLastActivity = new();
 
     private static Dictionary<string, Gauge.Child> _aliasChoice = new();
+
+    private static Dictionary<string, Gauge.Child> _lastItemsChecked = new();
 
     public static Task StartAsync(CancellationToken token)
     {
@@ -100,6 +112,8 @@ public static class MetricsExporter
         var curGameStatusLastActivity = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
 
         var curAliasChoice = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
+
+        var curLastItemsChecked = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
 
         // ====================
         // ChannelsAndUrlsTable
@@ -236,6 +250,39 @@ public static class MetricsExporter
         }
 
         // ====================
+        // LastItemsCheckTable
+        // ====================
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = @"
+                SELECT GuildId, ChannelId, LastItemCheck
+                FROM LastItemsCheckTable;";
+            using var rdr = await cmd.ExecuteReaderAsync(ct);
+            long? latestTs = null;
+            while (await rdr.ReadAsync(ct))
+            {
+                if (rdr.IsDBNull(2))
+                    continue;
+
+                var lastStr = rdr.GetString(2);
+                if (DateTime.TryParse(lastStr, out var dt))
+                {
+                    var ts = ((DateTimeOffset)dt.ToUniversalTime()).ToUnixTimeSeconds();
+                    if (!latestTs.HasValue || ts > latestTs.Value)
+                        latestTs = ts;
+                }
+            }
+
+            var ch = LastItemsChecked.WithLabels();
+            if (latestTs.HasValue)
+                ch.Set(latestTs.Value);
+            else
+                ch.Set(double.NaN);
+
+            curLastItemsChecked["global"] = ch;
+        }
+
+        // ====================
         // nettoyage
         // ====================
         lock (_stateLock)
@@ -249,12 +296,15 @@ public static class MetricsExporter
 
             UnpublishMissing(_aliasChoice, curAliasChoice);
 
+            UnpublishMissing(_lastItemsChecked, curLastItemsChecked);
+
             _channelInfo = curChannelInfo;
             _channelLastCheck = curChannelLastCheck;
             _gameStatusChecks = curGameStatusChecks;
             _gameStatusTotal = curGameStatusTotal;
             _gameStatusLastActivity = curGameStatusLastActivity;
             _aliasChoice = curAliasChoice;
+            _lastItemsChecked = curLastItemsChecked;
         }
     }
 
