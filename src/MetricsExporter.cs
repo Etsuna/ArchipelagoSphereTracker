@@ -62,10 +62,10 @@ public static class MetricsExporter
     // OBJETS VÉRIFIÉS
     // ==============
     private static readonly Gauge LastItemsChecked =
-        Metrics.CreateGauge(
-            "ast_last_items_checked_timestamp",
-            "Horodatage Unix UTC du dernier contrôle des objets.",
-            Array.Empty<string>());
+       Metrics.CreateGauge(
+           "ast_last_items_checked_timestamp",
+           "Horodatage Unix UTC du dernier contrôle des objets.",
+           new[] { "guild_id", "channel_id" });
 
     // ==============
     // état interne pour dépublier
@@ -255,31 +255,30 @@ public static class MetricsExporter
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = @"
-                SELECT GuildId, ChannelId, LastItemCheck
-                FROM LastItemsCheckTable;";
+            SELECT GuildId, ChannelId, LastItemCheck
+            FROM LastItemsCheckTable;";
             using var rdr = await cmd.ExecuteReaderAsync(ct);
-            long? latestTs = null;
+
             while (await rdr.ReadAsync(ct))
             {
                 if (rdr.IsDBNull(2))
                     continue;
 
+                var guild = rdr.GetString(0);
+                var channel = rdr.GetString(1);
                 var lastStr = rdr.GetString(2);
-                if (DateTime.TryParse(lastStr, out var dt))
-                {
-                    var ts = ((DateTimeOffset)dt.ToUniversalTime()).ToUnixTimeSeconds();
-                    if (!latestTs.HasValue || ts > latestTs.Value)
-                        latestTs = ts;
-                }
+
+                if (!DateTime.TryParse(lastStr, out var dt))
+                    continue;
+
+                var ts = ((DateTimeOffset)dt.ToUniversalTime()).ToUnixTimeSeconds();
+
+                var ch = LastItemsChecked.WithLabels(guild, channel);
+                ch.Set(ts);
+
+                var key = guild + "|" + channel;
+                curLastItemsChecked[key] = ch;
             }
-
-            var ch = LastItemsChecked.WithLabels();
-            if (latestTs.HasValue)
-                ch.Set(latestTs.Value);
-            else
-                ch.Set(double.NaN);
-
-            curLastItemsChecked["global"] = ch;
         }
 
         // ====================
