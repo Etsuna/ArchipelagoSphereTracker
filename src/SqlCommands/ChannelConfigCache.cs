@@ -29,6 +29,16 @@ public static class ChannelConfigCache
     public static void Remove(string guildId, string channelId)
         => _map.TryRemove(Key(guildId, channelId), out _);
 
+    public static IEnumerable<string> GetAllGuildIds()
+    => _map.Keys
+           .Select(k => k.Split(':', 2)[0])
+           .Distinct();
+
+    public static IEnumerable<string> GetAllChannelIds()
+=> _map.Keys
+       .Select(k => k.Split(':', 2)[1])
+        .Distinct();
+
     public static void Clear() => _map.Clear();
 
     /// <summary>
