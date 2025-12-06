@@ -3,9 +3,9 @@ using Discord.Commands;
 
 public class Declare
 {
-    public static string Version = "0.6.4";
+    public static string Version = "0.6.5";
 #if RC
-    public static string ReleaseVersion = $"{Version}-rc2";
+    public static string ReleaseVersion = $"{Version}-rc1";
 #else
     public static string ReleaseVersion = Version;
 #endif
@@ -44,8 +44,6 @@ public class Declare
     public static string TempExtractPath = Path.Combine(BasePath, "tempExtract");
     public static string BddPath = Path.Combine(BasePath, "AST.db");
     public static string ExternalFolder = Path.Combine(BasePath, "extern");
-
-    public static string GenerateTemplatesPath = "ArchipelagoSphereTracker.apworld.generate_templates.apworld";
 
     public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
     public static string ExtractPath = Path.Combine(ExternalFolder, "Archipelago");
