@@ -346,13 +346,17 @@ public static class TrackingDataManager
             if (await ExcludedItemsCommands.IsItemExcludedForAnyUserAsync(guild, channel, item.Receiver, item.Item, userInfos))
                 return string.Empty;
 
-            if (userInfos.Any(x => x.IsEnabled))
+            if (userInfos.Any())
             {
                 var gameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver);
                 if (!string.IsNullOrWhiteSpace(gameName))
                 {
-                    if (item.Flag is "0")
+                    bool shouldSkip = userInfos.Any(u => HasFlag(u.Flag, item.Flag));
+
+                    if (shouldSkip)
+                    {
                         return string.Empty;
+                    }
 
                     return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
                 }
@@ -788,5 +792,18 @@ public static class TrackingDataManager
         }
 
         return lines;
+    }
+
+    private static bool HasFlag(string maskString, string flagIndexString)
+    {
+        if (!int.TryParse(maskString, out var mask))
+            return false;
+
+        if (!int.TryParse(flagIndexString, out var flagIndex))
+            return false;
+
+        int flagValue = 1 << flagIndex;
+
+        return (mask & flagValue) != 0;
     }
 }

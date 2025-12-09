@@ -385,7 +385,7 @@
     <value>type-de-fil</value>
   </data>
   <data name="SCAddAliasSkipMention" xml:space="preserve">
-    <value>ignorer_mentions_filler</value>
+    <value>ignorer_mentions_items</value>
   </data>
   <data name="SCGetAliasesDescription" xml:space="preserve">
     <value>Liste tous les alias</value>
@@ -893,5 +893,8 @@
   </data>
   <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
     <value>La salle existe déjà dans un autre fil de discussion, supprimez d'abord le fil de discussion pour ajouter la même salle et attendez au moins une minute pour faire un autre ajout (le temps de nettoyer complètement les infos de la base de donnée).</value>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>Pas de filtre</value>
   </data>
 </root>

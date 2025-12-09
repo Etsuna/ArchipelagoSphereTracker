@@ -41,5 +41,16 @@ public class HintStatus
 public class ReceiverUserInfo
 {
     public string UserId { get; set; } = string.Empty;
-    public bool IsEnabled { get; set; }
+    public string Flag { get; set; }
+}
+
+[Flags]
+public enum ReceiverFlag
+{
+    None = 0,
+    Filler = 1 << 0, // 1
+    Progression = 1 << 1, // 2
+    Useful = 1 << 2, // 4
+    Required = 1 << 3, // 8
+    Trap = 1 << 4  // 16
 }

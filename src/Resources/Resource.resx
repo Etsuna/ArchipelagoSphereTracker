@@ -474,8 +474,8 @@
     <comment>thread-type</comment>
   </data>
   <data name="SCAddAliasSkipMention" xml:space="preserve">
-    <value>filler_items_skip_mention</value>
-    <comment>filler_items_skip_mention</comment>
+    <value>skip_mention_items</value>
+    <comment>skip_mention_items</comment>
   </data>
   <data name="SCGetAliasesDescription" xml:space="preserve">
     <value>List all Aliases</value>
@@ -1152,5 +1152,9 @@
   <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
     <value>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</value>
     <comment>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</comment>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>No filter</value>
+    <comment>No filter</comment>
   </data>
 </root>
