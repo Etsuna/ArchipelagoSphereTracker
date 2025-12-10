@@ -41,7 +41,7 @@ public class HintStatus
 public class ReceiverUserInfo
 {
     public string UserId { get; set; } = string.Empty;
-    public string Flag { get; set; }
+    public required string Flag { get; set; }
 }
 
 [Flags]
