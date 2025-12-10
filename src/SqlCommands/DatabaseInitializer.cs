@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS ReceiverAliasesTable (
     ChannelId TEXT NOT NULL,
     Receiver  TEXT NOT NULL,
     UserId    TEXT NOT NULL,
-    IsEnabled BOOLEAN
+    Flag      TEXT NOT NULL
 );
 
 -- ==========================

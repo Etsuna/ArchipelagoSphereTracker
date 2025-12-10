@@ -1267,6 +1267,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à No filter.
+        /// </summary>
+        internal static string None {
+            get {
+                return ResourceManager.GetString("None", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à No patch found for this thread..
         /// </summary>
         internal static string NoPatchForThisThread {
@@ -1555,7 +1564,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à filler_items_skip_mention.
+        ///   Recherche une chaîne localisée semblable à skip_mention_items.
         /// </summary>
         internal static string SCAddAliasSkipMention {
             get {

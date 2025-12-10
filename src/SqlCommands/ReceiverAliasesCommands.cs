@@ -59,7 +59,7 @@ public static class ReceiverAliasesCommands
 
         await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
-            SELECT Receiver, UserId, IsEnabled
+            SELECT Receiver, UserId, Flag
             FROM ReceiverAliasesTable
             WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND Receiver = @Receiver;", connection);
         command.Parameters.AddWithValue("@GuildId", guildId);
@@ -72,7 +72,7 @@ public static class ReceiverAliasesCommands
             var info = new ReceiverUserInfo
             {
                 UserId = reader["UserId"]?.ToString() ?? "",
-                IsEnabled = reader["IsEnabled"] != DBNull.Value && Convert.ToBoolean(reader["IsEnabled"]),
+                Flag = reader["Flag"]?.ToString() ?? "",
             };
             if (!string.IsNullOrEmpty(info.UserId))
                 userInfos.Add(info);
@@ -125,18 +125,18 @@ public static class ReceiverAliasesCommands
     // ==========================
     // 🎯 INSERT RECEIVER ALIAS  (WRITE)
     // ==========================   
-    public static async Task InsertReceiverAlias(string guildId, string channelId, string receiver, string userId, bool isEnabled)
+    public static async Task InsertReceiverAlias(string guildId, string channelId, string receiver, string userId, string flag)
     {
         await Db.WriteAsync(async conn =>
         {
             using var command = new SQLiteCommand(@"
-                INSERT INTO ReceiverAliasesTable (GuildId, ChannelId, Receiver, UserId, IsEnabled)
-                VALUES (@GuildId, @ChannelId, @Receiver, @UserId, @IsEnabled);", conn);
+                INSERT INTO ReceiverAliasesTable (GuildId, ChannelId, Receiver, UserId, Flag)
+                VALUES (@GuildId, @ChannelId, @Receiver, @UserId, @Flag);", conn);
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@ChannelId", channelId);
             command.Parameters.AddWithValue("@Receiver", receiver);
             command.Parameters.AddWithValue("@UserId", userId);
-            command.Parameters.AddWithValue("@IsEnabled", isEnabled);
+            command.Parameters.AddWithValue("@Flag", flag);
             await command.ExecuteNonQueryAsync().ConfigureAwait(false);
         });
     }

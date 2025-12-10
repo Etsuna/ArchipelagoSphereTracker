@@ -8,7 +8,7 @@ public class AliasClass
     public static async Task<string> AddAlias(SocketSlashCommand command, string message, string? alias, string channelId, string guildId)
     {
         var userId = command.User.Id.ToString();
-        var skipUselessMention = command.Data.Options.ElementAtOrDefault(1)?.Value as bool? ?? false;
+        var skipUselessMention = command.Data.Options.ElementAtOrDefault(1)?.Value as string ?? "0";
 
         if (string.IsNullOrWhiteSpace(alias))
         {
@@ -120,12 +120,20 @@ public class AliasClass
                 foreach (var value in getUserIds)
                 {
                     var user = await Declare.Client.GetUserAsync(ulong.Parse(value.UserId));
-                    sb.AppendLine(string.Format(Resource.AliasTableValue, user.Username, getReceiverAliase, HelperClass.TranslateBool(value.IsEnabled)));
+                    var flags = GetFlag(value);
+                    sb.AppendLine(string.Format(Resource.AliasTableValue, user.Username, getReceiverAliase, flags));
                 }
             }
             message = sb.ToString();
         }
 
         return message;
+    }
+
+    private static ReceiverFlag GetFlag(ReceiverUserInfo value)
+    {
+        int flagValue = int.Parse(value.Flag);
+        ReceiverFlag flags = (ReceiverFlag)flagValue;
+        return flags;
     }
 }

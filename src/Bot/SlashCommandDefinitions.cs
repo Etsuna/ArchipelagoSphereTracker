@@ -13,7 +13,16 @@ public static class SlashCommandDefinitions
             .WithName("add-alias")
             .WithDescription(Resource.SCAddAliasDescription)
             .AddOption(AliasOption("alias"))
-            .AddOption(BooleanOption(Resource.SCAddAliasSkipMention, Resource.SCAddAliasSkipMentionDescription)),
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName(Resource.SCAddAliasSkipMention)
+                    .WithDescription(Resource.SCAddAliasSkipMentionDescription)
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .AddChoice($"{Resource.None}", "0")
+                    .AddChoice($"{Resource.Filler}", "1")
+                    .AddChoice($"{Resource.Trap}", "16")
+                    .AddChoice($"{Resource.Filler} + {Resource.Trap}", "17")
+                    .AddChoice($"{Resource.Filler} + {Resource.Trap} + {Resource.Useful}", "21")),
 
             new SlashCommandBuilder()
                 .WithName("delete-alias")

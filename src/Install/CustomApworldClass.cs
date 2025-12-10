@@ -1,6 +1,5 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.InteropServices;
 
 public class CustomApworldClass : Declare
@@ -15,29 +14,6 @@ public class CustomApworldClass : Declare
             {
                 Directory.CreateDirectory(CustomPath);
             }
-
-            string destinationPath = Path.Combine(CustomPath, "generate_templates.apworld");
-
-            using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GenerateTemplatesPath);
-            if (stream == null)
-            {
-                Console.WriteLine(string.Format(Resource.CAEmbededError, GenerateTemplatesPath));
-                return;
-            }
-
-            using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
-            {
-                stream.CopyTo(fileStream);
-                fileStream.Flush(true);
-            }
-
-            if (!File.Exists(destinationPath))
-            {
-                Console.WriteLine(Resource.CAGenerateTemplateApworldError);
-                return;
-            }
-
-            Console.WriteLine(string.Format(Resource.CAFileCopied, destinationPath));
 
             string launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? "ArchipelagoLauncher.exe"
@@ -54,7 +30,7 @@ public class CustomApworldClass : Declare
             var psi = new ProcessStartInfo
             {
                 FileName = launcherPath,
-                Arguments = "\"Generate Templates\"",
+                Arguments = "\"Generate Template Options\" -- --skip_open_folder",
                 WorkingDirectory = ExtractPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
