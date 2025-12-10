@@ -3,9 +3,9 @@ using Discord.Commands;
 
 public class Declare
 {
-    public static string Version = "0.6.4";
+    public static string Version = "0.6.5";
 #if RC
-    public static string ReleaseVersion = $"{Version}-rc1";
+    public static string ReleaseVersion = $"{Version}-rc2";
 #else
     public static string ReleaseVersion = Version;
 #endif
