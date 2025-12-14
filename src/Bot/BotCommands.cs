@@ -140,6 +140,13 @@ public static class BotCommands
 
     private static async Task<string> HandleThreadedCommand(SocketSlashCommand command, IGuildUser? user, string message, string? alias, string? realAlias, string channelId, string guildId)
     {
+        var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
+
+        if (!checkChannel)
+        {
+            return message = Resource.NoUrlRegistered;
+        }
+
         return command.CommandName switch
         {
             "get-aliases" => await AliasClass.GetAlias(message, channelId, guildId),
@@ -161,6 +168,7 @@ public static class BotCommands
             "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, message, alias, channelId, guildId),
             "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
             "delete-excluded-item" => await ExcludedItemsCommands.DeleteExcludedItemAsync(command, channelId, guildId, alias),
+            "update-silent-option" => await ChannelsAndUrlsCommands.UpdateSilentOption(command, channelId, guildId),
             _ => Resource.BotCommandChannel
         };
     }

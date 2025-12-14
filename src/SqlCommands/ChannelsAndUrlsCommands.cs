@@ -425,6 +425,44 @@ public static class ChannelsAndUrlsCommands
         }
     }
 
+
+    // =================================================
+    // 🎯 UPDATE SILENT OPTION (WRITE)
+    // ================================================
+    public static async Task<string> UpdateSilentOption(SocketSlashCommand command, string channelId, string guildId)
+    {
+        bool getSilentOption = command.Data.Options.FirstOrDefault()?.Value?.ToString()?.ToLowerInvariant() == "true";
+
+        try
+        {
+            await Db.WriteAsync(async conn =>
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                        UPDATE ChannelsAndUrlsTable
+                        SET Silent = @Silent
+                        WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                cmd.Parameters.AddWithValue("@Silent", getSilentOption);
+                cmd.Parameters.AddWithValue("@GuildId", guildId);
+                cmd.Parameters.AddWithValue("@ChannelId", channelId);
+                await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
+            if (ChannelConfigCache.TryGet(guildId, channelId, out var cfg))
+            {
+                ChannelConfigCache.Upsert(guildId, channelId, cfg with { Silent = getSilentOption });
+            }
+            return getSilentOption ? Resource.SilentModeEnabled : Resource.SilentModeDisabled;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while updating Silent option: {ex.Message}");
+        }
+        return Resource.ErrorSilentModeUpdate;
+    }
+
+    // =================================================
+    // 🎯 UPDATE LAST ITEM CHECK (WRITE)
+    // =================================================
     public static async Task UpdateLastItemCheckAsync(string guildId, string channelId)
     {
         try
@@ -451,6 +489,9 @@ public static class ChannelsAndUrlsCommands
         }
     }
 
+    // =================================================
+    // 🎯 GET LAST ITEM CHECK (READ)
+    // =================================================
     public static async Task<DateTimeOffset?> GetLastItemCheckAsync(string guildId, string channelId)
     {
         try
@@ -480,6 +521,9 @@ public static class ChannelsAndUrlsCommands
         }
     }
 
+    // =================================================
+    // 🎯 UPDATE CHECK FREQUENCY (WRITE)
+    // ================================================
     public static async Task<string> UpdateFrequencyCheck(SocketSlashCommand command, string message, string channelId, string guildId)
     {
         try
@@ -523,6 +567,9 @@ public static class ChannelsAndUrlsCommands
         return message;
     }
 
+    // =================================================
+    // 🎯 GET CHANNEL ID FOR ROOM (READ)
+    // =================================================
     public static async Task<string?> GetChannelIdForRoomAsync(string guildId, string baseUrl, string room)
     {
         try

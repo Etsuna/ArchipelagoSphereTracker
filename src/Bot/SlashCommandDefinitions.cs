@@ -73,9 +73,14 @@ public static class SlashCommandDefinitions
                     .AddChoice($"{Resource.Every} 18 {Resource.Hour}", "18h")
                     .AddChoice($"{Resource.EveryDay}", "1d")),
 
+            new SlashCommandBuilder()
+                .WithName("update-silent-option")
+                .WithDescription(Resource.SCUpdateSilentOptionDescription)
+                .AddOption(BooleanOption(Resource.SCSilentOption, Resource.SCSilentDescription)),
+
             new SlashCommandBuilder().WithName("delete-url").WithDescription(Resource.SCDeleteUrlDescription),
             new SlashCommandBuilder().WithName("status-games-list").WithDescription(Resource.SCStatusGameListDescription),
-            
+
             new SlashCommandBuilder().WithName("info").WithDescription(Resource.SCInfoDescription),
 
             new SlashCommandBuilder()

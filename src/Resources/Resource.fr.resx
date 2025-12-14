@@ -897,4 +897,16 @@
   <data name="None" xml:space="preserve">
     <value>Pas de filtre</value>
   </data>
+  <data name="SCUpdateSilentOptionDescription" xml:space="preserve">
+    <value>Mise à jour de l'option "Silent".</value>
+  </data>
+  <data name="SilentModeEnabled" xml:space="preserve">
+    <value>Mode silencieux activé.</value>
+  </data>
+  <data name="SilentModeDisabled" xml:space="preserve">
+    <value>Mode silencieux désactivé.</value>
+  </data>
+  <data name="ErrorSilentModeUpdate" xml:space="preserve">
+    <value>Erreur de mise à jour du mode silencieux.</value>
+  </data>
 </root>

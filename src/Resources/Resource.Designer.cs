@@ -682,6 +682,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Error Silent Mode Update..
+        /// </summary>
+        internal static string ErrorSilentModeUpdate {
+            get {
+                return ResourceManager.GetString("ErrorSilentModeUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Every.
         /// </summary>
         internal static string Every {
@@ -2005,6 +2014,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Updated the “Silent” option..
+        /// </summary>
+        internal static string SCUpdateSilentOptionDescription {
+            get {
+                return ResourceManager.GetString("SCUpdateSilentOptionDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à The URL to track.
         /// </summary>
         internal static string SCUrlToTrack {
@@ -2028,6 +2046,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string SendAllPatchesForChannelAsyncPathLink {
             get {
                 return ResourceManager.GetString("SendAllPatchesForChannelAsyncPathLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Silent Mode Disabled..
+        /// </summary>
+        internal static string SilentModeDisabled {
+            get {
+                return ResourceManager.GetString("SilentModeDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Silent Mode Enabled..
+        /// </summary>
+        internal static string SilentModeEnabled {
+            get {
+                return ResourceManager.GetString("SilentModeEnabled", resourceCulture);
             }
         }
         

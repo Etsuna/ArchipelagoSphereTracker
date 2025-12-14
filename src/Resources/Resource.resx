@@ -1157,4 +1157,20 @@
     <value>No filter</value>
     <comment>No filter</comment>
   </data>
+  <data name="SCUpdateSilentOptionDescription" xml:space="preserve">
+    <value>Updated the “Silent” option.</value>
+    <comment>Updated the “Silent” option.</comment>
+  </data>
+  <data name="SilentModeEnabled" xml:space="preserve">
+    <value>Silent Mode Enabled.</value>
+    <comment>Silent Mode Enabled.</comment>
+  </data>
+  <data name="SilentModeDisabled" xml:space="preserve">
+    <value>Silent Mode Disabled.</value>
+    <comment>Silent Mode Disabled.</comment>
+  </data>
+  <data name="ErrorSilentModeUpdate" xml:space="preserve">
+    <value>Error Silent Mode Update.</value>
+    <comment>Error Silent Mode Update.</comment>
+  </data>
 </root>
