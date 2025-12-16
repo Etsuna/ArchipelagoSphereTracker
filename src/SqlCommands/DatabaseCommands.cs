@@ -3,6 +3,9 @@ using System.Data.SQLite;
 
 public static class DatabaseCommands
 {
+    private static long _lastReclaimUnixMs = 0;
+    private static int _reclaimInFlight = 0;
+
     // ====================
     // 🎯 GET ALL GUILDS (READ)
     // ====================
@@ -476,32 +479,67 @@ public static class DatabaseCommands
     }
 
     // ==========================
-    // 🎯 RECLAIM SPACE (VACUUM) — sérialisé, hors transaction
+    // 🎯 RECLAIM SPACE (VACUUM)
     // ==========================
-    public static async Task ReclaimSpaceAsync(long walTruncateThresholdBytes = 128L * 1024 * 1024)
+    private static async Task<(int Busy, int Log, int Checkpointed)> WalCheckpointAsync(SQLiteConnection conn, string mode)
     {
+        using var cmd = new SQLiteCommand($"PRAGMA wal_checkpoint({mode});", conn);
+        using var rdr = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+        if (await rdr.ReadAsync().ConfigureAwait(false))
+        {
+            return (rdr.GetInt32(0), rdr.GetInt32(1), rdr.GetInt32(2));
+        }
+        return (0, 0, 0);
+    }
+
+    public static async Task ReclaimSpaceAsync(
+        int minIntervalSeconds = 300,                 // 5 min
+        long walCheckpointThresholdBytes = 2L * 1024 * 1024,   // 2 MB
+        long walRestartThresholdBytes = 16L * 1024 * 1024,  // 16 MB
+        long walTruncateThresholdBytes = 64L * 1024 * 1024   // 64 MB
+    )
+    {
+        if (Interlocked.Exchange(ref _reclaimInFlight, 1) == 1)
+            return;
+
         try
         {
+            var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var lastMs = Interlocked.Read(ref _lastReclaimUnixMs);
+
             var dbPath = Declare.DatabaseFile;
-            await Task.Delay(2000);
-
             var walPath = dbPath + "-wal";
-            long walSize = 0;
-            if (File.Exists(walPath))
-                walSize = new FileInfo(walPath).Length;
+            long walSize = File.Exists(walPath) ? new FileInfo(walPath).Length : 0;
 
-            await Db.WriteGate.WaitAsync();
+            if (walSize < walCheckpointThresholdBytes && (nowMs - lastMs) < (minIntervalSeconds * 1000L))
+                return;
+
+            if (!await Db.WriteGate.WaitAsync(0).ConfigureAwait(false))
+                return;
+
             try
             {
-                await using var connection = await Db.OpenWriteAsync();
+                await using var conn = await Db.OpenWriteAsync().ConfigureAwait(false);
 
-                using (var cmd = new SQLiteCommand("PRAGMA wal_autocheckpoint=2000;", connection))
-                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                var mode = "PASSIVE";
+                var res = await WalCheckpointAsync(conn, mode).ConfigureAwait(false);
 
-                var checkpointMode = walSize > walTruncateThresholdBytes ? "TRUNCATE" : "PASSIVE";
-                using (var chk = new SQLiteCommand($"PRAGMA wal_checkpoint({checkpointMode});", connection))
-                    await chk.ExecuteNonQueryAsync().ConfigureAwait(false);
-                Console.WriteLine($"Checkpoint {checkpointMode} (wal={walSize / 1024 / 1024} MB) done.");
+                if (walSize >= walTruncateThresholdBytes && res.Busy == 0)
+                {
+                    mode = "TRUNCATE";
+                    res = await WalCheckpointAsync(conn, mode).ConfigureAwait(false);
+                }
+                else if (walSize >= walRestartThresholdBytes && res.Busy == 0 && res.Checkpointed < res.Log)
+                {
+                    mode = "RESTART";
+                    res = await WalCheckpointAsync(conn, mode).ConfigureAwait(false);
+                }
+
+                Interlocked.Exchange(ref _lastReclaimUnixMs, nowMs);
+
+                var walMb = walSize / 1024d / 1024d;
+                Console.WriteLine($"Checkpoint {mode} (wal={walMb:F2} MB, log={res.Log}, ckpt={res.Checkpointed}, busy={res.Busy}).");
             }
             finally
             {
@@ -511,6 +549,10 @@ public static class DatabaseCommands
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur ReclaimSpaceAsync: {ex.Message}");
+        }
+        finally
+        {
+            Volatile.Write(ref _reclaimInFlight, 0);
         }
     }
 }
