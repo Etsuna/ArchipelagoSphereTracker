@@ -70,7 +70,7 @@ public static class TrackingDataManager
                             }
 
                             var uniqueChannels = ChannelConfigCache.GetAllChannelIds().ToList();
-                            
+
                             var channelsToProcess = uniqueChannels
                                 .Where(ch => !Declare.AddedChannelId.Contains(ch))
                                 .ToList();
@@ -100,13 +100,7 @@ public static class TrackingDataManager
                                                 TimeSpan.FromMinutes(5),
                                                 null);
 
-                                            DateTimeOffset? last = null;
-                                            if (!string.IsNullOrWhiteSpace(lastCheckStr) &&
-                                                DateTimeOffset.TryParse(lastCheckStr, CultureInfo.InvariantCulture,
-                                                                        DateTimeStyles.AssumeUniversal, out var dt))
-                                            {
-                                                last = dt;
-                                            }
+                                            DateTimeOffset? last = TryParseIsoOrUnixMs(lastCheckStr);
 
                                             cfg = new ChannelConfig(tracker, baseUrl, room, silent, checkFrequency, last);
                                             ChannelConfigCache.Upsert(guild, channel, cfg);
@@ -161,14 +155,11 @@ public static class TrackingDataManager
 
                                         if (thread != null)
                                         {
-                                            var lastCheck = cfg.LastCheck;
-                                            if (lastCheck == null)
-                                            {
-                                                await ChannelsAndUrlsCommands.UpdateLastItemCheckAsync(guild, channel);
-                                                lastCheck = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(guild, channel);
-                                            }
+                                            var lastActivity = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(guild, channel);
+                                            if (lastActivity == null)
+                                                lastActivity = SnowflakeUtils.FromSnowflake(thread.Id);
 
-                                            double daysSince = (DateTimeOffset.UtcNow - lastCheck.Value).TotalDays;
+                                            double daysSince = (DateTimeOffset.UtcNow - lastActivity.Value).TotalDays;
 
                                             if (daysSince < 7)
                                             {
@@ -190,7 +181,7 @@ public static class TrackingDataManager
                                             {
                                                 if (!Declare.WarnedThreads.Contains(channel))
                                                 {
-                                                    var baseDate = lastCheck.Value;
+                                                    var baseDate = lastActivity.Value;
                                                     DateTimeOffset deletionDate = baseDate.AddDays(14);
 
                                                     TimeZoneInfo frenchTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Paris");
@@ -204,7 +195,7 @@ public static class TrackingDataManager
                                                     try
                                                     {
                                                         await BotCommands.SendMessageAsync(
-                                                            string.Format(Resource.TDMNoMessage7Days, formattedDeletionDate, thread.Name),channel);
+                                                            string.Format(Resource.TDMNoMessage7Days, formattedDeletionDate, thread.Name), channel);
                                                     }
                                                     finally
                                                     {
@@ -565,7 +556,6 @@ public static class TrackingDataManager
         }
     }
 
-
     private static async Task ProcessGameStatusTableAsync(string guild, string channel, List<GameStatus> statuses, bool silent, CancellationToken ctChan)
     {
         if (statuses == null || statuses.Count == 0)
@@ -713,10 +703,10 @@ public static class TrackingDataManager
         $"{h.Finder}|{h.Receiver}|{h.Item}|{h.Location}|{h.Game}";
 
     private static async Task<List<string>> BuildUnifiedLinesAsync(
-    IEnumerable<HintStatus> hints,
-    bool sendAsTextFile,
-    string guild,
-    string channel)
+        IEnumerable<HintStatus> hints,
+        bool sendAsTextFile,
+        string guild,
+        string channel)
     {
         var lines = new List<string>();
 
@@ -754,10 +744,10 @@ public static class TrackingDataManager
     }
 
     private static async Task<List<string>> BuildUnifiedLinesUpdatedAsync(
-    IEnumerable<HintStatus> hints,
-    bool sendAsTextFile,
-    string guild,
-    string channel)
+        IEnumerable<HintStatus> hints,
+        bool sendAsTextFile,
+        string guild,
+        string channel)
     {
         var lines = new List<string>();
 
@@ -805,5 +795,28 @@ public static class TrackingDataManager
         int flagValue = 1 << flagIndex;
 
         return (mask & flagValue) != 0;
+    }
+
+    private static DateTimeOffset? TryParseIsoOrUnixMs(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return null;
+        s = s.Trim();
+
+        if (long.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ms))
+        {
+            try { return DateTimeOffset.FromUnixTimeMilliseconds(ms); }
+            catch { return null; }
+        }
+
+        if (DateTimeOffset.TryParse(
+                s,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var dto))
+        {
+            return dto;
+        }
+
+        return null;
     }
 }
