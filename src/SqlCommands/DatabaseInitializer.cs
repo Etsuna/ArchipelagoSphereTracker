@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS ReceiverAliasesTable (
     ChannelId TEXT NOT NULL,
     Receiver  TEXT NOT NULL,
     UserId    TEXT NOT NULL,
-    IsEnabled BOOLEAN
+    Flag      TEXT NOT NULL
 );
 
 -- ==========================
@@ -239,6 +239,28 @@ CREATE TABLE IF NOT EXISTS UpdateAlertsTable (
 );
 
 -- ==========================
+-- 🎯 LastItemsCheckTable
+-- ==========================
+CREATE TABLE IF NOT EXISTS LastItemsCheckTable (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    GuildId       TEXT NOT NULL,
+    ChannelId     TEXT NOT NULL,
+    LastItemCheck TEXT NOT NULL
+);
+
+-- ==========================
+-- 🎯 ExcludedItemTable
+-- ==========================
+CREATE TABLE IF NOT EXISTS ExcludedItemTable (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    GuildId   TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    UserId    TEXT NOT NULL,
+    Alias     TEXT NOT NULL,
+    Item      TEXT NOT NULL
+);
+
+-- ==========================
 -- Index & contraintes
 -- ==========================
 
@@ -253,6 +275,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_url_patch
   ON UrlAndChannelPatchTable(ChannelsAndUrlsTableId, Alias);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
   ON DisplayedItemTable(GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag);
+CREATE UNIQUE INDEX IF NOT EXISTS IX_LastItemsCheck_Guild_Channel
+ON LastItemsCheckTable (GuildId, ChannelId);
+
+-- ExcludedItemTable
+CREATE UNIQUE INDEX IF NOT EXISTS uq_excludeditem_gcua
+  ON ExcludedItemTable(GuildId, ChannelId, UserId, Alias, Item);
+-- accès courant par guilde/salon
+CREATE INDEX IF NOT EXISTS idx_excludeditem_gc
+  ON ExcludedItemTable(GuildId, ChannelId);
 
 -- Accès de base
 CREATE INDEX IF NOT EXISTS idx_channels_guild_channel

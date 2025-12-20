@@ -129,26 +129,17 @@
   <data name="ProgramStartingBot" xml:space="preserve">
     <value>Lancement du bot… {0}</value>
   </data>
-  <data name="TDMNoMessageFound" xml:space="preserve">
-    <value>Aucun message trouvé, utilisation de la date de création du fil : {0}</value>
-  </data>
   <data name="TDMChannelStillExists" xml:space="preserve">
     <value>Le canal existe toujours : {0}</value>
   </data>
   <data name="TDMNewMessageOnThread" xml:space="preserve">
-    <value>Nouveau message dans le fil {0}, suppression automatique annulée.</value>
+    <value>Nouvel objet dans le fil {0}, suppression automatique annulée.</value>
   </data>
-  <data name="TDMNoMessage6Days" xml:space="preserve">
-    <value>Aucun message depuis 6 jours. Si aucun message n’est posté avant le {0} dans le fil {1}, il sera supprimé. Pensez à supprimer le fil ou l'URL si vous n’en avez plus besoin !</value>
-  </data>
-  <data name="TDMLastActivity" xml:space="preserve">
-    <value>Dernière activité : {0}</value>
+  <data name="TDMNoMessage7Days" xml:space="preserve">
+    <value>Aucun objet depuis 7 jours. Si aucun objet n’est trouvé avant le {0} dans le fil {1}, il sera supprimé. Pensez à supprimer le fil ou l'URL si vous n’en avez plus besoin !</value>
   </data>
   <data name="TDMNoActivity" xml:space="preserve">
-    <value>Aucune activité depuis 7 jours, suppression du fil...</value>
-  </data>
-  <data name="TDMThreadDeleted" xml:space="preserve">
-    <value>Fil supprimé.</value>
+    <value>Aucune activité depuis 14 jours, suppression des infos...</value>
   </data>
   <data name="TDMCheckingItems" xml:space="preserve">
     <value>Vérification des items pour le canal {0}...</value>
@@ -394,7 +385,7 @@
     <value>type-de-fil</value>
   </data>
   <data name="SCAddAliasSkipMention" xml:space="preserve">
-    <value>ignorer_mentions_filler</value>
+    <value>ignorer_mentions_items</value>
   </data>
   <data name="SCGetAliasesDescription" xml:space="preserve">
     <value>Liste tous les alias</value>
@@ -860,5 +851,62 @@
   </data>
   <data name="DownloadUpdate" xml:space="preserve">
     <value>Téléchargement de la mise à jour :</value>
+  </data>
+  <data name="Allcheckdone" xml:space="preserve">
+    <value>Tous les joueurs ont complété leurs checks. Suppression automatique des informations dans la base de données.</value>
+  </data>
+  <data name="Discord" xml:space="preserve">
+    <value>N’hésitez pas à rejoindre le Discord en cas de question ou de bug : https://discord.gg/PJfWRKVyEW</value>
+  </data>
+  <data name="DiscordDesc" xml:space="preserve">
+    <value>Affiche le lien du Discord.</value>
+  </data>
+  <data name="SCChooseAnItem" xml:space="preserve">
+    <value>Choisissez un objet</value>
+  </data>
+  <data name="SCExcludedItemDesc" xml:space="preserve">
+    <value>Exclut les notifications pour cet item</value>
+  </data>
+  <data name="SCExcludedItemListDesc" xml:space="preserve">
+    <value>Affiche la liste de tes items exclus</value>
+  </data>
+  <data name="SCDeleteExcludedItemDesc" xml:space="preserve">
+    <value>Supprime l'objet de la liste d’exclusion</value>
+  </data>
+  <data name="ExcludeItemAdded" xml:space="preserve">
+    <value>l'objet {0} ajouté à la liste d’exclusion de {1}.</value>
+  </data>
+  <data name="ExcludeItemDeleted" xml:space="preserve">
+    <value>l'objet {0} supprimé de {1}.</value>
+  </data>
+  <data name="ExcludeItemNotFound" xml:space="preserve">
+    <value>Aucun objet {0} trouvé pour {1}.</value>
+  </data>
+  <data name="HintItemUpdated" xml:space="preserve">
+    <value>L'item **{0}** a été trouvé à **{1}** dans le monde de **{2}**.</value>
+  </data>
+  <data name="PlayerAndGameList" xml:space="preserve">
+    <value>Liste des joueurs et de leurs jeux pour ce thread :</value>
+  </data>
+  <data name="PlayerList" xml:space="preserve">
+    <value>Liste complète des joueurs pour cette room.</value>
+  </data>
+  <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
+    <value>La salle existe déjà dans un autre fil de discussion, supprimez d'abord le fil de discussion pour ajouter la même salle et attendez au moins une minute pour faire un autre ajout (le temps de nettoyer complètement les infos de la base de donnée).</value>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>Pas de filtre</value>
+  </data>
+  <data name="SCUpdateSilentOptionDescription" xml:space="preserve">
+    <value>Mise à jour de l'option "Silent".</value>
+  </data>
+  <data name="SilentModeEnabled" xml:space="preserve">
+    <value>Mode silencieux activé.</value>
+  </data>
+  <data name="SilentModeDisabled" xml:space="preserve">
+    <value>Mode silencieux désactivé.</value>
+  </data>
+  <data name="ErrorSilentModeUpdate" xml:space="preserve">
+    <value>Erreur de mise à jour du mode silencieux.</value>
   </data>
 </root>

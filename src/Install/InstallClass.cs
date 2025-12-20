@@ -11,8 +11,8 @@ public class InstallClass : Declare
     public static async Task<bool> Install(string currentVersion, bool isWindows, bool isLinux)
     {
         var message = string.IsNullOrEmpty(currentVersion)
-            ? string.Format(Resource.InstallNewVersion, Version)
-            : string.Format(Resource.InstallNewVersionWithPrevious, Version, currentVersion);
+            ? string.Format(Resource.InstallNewVersion, ReleaseVersion)
+            : string.Format(Resource.InstallNewVersionWithPrevious, ReleaseVersion, currentVersion);
 
         Console.WriteLine(message);
         Console.WriteLine($"{BasePath.ToString()}");
@@ -89,7 +89,7 @@ public class InstallClass : Declare
         Console.WriteLine(Resource.InstallImportApworldsDatabase);
         await ApworldListDatabase.Import();
 
-        await File.WriteAllTextAsync(VersionFile, Version);
+        await File.WriteAllTextAsync(VersionFile, ReleaseVersion);
 
         Console.WriteLine(Resource.InstallUpdateComplete);
 

@@ -425,6 +425,105 @@ public static class ChannelsAndUrlsCommands
         }
     }
 
+
+    // =================================================
+    // 🎯 UPDATE SILENT OPTION (WRITE)
+    // ================================================
+    public static async Task<string> UpdateSilentOption(SocketSlashCommand command, string channelId, string guildId)
+    {
+        bool getSilentOption = command.Data.Options.FirstOrDefault()?.Value?.ToString()?.ToLowerInvariant() == "true";
+
+        try
+        {
+            await Db.WriteAsync(async conn =>
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                        UPDATE ChannelsAndUrlsTable
+                        SET Silent = @Silent
+                        WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                cmd.Parameters.AddWithValue("@Silent", getSilentOption);
+                cmd.Parameters.AddWithValue("@GuildId", guildId);
+                cmd.Parameters.AddWithValue("@ChannelId", channelId);
+                await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
+            if (ChannelConfigCache.TryGet(guildId, channelId, out var cfg))
+            {
+                ChannelConfigCache.Upsert(guildId, channelId, cfg with { Silent = getSilentOption });
+            }
+            return getSilentOption ? Resource.SilentModeEnabled : Resource.SilentModeDisabled;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while updating Silent option: {ex.Message}");
+        }
+        return Resource.ErrorSilentModeUpdate;
+    }
+
+    // =================================================
+    // 🎯 UPDATE LAST ITEM CHECK (WRITE)
+    // =================================================
+    public static async Task UpdateLastItemCheckAsync(string guildId, string channelId)
+    {
+        try
+        {
+            var nowIso = DateTimeOffset.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+
+            await Db.WriteAsync(async conn =>
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                    INSERT INTO LastItemsCheckTable (GuildId, ChannelId, LastItemCheck)
+                    VALUES (@GuildId, @ChannelId, @LastItemCheck)
+                    ON CONFLICT(GuildId, ChannelId) DO UPDATE SET
+                        LastItemCheck = excluded.LastItemCheck;";
+                cmd.Parameters.AddWithValue("@GuildId", guildId);
+                cmd.Parameters.AddWithValue("@ChannelId", channelId);
+                cmd.Parameters.AddWithValue("@LastItemCheck", nowIso);
+                await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while updating LastItemCheck: {ex.Message}");
+        }
+    }
+
+    // =================================================
+    // 🎯 GET LAST ITEM CHECK (READ)
+    // =================================================
+    public static async Task<DateTimeOffset?> GetLastItemCheckAsync(string guildId, string channelId)
+    {
+        try
+        {
+            await using var conn = await Db.OpenReadAsync();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT LastItemCheck
+                FROM LastItemsCheckTable
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+            cmd.Parameters.AddWithValue("@GuildId", guildId);
+            cmd.Parameters.AddWithValue("@ChannelId", channelId);
+
+            var result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
+            if (result is string s &&
+                DateTimeOffset.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dto))
+            {
+                return dto;
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while reading LastItemCheck: {ex.Message}");
+            return null;
+        }
+    }
+
+    // =================================================
+    // 🎯 UPDATE CHECK FREQUENCY (WRITE)
+    // ================================================
     public static async Task<string> UpdateFrequencyCheck(SocketSlashCommand command, string message, string channelId, string guildId)
     {
         try
@@ -466,5 +565,37 @@ public static class ChannelsAndUrlsCommands
         }
 
         return message;
+    }
+
+    // =================================================
+    // 🎯 GET CHANNEL ID FOR ROOM (READ)
+    // =================================================
+    public static async Task<string?> GetChannelIdForRoomAsync(string guildId, string baseUrl, string room)
+    {
+        try
+        {
+            await using var connection = await Db.OpenReadAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+            SELECT ChannelId
+            FROM ChannelsAndUrlsTable
+            WHERE GuildId = @GuildId
+              AND BaseUrl = @BaseUrl
+              AND Room    = @Room
+            LIMIT 1;";
+
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@BaseUrl", new Uri(baseUrl).GetLeftPart(UriPartial.Authority));
+            command.Parameters.AddWithValue("@Room", room);
+
+            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+            return result?.ToString();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while checking room existence: {ex.Message}");
+            return null;
+        }
     }
 }

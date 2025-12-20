@@ -2,8 +2,8 @@
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Discord;
 using Discord.WebSocket;
-using System;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using TrackerLib.Models;
 
@@ -37,6 +37,14 @@ public class UrlClass
         if (roomInfo == null)
         {
             message = "Room Not Found";
+            return message;
+        }
+
+        var existingChannelForRoom =  await ChannelsAndUrlsCommands.GetChannelIdForRoomAsync(guildId, baseUrl, room);
+
+        if (!string.IsNullOrEmpty(existingChannelForRoom) && existingChannelForRoom != channelId)
+        {
+            message = string.Format(Resource.RoomAlreadyExistInOtherThread, existingChannelForRoom);
             return message;
         }
 
@@ -151,19 +159,24 @@ public class UrlClass
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                         await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
                         await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
-                        await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent, true);
-                        await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
+                        var info = await HelperClass.Info("", channelId, guildId);
+                        await BotCommands.SendMessageAsync(info, channelId);
+                        using MemoryStream playersStream = await SendPlayersInfoAsync(channelId, thread, aliasList, roomInfo, room);
                         await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
+                        await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent, true);
                         await Telemetry.SendTelemetryAsync(Declare.ProgramID, false);
                         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
-                        if(Declare.TelemetryName != "AST")
+                        
+                        if (Declare.TelemetryName != "AST")
                         {
                             await UpdateReminder.MaybeNotifyDailyAsync(guildId, channelId, "Etsuna", "ArchipelagoSphereTracker", CancellationToken.None);
                         }
+                        await BotCommands.SendMessageAsync(Resource.Discord, channelId);
+                        await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
+
 
                         Declare.AddedChannelId.Remove(channelId);
                     }
-
                     message = string.Format(Resource.URLSet, newUrl);
                 }
             }
@@ -174,6 +187,32 @@ public class UrlClass
         }
 
         return message;
+
+        static async Task<MemoryStream> SendPlayersInfoAsync(string channelId, IThreadChannel thread, List<(int slot, string alias, string game)> aliasList, RoomStatus roomInfo, string room)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine(Resource.PlayerAndGameList);
+            sb.AppendLine();
+
+            foreach (var (slot, alias, game) in aliasList)
+            {
+                sb.AppendLine($"• {alias} - {game}");
+            }
+
+            var playersTxt = sb.ToString();
+
+            var playersBytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetBytes(playersTxt);
+            var playersStream = new MemoryStream(playersBytes);
+
+            var playersFileName = $"players_{channelId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
+
+            var playersMessage = await thread.SendFileAsync(
+                playersStream,
+                playersFileName,
+                Resource.PlayerList
+            );
+            return playersStream;
+        }
     }
 
     public static async Task<string> DeleteUrl(IGuildUser? guildUser, string message, string channelId, string guildId)

@@ -8,7 +8,7 @@ public class AliasClass
     public static async Task<string> AddAlias(SocketSlashCommand command, string message, string? alias, string channelId, string guildId)
     {
         var userId = command.User.Id.ToString();
-        var skipUselessMention = command.Data.Options.ElementAtOrDefault(1)?.Value as bool? ?? false;
+        var skipUselessMention = command.Data.Options.ElementAtOrDefault(1)?.Value as string ?? "0";
 
         if (string.IsNullOrWhiteSpace(alias))
         {
@@ -42,54 +42,42 @@ public class AliasClass
 
     public static async Task<string> DeleteAlias(SocketSlashCommand command, IGuildUser? guildUser, string message, string? alias, string channelId, string guildId)
     {
-        var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
-        async Task<bool> HasValidChannelDataAsync(string guildId, string channelId)
+
+        getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
+
+        if (getReceiverAliases.Count == 0)
         {
-            return checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
+            message = Resource.AliasNotRegistered;
         }
-
-        if (!await HasValidChannelDataAsync(guildId, channelId))
+        else if (alias != null)
         {
-            message = Resource.AliasOrUrlNotRegistered;
-        }
-        else
-        {
-            getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
+            var getUserId = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guildId, channelId, alias);
 
-            if (getReceiverAliases.Count == 0)
+            if (getUserId != null)
             {
-                message = Resource.AliasNotRegistered;
-            }
-            else if (alias != null)
-            {
-                var getUserId = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guildId, channelId, alias);
-
-                if (getUserId != null)
+                message = string.Format(Resource.AliasNotFound, alias);
+                foreach (var value in getUserId.Select(x => x.UserId))
                 {
-                    message = string.Format(Resource.AliasNotFound, alias);
-                    foreach (var value in getUserId.Select(x => x.UserId))
+                    if (value == command.User.Id.ToString() || guildUser != null && guildUser.GuildPermissions.Administrator)
                     {
-                        if (value == command.User.Id.ToString() || guildUser != null && guildUser.GuildPermissions.Administrator)
-                        {
-                            await ReceiverAliasesCommands.DeleteReceiverAlias(guildId, channelId, alias);
+                        await ReceiverAliasesCommands.DeleteReceiverAlias(guildId, channelId, alias);
 
-                            message = value == command.User.Id.ToString()
-                                ? string.Format(Resource.AliasDeleted, alias)
-                                : $"ADMIN: " + string.Format(Resource.AliasDeleted, alias);
+                        message = value == command.User.Id.ToString()
+                            ? string.Format(Resource.AliasDeleted, alias)
+                            : $"ADMIN: " + string.Format(Resource.AliasDeleted, alias);
 
-                            await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, value, alias);
-                        }
-                        else
-                        {
-                            message = string.Format(Resource.AliasOtherOwner, alias);
-                        }
+                        await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, value, alias);
+                    }
+                    else
+                    {
+                        message = string.Format(Resource.AliasOtherOwner, alias);
                     }
                 }
-                else
-                {
-                    message = string.Format(Resource.AliasNotFound, alias);
-                }
+            }
+            else
+            {
+                message = string.Format(Resource.AliasNotFound, alias);
             }
         }
 
@@ -98,14 +86,9 @@ public class AliasClass
 
     public static async Task<string> GetAlias(string message, string channelId, string guildId)
     {
-        var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 
-        if (!checkChannel)
-        {
-            message = Resource.NoUrlRegistered;
-        }
-        else if (getReceiverAliases.Count == 0)
+        if (getReceiverAliases.Count == 0)
         {
             message = Resource.AliasNotRegistered;
         }
@@ -120,12 +103,20 @@ public class AliasClass
                 foreach (var value in getUserIds)
                 {
                     var user = await Declare.Client.GetUserAsync(ulong.Parse(value.UserId));
-                    sb.AppendLine(string.Format(Resource.AliasTableValue, user.Username, getReceiverAliase, HelperClass.TranslateBool(value.IsEnabled)));
+                    var flags = GetFlag(value);
+                    sb.AppendLine(string.Format(Resource.AliasTableValue, user.Username, getReceiverAliase, flags));
                 }
             }
             message = sb.ToString();
         }
 
         return message;
+    }
+
+    private static ReceiverFlag GetFlag(ReceiverUserInfo value)
+    {
+        int flagValue = int.Parse(value.Flag);
+        ReceiverFlag flags = (ReceiverFlag)flagValue;
+        return flags;
     }
 }

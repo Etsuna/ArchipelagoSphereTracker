@@ -53,13 +53,6 @@ public class HelperClass
 
     public static async Task<string> StatusGameList(string message, string channelId, string guildId)
     {
-        var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
-        if (!checkChannel)
-        {
-            message = Resource.NoUrlRegistered;
-            return message;
-        }
-
         var getGameStatusForGuildAndChannelAsync = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guildId, channelId);
         var (urlTracker, urlSphereTracker, room, silent, CheckFrequency, LastCheck) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
@@ -101,9 +94,11 @@ public class HelperClass
                         double percent = total > 0
                             ? (double)checks / total * 100.0
                             : 0.0;
+                        string percentText = percent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                        
                         string gameStatus = checks != total
-                            ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percent) + "\n"
-                            : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percent) + "\n";
+                            ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percentText) + "\n"
+                            : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percentText) + "\n";
 
                         message += gameStatus;
                     }
@@ -123,9 +118,11 @@ public class HelperClass
                     double percent = total > 0
                         ? (double)checks / total * 100.0
                         : 0.0;
+                    string percentText = percent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
                     string gameStatus = checks != total
-                        ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percent) + "\n"
-                        : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percent) + "\n";
+                        ? string.Format(Resource.HelperGameStatusInProgress, game.Name, game.Game, percentText) + "\n"
+                        : string.Format(Resource.HelperGameStatusDone, game.Name, game.Game, percentText) + "\n";
 
                     message += gameStatus;
                 }
@@ -162,9 +159,7 @@ public class HelperClass
         _ => int.MaxValue - 1
     };
 
-    public static async Task<string> ListItems(
-    SocketSlashCommand command, string? userId, string message,
-    string? alias, string channelId, string guildId)
+    public static async Task<string> ListItems(SocketSlashCommand command, string? userId, string message, string? alias, string channelId, string guildId)
     {
         bool listByLine = command.Data.Options.FirstOrDefault(o => o.Name == "list-by-line")?.Value as bool? ?? false;
 

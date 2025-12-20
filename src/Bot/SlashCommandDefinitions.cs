@@ -13,7 +13,16 @@ public static class SlashCommandDefinitions
             .WithName("add-alias")
             .WithDescription(Resource.SCAddAliasDescription)
             .AddOption(AliasOption("alias"))
-            .AddOption(BooleanOption(Resource.SCAddAliasSkipMention, Resource.SCAddAliasSkipMentionDescription)),
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName(Resource.SCAddAliasSkipMention)
+                    .WithDescription(Resource.SCAddAliasSkipMentionDescription)
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .AddChoice($"{Resource.None}", "0")
+                    .AddChoice($"{Resource.Filler}", "1")
+                    .AddChoice($"{Resource.Trap}", "16")
+                    .AddChoice($"{Resource.Filler} + {Resource.Trap}", "17")
+                    .AddChoice($"{Resource.Filler} + {Resource.Trap} + {Resource.Useful}", "21")),
 
             new SlashCommandBuilder()
                 .WithName("delete-alias")
@@ -64,9 +73,14 @@ public static class SlashCommandDefinitions
                     .AddChoice($"{Resource.Every} 18 {Resource.Hour}", "18h")
                     .AddChoice($"{Resource.EveryDay}", "1d")),
 
+            new SlashCommandBuilder()
+                .WithName("update-silent-option")
+                .WithDescription(Resource.SCUpdateSilentOptionDescription)
+                .AddOption(BooleanOption(Resource.SCSilentOption, Resource.SCSilentDescription)),
+
             new SlashCommandBuilder().WithName("delete-url").WithDescription(Resource.SCDeleteUrlDescription),
             new SlashCommandBuilder().WithName("status-games-list").WithDescription(Resource.SCStatusGameListDescription),
-            
+
             new SlashCommandBuilder().WithName("info").WithDescription(Resource.SCInfoDescription),
 
             new SlashCommandBuilder()
@@ -121,6 +135,26 @@ public static class SlashCommandDefinitions
                     .WithType(ApplicationCommandOptionType.String)
                     .WithRequired(true)
                     .WithAutocomplete(true)),
+
+            new SlashCommandBuilder()
+                .WithName("discord")
+                .WithDescription(Resource.DiscordDesc),
+
+            new SlashCommandBuilder()
+                .WithName("excluded-item")
+                .WithDescription(Resource.SCExcludedItemDesc)
+                .AddOption(AliasOption("added-alias"))
+                .AddOption(ItemsOption("items")),
+
+             new SlashCommandBuilder()
+                .WithName("excluded-item-list")
+                .WithDescription(Resource.SCExcludedItemListDesc),
+
+            new SlashCommandBuilder()
+                .WithName("delete-excluded-item")
+                .WithDescription(Resource.SCDeleteExcludedItemDesc)
+                .AddOption(AliasOption("added-alias"))
+                .AddOption(ItemsOption("delete-items")),
         };
 
         if (Declare.IsArchipelagoMode)
@@ -208,6 +242,16 @@ public static class SlashCommandDefinitions
             .WithDescription(description)
             .WithType(ApplicationCommandOptionType.Boolean)
             .WithRequired(true);
+    }
+
+    private static SlashCommandOptionBuilder ItemsOption(string item)
+    {
+        return new SlashCommandOptionBuilder()
+            .WithName(item)
+            .WithDescription(Resource.SCChooseAnItem)
+            .WithType(ApplicationCommandOptionType.String)
+            .WithRequired(true)
+            .WithAutocomplete(true);
     }
 
     #endregion

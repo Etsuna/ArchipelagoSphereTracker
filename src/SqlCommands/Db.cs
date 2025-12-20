@@ -15,7 +15,14 @@ public static class Db
         var conn = new SQLiteConnection(ReadCS);
         await conn.OpenAsync();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA temp_store=MEMORY; PRAGMA busy_timeout=5000; PRAGMA cache_size=-20000; PRAGMA mmap_size=268435456;";
+        cmd.CommandText = @"
+            PRAGMA journal_mode=WAL;
+            PRAGMA synchronous=NORMAL;
+            PRAGMA foreign_keys=ON;
+            PRAGMA temp_store=MEMORY;
+            PRAGMA busy_timeout=5000;
+            PRAGMA cache_size=-20000;
+            PRAGMA mmap_size=268435456;";
         cmd.ExecuteNonQuery();
         return conn;
     }
@@ -25,7 +32,15 @@ public static class Db
         var conn = new SQLiteConnection(WriteCS);
         await conn.OpenAsync();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA temp_store=MEMORY; PRAGMA busy_timeout=5000;";
+        cmd.CommandText = @"
+            PRAGMA journal_mode=WAL;
+            PRAGMA synchronous=NORMAL;
+            PRAGMA foreign_keys=ON;
+            PRAGMA temp_store=MEMORY;
+            PRAGMA busy_timeout=5000;
+
+            PRAGMA wal_autocheckpoint=2000;
+            PRAGMA journal_size_limit=67108864; -- 64MB";
         cmd.ExecuteNonQuery();
         return conn;
     }

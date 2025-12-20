@@ -205,6 +205,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à All players have completed their checks. Automatic deletion of the information from the database..
+        /// </summary>
+        internal static string Allcheckdone {
+            get {
+                return ResourceManager.GetString("Allcheckdone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à ❌ custom_worlds folder not found..
         /// </summary>
         internal static string ApworldCustomFolderNotFound {
@@ -628,6 +637,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/PJfWRKVyEW.
+        /// </summary>
+        internal static string Discord {
+            get {
+                return ResourceManager.GetString("Discord", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Shows the Discord link..
+        /// </summary>
+        internal static string DiscordDesc {
+            get {
+                return ResourceManager.GetString("DiscordDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Download and Install Archipelago version {0} before to install the bot in Archipelago Mode..
         /// </summary>
         internal static string DownloadAndInstall {
@@ -655,6 +682,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Error Silent Mode Update..
+        /// </summary>
+        internal static string ErrorSilentModeUpdate {
+            get {
+                return ResourceManager.GetString("ErrorSilentModeUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Every.
         /// </summary>
         internal static string Every {
@@ -669,6 +705,33 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string EveryDay {
             get {
                 return ResourceManager.GetString("EveryDay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Item {0} added to the exclusion list from {1}..
+        /// </summary>
+        internal static string ExcludeItemAdded {
+            get {
+                return ResourceManager.GetString("ExcludeItemAdded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Item {0} removed from {1}..
+        /// </summary>
+        internal static string ExcludeItemDeleted {
+            get {
+                return ResourceManager.GetString("ExcludeItemDeleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No item {0} found for {1}..
+        /// </summary>
+        internal static string ExcludeItemNotFound {
+            get {
+                return ResourceManager.GetString("ExcludeItemNotFound", resourceCulture);
             }
         }
         
@@ -988,6 +1051,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à **{0}** was found at **{1}** in **{2}&apos;s** World..
+        /// </summary>
+        internal static string HintItemUpdated {
+            get {
+                return ResourceManager.GetString("HintItemUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à New Hint.
         /// </summary>
         internal static string HintNew {
@@ -1204,6 +1276,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à No filter.
+        /// </summary>
+        internal static string None {
+            get {
+                return ResourceManager.GetString("None", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à No patch found for this thread..
         /// </summary>
         internal static string NoPatchForThisThread {
@@ -1254,6 +1335,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string PatchSetForThisThread {
             get {
                 return ResourceManager.GetString("PatchSetForThisThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à List of players and their games for this thread:.
+        /// </summary>
+        internal static string PlayerAndGameList {
+            get {
+                return ResourceManager.GetString("PlayerAndGameList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Complete list of players for this room..
+        /// </summary>
+        internal static string PlayerList {
+            get {
+                return ResourceManager.GetString("PlayerList", resourceCulture);
             }
         }
         
@@ -1447,6 +1546,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database)..
+        /// </summary>
+        internal static string RoomAlreadyExistInOtherThread {
+            get {
+                return ResourceManager.GetString("RoomAlreadyExistInOtherThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Error during the migration of your thread. Please delete your thread and re-add the URL..
         /// </summary>
         internal static string RoomNotFound {
@@ -1465,7 +1573,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à filler_items_skip_mention.
+        ///   Recherche une chaîne localisée semblable à skip_mention_items.
         /// </summary>
         internal static string SCAddAliasSkipMention {
             get {
@@ -1537,6 +1645,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose an item.
+        /// </summary>
+        internal static string SCChooseAnItem {
+            get {
+                return ResourceManager.GetString("SCChooseAnItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Clean all recap items.
         /// </summary>
         internal static string SCCleanAllDescription {
@@ -1573,6 +1690,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Deletes the item from the exclusion list.
+        /// </summary>
+        internal static string SCDeleteExcludedItemDesc {
+            get {
+                return ResourceManager.GetString("SCDeleteExcludedItemDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Delete Url, clean Aliases and Recap.
         /// </summary>
         internal static string SCDeleteUrlDescription {
@@ -1605,6 +1731,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string SCDownloadYamlTemplateDescription {
             get {
                 return ResourceManager.GetString("SCDownloadYamlTemplateDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Excludes notifications for this item.
+        /// </summary>
+        internal static string SCExcludedItemDesc {
+            get {
+                return ResourceManager.GetString("SCExcludedItemDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Displays your excluded items list.
+        /// </summary>
+        internal static string SCExcludedItemListDesc {
+            get {
+                return ResourceManager.GetString("SCExcludedItemListDesc", resourceCulture);
             }
         }
         
@@ -1870,6 +2014,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Updated the “Silent” option..
+        /// </summary>
+        internal static string SCUpdateSilentOptionDescription {
+            get {
+                return ResourceManager.GetString("SCUpdateSilentOptionDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à The URL to track.
         /// </summary>
         internal static string SCUrlToTrack {
@@ -1893,6 +2046,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string SendAllPatchesForChannelAsyncPathLink {
             get {
                 return ResourceManager.GetString("SendAllPatchesForChannelAsyncPathLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Silent Mode Disabled..
+        /// </summary>
+        internal static string SilentModeDisabled {
+            get {
+                return ResourceManager.GetString("SilentModeDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Silent Mode Enabled..
+        /// </summary>
+        internal static string SilentModeEnabled {
+            get {
+                return ResourceManager.GetString("SilentModeEnabled", resourceCulture);
             }
         }
         
@@ -1960,16 +2131,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Last activity : {0}.
-        /// </summary>
-        internal static string TDMLastActivity {
-            get {
-                return ResourceManager.GetString("TDMLastActivity", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à New message on the thread {0}, automatic deletion canceled..
+        ///   Recherche une chaîne localisée semblable à New item on the thread {0}, automatic deletion canceled..
         /// </summary>
         internal static string TDMNewMessageOnThread {
             get {
@@ -1978,7 +2140,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à No activity for 7 days, deleting the thread....
+        ///   Recherche une chaîne localisée semblable à No new item for 14 days, deleting all infos ....
         /// </summary>
         internal static string TDMNoActivity {
             get {
@@ -1987,20 +2149,11 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à No message for 6 days. If no message is posted before {0} on the thread {1}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!.
+        ///   Recherche une chaîne localisée semblable à No new item for 7 days. If no item is found before {0} on the thread {1}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!.
         /// </summary>
-        internal static string TDMNoMessage6Days {
+        internal static string TDMNoMessage7Days {
             get {
-                return ResourceManager.GetString("TDMNoMessage6Days", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No message found, using the thread creation date: {0}.
-        /// </summary>
-        internal static string TDMNoMessageFound {
-            get {
-                return ResourceManager.GetString("TDMNoMessageFound", resourceCulture);
+                return ResourceManager.GetString("TDMNoMessage7Days", resourceCulture);
             }
         }
         
@@ -2019,15 +2172,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string TDMSkippingCheck {
             get {
                 return ResourceManager.GetString("TDMSkippingCheck", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Thread deleted..
-        /// </summary>
-        internal static string TDMThreadDeleted {
-            get {
-                return ResourceManager.GetString("TDMThreadDeleted", resourceCulture);
             }
         }
         

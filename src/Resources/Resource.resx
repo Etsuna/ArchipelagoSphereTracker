@@ -133,33 +133,21 @@
     <value>Starting bot... {0}</value>
     <comment>Starting bot... {version}</comment>
   </data>
-  <data name="TDMNoMessageFound" xml:space="preserve">
-    <value>No message found, using the thread creation date: {0}</value>
-    <comment>No message found, using the thread creation date: {lastActivity}</comment>
-  </data>
   <data name="TDMChannelStillExists" xml:space="preserve">
     <value>The channel still exists: {0}</value>
     <comment>The channel still exists: {channelCheck.Name}</comment>
   </data>
   <data name="TDMNewMessageOnThread" xml:space="preserve">
-    <value>New message on the thread {0}, automatic deletion canceled.</value>
-    <comment>New message on the thread {thread.Name}, automatic deletion canceled.</comment>
+    <value>New item on the thread {0}, automatic deletion canceled.</value>
+    <comment>New item on the thread {thread.Name}, automatic deletion canceled.</comment>
   </data>
-  <data name="TDMNoMessage6Days" xml:space="preserve">
-    <value>No message for 6 days. If no message is posted before {0} on the thread {1}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</value>
-    <comment>No message for 6 days. If no message is posted before {formattedDeletionDate} on the thread {thread.Name}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</comment>
-  </data>
-  <data name="TDMLastActivity" xml:space="preserve">
-    <value>Last activity : {0}</value>
-    <comment>Last activity : {lastActivity}</comment>
+  <data name="TDMNoMessage7Days" xml:space="preserve">
+    <value>No new item for 7 days. If no item is found before {0} on the thread {1}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</value>
+    <comment>No new item for 7 days. If no item is found before {formattedDeletionDate} on the thread {thread.Name}, it will be deleted. Remember to delete the thread or delete the URL when you no longer need it!</comment>
   </data>
   <data name="TDMNoActivity" xml:space="preserve">
-    <value>No activity for 7 days, deleting the thread...</value>
-    <comment>No activity for 7 days, deleting the thread...</comment>
-  </data>
-  <data name="TDMThreadDeleted" xml:space="preserve">
-    <value>Thread deleted.</value>
-    <comment>Thread deleted.</comment>
+    <value>No new item for 14 days, deleting all infos ...</value>
+    <comment>No new item for 14 days, deleting all infos...</comment>
   </data>
   <data name="TDMCheckingItems" xml:space="preserve">
     <value>Checking Items for the channel {0}...</value>
@@ -486,8 +474,8 @@
     <comment>thread-type</comment>
   </data>
   <data name="SCAddAliasSkipMention" xml:space="preserve">
-    <value>filler_items_skip_mention</value>
-    <comment>filler_items_skip_mention</comment>
+    <value>skip_mention_items</value>
+    <comment>skip_mention_items</comment>
   </data>
   <data name="SCGetAliasesDescription" xml:space="preserve">
     <value>List all Aliases</value>
@@ -1108,5 +1096,81 @@
   <data name="DownloadUpdate" xml:space="preserve">
     <value>Downloading the update:</value>
     <comment>Downloading the update:</comment>
+  </data>
+  <data name="Allcheckdone" xml:space="preserve">
+    <value>All players have completed their checks. Automatic deletion of the information from the database.</value>
+    <comment>All players have completed their checks. Automatic deletion of the information from the database.</comment>
+  </data>
+  <data name="Discord" xml:space="preserve">
+    <value>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/PJfWRKVyEW</value>
+    <comment>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/PJfWRKVyEW</comment>
+  </data>
+  <data name="DiscordDesc" xml:space="preserve">
+    <value>Shows the Discord link.</value>
+    <comment>Shows the Discord link.</comment>
+  </data>
+  <data name="SCChooseAnItem" xml:space="preserve">
+    <value>Choose an item</value>
+    <comment>Choose an item</comment>
+  </data>
+  <data name="SCExcludedItemDesc" xml:space="preserve">
+    <value>Excludes notifications for this item</value>
+    <comment>Excludes notifications for this item</comment>
+  </data>
+  <data name="SCExcludedItemListDesc" xml:space="preserve">
+    <value>Displays your excluded items list</value>
+    <comment>Displays your excluded items list</comment>
+  </data>
+  <data name="SCDeleteExcludedItemDesc" xml:space="preserve">
+    <value>Deletes the item from the exclusion list</value>
+    <comment>Deletes the item from the exclusion list</comment>
+  </data>
+  <data name="ExcludeItemAdded" xml:space="preserve">
+    <value>Item {0} added to the exclusion list from {1}.</value>
+    <comment>Item {item} added to the exclusion list for {alias}.</comment>
+  </data>
+  <data name="ExcludeItemDeleted" xml:space="preserve">
+    <value>Item {0} removed from {1}.</value>
+    <comment>Item {item} removed from {alias}.</comment>
+  </data>
+  <data name="ExcludeItemNotFound" xml:space="preserve">
+    <value>No item {0} found for {1}.</value>
+    <comment>No item {item} found for {alias}.</comment>
+  </data>
+  <data name="HintItemUpdated" xml:space="preserve">
+    <value>**{0}** was found at **{1}** in **{2}'s** World.</value>
+    <comment>**{item.Item}** was found at **{item.Location}** in **{item.Finder}'s** World.@MutedRule(PunctuationLead)@MutedRule(PunctuationTail)</comment>
+  </data>
+  <data name="PlayerAndGameList" xml:space="preserve">
+    <value>List of players and their games for this thread:</value>
+    <comment>List of players and their games for this thread:</comment>
+  </data>
+  <data name="PlayerList" xml:space="preserve">
+    <value>Complete list of players for this room.</value>
+    <comment>Complete list of players for this room.</comment>
+  </data>
+  <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
+    <value>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</value>
+    <comment>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</comment>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>No filter</value>
+    <comment>No filter</comment>
+  </data>
+  <data name="SCUpdateSilentOptionDescription" xml:space="preserve">
+    <value>Updated the “Silent” option.</value>
+    <comment>Updated the “Silent” option.</comment>
+  </data>
+  <data name="SilentModeEnabled" xml:space="preserve">
+    <value>Silent Mode Enabled.</value>
+    <comment>Silent Mode Enabled.</comment>
+  </data>
+  <data name="SilentModeDisabled" xml:space="preserve">
+    <value>Silent Mode Disabled.</value>
+    <comment>Silent Mode Disabled.</comment>
+  </data>
+  <data name="ErrorSilentModeUpdate" xml:space="preserve">
+    <value>Error Silent Mode Update.</value>
+    <comment>Error Silent Mode Update.</comment>
   </data>
 </root>

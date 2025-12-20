@@ -113,9 +113,9 @@ class Program
 
         if (Declare.IsArchipelagoMode)
         {
-            if (currentVersion.Trim() == Declare.Version)
+            if (currentVersion.Trim() == Declare.ReleaseVersion)
             {
-                Console.WriteLine(string.Format(Resource.ProgramArchipelagoAlreadyInstalled, Declare.Version));
+                Console.WriteLine(string.Format(Resource.ProgramArchipelagoAlreadyInstalled, Declare.ReleaseVersion));
             }
             else
             {
@@ -243,6 +243,7 @@ class Program
         {
             Console.WriteLine(Resource.NoBddVersionTable);
             await DBMigration.Migrate_4_to_5Async(cts.Token);
+            await DBMigration_5.Migrate_5_0_1(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }
@@ -250,10 +251,17 @@ class Program
         {
             Console.WriteLine(Resource.BDDUpToDate);
         }
+        else if (bddVersion == "5.0.0")
+        {
+            Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
+            await DBMigration_5.Migrate_5_0_1(cts.Token);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+        }
         else
         {
             Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
             await DBMigration.Migrate_4_to_5Async(cts.Token);
+            await DBMigration_5.Migrate_5_0_1(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }

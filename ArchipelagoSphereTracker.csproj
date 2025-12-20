@@ -37,10 +37,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="apworld/generate_templates.apworld" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<Compile Update="src\Resources\Resource.Designer.cs">
 			<DesignTime>True</DesignTime>
 			<AutoGen>True</AutoGen>

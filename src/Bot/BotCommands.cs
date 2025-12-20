@@ -140,6 +140,13 @@ public static class BotCommands
 
     private static async Task<string> HandleThreadedCommand(SocketSlashCommand command, IGuildUser? user, string message, string? alias, string? realAlias, string channelId, string guildId)
     {
+        var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
+
+        if (!checkChannel)
+        {
+            return message = Resource.NoUrlRegistered;
+        }
+
         return command.CommandName switch
         {
             "get-aliases" => await AliasClass.GetAlias(message, channelId, guildId),
@@ -158,6 +165,10 @@ public static class BotCommands
             "info" => await HelperClass.Info(message, channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, message, channelId, guildId),
             "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, message, channelId, guildId),
+            "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, message, alias, channelId, guildId),
+            "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
+            "delete-excluded-item" => await ExcludedItemsCommands.DeleteExcludedItemAsync(command, channelId, guildId, alias),
+            "update-silent-option" => await ChannelsAndUrlsCommands.UpdateSilentOption(command, channelId, guildId),
             _ => Resource.BotCommandChannel
         };
     }
@@ -180,6 +191,7 @@ public static class BotCommands
             "generate" => await GenerationClass.GenerateAsync(command, "", channelId),
             "test-generate" => await GenerationClass.TestGenerateAsync(command, "", channelId),
             "generate-with-zip" => await GenerationClass.GenerateWithZip(command, "", channelId),
+            "discord" => Resource.Discord, 
             _ => Resource.BotCommandThread
         };
     }
@@ -213,6 +225,7 @@ public static class BotCommands
         var input = interaction.Data.Current.Value?.ToString()?.ToLower() ?? "";
         var channelId = interaction.ChannelId.ToString();
         var guildId = interaction.GuildId?.ToString() ?? "";
+        var addedAlias = interaction.Data.Options?.FirstOrDefault(o => o.Name == "added-alias")?.Value as string ?? "";
 
         if (string.IsNullOrWhiteSpace(channelId) || string.IsNullOrWhiteSpace(guildId))
         {
@@ -238,6 +251,10 @@ public static class BotCommands
                         : Enumerable.Empty<string>()),
 
             "apworldsinfo" => async () => (await ApWorldListCommands.GetAllTitles()).AsEnumerable(),
+
+            "items" => async () => (await ExcludedItemsCommands.GetItemNamesForAliasAsync(guildId, channelId, addedAlias)).AsEnumerable(),
+
+            "delete-items" => async () => (await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(guildId, channelId, addedAlias)).AsEnumerable(),
 
             _ => () => Task.FromResult(Enumerable.Empty<string>())
         };
