@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Buffers;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
@@ -10,11 +11,13 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
         public static List<DisplayedItem> ParseItems(ProcessingContext ctx, string json)
         {
             var list = new List<DisplayedItem>(256);
-            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
-                new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
+            var reader = CreateReader(json, out var rentedBuffer);
 
             if (!MoveToProperty(ref reader, "player_items_received", JsonTokenType.StartArray))
+            {
+                ArrayPool<byte>.Shared.Return(rentedBuffer);
                 return list;
+            }
 
             while (reader.Read())
             {
@@ -80,6 +83,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     }
                 }
             }
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
             return list;
         }
 
@@ -87,11 +91,13 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
         public static List<HintStatus> ParseHints(ProcessingContext ctx, string json)
         {
             var list = new List<HintStatus>(256);
-            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
-                new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
+            var reader = CreateReader(json, out var rentedBuffer);
 
             if (!MoveToProperty(ref reader, "hints", JsonTokenType.StartArray))
+            {
+                ArrayPool<byte>.Shared.Return(rentedBuffer);
                 return list;
+            }
 
             while (reader.Read())
             {
@@ -163,6 +169,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     }
                 }
             }
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
             return list;
         }
 
@@ -173,11 +180,13 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             var activityBySlot = ParseActivityTimersMap(json);
             var foundBySlot = ParseChecksDoneCountsMap(json);
 
-            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(jsonStatic),
-                new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
+            var reader = CreateReader(jsonStatic, out var rentedStatic);
 
             if (!MoveToProperty(ref reader, "player_locations_total", JsonTokenType.StartArray))
+            {
+                ArrayPool<byte>.Shared.Return(rentedStatic);
                 return list;
+            }
 
             while (reader.Read())
             {
@@ -215,17 +224,20 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                 }
             }
 
+            ArrayPool<byte>.Shared.Return(rentedStatic);
             return list;
         }
 
         private static Dictionary<int, int> ParseChecksDoneCountsMap(string json)
         {
             var result = new Dictionary<int, int>();
-            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
-                new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
+            var reader = CreateReader(json, out var rentedBuffer);
 
             if (!MoveToProperty(ref reader, "player_checks_done", JsonTokenType.StartArray))
+            {
+                ArrayPool<byte>.Shared.Return(rentedBuffer);
                 return result;
+            }
 
             while (reader.Read())
             {
@@ -264,6 +276,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     result[slot] = count;
             }
 
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
             return result;
         }
 
@@ -335,11 +348,13 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
         private static Dictionary<int, string?> ParseActivityTimersMap(string json)
         {
             var map = new Dictionary<int, string?>(64);
-            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
-                new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
+            var reader = CreateReader(json, out var rentedBuffer);
 
             if (!MoveToProperty(ref reader, "activity_timers", JsonTokenType.StartArray))
+            {
+                ArrayPool<byte>.Shared.Return(rentedBuffer);
                 return map;
+            }
 
             while (reader.Read())
             {
@@ -375,7 +390,19 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     map[slot] = string.IsNullOrEmpty(time) ? null : time;
             }
 
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
             return map;
+        }
+
+        private static Utf8JsonReader CreateReader(string json, out byte[] rentedBuffer)
+        {
+            var byteCount = Encoding.UTF8.GetByteCount(json);
+            rentedBuffer = ArrayPool<byte>.Shared.Rent(byteCount);
+
+            var written = Encoding.UTF8.GetBytes(json, 0, json.Length, rentedBuffer, 0);
+            return new Utf8JsonReader(
+                new ReadOnlySpan<byte>(rentedBuffer, 0, written),
+                new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
         }
     }
 }
