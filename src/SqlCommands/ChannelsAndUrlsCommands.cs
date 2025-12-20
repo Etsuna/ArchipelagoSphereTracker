@@ -499,18 +499,40 @@ public static class ChannelsAndUrlsCommands
             await using var conn = await Db.OpenReadAsync();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                SELECT LastItemCheck
-                FROM LastItemsCheckTable
-                WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+            SELECT LastItemCheck
+            FROM LastItemsCheckTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
             cmd.Parameters.AddWithValue("@GuildId", guildId);
             cmd.Parameters.AddWithValue("@ChannelId", channelId);
 
             var result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
-            if (result is string s &&
-                DateTimeOffset.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dto))
+            if (result is null || result is DBNull) return null;
+
+            if (result is long msLong)
+                return DateTimeOffset.FromUnixTimeMilliseconds(msLong);
+
+            if (result is int msInt)
+                return DateTimeOffset.FromUnixTimeMilliseconds(msInt);
+
+            if (result is string s)
             {
-                return dto;
+                s = s.Trim();
+
+                if (long.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ms))
+                    return DateTimeOffset.FromUnixTimeMilliseconds(ms);
+
+                if (DateTimeOffset.TryParse(
+                        s,
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                        out var dto))
+                {
+                    return dto;
+                }
             }
+
+            if (result is DateTime dt)
+                return new DateTimeOffset(DateTime.SpecifyKind(dt, DateTimeKind.Utc));
 
             return null;
         }

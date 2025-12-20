@@ -57,14 +57,13 @@ public static class MetricsExporter
             "Ligne de AliasChoicesTable.",
             new[] { "guild_id", "guild_name", "channel_id", "channel_name", "slot", "alias", "game" });
 
-
     // ==============
     // OBJETS VÉRIFIÉS
     // ==============
     private static readonly Gauge LastItemsChecked =
        Metrics.CreateGauge(
            "ast_last_items_checked_timestamp",
-           "Horodatage Unix UTC du dernier contrôle des objets.",
+           "Horodatage Unix UTC (secondes) du dernier contrôle des objets.",
            new[] { "guild_id", "channel_id" });
 
     // ==============
@@ -143,24 +142,18 @@ public static class MetricsExporter
                 curChannelInfo[key] = ch;
 
                 var chLast = ChannelLastCheckSeconds.WithLabels(guild, guildName, channel, channelName);
-                if (rdr.IsDBNull(6))
+                var dto = rdr.IsDBNull(6) ? null : ParseIsoOrUnixMs(rdr.GetValue(6));
+                if (dto is null)
                 {
                     chLast.Set(double.NaN);
                 }
                 else
                 {
-                    var lastStr = rdr.GetString(6);
-                    if (DateTime.TryParse(lastStr, out var dt))
-                    {
-                        var ageSec = (DateTime.UtcNow - dt.ToUniversalTime()).TotalSeconds;
-                        if (ageSec < 0) ageSec = 0;
-                        chLast.Set(ageSec);
-                    }
-                    else
-                    {
-                        chLast.Set(double.NaN);
-                    }
+                    var ageSec = (DateTimeOffset.UtcNow - dto.Value).TotalSeconds;
+                    if (ageSec < 0) ageSec = 0;
+                    chLast.Set(ageSec);
                 }
+
                 curChannelLastCheck[guild + "|" + guildName + "|" + channel + "|" + channelName] = chLast;
             }
         }
@@ -199,24 +192,45 @@ public static class MetricsExporter
                 curGameStatusTotal[key] = gTotal;
 
                 var gLast = GameStatusLastActivitySeconds.WithLabels(guild, guildName, channel, channelName, name, game);
-                if (!rdr.IsDBNull(6))
-                {
-                    var last = rdr.GetString(6);
-                    if (DateTime.TryParse(last, out var dt))
-                    {
-                        var age = (DateTime.UtcNow - dt.ToUniversalTime()).TotalSeconds;
-                        if (age < 0) age = 0;
-                        gLast.Set(age);
-                    }
-                    else
-                    {
-                        gLast.Set(double.NaN);
-                    }
-                }
-                else
+                if (rdr.IsDBNull(6))
                 {
                     gLast.Set(double.NaN);
                 }
+                else
+                {
+                    var lastStr = rdr.GetString(6);
+
+                    DateTimeOffset? dto = null;
+                    if (DateTimeOffset.TryParseExact(
+                            lastStr,
+                            "r",
+                            CultureInfo.InvariantCulture,
+                            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                            out var rfcDto))
+                    {
+                        dto = rfcDto;
+                    }
+                    else if (DateTimeOffset.TryParse(
+                            lastStr,
+                            CultureInfo.InvariantCulture,
+                            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                            out var anyDto))
+                    {
+                        dto = anyDto;
+                    }
+
+                    if (dto is null)
+                    {
+                        gLast.Set(double.NaN);
+                    }
+                    else
+                    {
+                        var age = (DateTimeOffset.UtcNow - dto.Value).TotalSeconds;
+                        if (age < 0) age = 0;
+                        gLast.Set(age);
+                    }
+                }
+
                 curGameStatusLastActivity[key] = gLast;
             }
         }
@@ -266,15 +280,15 @@ public static class MetricsExporter
 
                 var guild = rdr.GetString(0);
                 var channel = rdr.GetString(1);
-                var lastStr = rdr.GetString(2);
 
-                if (!DateTime.TryParse(lastStr, out var dt))
+                var dto = ParseIsoOrUnixMs(rdr.GetValue(2));
+                if (dto is null)
                     continue;
 
-                var ts = ((DateTimeOffset)dt.ToUniversalTime()).ToUnixTimeSeconds();
+                var tsSeconds = dto.Value.ToUnixTimeSeconds();
 
                 var ch = LastItemsChecked.WithLabels(guild, channel);
-                ch.Set(ts);
+                ch.Set(tsSeconds);
 
                 var key = guild + "|" + channel;
                 curLastItemsChecked[key] = ch;
@@ -291,6 +305,7 @@ public static class MetricsExporter
 
             UnpublishMissing(_gameStatusChecks, curGameStatusChecks);
             UnpublishMissing(_gameStatusTotal, curGameStatusTotal);
+
             UnpublishMissing(_gameStatusLastActivity, curGameStatusLastActivity);
 
             UnpublishMissing(_aliasChoice, curAliasChoice);
@@ -314,5 +329,40 @@ public static class MetricsExporter
             if (!newMap.ContainsKey(kv.Key))
                 kv.Value.Unpublish();
         }
+    }
+
+    // ==========================================================
+    // FIX: parser robuste ISO 8601 ("o") + legacy unix ms (TEXT/INT)
+    // ==========================================================
+    private static DateTimeOffset? ParseIsoOrUnixMs(object? value)
+    {
+        if (value is null || value is DBNull) return null;
+
+        if (value is long l) return DateTimeOffset.FromUnixTimeMilliseconds(l);
+        if (value is int i) return DateTimeOffset.FromUnixTimeMilliseconds(i);
+        if (value is double d) return DateTimeOffset.FromUnixTimeMilliseconds((long)d);
+        if (value is decimal m) return DateTimeOffset.FromUnixTimeMilliseconds((long)m);
+
+        if (value is DateTime dt)
+            return new DateTimeOffset(DateTime.SpecifyKind(dt, DateTimeKind.Utc));
+
+        if (value is string s)
+        {
+            s = s.Trim();
+
+            if (long.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ms))
+                return DateTimeOffset.FromUnixTimeMilliseconds(ms);
+
+            if (DateTimeOffset.TryParse(
+                    s,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                    out var dto))
+            {
+                return dto;
+            }
+        }
+
+        return null;
     }
 }
