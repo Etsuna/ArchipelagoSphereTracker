@@ -159,7 +159,7 @@ If you prefer to host your own bot, download the latest release or compile the p
 * Summarize and clean the loot table (only if an alias is set)
 * Automatically post messages when new items are received (with Discord tag, only if an alias is set)
 * Automatically announce when a player completes their goal
-* List items received by player name (option to display items line-by-line or comma-separated)
+* List items received by player name
 * List hints by receivers or by finders
 * List patch links
 * Retrieve the tracker connection port

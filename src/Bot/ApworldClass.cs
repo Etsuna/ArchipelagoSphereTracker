@@ -6,7 +6,9 @@ using System.Text;
 
 public class ApworldClass : Declare
 {
-    public static async Task<string> SendApworld(SocketSlashCommand command, string message)
+    public static string message { get; set; } = string.Empty;
+
+    public static async Task<string> SendApworld(SocketSlashCommand command)
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         if (attachment == null || !attachment.Filename.EndsWith(".apworld"))
@@ -35,7 +37,7 @@ public class ApworldClass : Declare
         return message;
     }
 
-    public static async Task<string> BackupApworld(SocketSlashCommand command, string message)
+    public static async Task<string> BackupApworld(SocketSlashCommand command)
     {
         var apworldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
         if (Directory.Exists(apworldPath))
@@ -75,7 +77,7 @@ public class ApworldClass : Declare
         return message;
     }
 
-    public static async Task<string> ApworldsInfo(SocketSlashCommand command, string? message)
+    public static async Task<string> ApworldsInfo(SocketSlashCommand command)
     {
         var infoSelected = command.Data.Options.FirstOrDefault()?.Value as string;
 
@@ -84,7 +86,7 @@ public class ApworldClass : Declare
             return Resource.NoFileSelected;
         }
 
-        message = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected);
+        message = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected) ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -93,7 +95,7 @@ public class ApworldClass : Declare
         return message;
     }
 
-    public static string ListApworld(string message)
+    public static string ListApworld()
     {
         string apworldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
 

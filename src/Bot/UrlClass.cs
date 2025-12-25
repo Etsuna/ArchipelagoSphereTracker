@@ -9,7 +9,9 @@ using TrackerLib.Models;
 
 public class UrlClass
 {
-    public static async Task<string> AddUrl(SocketSlashCommand command, IGuildUser? guildUser, string message, string channelId, string guildId, ITextChannel channel)
+    public static string message { get; set; } = string.Empty;
+
+    public static async Task<string> AddUrl(SocketSlashCommand command, IGuildUser? guildUser, string channelId, string guildId, ITextChannel channel)
     {
         string baseUrl = string.Empty;
         string? tracker = string.Empty;
@@ -152,14 +154,14 @@ public class UrlClass
                     {
                         Declare.AddedChannelId.Add(channelId);
 
-                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr);
+                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr, port);
                         var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
                         var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
                         await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                         await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
                         await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
-                        var info = await HelperClass.Info("", channelId, guildId);
+                        var info = await HelperClass.Info(channelId, guildId);
                         await BotCommands.SendMessageAsync(info, channelId);
                         using MemoryStream playersStream = await SendPlayersInfoAsync(channelId, thread, aliasList, roomInfo, room);
                         await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
@@ -215,7 +217,7 @@ public class UrlClass
         }
     }
 
-    public static async Task<string> DeleteUrl(IGuildUser? guildUser, string message, string channelId, string guildId)
+    public static async Task<string> DeleteUrl(IGuildUser? guildUser, string channelId, string guildId)
     {
         message = await DeleteChannelAndUrl(channelId, guildId);
         return message;

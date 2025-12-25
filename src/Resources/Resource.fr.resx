@@ -177,9 +177,6 @@
   <data name="AliasAdded" xml:space="preserve">
     <value>Alias ajouté : {0} est maintenant associé à &lt;@{1}&gt; et son récapitulatif a été généré.</value>
   </data>
-  <data name="AliasOrUrlNotRegistered" xml:space="preserve">
-    <value>Aucune URL enregistrée pour ce canal ou aucun alias enregistré.</value>
-  </data>
   <data name="AliasNotRegistered" xml:space="preserve">
     <value>Aucun alias n’est enregistré.</value>
   </data>
@@ -426,9 +423,6 @@
   <data name="SCListItemDescription" xml:space="preserve">
     <value>Lister tous les items pour l’alias</value>
   </data>
-  <data name="SCListByLineDescription" xml:space="preserve">
-    <value>Afficher les items ligne par ligne (true) ou séparés par des virgules (false)</value>
-  </data>
   <data name="SCListYamlsDescription" xml:space="preserve">
     <value>Lister tous les fichiers YAML pour le canal</value>
   </data>
@@ -584,15 +578,6 @@
   </data>
   <data name="CAGeneratingYamlTemplates" xml:space="preserve">
     <value>📦 Génération de modèles YAML...</value>
-  </data>
-  <data name="CAEmbededError" xml:space="preserve">
-    <value>❌ Impossible de trouver la ressource intégrée : {0}</value>
-  </data>
-  <data name="CAGenerateTemplateApworldError" xml:space="preserve">
-    <value>❌ Le fichier 'generate_templates.apworld' n’a pas été écrit correctement.</value>
-  </data>
-  <data name="CAFileCopied" xml:space="preserve">
-    <value>✅ Fichier copié vers : {0}</value>
   </data>
   <data name="CALauncherNotFound" xml:space="preserve">
     <value>❌ Lanceur introuvable : {0}</value>
@@ -908,5 +893,8 @@
   </data>
   <data name="ErrorSilentModeUpdate" xml:space="preserve">
     <value>Erreur de mise à jour du mode silencieux.</value>
+  </data>
+  <data name="NewPort" xml:space="preserve">
+    <value>Nouveau Port : {0}.</value>
   </data>
 </root>

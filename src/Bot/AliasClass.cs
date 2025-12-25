@@ -5,7 +5,9 @@ using System.Text;
 
 public class AliasClass
 {
-    public static async Task<string> AddAlias(SocketSlashCommand command, string message, string? alias, string channelId, string guildId)
+    public static string message { get; set; } = string.Empty;
+
+    public static async Task<string> AddAlias(SocketSlashCommand command, string? alias, string channelId, string guildId)
     {
         var userId = command.User.Id.ToString();
         var skipUselessMention = command.Data.Options.ElementAtOrDefault(1)?.Value as string ?? "0";
@@ -40,7 +42,7 @@ public class AliasClass
         return message;
     }
 
-    public static async Task<string> DeleteAlias(SocketSlashCommand command, IGuildUser? guildUser, string message, string? alias, string channelId, string guildId)
+    public static async Task<string> DeleteAlias(SocketSlashCommand command, IGuildUser? guildUser, string? alias, string channelId, string guildId)
     {
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 
@@ -84,7 +86,7 @@ public class AliasClass
         return message;
     }
 
-    public static async Task<string> GetAlias(string message, string channelId, string guildId)
+    public static async Task<string> GetAlias(string channelId, string guildId)
     {
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 

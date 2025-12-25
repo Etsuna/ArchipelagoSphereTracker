@@ -3,8 +3,9 @@ using System.Text;
 
 public class HintClass
 {
+    public static string message { get; set; } = string.Empty;
+
     public static async Task<string> HintHandler(
-        string message,
         string? realAlias,
         string channelId,
         string guildId,
@@ -36,9 +37,8 @@ public class HintClass
     }
 
     public static Task<string> HintForReceiver(
-        string message, string? realAlias, string channelId, string guildId) =>
+        string? realAlias, string channelId, string guildId) =>
         HintHandler(
-            message,
             realAlias,
             channelId,
             guildId,
@@ -49,9 +49,8 @@ public class HintClass
             );
 
     public static Task<string> HintForFinder(
-        string message, string? realAlias, string channelId, string guildId) =>
+        string? realAlias, string channelId, string guildId) =>
         HintHandler(
-            message,
             realAlias,
             channelId,
             guildId,

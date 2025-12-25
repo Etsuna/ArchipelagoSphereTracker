@@ -10,7 +10,7 @@ public class Declare
     public static string ReleaseVersion = Version;
 #endif
     public static string BotVersion = CheckUpdate.GetLocalSemVer();
-    public static string BddVersion = "5.0.1";
+    public static string BddVersion = "5.0.2";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool TelemetryEnabled = (Environment.GetEnvironmentVariable("TELEMETRY") ?? "true").ToLower() == "true";
@@ -23,6 +23,7 @@ public class Declare
     public static List<string> AddedChannelId = new List<string>();
     public static readonly int MaxPlayer = 100;
     public static bool IsArchipelagoMode { get; set; } = false;
+    public static bool UpdateBdd { get; set; } = false;
 
     public static CancellationTokenSource Cts = new CancellationTokenSource();
     public static DiscordSocketClient Client = new DiscordSocketClient();

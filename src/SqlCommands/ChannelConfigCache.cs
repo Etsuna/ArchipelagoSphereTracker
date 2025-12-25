@@ -50,7 +50,7 @@ public static class ChannelConfigCache
 
         await using var connection = await Db.OpenReadAsync();
         using var cmd = new SQLiteCommand(@"
-                SELECT GuildId, ChannelId, Tracker, BaseUrl, Room, Silent, CheckFrequency, LastCheck
+                SELECT GuildId, ChannelId, Tracker, BaseUrl, Room, Silent, CheckFrequency, LastCheck, Port
                 FROM ChannelsAndUrlsTable;", connection);
 
         using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
@@ -66,6 +66,7 @@ public static class ChannelConfigCache
             var room = reader["Room"]?.ToString() ?? "";
             var silent = reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]);
             var checkFrequencyS = reader["CheckFrequency"]?.ToString() ?? "5m";
+            var port = reader["Port"]?.ToString() ?? "0";
             var checkFrequency = CheckFrequencyParser.ParseOrDefault(checkFrequencyS, minCheckFrequency, minCheckFrequency, null);
 
             DateTimeOffset? lastCheck = null;
@@ -85,7 +86,8 @@ public static class ChannelConfigCache
                     Room: room,
                     Silent: silent,
                     CheckFrequency: checkFrequency,
-                    LastCheck: lastCheck
+                    LastCheck: lastCheck,
+                    Port : port
                 ));
             }
         }
@@ -94,7 +96,7 @@ public static class ChannelConfigCache
     public static (bool ShouldRun, TimeSpan CheckFrequency) ShouldRunChecks(in ChannelConfig cfg)
     {
         if (cfg.LastCheck is null) return (true, cfg.CheckFrequency);
-        var key = $"{cfg.Room}:{cfg.BaseUrl}:{cfg.Tracker}";
+        var key = $"{cfg.Room}:{cfg.BaseUrl}:{cfg.Tracker}:{cfg.Port}";
         var should = DateTimeOffset.UtcNow - cfg.LastCheck.Value + GetJitter(key) >= cfg.CheckFrequency;
         return (should, cfg.CheckFrequency);
     }
@@ -106,5 +108,6 @@ string BaseUrl,
 string Room,
 bool Silent,
 TimeSpan CheckFrequency,
-DateTimeOffset? LastCheck
+DateTimeOffset? LastCheck,
+string Port
 );

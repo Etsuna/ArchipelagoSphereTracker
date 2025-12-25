@@ -89,14 +89,12 @@ public static class SlashCommandDefinitions
                 .AddOption(AliasOption("alias")),
 
              new SlashCommandBuilder()
-                .WithName("recap-all").WithDescription(Resource.SCRecapAllDescription)
-                .AddOption(BooleanOption("list-by-line", Resource.SCListByLineDescription)),
+                .WithName("recap-all").WithDescription(Resource.SCRecapAllDescription),
 
             new SlashCommandBuilder()
                 .WithName("recap")
                 .WithDescription(Resource.SCRecapDescription)
-                .AddOption(AliasOption("added-alias"))
-                .AddOption(BooleanOption("list-by-line", Resource.SCListByLineDescription)),
+                .AddOption(AliasOption("added-alias")),
 
             new SlashCommandBuilder()
                 .WithName("recap-and-clean")
@@ -123,8 +121,7 @@ public static class SlashCommandDefinitions
             new SlashCommandBuilder()
                 .WithName("list-items")
                 .WithDescription(Resource.SCListItemDescription)
-                .AddOption(AliasOption("alias"))
-                .AddOption(BooleanOption("list-by-line", Resource.SCListByLineDescription)),
+                .AddOption(AliasOption("alias")),
 
             new SlashCommandBuilder()
                 .WithName("apworlds-info")

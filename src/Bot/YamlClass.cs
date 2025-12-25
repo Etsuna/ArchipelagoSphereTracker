@@ -6,7 +6,9 @@ using System.Text;
 
 public class YamlClass : Declare
 {
-    public static async Task<string> DownloadTemplate(SocketSlashCommand command, string message)
+    public static string message { get; set; } = string.Empty;
+
+    public static async Task<string> DownloadTemplate(SocketSlashCommand command)
     {
         var yamlFile = command.Data.Options.FirstOrDefault()?.Value as string;
 
@@ -29,7 +31,7 @@ public class YamlClass : Declare
         return message;
     }
 
-    public static async Task<string> SendYaml(SocketSlashCommand command, string message, string channelId)
+    public static async Task<string> SendYaml(SocketSlashCommand command, string channelId)
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         if (attachment == null || !attachment.Filename.EndsWith(".yaml"))
@@ -92,7 +94,7 @@ public class YamlClass : Declare
         return message;
     }
 
-    public static string DeleteYaml(SocketSlashCommand command, string message, string channelId)
+    public static string DeleteYaml(SocketSlashCommand command, string channelId)
     {
         var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
@@ -126,7 +128,7 @@ public class YamlClass : Declare
         return message;
     }
 
-    public static async Task<string> BackupYamls(SocketSlashCommand command, string message, string channelId)
+    public static async Task<string> BackupYamls(SocketSlashCommand command, string channelId)
     {
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
         if (Directory.Exists(playersFolderChannel))

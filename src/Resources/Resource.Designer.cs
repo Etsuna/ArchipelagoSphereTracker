@@ -169,15 +169,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à No URL registered for this channel or no alias recorded..
-        /// </summary>
-        internal static string AliasOrUrlNotRegistered {
-            get {
-                return ResourceManager.GetString("AliasOrUrlNotRegistered", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à You are not the owner of this alias: &apos;{0}&apos;. Deletion not performed..
         /// </summary>
         internal static string AliasOtherOwner {
@@ -484,15 +475,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à ❌ Unable to find the embedded resource: {0}.
-        /// </summary>
-        internal static string CAEmbededError {
-            get {
-                return ResourceManager.GetString("CAEmbededError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Recherche une chaîne localisée semblable à ❌ ERROR: Failed to start the process..
         /// </summary>
         internal static string CAErrorProcess {
@@ -507,24 +489,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string CAException {
             get {
                 return ResourceManager.GetString("CAException", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ✅ File copied to: {0}.
-        /// </summary>
-        internal static string CAFileCopied {
-            get {
-                return ResourceManager.GetString("CAFileCopied", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à ❌ The file &apos;generate_templates.apworld&apos; was not written correctly..
-        /// </summary>
-        internal static string CAGenerateTemplateApworldError {
-            get {
-                return ResourceManager.GetString("CAGenerateTemplateApworldError", resourceCulture);
             }
         }
         
@@ -1258,6 +1222,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à New Port: {0}..
+        /// </summary>
+        internal static string NewPort {
+            get {
+                return ResourceManager.GetString("NewPort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à No BddVersion Table: migration required..
         /// </summary>
         internal static string NoBddVersionTable {
@@ -1830,15 +1803,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string SCListApworldDescription {
             get {
                 return ResourceManager.GetString("SCListApworldDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Display items line by line (true) or comma separated (false).
-        /// </summary>
-        internal static string SCListByLineDescription {
-            get {
-                return ResourceManager.GetString("SCListByLineDescription", resourceCulture);
             }
         }
         

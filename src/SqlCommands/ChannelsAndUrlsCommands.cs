@@ -9,11 +9,12 @@ using static TrackingDataManager;
 public static class ChannelsAndUrlsCommands
 {
     private static string DefaultTrackerValue = Resource.NotFound;
+    public static string message { get; set; } = string.Empty;
 
     // ==========================
     // 🎯 Channel et URL (WRITE)
     // ==========================
-    public static async Task AddOrEditUrlChannelAsync(string guildId, string channelId, string baseUrl, string room, string? tracker, bool silent, string checkFrequency)
+    public static async Task AddOrEditUrlChannelAsync(string guildId, string channelId, string baseUrl, string room, string? tracker, bool silent, string checkFrequency, string port)
     {
         try
         {
@@ -22,9 +23,9 @@ public static class ChannelsAndUrlsCommands
                 using var command = conn.CreateCommand();
                 command.CommandText = @"
                         INSERT OR REPLACE INTO ChannelsAndUrlsTable
-                            (GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, Silent)
+                            (GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, Silent, Port)
                         VALUES
-                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent);";
+                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent, @Port);";
 
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
@@ -33,6 +34,7 @@ public static class ChannelsAndUrlsCommands
                 command.Parameters.AddWithValue("@Tracker", tracker ?? DefaultTrackerValue);
                 command.Parameters.AddWithValue("@CheckFrequency", string.IsNullOrWhiteSpace(checkFrequency) ? "5m" : checkFrequency);
                 command.Parameters.AddWithValue("@Silent", silent);
+                command.Parameters.AddWithValue("@Port", port ?? "0");
 
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });
@@ -43,7 +45,8 @@ public static class ChannelsAndUrlsCommands
                 Room: room,
                 Silent: silent,
                 CheckFrequency: CheckFrequencyParser.ParseOrDefault(checkFrequency, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5), null),
-                LastCheck: null
+                LastCheck: null,
+                Port: port
             );
             ChannelConfigCache.Upsert(guildId, channelId, cfg);
 
@@ -106,7 +109,7 @@ public static class ChannelsAndUrlsCommands
     // ==========================
     // 🎯 GET URL AND TRACKER (READ)
     // ==========================
-    public static async Task<(string tracker, string baseUrl, string room, bool Silent, string CheckFrenquency, string? LastCheck)>
+    public static async Task<(string tracker, string baseUrl, string room, bool Silent, string CheckFrenquency, string? LastCheck, string? Port)>
     GetTrackerUrlsAsync(string guildId, string channelId)
     {
         try
@@ -114,7 +117,7 @@ public static class ChannelsAndUrlsCommands
             await using var connection = await Db.OpenReadAsync();
 
             using var command = new SQLiteCommand(@"
-            SELECT Tracker, BaseUrl, Room, Silent, CheckFrequency, LastCheck
+            SELECT Tracker, BaseUrl, Room, Silent, CheckFrequency, LastCheck, Port
             FROM ChannelsAndUrlsTable
             WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
 
@@ -129,6 +132,7 @@ public static class ChannelsAndUrlsCommands
                 var room = reader["Room"]?.ToString() ?? string.Empty;
                 var silent = reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]);
                 var checkFreq = reader["CheckFrequency"]?.ToString() ?? string.Empty;
+                var port = reader["Port"]?.ToString() ?? "0";
 
                 static string SinceAgo(DateTimeOffset dt)
                 {
@@ -155,15 +159,15 @@ public static class ChannelsAndUrlsCommands
                     lastCheck = $"{since}";
                 }
 
-                return (tracker, baseUrl, room, silent, checkFreq, lastCheck);
+                return (tracker, baseUrl, room, silent, checkFreq, lastCheck, port);
             }
 
-            return (string.Empty, string.Empty, string.Empty, false, string.Empty, null);
+            return (string.Empty, string.Empty, string.Empty, false, string.Empty, null, "0");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error while retrieving tracker URLs: {ex.Message}");
-            return (string.Empty, string.Empty, string.Empty, false, string.Empty, null);
+            return (string.Empty, string.Empty, string.Empty, false, string.Empty, null, "0");
         }
     }
 
@@ -337,14 +341,14 @@ public static class ChannelsAndUrlsCommands
     // ==========================
     // 🎯 GET URL + CheckFrequency + LastCheck (READ)
     // ==========================
-    public static async Task<(string tracker, string baseUrl, string room, bool silent, string checkFrequency, string? lastCheck)> GetChannelConfigAsync(string guildId, string channelId)
+    public static async Task<(string tracker, string baseUrl, string room, bool silent, string checkFrequency, string? lastCheck, string? port)> GetChannelConfigAsync(string guildId, string channelId)
     {
         try
         {
             await using var connection = await Db.OpenReadAsync();
 
             using var command = new SQLiteCommand(@"
-                    SELECT Tracker, BaseUrl, Room, Silent, CheckFrequency, LastCheck
+                    SELECT Tracker, BaseUrl, Room, Silent, CheckFrequency, LastCheck, Port
                     FROM ChannelsAndUrlsTable
                     WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
 
@@ -360,16 +364,17 @@ public static class ChannelsAndUrlsCommands
                     reader["Room"]?.ToString() ?? string.Empty,
                     reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]),
                     reader["CheckFrequency"]?.ToString() ?? "5m",
-                    reader["LastCheck"] as string
+                    reader["LastCheck"] as string,
+                    reader["Port"]?.ToString() ?? "0"
                 );
             }
 
-            return (string.Empty, string.Empty, string.Empty, false, "5m", null);
+            return (string.Empty, string.Empty, string.Empty, false, "5m", null, "0");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error while retrieving channel config: {ex.Message}");
-            return (string.Empty, string.Empty, string.Empty, false, "5m", null);
+            return (string.Empty, string.Empty, string.Empty, false, "5m", null, "0");
         }
     }
 
@@ -546,7 +551,7 @@ public static class ChannelsAndUrlsCommands
     // =================================================
     // 🎯 UPDATE CHECK FREQUENCY (WRITE)
     // ================================================
-    public static async Task<string> UpdateFrequencyCheck(SocketSlashCommand command, string message, string channelId, string guildId)
+    public static async Task<string> UpdateFrequencyCheck(SocketSlashCommand command, string channelId, string guildId)
     {
         try
         {
@@ -619,5 +624,23 @@ public static class ChannelsAndUrlsCommands
             Console.WriteLine($"Error while checking room existence: {ex.Message}");
             return null;
         }
+    }
+
+    // =================================================
+    // 🎯 UPDATE CHANNEL PORT (WRITE)
+    // =================================================
+    public static async Task<bool> UpdateChannelPortAsync(string guildId, string channelId, string port)
+    {
+        await using var conn = await Db.OpenWriteAsync();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+        UPDATE ChannelsAndUrlsTable
+        SET Port = @port
+        WHERE GuildId = @guildId AND ChannelId = @channelId;";
+        cmd.Parameters.AddWithValue("@port", port);
+        cmd.Parameters.AddWithValue("@guildId", guildId);
+        cmd.Parameters.AddWithValue("@channelId", channelId);
+        var rowsAffected = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        return rowsAffected > 0;
     }
 }

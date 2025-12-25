@@ -5,6 +5,7 @@ using System.Data.SQLite;
 
 public static class ExcludedItemsCommands
 {
+    public static string message { get; set; } = string.Empty;
     public static async Task<List<string>> GetItemNamesForAliasAsync(string guildId, string channelId, string alias)
     {
         var results = new List<string>();
@@ -80,7 +81,7 @@ public static class ExcludedItemsCommands
         return items;
     }
 
-    public static async Task<string> AddExcludedItemAsync(SocketSlashCommand command, string message, string? alias, string channelId, string guildId)
+    public static async Task<string> AddExcludedItemAsync(SocketSlashCommand command, string? alias, string channelId, string guildId)
     {
         var userId = command.User.Id.ToString();
         var item = command.Data.Options.ElementAtOrDefault(1)?.Value as string;

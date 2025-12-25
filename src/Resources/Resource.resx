@@ -197,10 +197,6 @@
     <value>Alias added: {0} is now associated with &lt;@{1}&gt; and its recap has been generated.</value>
     <comment>Alias added: {alias} is now associated with &lt;@{userId}&gt; and its recap has been generated.</comment>
   </data>
-  <data name="AliasOrUrlNotRegistered" xml:space="preserve">
-    <value>No URL registered for this channel or no alias recorded.</value>
-    <comment>No URL registered for this channel or no alias recorded.</comment>
-  </data>
   <data name="AliasNotRegistered" xml:space="preserve">
     <value>No alias is registered.</value>
     <comment>No alias is registered.</comment>
@@ -529,10 +525,6 @@
     <value>List all items for alias</value>
     <comment>List all items for alias</comment>
   </data>
-  <data name="SCListByLineDescription" xml:space="preserve">
-    <value>Display items line by line (true) or comma separated (false)</value>
-    <comment>Display items line by line (true) or comma separated (false)</comment>
-  </data>
   <data name="SCListYamlsDescription" xml:space="preserve">
     <value>List all YAML files for the channel</value>
     <comment>List all YAML files for the channel</comment>
@@ -740,18 +732,6 @@
   <data name="CAGeneratingYamlTemplates" xml:space="preserve">
     <value>📦 Generating YAML templates...</value>
     <comment>📦 Generating YAML templates...</comment>
-  </data>
-  <data name="CAEmbededError" xml:space="preserve">
-    <value>❌ Unable to find the embedded resource: {0}</value>
-    <comment>❌ Unable to find the embedded resource: {GenerateTemplatesPath}</comment>
-  </data>
-  <data name="CAGenerateTemplateApworldError" xml:space="preserve">
-    <value>❌ The file 'generate_templates.apworld' was not written correctly.</value>
-    <comment>❌ The file 'generate_templates.apworld' was not written correctly.</comment>
-  </data>
-  <data name="CAFileCopied" xml:space="preserve">
-    <value>✅ File copied to: {0}</value>
-    <comment>✅ File copied to: {destinationPath}</comment>
   </data>
   <data name="CALauncherNotFound" xml:space="preserve">
     <value>❌ Launcher not found: {0}</value>
@@ -1172,5 +1152,9 @@
   <data name="ErrorSilentModeUpdate" xml:space="preserve">
     <value>Error Silent Mode Update.</value>
     <comment>Error Silent Mode Update.</comment>
+  </data>
+  <data name="NewPort" xml:space="preserve">
+    <value>New Port: {0}.</value>
+    <comment>New Port: {0}.</comment>
   </data>
 </root>
