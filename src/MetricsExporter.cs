@@ -18,7 +18,7 @@ public static class MetricsExporter
             {
                 "guild_id", "guild_name",
                 "channel_id", "channel_name",
-                "base_url", "room", "tracker", "check_frequency", "silent"
+                "base_url", "room", "tracker", "check_frequency", "silent", "port"
             });
 
     private static readonly Gauge ChannelLastCheckSeconds =
@@ -120,7 +120,7 @@ public static class MetricsExporter
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = @"
-                SELECT GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, LastCheck, Silent
+                SELECT GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, LastCheck, Silent, Port
                 FROM ChannelsAndUrlsTable;";
             using var rdr = await cmd.ExecuteReaderAsync(ct);
             while (await rdr.ReadAsync(ct))
@@ -132,12 +132,13 @@ public static class MetricsExporter
                 var tracker = rdr.GetString(4);
                 var checkFrequency = rdr.GetString(5);
                 var silentStr = rdr.IsDBNull(7) ? "null" : (rdr.GetInt32(7) != 0 ? "true" : "false");
+                var portStr = rdr.GetString(8);
 
                 var guildName = ResolveGuildName(guild) ?? "unknown";
                 var channelName = ResolveChannelName(guild, channel) ?? "unknown";
 
-                var key = string.Join("|", guild, guildName, channel, channelName, baseUrl, room, tracker, checkFrequency, silentStr);
-                var ch = ChannelInfo.WithLabels(guild, guildName, channel, channelName, baseUrl, room, tracker, checkFrequency, silentStr);
+                var key = string.Join("|", guild, guildName, channel, channelName, baseUrl, room, tracker, checkFrequency, silentStr, portStr);
+                var ch = ChannelInfo.WithLabels(guild, guildName, channel, channelName, baseUrl, room, tracker, checkFrequency, silentStr, portStr);
                 ch.Set(1);
                 curChannelInfo[key] = ch;
 
