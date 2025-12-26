@@ -735,7 +735,7 @@
   <data name="ItemFor" xml:space="preserve">
     <value>Items pour</value>
   </data>
-  <data name="CheckPlayerMinMax" xml:space="preserve">
+  <data name="CheckPlayerMax" xml:space="preserve">
     <value>Joueurs minimum &gt; joueurs maximum. Impossible d’ajouter cet archipel. Le nombre maximum de joueurs est défini sur {0}.</value>
   </data>
   <data name="Every" xml:space="preserve">
@@ -896,5 +896,8 @@
   </data>
   <data name="NewPort" xml:space="preserve">
     <value>Nouveau Port : {0}.</value>
+  </data>
+  <data name="CheckPlayerMin" xml:space="preserve">
+    <value>Le nombre de joueurs doit être de 2 joueurs minimum.</value>
   </data>
 </root>

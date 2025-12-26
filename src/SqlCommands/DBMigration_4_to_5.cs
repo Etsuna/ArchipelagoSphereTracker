@@ -70,7 +70,7 @@ public static class DBMigration
 
                 var playersCount = roomInfo.Players.Count;
                 if (playersCount > Declare.MaxPlayer)
-                    return (false, string.Format(Resource.CheckPlayerMinMax, Declare.MaxPlayer));
+                    return (false, string.Format(Resource.CheckPlayerMax, Declare.MaxPlayer));
 
                 return (true, string.Empty);
             }

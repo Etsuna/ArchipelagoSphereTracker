@@ -65,8 +65,14 @@ public class UrlClass
                 return (false, Resource.UrlCheckMaxTread);
 
             var playersCount = roomInfo.Players.Count;
+            
+            if(playersCount <= 1)
+            {
+                return (false, Resource.CheckPlayerMin);
+            }
+
             if (playersCount > Declare.MaxPlayer)
-                return (false, string.Format(Resource.CheckPlayerMinMax, Declare.MaxPlayer));
+                return (false, string.Format(Resource.CheckPlayerMax, Declare.MaxPlayer));
 
             return (true, string.Empty);
         }

@@ -941,7 +941,7 @@
     <value>Items for</value>
     <comment>Items for</comment>
   </data>
-  <data name="CheckPlayerMinMax" xml:space="preserve">
+  <data name="CheckPlayerMax" xml:space="preserve">
     <value>Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}.</value>
     <comment>Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}.</comment>
   </data>
@@ -1156,5 +1156,9 @@
   <data name="NewPort" xml:space="preserve">
     <value>New Port: {0}.</value>
     <comment>New Port: {0}.</comment>
+  </data>
+  <data name="CheckPlayerMin" xml:space="preserve">
+    <value>The number of players must be 2 players minimum.</value>
+    <comment>The number of players must be 2 players minimum.</comment>
   </data>
 </root>

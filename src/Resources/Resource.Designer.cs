@@ -567,9 +567,18 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}..
         /// </summary>
-        internal static string CheckPlayerMinMax {
+        internal static string CheckPlayerMax {
             get {
-                return ResourceManager.GetString("CheckPlayerMinMax", resourceCulture);
+                return ResourceManager.GetString("CheckPlayerMax", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The number of players must be 2 players minimum..
+        /// </summary>
+        internal static string CheckPlayerMin {
+            get {
+                return ResourceManager.GetString("CheckPlayerMin", resourceCulture);
             }
         }
         
