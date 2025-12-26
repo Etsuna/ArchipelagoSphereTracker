@@ -5,8 +5,6 @@ using System.Text;
 
 public class AliasClass
 {
-    public static string message { get; set; } = string.Empty;
-
     public static async Task<string> AddAlias(SocketSlashCommand command, string? alias, string channelId, string guildId)
     {
         var userId = command.User.Id.ToString();
@@ -38,12 +36,13 @@ public class AliasClass
             await RecapListCommands.AddOrEditRecapListItemsAsync(guildId, channelId, alias, getAliasItems);
         }
 
-        message = string.Format(Resource.AliasAdded, alias, userId);
+        var message = string.Format(Resource.AliasAdded, alias, userId);
         return message;
     }
 
     public static async Task<string> DeleteAlias(SocketSlashCommand command, IGuildUser? guildUser, string? alias, string channelId, string guildId)
     {
+        var message = string.Empty;
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 
         getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
@@ -88,6 +87,7 @@ public class AliasClass
 
     public static async Task<string> GetAlias(string channelId, string guildId)
     {
+        var message = string.Empty;
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
 
         if (getReceiverAliases.Count == 0)

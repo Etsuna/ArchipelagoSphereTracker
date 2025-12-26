@@ -9,8 +9,6 @@ using TrackerLib.Models;
 
 public class UrlClass
 {
-    public static string message { get; set; } = string.Empty;
-
     public static async Task<string> AddUrl(SocketSlashCommand command, IGuildUser? guildUser, string channelId, string guildId, ITextChannel channel)
     {
         string baseUrl = string.Empty;
@@ -21,6 +19,7 @@ public class UrlClass
         var silent = command.Data.Options.ElementAtOrDefault(3)?.Value as bool? ?? false;
         var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
         var checkFrequencyStr = command.Data.Options.ElementAtOrDefault(4)?.Value as string ?? "5m";
+        var message = string.Empty;
 
         if (newUrl == null)
         {
@@ -225,7 +224,7 @@ public class UrlClass
 
     public static async Task<string> DeleteUrl(IGuildUser? guildUser, string channelId, string guildId)
     {
-        message = await DeleteChannelAndUrl(channelId, guildId);
+        var message = await DeleteChannelAndUrl(channelId, guildId);
         return message;
     }
 

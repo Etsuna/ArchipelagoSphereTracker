@@ -4,7 +4,6 @@ using System.Text;
 
 public class RecapAndCleanClass
 {
-    public static string message { get; set; } = string.Empty;
     public static async Task<string> HandleRecapOrClean(
     SocketSlashCommand command,
     string? alias,
@@ -16,6 +15,7 @@ public class RecapAndCleanClass
     bool returnRecap,
     Func<SocketSlashCommand, Dictionary<string, List<(string Item, long? Flag)>>, string, string, string?, string>? buildMessage)
     {
+        var message = string.Empty;
         var userId = command.User.Id.ToString();
 
         if (!await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "RecapListTable"))

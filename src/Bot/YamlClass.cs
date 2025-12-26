@@ -6,11 +6,10 @@ using System.Text;
 
 public class YamlClass : Declare
 {
-    public static string message { get; set; } = string.Empty;
-
     public static async Task<string> DownloadTemplate(SocketSlashCommand command)
     {
         var yamlFile = command.Data.Options.FirstOrDefault()?.Value as string;
+        var message = string.Empty;
 
         if (string.IsNullOrEmpty(yamlFile))
         {
@@ -34,6 +33,7 @@ public class YamlClass : Declare
     public static async Task<string> SendYaml(SocketSlashCommand command, string channelId)
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
+        var message = string.Empty;
         if (attachment == null || !attachment.Filename.EndsWith(".yaml"))
         {
             return Resource.YamlWrongFile;
@@ -98,6 +98,7 @@ public class YamlClass : Declare
     {
         var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+        var message = string.Empty;
 
         if (!string.IsNullOrEmpty(fileSelected))
         {
@@ -131,6 +132,7 @@ public class YamlClass : Declare
     public static async Task<string> BackupYamls(SocketSlashCommand command, string channelId)
     {
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+        var message = string.Empty;
         if (Directory.Exists(playersFolderChannel))
         {
             var backupFolder = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "backup");

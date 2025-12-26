@@ -9,7 +9,6 @@ using static TrackingDataManager;
 public static class ChannelsAndUrlsCommands
 {
     private static string DefaultTrackerValue = Resource.NotFound;
-    public static string message { get; set; } = string.Empty;
 
     // ==========================
     // 🎯 Channel et URL (WRITE)
@@ -553,6 +552,7 @@ public static class ChannelsAndUrlsCommands
     // ================================================
     public static async Task<string> UpdateFrequencyCheck(SocketSlashCommand command, string channelId, string guildId)
     {
+        var message = string.Empty;
         try
         {
             var newFrequency = command.Data.Options.FirstOrDefault()?.Value?.ToString();

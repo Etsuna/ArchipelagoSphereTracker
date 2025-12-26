@@ -5,10 +5,9 @@ using System.Text.RegularExpressions;
 
 public class HelperClass
 {
-    public static string message { get; set; } = string.Empty;
-
     public static async Task<string> GetPatch(SocketSlashCommand command, string channelId, string guildId)
     {
+        var message = string.Empty;
         var userId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
 
         if (string.IsNullOrWhiteSpace(userId))
@@ -31,6 +30,7 @@ public class HelperClass
 
     public static async Task<string> Info(string channelId, string guildId)
     {
+        var message = string.Empty;
         (var tracker, var baseUrl, var room, var silent, var CheckFrequency, var LastCheck, var Port) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
 
         var roomInfo = await UrlClass.RoomInfo(baseUrl, room);
@@ -44,7 +44,7 @@ public class HelperClass
             message += string.Format(Resource.HelperSilent, TranslateBool(silent)) + "\n";
             message += string.Format(Resource.HelperCheckFrequency, CheckFrequency) + "\n";
             message += string.Format(Resource.HelperLastCheck, LastCheck) + "\n";
-            message += string.Format(Resource.HelperPort, roomInfo.LastPort) + "\n";
+            message += string.Format(Resource.HelperPort, Port) + "\n";
         }
         else
         {
@@ -58,6 +58,7 @@ public class HelperClass
         var getGameStatusForGuildAndChannelAsync = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guildId, channelId);
         var (urlTracker, urlSphereTracker, room, silent, CheckFrequency, LastCheck, Port) = await ChannelsAndUrlsCommands.GetTrackerUrlsAsync(guildId, channelId);
         var getReceiverAliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
+        var message = string.Empty;
 
         if (silent)
         {
@@ -109,7 +110,7 @@ public class HelperClass
         }
         else
         {
-            message = $"{Resource.HelperStatusAllGames}\n";
+           message = $"{Resource.HelperStatusAllGames}\n";
 
             if (getGameStatusForGuildAndChannelAsync.Any())
             {
@@ -163,6 +164,7 @@ public class HelperClass
 
     public static async Task<string> ListItems(SocketSlashCommand command, string? userId, string? alias, string channelId, string guildId)
     {
+        var message = string.Empty;
         string BuildItemMessageByFlag(IEnumerable<DisplayedItem> items)
         {
             var sb = new StringBuilder();

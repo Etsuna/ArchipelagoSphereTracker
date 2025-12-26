@@ -3,8 +3,6 @@ using System.Text;
 
 public class HintClass
 {
-    public static string message { get; set; } = string.Empty;
-
     public static async Task<string> HintHandler(
         string? realAlias,
         string channelId,
@@ -19,6 +17,7 @@ public class HintClass
             return Resource.HintNoAlias;
 
         var hints = await fetchHintsFunc(guildId, channelId, realAlias).ConfigureAwait(false);
+        var message = string.Empty;
 
         if (hints.Any())
         {

@@ -17,8 +17,6 @@ public class GenerationClass : Declare
         return Path.Combine(ExtractPath, launcher);
     }
 
-    public static string message { get; set; } = string.Empty;
-
     private static ProcessStartInfo CreateProcessStartInfo(string launcherPath, string arguments)
     {
         return new ProcessStartInfo
@@ -158,7 +156,7 @@ public class GenerationClass : Declare
         var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
         var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
-        message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
+        var message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
 
         return message;
     }
@@ -176,7 +174,7 @@ public class GenerationClass : Declare
         var arguments = $"--player_files_path \"{playersFolder}\" --skip_output";
         var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
-        message = await RunGenerationProcessAsync(startInfo, command);
+        var message = await RunGenerationProcessAsync(startInfo, command);
 
         return message;
     }
@@ -207,7 +205,7 @@ public class GenerationClass : Declare
             var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
             var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
-            message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
+            var message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
             return message;
         }
         catch (Exception ex)

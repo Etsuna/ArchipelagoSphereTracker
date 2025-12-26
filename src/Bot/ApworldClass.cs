@@ -6,8 +6,6 @@ using System.Text;
 
 public class ApworldClass : Declare
 {
-    public static string message { get; set; } = string.Empty;
-
     public static async Task<string> SendApworld(SocketSlashCommand command)
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
@@ -33,12 +31,13 @@ public class ApworldClass : Declare
             await response.Content.CopyToAsync(fs);
         }
         CustomApworldClass.GenerateYamls();
-        message = string.Format(Resource.ApworldFileSent, attachment.Filename);
+        var message = string.Format(Resource.ApworldFileSent, attachment.Filename);
         return message;
     }
 
     public static async Task<string> BackupApworld(SocketSlashCommand command)
     {
+        var message = string.Empty;
         var apworldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
         if (Directory.Exists(apworldPath))
         {
@@ -86,7 +85,7 @@ public class ApworldClass : Declare
             return Resource.NoFileSelected;
         }
 
-        message = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected) ?? string.Empty;
+        var message = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected) ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -97,6 +96,7 @@ public class ApworldClass : Declare
 
     public static string ListApworld()
     {
+        var message = string.Empty;
         string apworldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
 
         if (Directory.Exists(apworldPath))
