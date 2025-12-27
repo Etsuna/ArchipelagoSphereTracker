@@ -6,7 +6,6 @@ public class RecapAndCleanClass
 {
     public static async Task<string> HandleRecapOrClean(
     SocketSlashCommand command,
-    string message,
     string? alias,
     string channelId,
     string guildId,
@@ -16,6 +15,7 @@ public class RecapAndCleanClass
     bool returnRecap,
     Func<SocketSlashCommand, Dictionary<string, List<(string Item, long? Flag)>>, string, string, string?, string>? buildMessage)
     {
+        var message = string.Empty;
         var userId = command.User.Id.ToString();
 
         if (!await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "RecapListTable"))
@@ -71,28 +71,28 @@ public class RecapAndCleanClass
         return message;
     }
 
-    public static async Task<string> Clean(SocketSlashCommand command, string message, string? alias, string channelId, string guildId)
+    public static async Task<string> Clean(SocketSlashCommand command,  string? alias, string channelId, string guildId)
     {
-        return await HandleRecapOrClean(command, message, alias, channelId, guildId, isAliasRequired: true, deleteAfter: true, includeAllAliases: false, returnRecap: false, buildMessage: null);
+        return await HandleRecapOrClean(command, alias, channelId, guildId, isAliasRequired: true, deleteAfter: true, includeAllAliases: false, returnRecap: false, buildMessage: null);
     }
 
-    public static async Task<string> CleanAll(SocketSlashCommand command, string message, string? alias, string channelId, string guildId)
+    public static async Task<string> CleanAll(SocketSlashCommand command, string? alias, string channelId, string guildId)
     {
-        return await HandleRecapOrClean(command, message, alias, channelId, guildId, isAliasRequired: false, deleteAfter: true, includeAllAliases: true, returnRecap: false, buildMessage: null);
+        return await HandleRecapOrClean(command, alias, channelId, guildId, isAliasRequired: false, deleteAfter: true, includeAllAliases: true, returnRecap: false, buildMessage: null);
     }
 
-    public static async Task<string> Recap(SocketSlashCommand command, string message, string? alias, string channelId, string guildId)
+    public static async Task<string> Recap(SocketSlashCommand command, string? alias, string channelId, string guildId)
     {
-        return await HandleRecapOrClean(command, message, alias, channelId, guildId, isAliasRequired: true, deleteAfter: false, includeAllAliases: false, returnRecap: true, buildMessage: BuildRecapMessage);
+        return await HandleRecapOrClean(command, alias, channelId, guildId, isAliasRequired: true, deleteAfter: false, includeAllAliases: false, returnRecap: true, buildMessage: BuildRecapMessage);
     }
 
-    public static async Task<string> RecapAll(SocketSlashCommand command, string message, string channelId, string guildId)
+    public static async Task<string> RecapAll(SocketSlashCommand command, string channelId, string guildId)
     {
-        return await HandleRecapOrClean(command, message, alias: null, channelId, guildId, isAliasRequired: false, deleteAfter: false, includeAllAliases: true, returnRecap: true, buildMessage: BuildRecapMessage);
+        return await HandleRecapOrClean(command, alias: null, channelId, guildId, isAliasRequired: false, deleteAfter: false, includeAllAliases: true, returnRecap: true, buildMessage: BuildRecapMessage);
     }
-    public static async Task<string> RecapAndClean(SocketSlashCommand command, string message, string? alias, string channelId, string guildId)
+    public static async Task<string> RecapAndClean(SocketSlashCommand command, string? alias, string channelId, string guildId)
     {
-        return await HandleRecapOrClean(command, message, alias, channelId, guildId, isAliasRequired: true, deleteAfter: true, includeAllAliases: false, returnRecap: true, buildMessage: BuildRecapMessage);
+        return await HandleRecapOrClean(command, alias, channelId, guildId, isAliasRequired: true, deleteAfter: true, includeAllAliases: false, returnRecap: true, buildMessage: BuildRecapMessage);
     }
 
     public sealed record RecapItem(string Item, long? Flag);
@@ -129,21 +129,18 @@ public class RecapAndCleanClass
         var sb = new StringBuilder(string.Format(Resource.RACDetailsForUser, userId));
         sb.AppendLine();
 
-        bool listByLine = command.Data.Options
-            .FirstOrDefault(o => o.Name == "list-by-line")?.Value as bool? ?? false;
-
         var toProcess = filterAlias != null ? data.Where(d => d.Key == filterAlias) : data;
         bool firstSection = true;
 
         foreach (var sub in toProcess)
         {
-            if (listByLine && !firstSection) sb.AppendLine(); 
+            if (firstSection) sb.AppendLine();
             firstSection = false;
 
-            sb.AppendLine($"**{sub.Key}**"); 
+            sb.AppendLine($"**{sub.Key}**");
 
             var items = sub.Value ?? new List<(string, long?)>();
-        
+
             if (items.Count == 0)
             {
                 sb.AppendLine(Resource.HelperNoItems);
@@ -159,7 +156,7 @@ public class RecapAndCleanClass
 
             foreach (var fg in byFlag)
             {
-                if (listByLine && !firstFlag) sb.AppendLine();
+                if (!firstFlag) sb.AppendLine();
                 firstFlag = false;
 
                 var groupedItems = fg
@@ -172,18 +169,10 @@ public class RecapAndCleanClass
                 if (!string.IsNullOrEmpty(label))
                     sb.AppendLine($"**{label}:**");
 
-                if (listByLine)
-                {
-                    foreach (var s in groupedItems)
-                        sb.AppendLine(s);
-                }
-                else
-                {
-                    sb.AppendLine(string.Join(", ", groupedItems));
-                }
+                foreach (var s in groupedItems)
+                    sb.AppendLine(s);
             }
         }
-
         return sb.ToString();
     }
 }

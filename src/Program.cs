@@ -22,6 +22,8 @@ class Program
         args = ["--normalmode"];
 #elif DEBUG
         args = ["--normalmode"];
+#elif UPDATEBDD
+        args = ["--updatebdd"];
 #endif
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
@@ -60,6 +62,12 @@ class Program
             Declare.IsArchipelagoMode = false;
         }
 
+        if (args[0].ToLower() == "--updatebdd")
+        {
+            Console.WriteLine("UpdateBdd");
+            Declare.UpdateBdd = true;
+        }
+
         if (args[0].ToLower() == "")
         {
             ShowHelp();
@@ -84,6 +92,10 @@ class Program
         else
         {
             await CheckBdd();
+            if(Declare.UpdateBdd)
+            {
+                return;
+            }
         }
 
         await DatabaseInitializer.InitializeDatabaseAsync();
@@ -244,6 +256,7 @@ class Program
             Console.WriteLine(Resource.NoBddVersionTable);
             await DBMigration.Migrate_4_to_5Async(cts.Token);
             await DBMigration_5.Migrate_5_0_1(cts.Token);
+            await DBMigration_5.Migrate_5_0_2(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }
@@ -257,11 +270,18 @@ class Program
             await DBMigration_5.Migrate_5_0_1(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
+        else if (bddVersion == "5.0.1")
+        {
+            Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
+            await DBMigration_5.Migrate_5_0_2(cts.Token);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+        }
         else
         {
             Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
             await DBMigration.Migrate_4_to_5Async(cts.Token);
             await DBMigration_5.Migrate_5_0_1(cts.Token);
+            await DBMigration_5.Migrate_5_0_2(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }

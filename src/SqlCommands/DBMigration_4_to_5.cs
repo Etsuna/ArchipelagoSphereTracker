@@ -3,11 +3,14 @@ using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using System.Data.SQLite;
 using System.Net.Http;
 using System.Threading;
+using static TrackingDataManager;
 
 public static class DBMigration
 {
     public static async Task Migrate_4_to_5Async(CancellationToken ct = default)
     {
+        Console.WriteLine("Migrating to DB version 5.0.0: Updating ChannelsAndUrlsTable schema and migrating existing entries.");
+
         var guildList = await GetAllGuildChannelMappingsAsync();
         await Task.Delay(1000, ct);
         var OldDisplayedItems = await GetAllDisplayedItemsAsync();
@@ -67,7 +70,7 @@ public static class DBMigration
 
                 var playersCount = roomInfo.Players.Count;
                 if (playersCount > Declare.MaxPlayer)
-                    return (false, string.Format(Resource.CheckPlayerMinMax, Declare.MaxPlayer));
+                    return (false, string.Format(Resource.CheckPlayerMax, Declare.MaxPlayer));
 
                 return (true, string.Empty);
             }
@@ -126,7 +129,7 @@ public static class DBMigration
                         {
                             Declare.AddedChannelId.Add(channelId);
 
-                            await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr);
+                            await AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr);
                             await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                             await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
 
@@ -567,5 +570,38 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
                 fkOn.ExecuteNonQuery();
             }
         });
+    }
+
+    public static async Task AddOrEditUrlChannelAsync(string guildId, string channelId, string baseUrl, string room, string? tracker, bool silent, string checkFrequency)
+    {
+        string DefaultTrackerValue = Resource.NotFound;
+
+        try
+        {
+            await Db.WriteAsync(async conn =>
+            {
+                using var command = conn.CreateCommand();
+                command.CommandText = @"
+                        INSERT OR REPLACE INTO ChannelsAndUrlsTable
+                            (GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, Silent)
+                        VALUES
+                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent);";
+
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                command.Parameters.AddWithValue("@BaseUrl", new Uri(baseUrl).GetLeftPart(UriPartial.Authority));
+                command.Parameters.AddWithValue("@Room", room);
+                command.Parameters.AddWithValue("@Tracker", tracker ?? DefaultTrackerValue);
+                command.Parameters.AddWithValue("@CheckFrequency", string.IsNullOrWhiteSpace(checkFrequency) ? "5m" : checkFrequency);
+                command.Parameters.AddWithValue("@Silent", silent);
+
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+            });
+            Console.WriteLine(Resource.AddOrEditUrlChannelAsyncSuccessful);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while adding or updating the URL: {ex.Message}");
+        }
     }
 }

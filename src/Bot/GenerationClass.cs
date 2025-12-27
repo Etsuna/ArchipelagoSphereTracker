@@ -109,7 +109,7 @@ public class GenerationClass : Declare
         return string.Empty;
     }
 
-    public static async Task<string> GenerateWithZip(SocketSlashCommand command, string message, string channelId)
+    public static async Task<string> GenerateWithZip(SocketSlashCommand command, string channelId)
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         if (attachment == null || !attachment.Filename.EndsWith(".zip"))
@@ -156,12 +156,12 @@ public class GenerationClass : Declare
         var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
         var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
-        message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
+        var message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
 
         return message;
     }
 
-    public static async Task<string> TestGenerateAsync(SocketSlashCommand command, string message, string channelId)
+    public static async Task<string> TestGenerateAsync(SocketSlashCommand command, string channelId)
     {
         var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
 
@@ -174,12 +174,12 @@ public class GenerationClass : Declare
         var arguments = $"--player_files_path \"{playersFolder}\" --skip_output";
         var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
-        message = await RunGenerationProcessAsync(startInfo, command);
+        var message = await RunGenerationProcessAsync(startInfo, command);
 
         return message;
     }
 
-    public static async Task<string> GenerateAsync(SocketSlashCommand command, string message, string channelId)
+    public static async Task<string> GenerateAsync(SocketSlashCommand command, string channelId)
     {
         var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
         var outputFolder = Path.Combine(OutputPath, channelId);
@@ -205,7 +205,7 @@ public class GenerationClass : Declare
             var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
             var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
-            message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
+            var message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
             return message;
         }
         catch (Exception ex)

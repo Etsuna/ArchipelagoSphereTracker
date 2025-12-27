@@ -118,7 +118,7 @@ public static class BotCommands
 
                 if (isThread)
                 {
-                    message = await HandleThreadedCommand(command, guildUser, "", alias, realAlias, channelId, guildId);
+                    message = await HandleThreadedCommand(command, guildUser, alias, realAlias, channelId, guildId);
                     await SendPaginatedMessageAsync(command, message, maxLength);
                 }
                 else
@@ -138,34 +138,34 @@ public static class BotCommands
         });
     }
 
-    private static async Task<string> HandleThreadedCommand(SocketSlashCommand command, IGuildUser? user, string message, string? alias, string? realAlias, string channelId, string guildId)
+    private static async Task<string> HandleThreadedCommand(SocketSlashCommand command, IGuildUser? user, string? alias, string? realAlias, string channelId, string guildId)
     {
         var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
 
         if (!checkChannel)
         {
-            return message = Resource.NoUrlRegistered;
+            return Resource.NoUrlRegistered;
         }
 
         return command.CommandName switch
         {
-            "get-aliases" => await AliasClass.GetAlias(message, channelId, guildId),
-            "delete-alias" => await AliasClass.DeleteAlias(command, user, message, alias, channelId, guildId),
-            "add-alias" => await AliasClass.AddAlias(command, message, alias, channelId, guildId),
-            "delete-url" => await UrlClass.DeleteUrl(user, message, channelId, guildId),
-            "recap-all" => await RecapAndCleanClass.RecapAll(command, message, channelId, guildId),
-            "recap" => await RecapAndCleanClass.Recap(command, message, alias, channelId, guildId),
-            "recap-and-clean" => await RecapAndCleanClass.RecapAndClean(command, message, alias, channelId, guildId),
-            "clean" => await RecapAndCleanClass.Clean(command, message, alias, channelId, guildId),
-            "clean-all" => await RecapAndCleanClass.CleanAll(command, message, alias, channelId, guildId),
-            "list-items" => await HelperClass.ListItems(command, user?.Id.ToString() ?? "", message, alias, channelId, guildId),
-            "hint-from-finder" => await HintClass.HintForFinder(message, realAlias, channelId, guildId),
-            "hint-for-receiver" => await HintClass.HintForReceiver(message, realAlias, channelId, guildId),
-            "status-games-list" => await HelperClass.StatusGameList(message, channelId, guildId),
-            "info" => await HelperClass.Info(message, channelId, guildId),
-            "get-patch" => await HelperClass.GetPatch(command, message, channelId, guildId),
-            "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, message, channelId, guildId),
-            "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, message, alias, channelId, guildId),
+            "get-aliases" => await AliasClass.GetAlias(channelId, guildId),
+            "delete-alias" => await AliasClass.DeleteAlias(command, user, alias, channelId, guildId),
+            "add-alias" => await AliasClass.AddAlias(command, alias, channelId, guildId),
+            "delete-url" => await UrlClass.DeleteUrl(user, channelId, guildId),
+            "recap-all" => await RecapAndCleanClass.RecapAll(command, channelId, guildId),
+            "recap" => await RecapAndCleanClass.Recap(command, alias, channelId, guildId),
+            "recap-and-clean" => await RecapAndCleanClass.RecapAndClean(command,  alias, channelId, guildId),
+            "clean" => await RecapAndCleanClass.Clean(command, alias, channelId, guildId),
+            "clean-all" => await RecapAndCleanClass.CleanAll(command, alias, channelId, guildId),
+            "list-items" => await HelperClass.ListItems(command, user?.Id.ToString() ?? "", alias, channelId, guildId),
+            "hint-from-finder" => await HintClass.HintForFinder(realAlias, channelId, guildId),
+            "hint-for-receiver" => await HintClass.HintForReceiver(realAlias, channelId, guildId),
+            "status-games-list" => await HelperClass.StatusGameList(channelId, guildId),
+            "info" => await HelperClass.Info(channelId, guildId),
+            "get-patch" => await HelperClass.GetPatch(command, channelId, guildId),
+            "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, channelId, guildId),
+            "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, alias, channelId, guildId),
             "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
             "delete-excluded-item" => await ExcludedItemsCommands.DeleteExcludedItemAsync(command, channelId, guildId, alias),
             "update-silent-option" => await ChannelsAndUrlsCommands.UpdateSilentOption(command, channelId, guildId),
@@ -177,20 +177,20 @@ public static class BotCommands
     {
         return command.CommandName switch
         {
-            "add-url" => await UrlClass.AddUrl(command, user, "", channelId, guildId, (ITextChannel)command.Channel),
+            "add-url" => await UrlClass.AddUrl(command, user, channelId, guildId, (ITextChannel)command.Channel),
             "list-yamls" => YamlClass.ListYamls(channelId),
-            "backup-yamls" => await YamlClass.BackupYamls(command, "", channelId),
-            "delete-yaml" => YamlClass.DeleteYaml(command, "", channelId),
+            "backup-yamls" => await YamlClass.BackupYamls(command, channelId),
+            "delete-yaml" => YamlClass.DeleteYaml(command, channelId),
             "clean-yamls" => YamlClass.CleanYamls(channelId),
-            "send-yaml" => await YamlClass.SendYaml(command, "", channelId),
-            "download-template" => await YamlClass.DownloadTemplate(command, ""),
-            "list-apworld" => ApworldClass.ListApworld(""),
-            "apworlds-info" => await ApworldClass.ApworldsInfo(command, ""),
-            "backup-apworld" => await ApworldClass.BackupApworld(command, ""),
-            "send-apworld" => await ApworldClass.SendApworld(command, ""),
-            "generate" => await GenerationClass.GenerateAsync(command, "", channelId),
-            "test-generate" => await GenerationClass.TestGenerateAsync(command, "", channelId),
-            "generate-with-zip" => await GenerationClass.GenerateWithZip(command, "", channelId),
+            "send-yaml" => await YamlClass.SendYaml(command, channelId),
+            "download-template" => await YamlClass.DownloadTemplate(command),
+            "list-apworld" => ApworldClass.ListApworld(),
+            "apworlds-info" => await ApworldClass.ApworldsInfo(command),
+            "backup-apworld" => await ApworldClass.BackupApworld(command),
+            "send-apworld" => await ApworldClass.SendApworld(command),
+            "generate" => await GenerationClass.GenerateAsync(command, channelId),
+            "test-generate" => await GenerationClass.TestGenerateAsync(command, channelId),
+            "generate-with-zip" => await GenerationClass.GenerateWithZip(command, channelId),
             "discord" => Resource.Discord, 
             _ => Resource.BotCommandThread
         };

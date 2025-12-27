@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS ChannelsAndUrlsTable (
     Tracker        TEXT NOT NULL,
     CheckFrequency TEXT NOT NULL,
     LastCheck      TEXT,
-    Silent         BOOLEAN
+    Silent         BOOLEAN,
+    Port           TEXT
 );
 
 CREATE TABLE IF NOT EXISTS UrlAndChannelPatchTable (

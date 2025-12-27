@@ -88,7 +88,7 @@ public static class TrackingDataManager
                                     {
                                         if (!ChannelConfigCache.TryGet(guild, channel, out var cfg))
                                         {
-                                            var (tracker, baseUrl, room, silent, checkFrequencyStr, lastCheckStr)
+                                            var (tracker, baseUrl, room, silent, checkFrequencyStr, lastCheckStr, port)
                                                 = await ChannelsAndUrlsCommands.GetChannelConfigAsync(guild, channel);
 
                                             if (string.IsNullOrWhiteSpace(tracker) || string.IsNullOrWhiteSpace(baseUrl))
@@ -102,7 +102,12 @@ public static class TrackingDataManager
 
                                             DateTimeOffset? last = TryParseIsoOrUnixMs(lastCheckStr);
 
-                                            cfg = new ChannelConfig(tracker, baseUrl, room, silent, checkFrequency, last);
+                                            if(port == null)
+                                            {
+                                                port = "0";
+                                            }
+
+                                            cfg = new ChannelConfig(tracker, baseUrl, room, silent, checkFrequency, last, port);
                                             ChannelConfigCache.Upsert(guild, channel, cfg);
                                         }
 
@@ -226,8 +231,27 @@ public static class TrackingDataManager
                                         }
 
                                         Console.WriteLine(string.Format(Resource.TDMCheckingItems, nameForLog));
-                                        await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
+                                        var roomInfo = await UrlClass.RoomInfo(cfg.BaseUrl, cfg.Room);
 
+                                        if (roomInfo != null)
+                                        {
+                                            if (cfg.Port != roomInfo.LastPort.ToString())
+                                            {
+                                                cfg = cfg with { Port = roomInfo.LastPort.ToString() };
+                                                ChannelConfigCache.Upsert(guild, channel, cfg);
+                                                await ChannelsAndUrlsCommands.UpdateChannelPortAsync(guild, channel, roomInfo.LastPort.ToString());
+                                                try
+                                                {
+                                                    var message = string.Format(Resource.NewPort, roomInfo.LastPort.ToString());
+                                                    await BotCommands.SendMessageAsync($"@everyone, {message}", channel);
+                                                }
+                                                finally
+                                                {
+                                                    RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
+                                                }
+                                            }
+                                        }
+                                        await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
                                     }
                                     finally
                                     {

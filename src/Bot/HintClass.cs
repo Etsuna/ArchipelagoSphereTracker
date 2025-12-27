@@ -4,7 +4,6 @@ using System.Text;
 public class HintClass
 {
     public static async Task<string> HintHandler(
-        string message,
         string? realAlias,
         string channelId,
         string guildId,
@@ -18,6 +17,7 @@ public class HintClass
             return Resource.HintNoAlias;
 
         var hints = await fetchHintsFunc(guildId, channelId, realAlias).ConfigureAwait(false);
+        var message = string.Empty;
 
         if (hints.Any())
         {
@@ -36,9 +36,8 @@ public class HintClass
     }
 
     public static Task<string> HintForReceiver(
-        string message, string? realAlias, string channelId, string guildId) =>
+        string? realAlias, string channelId, string guildId) =>
         HintHandler(
-            message,
             realAlias,
             channelId,
             guildId,
@@ -49,9 +48,8 @@ public class HintClass
             );
 
     public static Task<string> HintForFinder(
-        string message, string? realAlias, string channelId, string guildId) =>
+        string? realAlias, string channelId, string guildId) =>
         HintHandler(
-            message,
             realAlias,
             channelId,
             guildId,

@@ -6,7 +6,7 @@ using System.Text;
 
 public class ApworldClass : Declare
 {
-    public static async Task<string> SendApworld(SocketSlashCommand command, string message)
+    public static async Task<string> SendApworld(SocketSlashCommand command)
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         if (attachment == null || !attachment.Filename.EndsWith(".apworld"))
@@ -31,12 +31,13 @@ public class ApworldClass : Declare
             await response.Content.CopyToAsync(fs);
         }
         CustomApworldClass.GenerateYamls();
-        message = string.Format(Resource.ApworldFileSent, attachment.Filename);
+        var message = string.Format(Resource.ApworldFileSent, attachment.Filename);
         return message;
     }
 
-    public static async Task<string> BackupApworld(SocketSlashCommand command, string message)
+    public static async Task<string> BackupApworld(SocketSlashCommand command)
     {
+        var message = string.Empty;
         var apworldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
         if (Directory.Exists(apworldPath))
         {
@@ -75,7 +76,7 @@ public class ApworldClass : Declare
         return message;
     }
 
-    public static async Task<string> ApworldsInfo(SocketSlashCommand command, string? message)
+    public static async Task<string> ApworldsInfo(SocketSlashCommand command)
     {
         var infoSelected = command.Data.Options.FirstOrDefault()?.Value as string;
 
@@ -84,7 +85,7 @@ public class ApworldClass : Declare
             return Resource.NoFileSelected;
         }
 
-        message = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected);
+        var message = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected) ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -93,8 +94,9 @@ public class ApworldClass : Declare
         return message;
     }
 
-    public static string ListApworld(string message)
+    public static string ListApworld()
     {
+        var message = string.Empty;
         string apworldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
 
         if (Directory.Exists(apworldPath))
