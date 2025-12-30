@@ -40,7 +40,7 @@ public static class UpdateReminder
                             await MaybeNotifyDailyAsync(guild, channel, owner, repo, ctG);
                     });
 
-                await Task.Delay(TimeSpan.FromHours(1), token);
+                await Task.Delay(TimeSpan.FromDays(1), token);
             }
         }, token);
     }

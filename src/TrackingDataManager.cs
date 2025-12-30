@@ -24,8 +24,8 @@ public static class TrackingDataManager
 
     public static void StartTracking()
     {
-        const int MaxGuildsParallel = 24;
-        const int MaxChannelsParallel = 6;
+        const int MaxGuildsParallel = 8;
+        const int MaxChannelsParallel = 2;
 
         if (Declare.Cts != null)
             Declare.Cts.Cancel();
@@ -102,7 +102,7 @@ public static class TrackingDataManager
 
                                             DateTimeOffset? last = TryParseIsoOrUnixMs(lastCheckStr);
 
-                                            if(port == null)
+                                            if (port == null)
                                             {
                                                 port = "0";
                                             }
@@ -281,32 +281,36 @@ public static class TrackingDataManager
     public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, bool sendAsTextFile)
         => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None, sendAsTextFile);
 
+    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(3);
+
     public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan, bool sendAsTextFile = false)
     {
         var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctChan);
-        cts.CancelAfter(TimeSpan.FromSeconds(30));
+        cts.CancelAfter(TimeSpan.FromSeconds(180));
 
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
         var urlStatic = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{tracker}";
 
-        string json, jsonStatic;
+        string? json = null, jsonStatic = null;
+
         try
         {
-            json = await Http.GetStringAsync(url, cts.Token);
-            jsonStatic = await Http.GetStringAsync(urlStatic, cts.Token);
+            json = await HttpThrottle.GetStringThrottledAsync(
+                Http, url, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
+
+            jsonStatic = await HttpThrottle.GetStringThrottledAsync(
+                Http, urlStatic, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
         }
         catch (OperationCanceledException)
         {
             Console.WriteLine($"[TDM] Serveur indisponible ou lent pour {baseUrl}. Abandon de la passe.");
             return;
         }
-        catch (HttpRequestException hre)
-        {
-            Console.WriteLine($"[TDM] Erreur HTTP pour {url}: {hre.Message}");
+
+        if (string.IsNullOrWhiteSpace(json) || string.IsNullOrWhiteSpace(jsonStatic))
             return;
-        }
 
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);

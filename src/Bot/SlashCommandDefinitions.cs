@@ -1,5 +1,6 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using Discord;
+using System.Threading.Channels;
 
 public static class SlashCommandDefinitions
 {
@@ -58,6 +59,7 @@ public static class SlashCommandDefinitions
                     .WithRequired(true)
                     .AddChoice(Resource.SCThreadPublic, "Public")
                     .AddChoice(Resource.SCThreadPrivate, "Private"))
+                .AddOption(BooleanOption("auto-add-members", "Auto-add all channel members to the thread (public only)"))
                 .AddOption(BooleanOption(Resource.SCSilentOption, Resource.SCSilentDescription))
                 .AddOption(new SlashCommandOptionBuilder()
                     .WithName(Resource.CheckFrequency)
