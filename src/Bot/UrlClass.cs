@@ -2,7 +2,6 @@
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Discord;
 using Discord.WebSocket;
-using System.Net;
 using System.Text;
 using System.Text.Json;
 using TrackerLib.Models;
@@ -275,7 +274,7 @@ public class UrlClass
         Timeout = TimeSpan.FromSeconds(5)
     };
 
-    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(2);
 
     public static async Task<RoomStatus?> RoomInfo(string baseUrl, string roomId, CancellationToken ct = default)
     {

@@ -24,8 +24,8 @@ public static class TrackingDataManager
 
     public static void StartTracking()
     {
-        const int MaxGuildsParallel = 8;
-        const int MaxChannelsParallel = 2;
+        const int MaxGuildsParallel = 10;
+        const int MaxChannelsParallel = 1;
 
         if (Declare.Cts != null)
             Declare.Cts.Cancel();
@@ -281,7 +281,7 @@ public static class TrackingDataManager
     public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, bool sendAsTextFile)
         => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None, sendAsTextFile);
 
-    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(2);
 
     public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan, bool sendAsTextFile = false)
     {
