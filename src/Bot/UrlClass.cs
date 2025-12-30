@@ -16,9 +16,12 @@ public class UrlClass
         string? room = string.Empty;
         string port = string.Empty;
 
-        var silent = command.Data.Options.ElementAtOrDefault(3)?.Value as bool? ?? false;
-        var newUrl = command.Data.Options.FirstOrDefault()?.Value as string;
-        var checkFrequencyStr = command.Data.Options.ElementAtOrDefault(4)?.Value as string ?? "5m";
+        var newUrl = command.Data.Options.ElementAt(0)?.Value as string;
+        var threadTitle = command.Data.Options.ElementAt(1)?.Value as string ?? "Archipelago";
+        var threadType = command.Data.Options.ElementAt(2)?.Value as string ?? "Private";
+        var autoAddMembers = command.Data.Options.ElementAtOrDefault(3)?.Value as bool? ?? false;
+        var silent = command.Data.Options.ElementAtOrDefault(4)?.Value as bool? ?? false;
+        var checkFrequencyStr = command.Data.Options.ElementAtOrDefault(5)?.Value as string ?? "5m";
         var message = string.Empty;
 
         if (newUrl == null)
@@ -95,9 +98,6 @@ public class UrlClass
                 }
                 else
                 {
-                    string? threadTitle = command.Data.Options.ElementAt(1).Value.ToString();
-                    string? threadType = command.Data.Options.ElementAt(2).Value.ToString();
-
                     ThreadType type = threadType switch
                     {
                         "Private" => ThreadType.PrivateThread,
@@ -123,10 +123,20 @@ public class UrlClass
                     }
                     else
                     {
-                        await foreach (var memberBatch in channel.GetUsersAsync())
+                        if(autoAddMembers)
                         {
-                            foreach (var member in memberBatch)
-                                await thread.AddUserAsync(member);
+                            await foreach (var memberBatch in channel.GetUsersAsync())
+                            {
+                                foreach (var member in memberBatch)
+                                    await thread.AddUserAsync(member);
+                            }
+                        }
+                        else
+                        {
+                            if (command.User is IGuildUser user)
+                                await thread.AddUserAsync(user);
+                            else
+                                message = Resource.UrlPrivateThreadUserNotFound;
                         }
                     }
 
@@ -265,12 +275,7 @@ public class UrlClass
         Timeout = TimeSpan.FromSeconds(5)
     };
 
-    private static TimeSpan Backoff(int attempt)
-    {
-        var baseMs = 250 * (int)Math.Pow(2, attempt - 1);
-        var jitter = Random.Shared.Next(0, 200);
-        return TimeSpan.FromMilliseconds(baseMs + jitter);
-    }
+    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(3);
 
     public static async Task<RoomStatus?> RoomInfo(string baseUrl, string roomId, CancellationToken ct = default)
     {
@@ -282,53 +287,33 @@ public class UrlClass
 
         var url = new Uri(baseUri, $"api/room_status/{roomId.Trim()}");
 
-        for (int attempt = 1; attempt <= 3; attempt++)
+        string? json;
+        try
         {
-            try
-            {
-                using var req = new HttpRequestMessage(HttpMethod.Get, url);
-                using var res = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-
-                if (res.StatusCode == HttpStatusCode.NotFound)
-                    return null;
-
-                if (!res.IsSuccessStatusCode)
-                {
-                    if ((int)res.StatusCode >= 500 && attempt < 3)
-                    {
-                        await Task.Delay(Backoff(attempt), ct).ConfigureAwait(false);
-                        continue;
-                    }
-                    return null;
-                }
-
-                var json = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                return JsonSerializer.Deserialize<RoomStatus>(json);
-            }
-            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-            {
-                if (attempt < 3)
-                {
-                    await Task.Delay(Backoff(attempt), ct).ConfigureAwait(false);
-                    continue;
-                }
-                return null;
-            }
-            catch (HttpRequestException)
-            {
-                if (attempt < 3)
-                {
-                    await Task.Delay(Backoff(attempt), ct).ConfigureAwait(false);
-                    continue;
-                }
-                return null;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            json = await HttpThrottle.GetStringThrottledAsync(
+                Http,
+                url.ToString(),
+                minSpacingPerHost: MinSpacingPerHost,
+                ct: ct,
+                maxAttempts: 3,
+                log: Console.WriteLine
+            ).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
         }
 
-        return null;
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+
+        try
+        {
+            return JsonSerializer.Deserialize<RoomStatus>(json);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

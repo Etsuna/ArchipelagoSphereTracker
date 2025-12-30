@@ -292,17 +292,6 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             } while (r.Read() && depth > 0);
         }
 
-        private static void SkipObject(ref Utf8JsonReader r)
-        {
-            if (r.TokenType != JsonTokenType.StartObject) return;
-            int depth = 1;
-            while (r.Read() && depth > 0)
-            {
-                if (r.TokenType == JsonTokenType.StartObject) depth++;
-                else if (r.TokenType == JsonTokenType.EndObject) depth--;
-            }
-        }
-
         private static int ReadInt(ref Utf8JsonReader r)
             => r.TokenType switch
             {
