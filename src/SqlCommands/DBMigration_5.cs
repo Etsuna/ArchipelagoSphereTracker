@@ -113,7 +113,7 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
             Console.WriteLine($"Migrate Guild: {guild.GuildId}, Channel: {guild.ChannelId}, Room: {guild.Room}");
 
             var roomInfo = await UrlClass.RoomInfo(guild.BaseUrl, guild.Room);
-            if(roomInfo == null)
+            if (roomInfo == null)
             {
                 continue;
             }
@@ -172,5 +172,47 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
         public string ChannelId { get; set; } = string.Empty;
         public string BaseUrl { get; set; } = string.Empty;
         public string Room { get; set; } = string.Empty;
+    }
+
+    public static async Task Migrate_5_0_3(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.3: Delete Telemetry.");
+
+        var guildList = await GetAllGuildChannelMappingsAsync();
+        await Task.Delay(1000, ct);
+
+        await using var conn = await Db.OpenWriteAsync();
+
+        using (var pragma = conn.CreateCommand())
+        {
+            pragma.CommandText = @"
+                PRAGMA journal_mode=WAL;
+                PRAGMA synchronous=NORMAL;
+                PRAGMA foreign_keys=ON;
+                PRAGMA temp_store=MEMORY;
+            ";
+            pragma.ExecuteNonQuery();
+        }
+
+        using (var transaction = conn.BeginTransaction())
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = transaction;
+
+            cmd.CommandText = @"
+            DROP TABLE [TelemetryTable];
+            DROP TABLE [ProgramIdTable];";
+            cmd.ExecuteNonQuery();
+
+            transaction.Commit();
+        }
+
+        using (var pragmaOn = conn.CreateCommand())
+        {
+            pragmaOn.CommandText = "PRAGMA foreign_keys = ON;";
+            pragmaOn.ExecuteNonQuery();
+        }
+
+        await PostMigrationMaintenanceAsync();
     }
 }

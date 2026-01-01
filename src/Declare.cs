@@ -1,5 +1,6 @@
-﻿using Discord.WebSocket;
-using Discord.Commands;
+﻿using Discord.Commands;
+using Discord.WebSocket;
+using System.Reflection;
 
 public class Declare
 {
@@ -9,12 +10,10 @@ public class Declare
 #else
     public static string ReleaseVersion = Version;
 #endif
-    public static string BotVersion = CheckUpdate.GetLocalSemVer();
-    public static string BddVersion = "5.0.2";
+    public static string BotVersion = GetLocalSemVer();
+    public static string BddVersion = "5.0.3";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
-    public static readonly bool TelemetryEnabled = (Environment.GetEnvironmentVariable("TELEMETRY") ?? "true").ToLower() == "true";
-    public static readonly string TelemetryName = Environment.GetEnvironmentVariable("TELEMETRY_NAME") ?? Guid.NewGuid().ToString();
     public static readonly bool ExportMetrics = (Environment.GetEnvironmentVariable("EXPORT_METRICS") ?? "false").Trim().ToLower() == "true";
     public static readonly string MetricsPort = Environment.GetEnvironmentVariable("METRICS_PORT") ?? string.Empty;
 
@@ -59,4 +58,16 @@ public class Declare
     public static string RomBackupPath = Path.Combine(BackupPath, "rom_backup");
     public static string ApworldsBackupPath = Path.Combine(BackupPath, "apworlds_backup");
     public static string PlayersBackup = Path.Combine(BackupPath, "players_backup");
+
+    public static string GetLocalSemVer()
+    {
+        var asm = Assembly.GetEntryAssembly()!;
+        var info = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        return string.IsNullOrWhiteSpace(info)
+            ? asm.GetName().Version?.ToString() ?? "0.0.0"
+            : Normalize(info);
+    }
+
+    private static string Normalize(string v)
+        => v.Trim().TrimStart('v', 'V').Split('+', '-', ' ').FirstOrDefault() ?? "0.0.0";
 }

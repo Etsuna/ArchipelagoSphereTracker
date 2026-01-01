@@ -31,39 +31,6 @@ public static class DatabaseCommands
     }
 
     // ====================
-    // 🎯 PROGRAM IDENTIFIER (READ then WRITE if absent)
-    // ====================
-    public static async Task<string> ProgramIdentifier(string tableName)
-    {
-        try
-        {
-            await using (var connection = await Db.OpenReadAsync())
-            {
-                using var selectCmd = new SQLiteCommand("SELECT ProgramId FROM ProgramIdTable LIMIT 1;", connection);
-                var result = await selectCmd.ExecuteScalarAsync().ConfigureAwait(false) as string;
-                if (!string.IsNullOrEmpty(result))
-                    return result!;
-            }
-
-            var newId = Declare.TelemetryName;
-
-            await Db.WriteAsync(async conn =>
-            {
-                using var insertCmd = new SQLiteCommand("INSERT INTO ProgramIdTable (ProgramId) VALUES (@ProgramId);", conn);
-                insertCmd.Parameters.AddWithValue("@ProgramId", newId);
-                await insertCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-            });
-
-            return newId;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error in GetOrCreateProgramIdAsync: {ex.Message}");
-            return Guid.NewGuid().ToString();
-        }
-    }
-
-    // ====================
     // 🎯 GET ALL CHANNELS (READ)
     // ====================
     public static async Task<List<string>> GetAllChannelsAsync(string guildId, string table)

@@ -180,13 +180,8 @@ public class UrlClass
                         using MemoryStream playersStream = await SendPlayersInfoAsync(channelId, thread, aliasList, roomInfo, room);
                         await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
                         await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent, true);
-                        await Telemetry.SendTelemetryAsync(Declare.ProgramID, false);
                         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
                         
-                        if (Declare.TelemetryName != "AST")
-                        {
-                            await UpdateReminder.MaybeNotifyDailyAsync(guildId, channelId, "Etsuna", "ArchipelagoSphereTracker", CancellationToken.None);
-                        }
                         await BotCommands.SendMessageAsync(Resource.Discord, channelId);
                         await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
 
@@ -262,8 +257,7 @@ public class UrlClass
 
         var message = Resource.URLDeleted;
         await Task.WhenAll(
-            BotCommands.RegisterCommandsAsync(),
-            Telemetry.SendTelemetryAsync(Declare.ProgramID, false)
+            BotCommands.RegisterCommandsAsync()
         ).ConfigureAwait(false);
 
         return message;
@@ -274,7 +268,7 @@ public class UrlClass
         Timeout = TimeSpan.FromSeconds(5)
     };
 
-    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(1);
 
     public static async Task<RoomStatus?> RoomInfo(string baseUrl, string roomId, CancellationToken ct = default)
     {

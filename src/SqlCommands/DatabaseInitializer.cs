@@ -150,20 +150,6 @@ CREATE TABLE IF NOT EXISTS ApWorldItemTable (
     FOREIGN KEY (ApWorldListTableId) REFERENCES ApWorldListTable(Id) ON DELETE CASCADE
 );
 
--- ==========================
--- 🎯 ProgramIdTable
--- ==========================
-CREATE TABLE IF NOT EXISTS ProgramIdTable (
-    ProgramId TEXT PRIMARY KEY
-);
-
--- ==========================
--- 🎯 TelemetryTable
--- ==========================
-CREATE TABLE IF NOT EXISTS TelemetryTable (
-    Date TEXT PRIMARY KEY
-);
-
 -- =====================================================================
 -- 🧩 Datapackage store (Items/Locations + groupes)
 -- =====================================================================

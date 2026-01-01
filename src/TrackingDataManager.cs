@@ -261,7 +261,6 @@ public static class TrackingDataManager
                         });
 
                     Console.WriteLine(Resource.TDMWaitingCheck);
-                    await Telemetry.SendTelemetryAsync(Declare.ProgramID);
                     await DatabaseCommands.ReclaimSpaceAsync();
                     await Task.Delay(60000, token);
                 }
@@ -281,7 +280,7 @@ public static class TrackingDataManager
     public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, bool sendAsTextFile)
         => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None, sendAsTextFile);
 
-    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(1);
 
     public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan, bool sendAsTextFile = false)
     {
