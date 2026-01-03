@@ -251,7 +251,13 @@ public static class TrackingDataManager
                                                 }
                                             }
                                         }
+                                        else
+                                        {
+                                            Console.WriteLine($"[TDM] Impossible de récupérer les informations de la salle pour {nameForLog} ({cfg.BaseUrl} / {cfg.Room}).");
+                                        }
+
                                         await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
+                                        Console.WriteLine(string.Format(Resource.TDMCheckCompleted, nameForLog));
                                     }
                                     finally
                                     {

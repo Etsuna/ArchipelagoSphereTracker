@@ -900,4 +900,7 @@
   <data name="CheckPlayerMin" xml:space="preserve">
     <value>Le nombre de joueurs doit être de 2 joueurs minimum.</value>
   </data>
+  <data name="TDMCheckCompleted" xml:space="preserve">
+    <value>Vérification Terminé pour {0}.</value>
+  </data>
 </root>

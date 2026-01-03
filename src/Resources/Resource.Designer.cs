@@ -2077,6 +2077,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Check Complete for {0}..
+        /// </summary>
+        internal static string TDMCheckCompleted {
+            get {
+                return ResourceManager.GetString("TDMCheckCompleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Checking Items for the channel {0}....
         /// </summary>
         internal static string TDMCheckingItems {

@@ -1161,4 +1161,8 @@
     <value>The number of players must be 2 players minimum.</value>
     <comment>The number of players must be 2 players minimum.</comment>
   </data>
+  <data name="TDMCheckCompleted" xml:space="preserve">
+    <value>Check Complete for {0}.</value>
+    <comment>Check Complete for {0}.</comment>
+  </data>
 </root>
