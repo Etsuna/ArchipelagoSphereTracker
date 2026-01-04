@@ -460,7 +460,7 @@ public static class DatabaseCommands
         return (0, 0, 0);
     }
 
-    public static async Task ReclaimSpaceAsync(
+    /*public static async Task ReclaimSpaceAsync(
         int minIntervalSeconds = 300,                 // 5 min
         long walCheckpointThresholdBytes = 2L * 1024 * 1024,   // 2 MB
         long walRestartThresholdBytes = 16L * 1024 * 1024,  // 16 MB
@@ -521,5 +521,5 @@ public static class DatabaseCommands
         {
             Volatile.Write(ref _reclaimInFlight, 0);
         }
-    }
+    }*/
 }

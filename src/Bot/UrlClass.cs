@@ -238,12 +238,10 @@ public class UrlClass
         {
             await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guildId);
 
-            await DatabaseCommands.ReclaimSpaceAsync();
         }
         else
         {
             await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId);
-            await DatabaseCommands.ReclaimSpaceAsync();
             ChannelConfigCache.Remove(guildId, channelId);
 
             var playersPath = Path.Combine(Declare.PlayersPath, channelId);
