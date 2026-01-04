@@ -3,9 +3,6 @@ using System.Data.SQLite;
 
 public static class DatabaseCommands
 {
-    private static long _lastReclaimUnixMs = 0;
-    private static int _reclaimInFlight = 0;
-
     // ====================
     // 🎯 GET ALL GUILDS (READ)
     // ====================
