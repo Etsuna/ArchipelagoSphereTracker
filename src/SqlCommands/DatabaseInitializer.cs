@@ -134,22 +134,6 @@ CREATE TABLE IF NOT EXISTS HintStatusTable (
     Flag     TEXT
 );
 
--- ==========================
--- 🎯 ApWorldList / Items
--- ==========================
-CREATE TABLE IF NOT EXISTS ApWorldListTable (
-    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    Title TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS ApWorldItemTable (
-    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ApWorldListTableId INTEGER,
-    Text TEXT NOT NULL,
-    Link TEXT,
-    FOREIGN KEY (ApWorldListTableId) REFERENCES ApWorldListTable(Id) ON DELETE CASCADE
-);
-
 -- =====================================================================
 -- 🧩 Datapackage store (Items/Locations + groupes)
 -- =====================================================================
@@ -294,27 +278,12 @@ CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcur
 CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcr
   ON ReceiverAliasesTable(GuildId, ChannelId, Receiver);
 
--- ApWorldItemTable: SELECT … WHERE ApWorldListTableId = ?
-CREATE INDEX IF NOT EXISTS idx_apworlditem_listid
-  ON ApWorldItemTable(ApWorldListTableId);
-
 -- HintStatusTable: mêmes patterns que DisplayedItemTable
 CREATE INDEX IF NOT EXISTS idx_hintstatus_gcr_item
   ON HintStatusTable(GuildId, ChannelId, Receiver, Item);
 
 CREATE INDEX IF NOT EXISTS idx_hintstatus_gcf_item
-  ON HintStatusTable(GuildId, ChannelId, Finder, Item);
-
-CREATE INDEX IF NOT EXISTS idx_apworldlist_title
-  ON ApWorldListTable(Title);
-
-DROP INDEX IF EXISTS idx_displayeditem_guild_channel;
-DROP INDEX IF EXISTS idx_displayeditem_receiver;
-DROP INDEX IF EXISTS idx_displayeditem_finder;
-DROP INDEX IF EXISTS idx_displayeditem_game_item;
-DROP INDEX IF EXISTS idx_recapitems_tableid;
-DROP INDEX IF EXISTS idx_receiveraliases_gcu;
-DROP INDEX IF EXISTS idx_displayeditem_gci;  
+  ON HintStatusTable(GuildId, ChannelId, Finder, Item); 
 ";
         cmd.ExecuteNonQuery();
 

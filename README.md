@@ -25,7 +25,7 @@ Si vous préférez héberger votre propre bot, téléchargez la dernière releas
 * Lister les hints par receivers ou par finders
 * Lister les liens de patch
 * Récupérer le port de connexion
-* Suppression automatique du fil après 1 semaine d'inactivité
+* Suppression automatique du fil après 2 semaine d'inactivité
 
 ### Mode Archipelago uniquement
 * Fonctionne uniquement sur architecture x64
@@ -140,7 +140,7 @@ If you prefer to host your own bot, download the latest release or compile the p
 * List hints by receivers or by finders
 * List patch links
 * Retrieve the tracker connection port
-* Auto-delete threads after 1 week of inactivity
+* Auto-delete threads after 2 week of inactivity
 
 ### Archipelago Mode Only
 * Runs only on x64 architecture

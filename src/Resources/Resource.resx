@@ -1165,4 +1165,8 @@
     <value>Check Complete for {0}.</value>
     <comment>Check Complete for {0}.</comment>
   </data>
+  <data name="ApworldInfo" xml:space="preserve">
+    <value>Archipelago Games Sheet Link: {0}</value>
+    <comment>Archipelago Games Sheet Link: {0}</comment>
+  </data>
 </root>

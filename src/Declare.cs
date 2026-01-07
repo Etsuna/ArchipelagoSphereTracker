@@ -11,7 +11,7 @@ public class Declare
     public static string ReleaseVersion = Version;
 #endif
     public static string BotVersion = GetLocalSemVer();
-    public static string BddVersion = "5.0.3";
+    public static string BddVersion = "5.0.4";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool ExportMetrics = (Environment.GetEnvironmentVariable("EXPORT_METRICS") ?? "false").Trim().ToLower() == "true";
@@ -58,6 +58,8 @@ public class Declare
     public static string RomBackupPath = Path.Combine(BackupPath, "rom_backup");
     public static string ApworldsBackupPath = Path.Combine(BackupPath, "apworlds_backup");
     public static string PlayersBackup = Path.Combine(BackupPath, "players_backup");
+
+    public static string ApworldInfoSheet = "https://docs.google.com/spreadsheets/d/1iuzDTOAvdoNe8Ne8i461qGNucg5OuEoF-Ikqs8aUQZw/edit?usp=sharing";
 
     public static string GetLocalSemVer()
     {

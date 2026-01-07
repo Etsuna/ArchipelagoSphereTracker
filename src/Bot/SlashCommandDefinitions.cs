@@ -127,13 +127,7 @@ public static class SlashCommandDefinitions
 
             new SlashCommandBuilder()
                 .WithName("apworlds-info")
-                .WithDescription(Resource.SCApworldInfoDescription)
-                .AddOption(new SlashCommandOptionBuilder()
-                    .WithName("apworldsinfo")
-                    .WithDescription(Resource.SCApworldInfoChoiceDescription)
-                    .WithType(ApplicationCommandOptionType.String)
-                    .WithRequired(true)
-                    .WithAutocomplete(true)),
+                .WithDescription(Resource.SCApworldInfoDescription),
 
             new SlashCommandBuilder()
                 .WithName("discord")

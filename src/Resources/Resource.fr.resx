@@ -903,4 +903,7 @@
   <data name="TDMCheckCompleted" xml:space="preserve">
     <value>Vérification Terminé pour {0}.</value>
   </data>
+  <data name="ApworldInfo" xml:space="preserve">
+    <value>Lien Archipelago Games Sheet : {0}</value>
+  </data>
 </root>

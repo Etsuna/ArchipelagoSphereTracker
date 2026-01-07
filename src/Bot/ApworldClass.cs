@@ -76,24 +76,6 @@ public class ApworldClass : Declare
         return message;
     }
 
-    public static async Task<string> ApworldsInfo(SocketSlashCommand command)
-    {
-        var infoSelected = command.Data.Options.FirstOrDefault()?.Value as string;
-
-        if (infoSelected == null)
-        {
-            return Resource.NoFileSelected;
-        }
-
-        var message = await ApWorldListCommands.GetItemsByTitleAsync(infoSelected) ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            return Resource.NoFileSelected;
-        }
-        return message;
-    }
-
     public static string ListApworld()
     {
         var message = string.Empty;
