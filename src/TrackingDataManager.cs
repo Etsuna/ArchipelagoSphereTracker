@@ -15,6 +15,14 @@ public static class TrackingDataManager
         private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> _guildSendGates = new();
         public static SemaphoreSlim GetGuildSendGate(ulong guildId, int parallelismPerGuild = 2)
             => _guildSendGates.GetOrAdd(guildId, _ => new SemaphoreSlim(parallelismPerGuild, parallelismPerGuild));
+
+        public static void RemoveGuildSendGate(ulong guildId)
+        {
+            if (_guildSendGates.TryRemove(guildId, out var gate))
+            {
+                gate.Dispose();
+            }
+        }
     }
 
     private static readonly ConcurrentDictionary<string, byte> InFlight = new();
@@ -45,101 +53,89 @@ public static class TrackingDataManager
                 {
                     try
                     {
-                    if (Declare.Client.ConnectionState != ConnectionState.Connected)
-                    {
-                        await Task.Delay(5000, token);
-                        continue;
-                    }
-
-                    var uniqueGuilds = ChannelConfigCache.GetAllGuildIds().ToList();
-
-                    await Parallel.ForEachAsync(
-                        uniqueGuilds,
-                        new ParallelOptions { MaxDegreeOfParallelism = MaxGuildsParallel, CancellationToken = token },
-                        async (guild, ctGuild) =>
+                        if (Declare.Client.ConnectionState != ConnectionState.Connected)
                         {
-                            try
+                            await Task.Delay(5000, token);
+                            continue;
+                        }
+
+                        var uniqueGuilds = ChannelConfigCache.GetAllGuildIds().ToList();
+
+                        await Parallel.ForEachAsync(
+                            uniqueGuilds,
+                            new ParallelOptions { MaxDegreeOfParallelism = MaxGuildsParallel, CancellationToken = token },
+                            async (guild, ctGuild) =>
                             {
-                                var guildId = ulong.Parse(guild);
-
-                            var guildCheck = Declare.Client.GetGuild(guildId);
-                            if (guildCheck == null)
-                            {
-                                var restGuild = await Declare.Client.Rest.GetGuildAsync(guildId);
-                                if (restGuild == null)
+                                try
                                 {
-                                    Console.WriteLine(string.Format(Resource.TDMServerNotFound, guild));
-                                    await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guild);
-                                    Console.WriteLine(Resource.TDMDeletionCompleted);
-                                }
-                                return;
-                            }
+                                    var guildId = ulong.Parse(guild);
 
-                            var uniqueChannels = ChannelConfigCache.GetChannelIdsForGuild(guild).ToList();
-
-                            var channelsToProcess = uniqueChannels
-                                .Where(ch => !Declare.AddedChannelId.Contains(ch))
-                                .ToList();
-
-                            await Parallel.ForEachAsync(
-                                channelsToProcess,
-                                new ParallelOptions { MaxDegreeOfParallelism = MaxChannelsParallel, CancellationToken = token },
-                                async (channel, ctChan) =>
-                                {
-                                    var key = $"{guild}:{channel}";
-                                    if (!InFlight.TryAdd(key, 0))
-                                        return;
-
-                                    try
+                                    var guildCheck = Declare.Client.GetGuild(guildId);
+                                    if (guildCheck == null)
                                     {
-                                        if (!ChannelConfigCache.TryGet(guild, channel, out var cfg))
+                                        var restGuild = await Declare.Client.Rest.GetGuildAsync(guildId);
+                                        if (restGuild == null)
                                         {
-                                            var (tracker, baseUrl, room, silent, checkFrequencyStr, lastCheckStr, port)
-                                                = await ChannelsAndUrlsCommands.GetChannelConfigAsync(guild, channel);
-
-                                            if (string.IsNullOrWhiteSpace(tracker) || string.IsNullOrWhiteSpace(baseUrl))
-                                                return;
-
-                                            var checkFrequency = CheckFrequencyParser.ParseOrDefault(
-                                                checkFrequencyStr,
-                                                TimeSpan.FromMinutes(5),
-                                                TimeSpan.FromMinutes(5),
-                                                null);
-
-                                            DateTimeOffset? last = TryParseIsoOrUnixMs(lastCheckStr);
-
-                                            if (port == null)
-                                            {
-                                                port = "0";
-                                            }
-
-                                            cfg = new ChannelConfig(tracker, baseUrl, room, silent, checkFrequency, last, port);
-                                            ChannelConfigCache.Upsert(guild, channel, cfg);
+                                            Console.WriteLine(string.Format(Resource.TDMServerNotFound, guild));
+                                            await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guild);
+                                            RateLimitGuards.RemoveGuildSendGate(guildId);
+                                            Console.WriteLine(Resource.TDMDeletionCompleted);
                                         }
+                                        return;
+                                    }
 
-                                        var channelId = ulong.Parse(channel);
-                                        var guildChannel = guildCheck.GetChannel(channelId) as SocketGuildChannel;
-                                        var thread = guildCheck.ThreadChannels.FirstOrDefault(t => t.Id == channelId);
+                                    var uniqueChannels = ChannelConfigCache.GetChannelIdsForGuild(guild).ToList();
 
-                                        if (guildChannel is null && thread is null)
+                                    var channelsToProcess = uniqueChannels
+                                    .Where(ch => !Declare.AddedChannelId.Contains(ch))
+                                    .ToList();
+
+                                    await Parallel.ForEachAsync(
+                                    channelsToProcess,
+                                    new ParallelOptions { MaxDegreeOfParallelism = MaxChannelsParallel, CancellationToken = token },
+                                    async (channel, ctChan) =>
+                                    {
+                                        var key = $"{guild}:{channel}";
+                                        if (!InFlight.TryAdd(key, 0))
+                                            return;
+
+                                        try
                                         {
-                                            var restChan = await Declare.Client.Rest.GetChannelAsync(channelId);
-                                            if (restChan == null)
+                                            if (!ChannelConfigCache.TryGet(guild, channel, out var cfg))
                                             {
-                                                Console.WriteLine(string.Format(Resource.TDMChannelNoLongerExists, channel));
-                                                await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
-                                                Console.WriteLine(Resource.TDMDeletionCompleted);
-                                                ChannelConfigCache.Remove(guild, channel);
+                                                var (tracker, baseUrl, room, silent, checkFrequencyStr, lastCheckStr, port)
+                                                    = await ChannelsAndUrlsCommands.GetChannelConfigAsync(guild, channel);
 
-                                                MissingChannelPassCount.TryRemove(channelId, out _);
-                                            }
-                                            else
-                                            {
-                                                var count = MissingChannelPassCount.AddOrUpdate(channelId, 1, (_, old) => old + 1);
+                                                if (string.IsNullOrWhiteSpace(tracker) || string.IsNullOrWhiteSpace(baseUrl))
+                                                    return;
 
-                                                if (count >= MaxChecksBeforeDelete)
+                                                var checkFrequency = CheckFrequencyParser.ParseOrDefault(
+                                                    checkFrequencyStr,
+                                                    TimeSpan.FromMinutes(5),
+                                                    TimeSpan.FromMinutes(5),
+                                                    null);
+
+                                                DateTimeOffset? last = TryParseIsoOrUnixMs(lastCheckStr);
+
+                                                if (port == null)
                                                 {
-                                                    Console.WriteLine($"[TDM] Le canal {channelId} est introuvable côté gateway depuis {count} minutes, suppression des données.");
+                                                    port = "0";
+                                                }
+
+                                                cfg = new ChannelConfig(tracker, baseUrl, room, silent, checkFrequency, last, port);
+                                                ChannelConfigCache.Upsert(guild, channel, cfg);
+                                            }
+
+                                            var channelId = ulong.Parse(channel);
+                                            var guildChannel = guildCheck.GetChannel(channelId) as SocketGuildChannel;
+                                            var thread = guildCheck.ThreadChannels.FirstOrDefault(t => t.Id == channelId);
+
+                                            if (guildChannel is null && thread is null)
+                                            {
+                                                var restChan = await Declare.Client.Rest.GetChannelAsync(channelId);
+                                                if (restChan == null)
+                                                {
+                                                    Console.WriteLine(string.Format(Resource.TDMChannelNoLongerExists, channel));
                                                     await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
                                                     Console.WriteLine(Resource.TDMDeletionCompleted);
                                                     ChannelConfigCache.Remove(guild, channel);
@@ -148,153 +144,166 @@ public static class TrackingDataManager
                                                 }
                                                 else
                                                 {
-                                                    Console.WriteLine($"[TDM] REST confirme l'existence du canal {channelId}, on saute cette passe ({count}/{MaxChecksBeforeDelete}).");
-                                                }
-                                            }
-                                            return;
-                                        }
+                                                    var count = MissingChannelPassCount.AddOrUpdate(channelId, 1, (_, old) => old + 1);
 
-                                        var nameForLog = thread?.Name ?? guildChannel!.Name;
-
-                                        var (shouldRun, checkFrequencyTs) = ChannelConfigCache.ShouldRunChecks(cfg);
-                                        if (!shouldRun)
-                                        {
-                                            Console.WriteLine(string.Format(Resource.TDMSkippingCheck, nameForLog, checkFrequencyTs.TotalMinutes));
-                                            return;
-                                        }
-                                        Console.WriteLine(string.Format(Resource.TDMChannelStillExists, nameForLog));
-
-                                        if (thread != null)
-                                        {
-                                            var lastActivity = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(guild, channel);
-                                            if (lastActivity == null)
-                                                lastActivity = SnowflakeUtils.FromSnowflake(thread.Id);
-
-                                            double daysSince = (DateTimeOffset.UtcNow - lastActivity.Value).TotalDays;
-
-                                            if (daysSince < 7)
-                                            {
-                                                if (Declare.WarnedThreads.Contains(channel))
-                                                {
-                                                    await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
-                                                    try
+                                                    if (count >= MaxChecksBeforeDelete)
                                                     {
-                                                        await BotCommands.SendMessageAsync(string.Format(Resource.TDMNewMessageOnThread, thread.Name), channel);
+                                                        Console.WriteLine($"[TDM] Le canal {channelId} est introuvable côté gateway depuis {count} minutes, suppression des données.");
+                                                        await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
+                                                        Console.WriteLine(Resource.TDMDeletionCompleted);
+                                                        ChannelConfigCache.Remove(guild, channel);
+
+                                                        MissingChannelPassCount.TryRemove(channelId, out _);
                                                     }
-                                                    finally
+                                                    else
                                                     {
-                                                        RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
+                                                        Console.WriteLine($"[TDM] REST confirme l'existence du canal {channelId}, on saute cette passe ({count}/{MaxChecksBeforeDelete}).");
                                                     }
-                                                    Declare.WarnedThreads.Remove(channel);
                                                 }
+                                                return;
                                             }
-                                            else if (daysSince < 14)
+
+                                            var nameForLog = thread?.Name ?? guildChannel!.Name;
+
+                                            var (shouldRun, checkFrequencyTs) = ChannelConfigCache.ShouldRunChecks(cfg);
+                                            if (!shouldRun)
                                             {
-                                                if (!Declare.WarnedThreads.Contains(channel))
+                                                Console.WriteLine(string.Format(Resource.TDMSkippingCheck, nameForLog, checkFrequencyTs.TotalMinutes));
+                                                return;
+                                            }
+                                            Console.WriteLine(string.Format(Resource.TDMChannelStillExists, nameForLog));
+
+                                            if (thread != null)
+                                            {
+                                                var lastActivity = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(guild, channel);
+                                                if (lastActivity == null)
+                                                    lastActivity = SnowflakeUtils.FromSnowflake(thread.Id);
+
+                                                double daysSince = (DateTimeOffset.UtcNow - lastActivity.Value).TotalDays;
+
+                                                if (daysSince < 7)
                                                 {
-                                                    var baseDate = lastActivity.Value;
-                                                    DateTimeOffset deletionDate = baseDate.AddDays(14);
+                                                    if (Declare.WarnedThreads.Contains(channel))
+                                                    {
+                                                        await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
+                                                        try
+                                                        {
+                                                            await BotCommands.SendMessageAsync(string.Format(Resource.TDMNewMessageOnThread, thread.Name), channel);
+                                                        }
+                                                        finally
+                                                        {
+                                                            RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
+                                                        }
+                                                        Declare.WarnedThreads.Remove(channel);
+                                                    }
+                                                }
+                                                else if (daysSince < 14)
+                                                {
+                                                    if (!Declare.WarnedThreads.Contains(channel))
+                                                    {
+                                                        var baseDate = lastActivity.Value;
+                                                        DateTimeOffset deletionDate = baseDate.AddDays(14);
 
-                                                    TimeZoneInfo frenchTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Paris");
-                                                    DateTimeOffset localDeletionDate = TimeZoneInfo.ConvertTime(deletionDate, frenchTimeZone);
+                                                        TimeZoneInfo frenchTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Paris");
+                                                        DateTimeOffset localDeletionDate = TimeZoneInfo.ConvertTime(deletionDate, frenchTimeZone);
 
-                                                    string formattedDeletionDate = localDeletionDate.ToString(
-                                                        "dddd d MMMM yyyy à HH'h'mm",
-                                                        CultureInfo.GetCultureInfo("fr-FR"));
+                                                        string formattedDeletionDate = localDeletionDate.ToString(
+                                                            "dddd d MMMM yyyy à HH'h'mm",
+                                                            CultureInfo.GetCultureInfo("fr-FR"));
 
+                                                        await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
+                                                        try
+                                                        {
+                                                            await BotCommands.SendMessageAsync(
+                                                                string.Format(Resource.TDMNoMessage7Days, formattedDeletionDate, thread.Name), channel);
+                                                        }
+                                                        finally
+                                                        {
+                                                            RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
+                                                        }
+
+                                                        Declare.WarnedThreads.Add(channel);
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    Console.WriteLine(Resource.TDMNoActivity);
                                                     await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
                                                     try
                                                     {
                                                         await BotCommands.SendMessageAsync(
-                                                            string.Format(Resource.TDMNoMessage7Days, formattedDeletionDate, thread.Name), channel);
+                                                            string.Format(Resource.TDMNoActivity, thread.Name), channel);
                                                     }
                                                     finally
                                                     {
                                                         RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
                                                     }
+                                                    await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
+                                                    Declare.WarnedThreads.Remove(channel);
+                                                    ChannelConfigCache.Remove(guild, channel);
+                                                    return;
+                                                }
+                                            }
 
-                                                    Declare.WarnedThreads.Add(channel);
+                                            Console.WriteLine(string.Format(Resource.TDMCheckingItems, nameForLog));
+                                            var roomInfo = await UrlClass.RoomInfo(cfg.BaseUrl, cfg.Room);
+
+                                            if (roomInfo != null)
+                                            {
+                                                if (cfg.Port != roomInfo.LastPort.ToString())
+                                                {
+                                                    cfg = cfg with { Port = roomInfo.LastPort.ToString() };
+                                                    ChannelConfigCache.Upsert(guild, channel, cfg);
+                                                    await ChannelsAndUrlsCommands.UpdateChannelPortAsync(guild, channel, roomInfo.LastPort.ToString());
+
+                                                    var gate = RateLimitGuards.GetGuildSendGate(guildCheck.Id);
+                                                    await gate.WaitAsync(ctChan);
+                                                    try
+                                                    {
+                                                        var message = string.Format(Resource.NewPort, roomInfo.LastPort.ToString());
+                                                        await BotCommands.SendMessageAsync($"@everyone, {message}", channel);
+                                                    }
+                                                    finally
+                                                    {
+                                                        gate.Release();
+                                                    }
                                                 }
                                             }
                                             else
                                             {
-                                                Console.WriteLine(Resource.TDMNoActivity);
-                                                await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
-                                                try
-                                                {
-                                                    await BotCommands.SendMessageAsync(
-                                                        string.Format(Resource.TDMNoActivity, thread.Name), channel);
-                                                }
-                                                finally
-                                                {
-                                                    RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
-                                                }
-                                                await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
-                                                Declare.WarnedThreads.Remove(channel);
-                                                ChannelConfigCache.Remove(guild, channel);
-                                                return;
+                                                Console.WriteLine($"[TDM] Impossible de récupérer les informations de la salle pour {nameForLog} ({cfg.BaseUrl} / {cfg.Room}).");
                                             }
+
+                                            await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
+                                            Console.WriteLine(string.Format(Resource.TDMCheckCompleted, nameForLog));
                                         }
-
-                                        Console.WriteLine(string.Format(Resource.TDMCheckingItems, nameForLog));
-                                        var roomInfo = await UrlClass.RoomInfo(cfg.BaseUrl, cfg.Room);
-
-                                        if (roomInfo != null)
+                                        catch (OperationCanceledException) when (ctChan.IsCancellationRequested)
                                         {
-                                            if (cfg.Port != roomInfo.LastPort.ToString())
-                                            {
-                                                cfg = cfg with { Port = roomInfo.LastPort.ToString() };
-                                                ChannelConfigCache.Upsert(guild, channel, cfg);
-                                                await ChannelsAndUrlsCommands.UpdateChannelPortAsync(guild, channel, roomInfo.LastPort.ToString());
-
-                                                var gate = RateLimitGuards.GetGuildSendGate(guildCheck.Id);
-                                                await gate.WaitAsync(ctChan);
-                                                try
-                                                {
-                                                    var message = string.Format(Resource.NewPort, roomInfo.LastPort.ToString());
-                                                    await BotCommands.SendMessageAsync($"@everyone, {message}", channel);
-                                                }
-                                                finally
-                                                {
-                                                    gate.Release();
-                                                }
-}
+                                            throw;
                                         }
-                                        else
+                                        catch (Exception ex)
                                         {
-                                            Console.WriteLine($"[TDM] Impossible de récupérer les informations de la salle pour {nameForLog} ({cfg.BaseUrl} / {cfg.Room}).");
+                                            Console.WriteLine($"[TDM] Channel processing error for guild {guild} / channel {channel}: {ex}");
                                         }
+                                        finally
+                                        {
+                                            InFlight.TryRemove(key, out _);
+                                        }
+                                    });
+                                }
+                                catch (OperationCanceledException) when (ctGuild.IsCancellationRequested)
+                                {
+                                    throw;
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"[TDM] Guild processing error for {guild}: {ex}");
+                                }
+                            });
 
-                                        await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
-                                        Console.WriteLine(string.Format(Resource.TDMCheckCompleted, nameForLog));
-                                    }
-                                    catch (OperationCanceledException) when (ctChan.IsCancellationRequested)
-                                    {
-                                        throw;
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Console.WriteLine($"[TDM] Channel processing error for guild {guild} / channel {channel}: {ex}");
-                                    }
-                                    finally
-                                    {
-                                        InFlight.TryRemove(key, out _);
-                                    }
-                                });
-                            }
-                            catch (OperationCanceledException) when (ctGuild.IsCancellationRequested)
-                            {
-                                throw;
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"[TDM] Guild processing error for {guild}: {ex}");
-                            }
-                        });
-
-                    Console.WriteLine(Resource.TDMWaitingCheck);
-                    await Task.Delay(60000, token);
-                    backoffSeconds = 2;
+                        Console.WriteLine(Resource.TDMWaitingCheck);
+                        await Task.Delay(60000, token);
+                        backoffSeconds = 2;
                     }
                     catch (OperationCanceledException) when (token.IsCancellationRequested)
                     {

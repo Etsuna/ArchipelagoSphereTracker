@@ -10,6 +10,9 @@ public static class ChannelConfigCache
     private static readonly ConcurrentDictionary<string, TimeSpan> _jitter = new();
     private static readonly TimeSpan _maxJitter = TimeSpan.FromSeconds(60);
 
+    private static string JitterKey(in ChannelConfig cfg)
+        => $"{cfg.Room}:{cfg.BaseUrl}:{cfg.Tracker}:{cfg.Port}";
+
     private static TimeSpan GetJitter(string key)
         => _jitter.GetOrAdd(
             key,
@@ -27,7 +30,12 @@ public static class ChannelConfigCache
         => _map[Key(guildId, channelId)] = cfg;
 
     public static void Remove(string guildId, string channelId)
-        => _map.TryRemove(Key(guildId, channelId), out _);
+    {
+        if (_map.TryRemove(Key(guildId, channelId), out var cfg))
+        {
+            _jitter.TryRemove(JitterKey(cfg), out _);
+        }
+    }
 
     public static IEnumerable<string> GetAllGuildIds()
     => _map.Keys
@@ -46,7 +54,11 @@ public static class ChannelConfigCache
             .Distinct();
 
 
-    public static void Clear() => _map.Clear();
+    public static void Clear()
+    {
+        _map.Clear();
+        _jitter.Clear();
+    }
 
     /// <summary>
     /// Charge toute la table ChannelsAndUrlsTable en mémoire.
@@ -103,7 +115,7 @@ public static class ChannelConfigCache
     public static (bool ShouldRun, TimeSpan CheckFrequency) ShouldRunChecks(in ChannelConfig cfg)
     {
         if (cfg.LastCheck is null) return (true, cfg.CheckFrequency);
-        var key = $"{cfg.Room}:{cfg.BaseUrl}:{cfg.Tracker}:{cfg.Port}";
+        var key = JitterKey(cfg);
         var should = DateTimeOffset.UtcNow - cfg.LastCheck.Value + GetJitter(key) >= cfg.CheckFrequency;
         return (should, cfg.CheckFrequency);
     }
