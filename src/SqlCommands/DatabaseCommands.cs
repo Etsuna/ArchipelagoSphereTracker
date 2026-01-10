@@ -3,9 +3,6 @@ using System.Data.SQLite;
 
 public static class DatabaseCommands
 {
-    private static long _lastReclaimUnixMs = 0;
-    private static int _reclaimInFlight = 0;
-
     // ====================
     // 🎯 GET ALL GUILDS (READ)
     // ====================
@@ -28,39 +25,6 @@ public static class DatabaseCommands
             Console.WriteLine($"Error while retrieving guilds: {ex.Message}");
         }
         return guilds;
-    }
-
-    // ====================
-    // 🎯 PROGRAM IDENTIFIER (READ then WRITE if absent)
-    // ====================
-    public static async Task<string> ProgramIdentifier(string tableName)
-    {
-        try
-        {
-            await using (var connection = await Db.OpenReadAsync())
-            {
-                using var selectCmd = new SQLiteCommand("SELECT ProgramId FROM ProgramIdTable LIMIT 1;", connection);
-                var result = await selectCmd.ExecuteScalarAsync().ConfigureAwait(false) as string;
-                if (!string.IsNullOrEmpty(result))
-                    return result!;
-            }
-
-            var newId = Declare.TelemetryName;
-
-            await Db.WriteAsync(async conn =>
-            {
-                using var insertCmd = new SQLiteCommand("INSERT INTO ProgramIdTable (ProgramId) VALUES (@ProgramId);", conn);
-                insertCmd.Parameters.AddWithValue("@ProgramId", newId);
-                await insertCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-            });
-
-            return newId;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error in GetOrCreateProgramIdAsync: {ex.Message}");
-            return Guid.NewGuid().ToString();
-        }
     }
 
     // ====================
@@ -493,7 +457,7 @@ public static class DatabaseCommands
         return (0, 0, 0);
     }
 
-    public static async Task ReclaimSpaceAsync(
+    /*public static async Task ReclaimSpaceAsync(
         int minIntervalSeconds = 300,                 // 5 min
         long walCheckpointThresholdBytes = 2L * 1024 * 1024,   // 2 MB
         long walRestartThresholdBytes = 16L * 1024 * 1024,  // 16 MB
@@ -554,5 +518,5 @@ public static class DatabaseCommands
         {
             Volatile.Write(ref _reclaimInFlight, 0);
         }
-    }
+    }*/
 }

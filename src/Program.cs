@@ -30,12 +30,6 @@ class Program
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
-        await CheckUpdate.CheckAsync(
-            owner: "Etsuna",
-            repo: "ArchipelagoSphereTracker",
-            notify: Notify
-        );
-
         if (!isWindows && !isLinux)
         {
             Console.WriteLine(Resource.ProgramOSNotSupported);
@@ -105,7 +99,6 @@ class Program
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
 
-        Declare.ProgramID = await DatabaseCommands.ProgramIdentifier("ProgramIdTable");
 
         if (args[0].ToLower() == "--install")
         {
@@ -213,7 +206,6 @@ class Program
             Console.WriteLine(Resource.ProgramBotIsConnected);
 
             TrackingDataManager.StartTracking();
-            UpdateReminder.Start();
 
             if (Declare.ExportMetrics && !string.IsNullOrEmpty(Declare.MetricsPort))
             {
@@ -257,6 +249,8 @@ class Program
             await DBMigration.Migrate_4_to_5Async(cts.Token);
             await DBMigration_5.Migrate_5_0_1(cts.Token);
             await DBMigration_5.Migrate_5_0_2(cts.Token);
+            await DBMigration_5.Migrate_5_0_3(cts.Token);
+            await DBMigration_5.Migrate_5_0_4(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }
@@ -276,12 +270,26 @@ class Program
             await DBMigration_5.Migrate_5_0_2(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
+        else if (bddVersion == "5.0.2")
+        {
+            Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
+            await DBMigration_5.Migrate_5_0_3(cts.Token);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+        }
+        else if (bddVersion == "5.0.3")
+        {
+            Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
+            await DBMigration_5.Migrate_5_0_4(cts.Token);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+        }
         else
         {
             Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
             await DBMigration.Migrate_4_to_5Async(cts.Token);
             await DBMigration_5.Migrate_5_0_1(cts.Token);
             await DBMigration_5.Migrate_5_0_2(cts.Token);
+            await DBMigration_5.Migrate_5_0_3(cts.Token);
+            await DBMigration_5.Migrate_5_0_4(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }

@@ -232,6 +232,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago Games Sheet Link: {0}.
+        /// </summary>
+        internal static string ApworldInfo {
+            get {
+                return ResourceManager.GetString("ApworldInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à List of apworld.
         /// </summary>
         internal static string ApworldList {
@@ -2073,6 +2082,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string TDMChannelStillExists {
             get {
                 return ResourceManager.GetString("TDMChannelStillExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Check Complete for {0}..
+        /// </summary>
+        internal static string TDMCheckCompleted {
+            get {
+                return ResourceManager.GetString("TDMCheckCompleted", resourceCulture);
             }
         }
         

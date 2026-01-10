@@ -64,7 +64,7 @@ public static class MetricsExporter
        Metrics.CreateGauge(
            "ast_last_items_checked_timestamp",
            "Horodatage Unix UTC (secondes) du dernier contrôle des objets.",
-           new[] { "guild_id", "channel_id" });
+           new[] { "guild_id", "guild_name", "channel_id", "channel_name" });
 
     // ==============
     // état interne pour dépublier
@@ -282,16 +282,19 @@ public static class MetricsExporter
                 var guild = rdr.GetString(0);
                 var channel = rdr.GetString(1);
 
+                var guildName = ResolveGuildName(guild) ?? "unknown";
+                var channelName = ResolveChannelName(guild, channel) ?? "unknown";
+
                 var dto = ParseIsoOrUnixMs(rdr.GetValue(2));
                 if (dto is null)
                     continue;
 
                 var tsSeconds = dto.Value.ToUnixTimeSeconds();
 
-                var ch = LastItemsChecked.WithLabels(guild, channel);
+                var ch = LastItemsChecked.WithLabels(guild, guildName, channel, channelName);
                 ch.Set(tsSeconds);
 
-                var key = guild + "|" + channel;
+                var key = string.Join("|", guild, guildName, channel, channelName);
                 curLastItemsChecked[key] = ch;
             }
         }

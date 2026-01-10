@@ -25,7 +25,7 @@ Si vous préférez héberger votre propre bot, téléchargez la dernière releas
 * Lister les hints par receivers ou par finders
 * Lister les liens de patch
 * Récupérer le port de connexion
-* Suppression automatique du fil après 1 semaine d'inactivité
+* Suppression automatique du fil après 2 semaine d'inactivité
 
 ### Mode Archipelago uniquement
 * Fonctionne uniquement sur architecture x64
@@ -113,29 +113,6 @@ Windows : exécutez ArchipelagoSphereTracker.exe (--install ou --NormalMode ou -
 Linux : exécutez ./ArchipelagoSphereTracker.
 ```
 
-## Télémétrie
-Une fonctionnalité de télémétrie a été ajoutée pour collecter des statistiques d’usage anonymes du programme.
-Elle peut être désactivée en ajoutant dans le `.env` le paramètre `TELEMETRY=false`. Si non défini, la télémétrie est activée par défaut.
-
-### Que collecte la télémétrie ?
-* Le nombre total de serveurs Discord (guilds) où le programme est actif
-* Le nombre total de fils utilisés
-* Le nombre d’instances distinctes du programme en fonctionnement (identifiées par un identifiant unique local, anonymisé)
-
-### Ce qui n’est pas collecté
-* Aucune donnée personnelle ou sensible (pas de noms, IDs Discord, IP, messages, etc.)
-* Aucun détail sur les fils ou contenus des serveurs
-
-### Pourquoi cette télémétrie ?
-Elle permet de mieux comprendre l’adoption du programme, d’évaluer son utilisation et d’améliorer son développement, tout en respectant la vie privée des utilisateurs.
-
-### Fonctionnement technique
-* La télémétrie est envoyée automatiquement une fois par jour ou à chaque fois qu'une URL de room est ajoutée ou supprimée depuis chaque instance.
-* Les données sont transmises de façon sécurisée via HTTPS vers un serveur dédié.
-* Chaque instance génère localement un identifiant unique non personnel utilisé pour compter les programmes distincts.
-* Un mécanisme évite les envois multiples par jour depuis une même instance.
-* Aucune donnée personnelle n’est envoyée.
-
 </details>
 
 <details open>
@@ -163,7 +140,7 @@ If you prefer to host your own bot, download the latest release or compile the p
 * List hints by receivers or by finders
 * List patch links
 * Retrieve the tracker connection port
-* Auto-delete threads after 1 week of inactivity
+* Auto-delete threads after 2 week of inactivity
 
 ### Archipelago Mode Only
 * Runs only on x64 architecture
@@ -250,28 +227,5 @@ Copy the .env file to this folder.
 Windows: run ArchipelagoSphereTracker.exe (--install or --NormalMode or --ArchipelagoMode).
 Linux: run ./ArchipelagoSphereTracker.
 ```
-
-## Telemetry
-A telemetry feature collects anonymous usage statistics.
-You can disable it by setting `TELEMETRY=false` in the `.env` file. If not set, telemetry is enabled by default.
-
-### What telemetry collects
-* Total number of Discord servers (guilds) where the bot is active
-* Total number of threads used
-* Number of distinct bot instances (identified by a local, anonymized unique ID)
-
-### What is **not** collected
-* No personal or sensitive data (no names, Discord IDs, IPs, messages, etc.)
-* No details about threads or server content
-
-### Why telemetry?
-It helps understand adoption, usage, and improve development while respecting user privacy.
-
-### Technical details
-* Telemetry is sent once per day or when a tracker URL is added or removed.
-* Data is transmitted securely over HTTPS to a dedicated server.
-* Each bot instance generates a unique local ID used only to count instances.
-* Duplicate submissions from the same instance are prevented.
-* No personal data is sent.
 
 </details>

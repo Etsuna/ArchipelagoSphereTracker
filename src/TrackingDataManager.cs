@@ -24,8 +24,8 @@ public static class TrackingDataManager
 
     public static void StartTracking()
     {
-        const int MaxGuildsParallel = 8;
-        const int MaxChannelsParallel = 2;
+        const int MaxGuildsParallel = 10;
+        const int MaxChannelsParallel = 1;
 
         if (Declare.Cts != null)
             Declare.Cts.Cancel();
@@ -39,8 +39,12 @@ public static class TrackingDataManager
             {
                 await ChannelConfigCache.LoadAllAsync();
 
+                var backoffSeconds = 2;
+
                 while (!token.IsCancellationRequested)
                 {
+                    try
+                    {
                     if (Declare.Client.ConnectionState != ConnectionState.Connected)
                     {
                         await Task.Delay(5000, token);
@@ -54,7 +58,9 @@ public static class TrackingDataManager
                         new ParallelOptions { MaxDegreeOfParallelism = MaxGuildsParallel, CancellationToken = token },
                         async (guild, ctGuild) =>
                         {
-                            var guildId = ulong.Parse(guild);
+                            try
+                            {
+                                var guildId = ulong.Parse(guild);
 
                             var guildCheck = Declare.Client.GetGuild(guildId);
                             if (guildCheck == null)
@@ -69,7 +75,7 @@ public static class TrackingDataManager
                                 return;
                             }
 
-                            var uniqueChannels = ChannelConfigCache.GetAllChannelIds().ToList();
+                            var uniqueChannels = ChannelConfigCache.GetChannelIdsForGuild(guild).ToList();
 
                             var channelsToProcess = uniqueChannels
                                 .Where(ch => !Declare.AddedChannelId.Contains(ch))
@@ -240,6 +246,9 @@ public static class TrackingDataManager
                                                 cfg = cfg with { Port = roomInfo.LastPort.ToString() };
                                                 ChannelConfigCache.Upsert(guild, channel, cfg);
                                                 await ChannelsAndUrlsCommands.UpdateChannelPortAsync(guild, channel, roomInfo.LastPort.ToString());
+
+                                                var gate = RateLimitGuards.GetGuildSendGate(guildCheck.Id);
+                                                await gate.WaitAsync(ctChan);
                                                 try
                                                 {
                                                     var message = string.Format(Resource.NewPort, roomInfo.LastPort.ToString());
@@ -247,28 +256,67 @@ public static class TrackingDataManager
                                                 }
                                                 finally
                                                 {
-                                                    RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
+                                                    gate.Release();
                                                 }
-                                            }
+}
                                         }
+                                        else
+                                        {
+                                            Console.WriteLine($"[TDM] Impossible de récupérer les informations de la salle pour {nameForLog} ({cfg.BaseUrl} / {cfg.Room}).");
+                                        }
+
                                         await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
+                                        Console.WriteLine(string.Format(Resource.TDMCheckCompleted, nameForLog));
+                                    }
+                                    catch (OperationCanceledException) when (ctChan.IsCancellationRequested)
+                                    {
+                                        throw;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine($"[TDM] Channel processing error for guild {guild} / channel {channel}: {ex}");
                                     }
                                     finally
                                     {
                                         InFlight.TryRemove(key, out _);
                                     }
                                 });
+                            }
+                            catch (OperationCanceledException) when (ctGuild.IsCancellationRequested)
+                            {
+                                throw;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[TDM] Guild processing error for {guild}: {ex}");
+                            }
                         });
 
                     Console.WriteLine(Resource.TDMWaitingCheck);
-                    await Telemetry.SendTelemetryAsync(Declare.ProgramID);
-                    await DatabaseCommands.ReclaimSpaceAsync();
                     await Task.Delay(60000, token);
+                    backoffSeconds = 2;
+                    }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested)
+                    {
+                        Console.WriteLine(Resource.TDMTrackingCanceled);
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[TDM] Tracking loop error: {ex}");
+                        var delay = TimeSpan.FromSeconds(Math.Min(backoffSeconds, 60));
+                        backoffSeconds = Math.Min(backoffSeconds * 2, 60);
+                        await Task.Delay(delay, token);
+                    }
                 }
             }
-            catch (TaskCanceledException)
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
                 Console.WriteLine(Resource.TDMTrackingCanceled);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TDM] Tracking task crashed: {ex}");
             }
         }, token);
     }
@@ -281,7 +329,7 @@ public static class TrackingDataManager
     public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, bool sendAsTextFile)
         => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None, sendAsTextFile);
 
-    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(1);
 
     public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan, bool sendAsTextFile = false)
     {

@@ -185,7 +185,7 @@ public static class BotCommands
             "send-yaml" => await YamlClass.SendYaml(command, channelId),
             "download-template" => await YamlClass.DownloadTemplate(command),
             "list-apworld" => ApworldClass.ListApworld(),
-            "apworlds-info" => await ApworldClass.ApworldsInfo(command),
+            "apworlds-info" => string.Format(Resource.ApworldInfo, Declare.ApworldInfoSheet),
             "backup-apworld" => await ApworldClass.BackupApworld(command),
             "send-apworld" => await ApworldClass.SendApworld(command),
             "generate" => await GenerationClass.GenerateAsync(command, channelId),
@@ -249,8 +249,6 @@ public static class BotCommands
                     Directory.Exists(TemplatePath())
                         ? Directory.GetFiles(TemplatePath(), "*.yaml").Select(f => Path.GetFileName(f)!).AsEnumerable()
                         : Enumerable.Empty<string>()),
-
-            "apworldsinfo" => async () => (await ApWorldListCommands.GetAllTitles()).AsEnumerable(),
 
             "items" => async () => (await ExcludedItemsCommands.GetItemNamesForAliasAsync(guildId, channelId, addedAlias)).AsEnumerable(),
 
