@@ -22,7 +22,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resource {
+    public class Resource {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -540,7 +540,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à check-frequency.
         /// </summary>
-        internal static string CheckFrequency {
+        public static string CheckFrequency {
             get {
                 return ResourceManager.GetString("CheckFrequency", resourceCulture);
             }
@@ -1566,7 +1566,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à skip_mention_items.
         /// </summary>
-        internal static string SCAddAliasSkipMention {
+        public static string SCAddAliasSkipMention {
             get {
                 return ResourceManager.GetString("SCAddAliasSkipMention", resourceCulture);
             }
@@ -1908,7 +1908,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à silent.
         /// </summary>
-        internal static string SCSilentOption {
+        public static string SCSilentOption {
             get {
                 return ResourceManager.GetString("SCSilentOption", resourceCulture);
             }
@@ -1944,7 +1944,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à thread-name.
         /// </summary>
-        internal static string SCThreadName {
+        public static string SCThreadName {
             get {
                 return ResourceManager.GetString("SCThreadName", resourceCulture);
             }
@@ -1980,7 +1980,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à thread-type.
         /// </summary>
-        internal static string SCThreadType {
+        public static string SCThreadType {
             get {
                 return ResourceManager.GetString("SCThreadType", resourceCulture);
             }

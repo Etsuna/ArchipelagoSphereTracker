@@ -31,6 +31,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Compile Remove="tests\**\*.cs" />
+		<None Remove="tests\**\*" />
+		<EmbeddedResource Remove="tests\**\*" />
+		<Page Remove="tests\**\*.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Update=".env">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
