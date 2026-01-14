@@ -209,7 +209,7 @@ public static class TrackingDataManager
 
                                                         string formattedDeletionDate = localDeletionDate.ToString(
                                                             "dddd d MMMM yyyy à HH'h'mm",
-                                                            CultureInfo.GetCultureInfo("fr-FR"));
+                                                            CultureInfo.GetCultureInfo($"{Declare.Language}-{Declare.Language.ToUpperInvariant()}"));
 
                                                         await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
                                                         try
