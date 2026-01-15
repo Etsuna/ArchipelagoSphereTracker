@@ -43,15 +43,16 @@ public static class BotCommands
                 .Select(cmd => cmd.Build() as ApplicationCommandProperties)
                 .ToArray();
 
-
             foreach (var guild in Declare.Client.Guilds)
             {
+                Console.WriteLine("Registering commands for guild: " + guild.Name);
                 await Declare.Client.Rest.BulkOverwriteGuildCommands(builtCommands, guild.Id);
                 await Task.Delay(RegisterCommandsDelay);
             }
 
             if (!_handlersRegistered)
             {
+                Console.WriteLine("Registering command handlers");
                 Declare.Client.SlashCommandExecuted += HandleSlashCommandAsync;
                 Declare.Client.AutocompleteExecuted += HandleAutocompleteAsync;
                 _handlersRegistered = true;
