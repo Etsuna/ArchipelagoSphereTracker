@@ -29,6 +29,8 @@ public class UrlClass
             return message;
         }
 
+        Console.WriteLine($"Try to add URL Channel: {newUrl} in Guild: {guildId}, Channel: {channelId}");
+
         var uri = new Uri(newUrl);
         baseUrl = $"{uri.Scheme}://{uri.Authority}";
         var segments = uri.AbsolutePath.Trim('/').Split('/');
@@ -39,6 +41,7 @@ public class UrlClass
         var roomInfo = await RoomInfo(baseUrl, room);
         if (roomInfo == null)
         {
+            Console.WriteLine("Room Not Found");
             message = "Room Not Found";
             return message;
         }
@@ -47,6 +50,7 @@ public class UrlClass
 
         if (!string.IsNullOrEmpty(existingChannelForRoom) && existingChannelForRoom != channelId)
         {
+            Console.WriteLine("Room Already Exist In Other Thread");
             message = string.Format(Resource.RoomAlreadyExistInOtherThread, existingChannelForRoom);
             return message;
         }
@@ -189,6 +193,7 @@ public class UrlClass
                         finally
                         {
                             Declare.AddedChannelId.Remove(channelId);
+                            Console.WriteLine($"Finished adding URL Channel: {newUrl} in Guild: {guildId}, Channel: {channelId}");
                         }
                     }
                     message = string.Format(Resource.URLSet, newUrl);

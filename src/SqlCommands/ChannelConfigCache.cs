@@ -42,11 +42,6 @@ public static class ChannelConfigCache
            .Select(k => k.Split(':', 2)[0])
            .Distinct();
 
-    public static IEnumerable<string> GetAllChannelIds()
-=> _map.Keys
-       .Select(k => k.Split(':', 2)[1])
-        .Distinct();
-
     public static IEnumerable<string> GetChannelIdsForGuild(string guildId)
         => _map.Keys
             .Where(k => k.StartsWith(guildId + ":", StringComparison.Ordinal))
