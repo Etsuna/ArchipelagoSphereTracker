@@ -24,6 +24,8 @@ class Program
         args = ["--normalmode"];
 #elif UPDATEBDD
         args = ["--updatebdd"];
+#elif BIGASYNC
+        args = ["--bigasync"];
 #endif
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
@@ -62,6 +64,12 @@ class Program
             Declare.UpdateBdd = true;
         }
 
+        if(args[0].ToLower() == "--bigasync")
+        {
+            Console.WriteLine("BigAsync mode enabled");
+            Declare.IsBigAsync = true;
+        }
+
         if (args[0].ToLower() == "")
         {
             ShowHelp();
@@ -74,6 +82,8 @@ class Program
             Console.WriteLine($"  --install           {Resource.ProgramInstall}");
             Console.WriteLine($"  --ArchipelagoMode   {Resource.ProgramArchipelagoMode}");
             Console.WriteLine($"  --NormalMode        {Resource.ProgramNormalMode}");
+            Console.WriteLine($"  --UpdateBDD         {Resource.ProgramUpdateBDD}");
+            Console.WriteLine($"  --BigAsync          {Resource.ProgramBigAsyncMode}");
             Console.WriteLine();
             Console.WriteLine(Resource.ProgramHelp);
         }

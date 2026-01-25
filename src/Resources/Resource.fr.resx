@@ -906,4 +906,16 @@
   <data name="ApworldInfo" xml:space="preserve">
     <value>Lien Archipelago Games Sheet : {0}</value>
   </data>
+  <data name="URLAddByAsyncNotAllowed" xml:space="preserve">
+    <value>Vous n’êtes pas autorisé à ajouter une salle. (USER_ID_FOR_BIG_ASYNC est nécessaire dans le fichier .env.)</value>
+  </data>
+  <data name="URLDeleteByAsyncNotAllowed" xml:space="preserve">
+    <value>Vous n’êtes pas autorisé à supprimer une salle. (USER_ID_FOR_BIG_ASYNC est nécessaire dans le fichier .env.)</value>
+  </data>
+  <data name="ProgramUpdateBDD" xml:space="preserve">
+    <value>Exécutez la mise a jour de la base de donnée</value>
+  </data>
+  <data name="ProgramBigAsyncMode" xml:space="preserve">
+    <value>Executez le programme en mode BigAsync. (USER_ID_FOR_BIG_ASYNC est nécessaire dans le fichier .env.)</value>
+  </data>
 </root>

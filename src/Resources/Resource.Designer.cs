@@ -19,10 +19,10 @@ namespace ArchipelagoSphereTracker.src.Resources {
     // à l'aide d'un outil, tel que ResGen ou Visual Studio.
     // Pour ajouter ou supprimer un membre, modifiez votre fichier .ResX, puis réexécutez ResGen
     // avec l'option /str ou régénérez votre projet VS.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public class Resource {
+    internal class Resource {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -540,7 +540,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à check-frequency.
         /// </summary>
-        public static string CheckFrequency {
+        internal static string CheckFrequency {
             get {
                 return ResourceManager.GetString("CheckFrequency", resourceCulture);
             }
@@ -1366,6 +1366,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Run the program in BigAsync mode. (USERIDFORBIGASYNC is needed in the .env file.).
+        /// </summary>
+        internal static string ProgramBigAsyncMode {
+            get {
+                return ResourceManager.GetString("ProgramBigAsyncMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Bot is connected!.
         /// </summary>
         internal static string ProgramBotIsConnected {
@@ -1425,6 +1434,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string ProgramStartingBot {
             get {
                 return ResourceManager.GetString("ProgramStartingBot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Run the database update.
+        /// </summary>
+        internal static string ProgramUpdateBDD {
+            get {
+                return ResourceManager.GetString("ProgramUpdateBDD", resourceCulture);
             }
         }
         
@@ -1566,7 +1584,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à skip_mention_items.
         /// </summary>
-        public static string SCAddAliasSkipMention {
+        internal static string SCAddAliasSkipMention {
             get {
                 return ResourceManager.GetString("SCAddAliasSkipMention", resourceCulture);
             }
@@ -1908,7 +1926,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à silent.
         /// </summary>
-        public static string SCSilentOption {
+        internal static string SCSilentOption {
             get {
                 return ResourceManager.GetString("SCSilentOption", resourceCulture);
             }
@@ -1944,7 +1962,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à thread-name.
         /// </summary>
-        public static string SCThreadName {
+        internal static string SCThreadName {
             get {
                 return ResourceManager.GetString("SCThreadName", resourceCulture);
             }
@@ -1980,7 +1998,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à thread-type.
         /// </summary>
-        public static string SCThreadType {
+        internal static string SCThreadType {
             get {
                 return ResourceManager.GetString("SCThreadType", resourceCulture);
             }
@@ -2221,6 +2239,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à You are not allowed to add a room. (USERIDFORBIGASYNC is needed in the .env file.).
+        /// </summary>
+        internal static string URLAddByAsyncNotAllowed {
+            get {
+                return ResourceManager.GetString("URLAddByAsyncNotAllowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à URL already set for this channel. Remove the URL before adding a new one..
         /// </summary>
         internal static string URLAlreadySet {
@@ -2244,6 +2271,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string UrlCheckMaxTread {
             get {
                 return ResourceManager.GetString("UrlCheckMaxTread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à You are not allowed to delete a room. (USERIDFORBIGASYNC is needed in the .env file.).
+        /// </summary>
+        internal static string URLDeleteByAsyncNotAllowed {
+            get {
+                return ResourceManager.GetString("URLDeleteByAsyncNotAllowed", resourceCulture);
             }
         }
         

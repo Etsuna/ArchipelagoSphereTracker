@@ -23,6 +23,21 @@ public class UrlClass
         var checkFrequencyStr = command.Data.Options.ElementAtOrDefault(5)?.Value as string ?? "5m";
         var message = string.Empty;
 
+        if (Declare.IsBigAsync)
+        {
+            if (Declare.UserIdForBigAsync != guildUser?.Id.ToString())
+            {
+                message = Resource.URLAddByAsyncNotAllowed;
+                return message;
+            }
+
+            silent = true;
+            autoAddMembers = false;
+            threadType = "Public";
+            threadTitle = "Archipelago Big Async";
+            checkFrequencyStr = "1h";
+        }
+
         if (newUrl == null)
         {
             message = "Is Null";
@@ -76,8 +91,13 @@ public class UrlClass
                 return (false, Resource.CheckPlayerMin);
             }
 
-            if (playersCount > Declare.MaxPlayer)
-                return (false, string.Format(Resource.CheckPlayerMax, Declare.MaxPlayer));
+            if (!Declare.IsBigAsync)
+            {
+                if (playersCount > Declare.MaxPlayer)
+                {
+                    return (false, string.Format(Resource.CheckPlayerMax, Declare.MaxPlayer));
+                }
+            }
 
             return (true, string.Empty);
         }
@@ -236,7 +256,22 @@ public class UrlClass
 
     public static async Task<string> DeleteUrl(IGuildUser? guildUser, string channelId, string guildId)
     {
-        var message = await DeleteChannelAndUrl(channelId, guildId);
+        var message = string.Empty;
+        if (Declare.IsBigAsync)
+        {
+            if(Declare.UserIdForBigAsync == guildUser?.Id.ToString())
+            {
+                message = await DeleteChannelAndUrl(channelId, guildId);
+                return message;
+            }
+            else
+            {
+                message = Resource.URLDeleteByAsyncNotAllowed;
+                return message;
+            }
+        }
+
+        message = await DeleteChannelAndUrl(channelId, guildId);
         return message;
     }
 
