@@ -151,7 +151,7 @@ public static class DBMigration
         }
     }
 
-    private static readonly HttpClient _http = new HttpClient();
+    private static readonly HttpClient _http = HttpClientFactory.CreateJsonClient();
 
     public static async Task MigrateTableData(string guild, string channel, bool silent, string baseUrl, string tracker, List<DisplayedItem_Old> oldDisplayedItems, CancellationToken ct = default)
     {

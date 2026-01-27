@@ -4,10 +4,7 @@ using System.Text.Json.Serialization;
 
 public static class DatapackageStore
 {
-    private static readonly HttpClient Http = new HttpClient
-    {
-        Timeout = TimeSpan.FromSeconds(10)
-    };
+    private static readonly HttpClient Http = HttpClientFactory.CreateJsonClient();
 
     // ---- Modèle du JSON attendu ----
     private sealed class Datapackage
@@ -32,7 +29,7 @@ public static class DatapackageStore
     public static async Task ImportAsync(string pathOrUrl, string guildId, string channelId, string datasetKey, bool truncate = false, string? gameName = null, CancellationToken ct = default)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(TimeSpan.FromSeconds(30)); 
+        cts.CancelAfter(TimeSpan.FromSeconds(120));
 
         byte[] payload;
         if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var uri) &&

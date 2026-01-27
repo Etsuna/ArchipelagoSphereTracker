@@ -330,10 +330,7 @@ public static class TrackingDataManager
         }, token);
     }
 
-    internal static readonly HttpClient Http = new HttpClient
-    {
-        Timeout = TimeSpan.FromSeconds(30)
-    };
+    internal static readonly HttpClient Http = HttpClientFactory.CreateJsonClient();
 
     public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, bool sendAsTextFile)
         => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None, sendAsTextFile);
@@ -360,9 +357,18 @@ public static class TrackingDataManager
             jsonStatic = await HttpThrottle.GetStringThrottledAsync(
                 Http, urlStatic, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            Console.WriteLine($"[TDM] Serveur indisponible ou lent pour {baseUrl}. Abandon de la passe.");
+            if (!ctChan.IsCancellationRequested)
+                Console.WriteLine($"[TDM] Timeout en récupérant {baseUrl} : {ex}");
+            else
+                Console.WriteLine($"[TDM] Annulé par le caller pour {baseUrl} : {ex}");
+
+            return;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TDM] Erreur HTTP en récupérant {baseUrl} : {ex}");
             return;
         }
 

@@ -7,13 +7,12 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
     {
         public static async Task<TrackerRoot> getRoots(string baseUrl, string trackerId, HttpClient? http = null)
         {
-            CancellationToken ct = default;
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
 
             var url = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{trackerId}";
-            http ??= new HttpClient();
+            http ??= HttpClientFactory.CreateJsonClient();
 
-            var json = await http.GetStringAsync(url, ct).ConfigureAwait(false);
+            var json = await http.GetStringAsync(url, cts.Token).ConfigureAwait(false);
 
             var options = new JsonSerializerOptions
             {

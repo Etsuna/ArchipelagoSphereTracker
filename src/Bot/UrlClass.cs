@@ -2,6 +2,7 @@
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Discord;
 using Discord.WebSocket;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using TrackerLib.Models;
@@ -306,10 +307,7 @@ public class UrlClass
         return message;
     }
 
-    private static readonly HttpClient Http = new HttpClient
-    {
-        Timeout = TimeSpan.FromSeconds(5)
-    };
+    private static readonly HttpClient Http = HttpClientFactory.CreateJsonClient();
 
     private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(1);
 
@@ -335,8 +333,18 @@ public class UrlClass
                 log: Console.WriteLine
             ).ConfigureAwait(false);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            if (!ct.IsCancellationRequested)
+                Console.WriteLine($"[TDM] Timeout en récupérant {url} : {ex}");
+            else
+                Console.WriteLine($"[TDM] Annulé par le caller pour {url} : {ex}");
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TDM] Erreur HTTP en récupérant {url} : {ex}");
             return null;
         }
 
