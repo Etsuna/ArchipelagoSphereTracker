@@ -34,6 +34,7 @@ public class GenerationClass : Declare
     {
         bool errorDetected = false;
         StringBuilder errorMessage = new();
+        var timeout = TimeSpan.FromMinutes(30);
 
         using (Process process = new Process { StartInfo = startInfo })
         {
@@ -68,7 +69,7 @@ public class GenerationClass : Declare
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            if (!process.WaitForExit(600000) && !errorDetected)
+            if (!process.WaitForExit((int)timeout.TotalMilliseconds) && !errorDetected)
             {
                 if (!process.HasExited) process.Kill();
                 errorMessage.AppendLine(Resource.GenerationTimeout);
