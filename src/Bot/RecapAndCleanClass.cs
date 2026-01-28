@@ -71,7 +71,7 @@ public class RecapAndCleanClass
         return message;
     }
 
-    public static async Task<string> Clean(SocketSlashCommand command,  string? alias, string channelId, string guildId)
+    public static async Task<string> Clean(SocketSlashCommand command, string? alias, string channelId, string guildId)
     {
         return await HandleRecapOrClean(command, alias, channelId, guildId, isAliasRequired: true, deleteAfter: true, includeAllAliases: false, returnRecap: false, buildMessage: null);
     }
@@ -167,11 +167,17 @@ public class RecapAndCleanClass
 
                 var label = FlagLabel(fg.Key);
                 if (!string.IsNullOrEmpty(label))
+                {
                     sb.AppendLine($"**{label}:**");
+                }
+
 
                 foreach (var s in groupedItems)
+                {
                     sb.AppendLine(s);
+                }
             }
+            sb.AppendLine();
         }
         return sb.ToString();
     }
