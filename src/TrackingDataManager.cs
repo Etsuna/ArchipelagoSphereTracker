@@ -498,7 +498,7 @@ public static class TrackingDataManager
                             ? $"**{Resource.ItemFor} {receiver} {mentions} ({withHeader.Count}) [{i + 1}/{chunks.Count}]:**"
                             : $"**{Resource.ItemFor} {receiver} {mentions} ({withHeader.Count}):**";
 
-                        string finalMessage = header + "\n" + chunks[i];
+                        string finalMessage = header + "\n>>> " + chunks[i];
 
                         await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
                         try
@@ -737,7 +737,7 @@ public static class TrackingDataManager
             }
 
             if (sb.Length > 0) sb.AppendLine();
-            sb.Append(msg);
+            sb.Append($"- {msg}");
         }
 
         if (sb.Length > 0)
