@@ -137,7 +137,7 @@ public class RecapAndCleanClass
             if (firstSection) sb.AppendLine();
             firstSection = false;
 
-            sb.AppendLine($"**{sub.Key}**");
+            sb.AppendLine($"## **{sub.Key}:**");
 
             var items = sub.Value ?? new List<(string, long?)>();
 
@@ -168,13 +168,12 @@ public class RecapAndCleanClass
                 var label = FlagLabel(fg.Key);
                 if (!string.IsNullOrEmpty(label))
                 {
-                    sb.AppendLine($"**{label}:**");
+                    sb.AppendLine($"### **{label}:**");
                 }
-
 
                 foreach (var s in groupedItems)
                 {
-                    sb.AppendLine(s);
+                    sb.AppendLine($"> - {s}");
                 }
             }
             sb.AppendLine();
