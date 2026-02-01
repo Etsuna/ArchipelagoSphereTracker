@@ -193,6 +193,7 @@ public static class BotCommands
             "status-games-list" => await HelperClass.StatusGameList(channelId, guildId),
             "info" => await HelperClass.Info(channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, channelId, guildId),
+            "portal-link" => await WebPortalLinkAsync(channelId, guildId, command.User.Id.ToString()),
             "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, channelId, guildId),
             "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, alias, channelId, guildId),
             "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
@@ -224,6 +225,19 @@ public static class BotCommands
             _ => Resource.BotCommandThread
         };
     }
+    private static async Task<string> WebPortalLinkAsync(string channelId, string guildId, string userId)
+    {
+        if (!Declare.EnableWebPortal)
+        {
+            return Resource.WebPortalDisabled;
+        }
+
+        var portalUrl = await WebPortalPages.EnsureUserPageAsync(guildId, channelId, userId);
+        return string.IsNullOrWhiteSpace(portalUrl)
+            ? Resource.WebPortalDisabled
+            : string.Format(Resource.WebPortalLink, portalUrl);
+    }
+
 
     private static async Task SendPaginatedMessageAsync(SocketSlashCommand command, string message, int maxLength)
     {

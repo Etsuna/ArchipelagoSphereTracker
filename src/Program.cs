@@ -216,6 +216,8 @@ class Program
             Console.WriteLine(Resource.ProgramBotIsConnected);
 
             TrackingDataManager.StartTracking();
+            WebPortalServer.Start();
+            await WebPortalPages.EnsureMissingUserPagesAsync();
 
             if (Declare.ExportMetrics && !string.IsNullOrEmpty(Declare.MetricsPort))
             {

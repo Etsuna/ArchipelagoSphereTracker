@@ -918,4 +918,13 @@
   <data name="ProgramBigAsyncMode" xml:space="preserve">
     <value>Executez le programme en mode BigAsync. (USER_ID_FOR_BIG_ASYNC est nécessaire dans le fichier .env.)</value>
   </data>
+  <data name="WebPortalLink" xml:space="preserve">
+    <value>🌌 Portail : {0}</value>
+  </data>
+  <data name="SCPortalLinkDescription" xml:space="preserve">
+    <value>Obtenir le lien du portail web.</value>
+  </data>
+  <data name="WebPortalDisabled" xml:space="preserve">
+    <value>Le portail web est désactivé.</value>
+  </data>
 </root>

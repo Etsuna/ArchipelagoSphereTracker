@@ -24,6 +24,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Compile Remove="Gui\**\*.cs" />
 		<None Remove="Gui\**\*" />
 		<EmbeddedResource Remove="Gui\**\*" />

@@ -150,6 +150,11 @@ public static class SlashCommandDefinitions
                 .WithDescription(Resource.SCDeleteExcludedItemDesc)
                 .AddOption(AliasOption("added-alias"))
                 .AddOption(ItemsOption("delete-items")),
+
+            new SlashCommandBuilder()
+                .WithName("portal-link")
+                .WithDescription(Resource.SCPortalLinkDescription),
+
         };
 
         if (Declare.IsArchipelagoMode)

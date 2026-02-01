@@ -1861,6 +1861,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Get your web portal link..
+        /// </summary>
+        internal static string SCPortalLinkDescription {
+            get {
+                return ResourceManager.GetString("SCPortalLinkDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Recap list of items for all games.
         /// </summary>
         internal static string SCRecapAllDescription {
@@ -2352,6 +2361,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string Useful {
             get {
                 return ResourceManager.GetString("Useful", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Web portal is disabled..
+        /// </summary>
+        internal static string WebPortalDisabled {
+            get {
+                return ResourceManager.GetString("WebPortalDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 🌌 Portal: {0}.
+        /// </summary>
+        internal static string WebPortalLink {
+            get {
+                return ResourceManager.GetString("WebPortalLink", resourceCulture);
             }
         }
         

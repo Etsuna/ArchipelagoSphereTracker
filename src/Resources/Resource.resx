@@ -1185,4 +1185,16 @@
     <value>Run the program in BigAsync mode. (USERIDFORBIGASYNC is needed in the .env file.)</value>
     <comment>Run the program in BigAsync mode. (USERIDFORBIGASYNC is needed in the .env file.)</comment>
   </data>
+  <data name="WebPortalLink" xml:space="preserve">
+    <value>🌌 Portal: {0}</value>
+    <comment>Web portal link for the user's recap page.</comment>
+  </data>
+  <data name="SCPortalLinkDescription" xml:space="preserve">
+    <value>Get your web portal link.</value>
+    <comment>Slash command description for portal-link.</comment>
+  </data>
+  <data name="WebPortalDisabled" xml:space="preserve">
+    <value>Web portal is disabled.</value>
+    <comment>Message shown when the web portal is disabled.</comment>
+  </data>
 </root>
