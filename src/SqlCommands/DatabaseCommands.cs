@@ -173,6 +173,8 @@ public static class DatabaseCommands
     {
         try
         {
+            Console.WriteLine($"Try to delete data for GuildId: {guildId}, ChannelId: {channelId}");
+
             await Db.WriteAsync(async conn =>
             {
                 using var command = conn.CreateCommand();
@@ -335,6 +337,8 @@ public static class DatabaseCommands
     {
         try
         {
+            Console.WriteLine($"Try to delete data for GuildId: {guildId}");
+
             await Db.WriteAsync(async conn =>
             {
                 using var command = conn.CreateCommand();
@@ -441,82 +445,4 @@ public static class DatabaseCommands
             Console.WriteLine($"Error while deleting by GuildId: {ex.Message}");
         }
     }
-
-    // ==========================
-    // 🎯 RECLAIM SPACE (VACUUM)
-    // ==========================
-    private static async Task<(int Busy, int Log, int Checkpointed)> WalCheckpointAsync(SQLiteConnection conn, string mode)
-    {
-        using var cmd = new SQLiteCommand($"PRAGMA wal_checkpoint({mode});", conn);
-        using var rdr = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-
-        if (await rdr.ReadAsync().ConfigureAwait(false))
-        {
-            return (rdr.GetInt32(0), rdr.GetInt32(1), rdr.GetInt32(2));
-        }
-        return (0, 0, 0);
-    }
-
-    /*public static async Task ReclaimSpaceAsync(
-        int minIntervalSeconds = 300,                 // 5 min
-        long walCheckpointThresholdBytes = 2L * 1024 * 1024,   // 2 MB
-        long walRestartThresholdBytes = 16L * 1024 * 1024,  // 16 MB
-        long walTruncateThresholdBytes = 64L * 1024 * 1024   // 64 MB
-    )
-    {
-        if (Interlocked.Exchange(ref _reclaimInFlight, 1) == 1)
-            return;
-
-        try
-        {
-            var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var lastMs = Interlocked.Read(ref _lastReclaimUnixMs);
-
-            var dbPath = Declare.DatabaseFile;
-            var walPath = dbPath + "-wal";
-            long walSize = File.Exists(walPath) ? new FileInfo(walPath).Length : 0;
-
-            if (walSize < walCheckpointThresholdBytes && (nowMs - lastMs) < (minIntervalSeconds * 1000L))
-                return;
-
-            if (!await Db.WriteGate.WaitAsync(0).ConfigureAwait(false))
-                return;
-
-            try
-            {
-                await using var conn = await Db.OpenWriteAsync().ConfigureAwait(false);
-
-                var mode = "PASSIVE";
-                var res = await WalCheckpointAsync(conn, mode).ConfigureAwait(false);
-
-                if (walSize >= walTruncateThresholdBytes && res.Busy == 0)
-                {
-                    mode = "TRUNCATE";
-                    res = await WalCheckpointAsync(conn, mode).ConfigureAwait(false);
-                }
-                else if (walSize >= walRestartThresholdBytes && res.Busy == 0 && res.Checkpointed < res.Log)
-                {
-                    mode = "RESTART";
-                    res = await WalCheckpointAsync(conn, mode).ConfigureAwait(false);
-                }
-
-                Interlocked.Exchange(ref _lastReclaimUnixMs, nowMs);
-
-                var walMb = walSize / 1024d / 1024d;
-                Console.WriteLine($"Checkpoint {mode} (wal={walMb:F2} MB, log={res.Log}, ckpt={res.Checkpointed}, busy={res.Busy}).");
-            }
-            finally
-            {
-                Db.WriteGate.Release();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erreur ReclaimSpaceAsync: {ex.Message}");
-        }
-        finally
-        {
-            Volatile.Write(ref _reclaimInFlight, 0);
-        }
-    }*/
 }

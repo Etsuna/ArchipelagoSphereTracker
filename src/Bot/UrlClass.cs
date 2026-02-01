@@ -2,6 +2,7 @@
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Discord;
 using Discord.WebSocket;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using TrackerLib.Models;
@@ -23,11 +24,28 @@ public class UrlClass
         var checkFrequencyStr = command.Data.Options.ElementAtOrDefault(5)?.Value as string ?? "5m";
         var message = string.Empty;
 
+        if (Declare.IsBigAsync)
+        {
+            if (Declare.UserIdForBigAsync != guildUser?.Id.ToString())
+            {
+                message = Resource.URLAddByAsyncNotAllowed;
+                return message;
+            }
+
+            silent = true;
+            autoAddMembers = false;
+            threadType = "Public";
+            threadTitle = "Archipelago Big Async";
+            checkFrequencyStr = "1h";
+        }
+
         if (newUrl == null)
         {
             message = "Is Null";
             return message;
         }
+
+        Console.WriteLine($"Try to add URL Channel: {newUrl} in Guild: {guildId}, Channel: {channelId}");
 
         var uri = new Uri(newUrl);
         baseUrl = $"{uri.Scheme}://{uri.Authority}";
@@ -39,6 +57,7 @@ public class UrlClass
         var roomInfo = await RoomInfo(baseUrl, room);
         if (roomInfo == null)
         {
+            Console.WriteLine("Room Not Found");
             message = "Room Not Found";
             return message;
         }
@@ -47,6 +66,7 @@ public class UrlClass
 
         if (!string.IsNullOrEmpty(existingChannelForRoom) && existingChannelForRoom != channelId)
         {
+            Console.WriteLine("Room Already Exist In Other Thread");
             message = string.Format(Resource.RoomAlreadyExistInOtherThread, existingChannelForRoom);
             return message;
         }
@@ -72,8 +92,13 @@ public class UrlClass
                 return (false, Resource.CheckPlayerMin);
             }
 
-            if (playersCount > Declare.MaxPlayer)
-                return (false, string.Format(Resource.CheckPlayerMax, Declare.MaxPlayer));
+            if (!Declare.IsBigAsync)
+            {
+                if (playersCount > Declare.MaxPlayer)
+                {
+                    return (false, string.Format(Resource.CheckPlayerMax, Declare.MaxPlayer));
+                }
+            }
 
             return (true, string.Empty);
         }
@@ -167,26 +192,30 @@ public class UrlClass
                     if (!string.IsNullOrEmpty(tracker))
                     {
                         Declare.AddedChannelId.Add(channelId);
+                        try
+                        {
+                            await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr, port);
+                            var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
+                            var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
+                            await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
+                            await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
+                            await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
+                            await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
+                            var info = await HelperClass.Info(channelId, guildId);
+                            await BotCommands.SendMessageAsync(info, channelId);
+                            using MemoryStream playersStream = await SendPlayersInfoAsync(channelId, thread, aliasList, roomInfo, room);
+                            await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
+                            await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent, true);
+                            await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
 
-                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr, port);
-                        var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
-                        var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
-                        await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
-                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
-                        await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
-                        await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
-                        var info = await HelperClass.Info(channelId, guildId);
-                        await BotCommands.SendMessageAsync(info, channelId);
-                        using MemoryStream playersStream = await SendPlayersInfoAsync(channelId, thread, aliasList, roomInfo, room);
-                        await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
-                        await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent, true);
-                        await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
-                        
-                        await BotCommands.SendMessageAsync(Resource.Discord, channelId);
-                        await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
-
-
-                        Declare.AddedChannelId.Remove(channelId);
+                            await BotCommands.SendMessageAsync(Resource.Discord, channelId);
+                            await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
+                        }
+                        finally
+                        {
+                            Declare.AddedChannelId.Remove(channelId);
+                            Console.WriteLine($"Finished adding URL Channel: {newUrl} in Guild: {guildId}, Channel: {channelId}");
+                        }
                     }
                     message = string.Format(Resource.URLSet, newUrl);
                 }
@@ -228,7 +257,22 @@ public class UrlClass
 
     public static async Task<string> DeleteUrl(IGuildUser? guildUser, string channelId, string guildId)
     {
-        var message = await DeleteChannelAndUrl(channelId, guildId);
+        var message = string.Empty;
+        if (Declare.IsBigAsync)
+        {
+            if(Declare.UserIdForBigAsync == guildUser?.Id.ToString())
+            {
+                message = await DeleteChannelAndUrl(channelId, guildId);
+                return message;
+            }
+            else
+            {
+                message = Resource.URLDeleteByAsyncNotAllowed;
+                return message;
+            }
+        }
+
+        message = await DeleteChannelAndUrl(channelId, guildId);
         return message;
     }
 
@@ -237,12 +281,14 @@ public class UrlClass
         if (string.IsNullOrEmpty(channelId))
         {
             await DatabaseCommands.DeleteChannelDataByGuildIdAsync(guildId);
+            TrackingDataManager.RateLimitGuards.RemoveGuildSendGate(ulong.Parse(guildId));
 
         }
         else
         {
             await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId);
             ChannelConfigCache.Remove(guildId, channelId);
+            Declare.WarnedThreads.Remove(channelId);
 
             var playersPath = Path.Combine(Declare.PlayersPath, channelId);
             if (Directory.Exists(playersPath))
@@ -261,10 +307,7 @@ public class UrlClass
         return message;
     }
 
-    private static readonly HttpClient Http = new HttpClient
-    {
-        Timeout = TimeSpan.FromSeconds(5)
-    };
+    private static readonly HttpClient Http = HttpClientFactory.CreateJsonClient();
 
     private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(1);
 
@@ -290,8 +333,18 @@ public class UrlClass
                 log: Console.WriteLine
             ).ConfigureAwait(false);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            if (!ct.IsCancellationRequested)
+                Console.WriteLine($"[TDM] Timeout en récupérant {url} : {ex}");
+            else
+                Console.WriteLine($"[TDM] Annulé par le caller pour {url} : {ex}");
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TDM] Erreur HTTP en récupérant {url} : {ex}");
             return null;
         }
 

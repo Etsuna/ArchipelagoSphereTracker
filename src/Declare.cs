@@ -4,7 +4,7 @@ using System.Reflection;
 
 public class Declare
 {
-    public static string Version = "0.6.5";
+    public static string Version = "0.6.6";
 #if RC
     public static string ReleaseVersion = $"{Version}-rc1";
 #else
@@ -16,12 +16,13 @@ public class Declare
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool ExportMetrics = (Environment.GetEnvironmentVariable("EXPORT_METRICS") ?? "false").Trim().ToLower() == "true";
     public static readonly string MetricsPort = Environment.GetEnvironmentVariable("METRICS_PORT") ?? string.Empty;
-
+    public static readonly string UserIdForBigAsync = Environment.GetEnvironmentVariable("USER_ID_FOR_BIG_ASYNC") ?? string.Empty;
 
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();
     public static List<string> AddedChannelId = new List<string>();
     public static readonly int MaxPlayer = 100;
     public static bool IsArchipelagoMode { get; set; } = false;
+    public static bool IsBigAsync { get; set; } = false;
     public static bool UpdateBdd { get; set; } = false;
 
     public static CancellationTokenSource Cts = new CancellationTokenSource();

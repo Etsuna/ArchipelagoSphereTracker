@@ -1169,4 +1169,20 @@
     <value>Archipelago Games Sheet Link: {0}</value>
     <comment>Archipelago Games Sheet Link: {0}</comment>
   </data>
+  <data name="URLAddByAsyncNotAllowed" xml:space="preserve">
+    <value>You are not allowed to add a room. (USERIDFORBIGASYNC is needed in the .env file.)</value>
+    <comment>You are not allowed to add a room. (USERIDFORBIGASYNC is needed in the .env file.)</comment>
+  </data>
+  <data name="URLDeleteByAsyncNotAllowed" xml:space="preserve">
+    <value>You are not allowed to delete a room. (USERIDFORBIGASYNC is needed in the .env file.)</value>
+    <comment>You are not allowed to delete a room. (USERIDFORBIGASYNC is needed in the .env file.)</comment>
+  </data>
+  <data name="ProgramUpdateBDD" xml:space="preserve">
+    <value>Run the database update</value>
+    <comment>Run the database update</comment>
+  </data>
+  <data name="ProgramBigAsyncMode" xml:space="preserve">
+    <value>Run the program in BigAsync mode. (USERIDFORBIGASYNC is needed in the .env file.)</value>
+    <comment>Run the program in BigAsync mode. (USERIDFORBIGASYNC is needed in the .env file.)</comment>
+  </data>
 </root>

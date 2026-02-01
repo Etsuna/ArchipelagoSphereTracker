@@ -41,7 +41,7 @@ namespace TrackerLib.Services
         public static async Task<DatapackageIndex> FetchOneAsync(string baseUrl, string checksum, HttpClient? http = null, CancellationToken ct = default)
         {
             var ownClient = http is null;
-            http ??= new HttpClient();
+            http ??= HttpClientFactory.CreateJsonClient();
             try
             {
                 var url = $"{baseUrl.TrimEnd('/')}/api/datapackage/{checksum}";

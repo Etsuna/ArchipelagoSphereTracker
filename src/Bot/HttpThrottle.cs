@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Net.Http.Headers;
+using System.Threading;
 
 internal static class HttpThrottle
 {
@@ -7,9 +8,13 @@ internal static class HttpThrottle
     {
         public readonly SemaphoreSlim Mutex = new(1, 1);
         public DateTimeOffset NextAllowedUtc = DateTimeOffset.MinValue;
+        public DateTimeOffset LastUsedUtc = DateTimeOffset.UtcNow;
     }
 
     private static readonly ConcurrentDictionary<string, Gate> _byHost = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly TimeSpan GateIdleTtl = TimeSpan.FromMinutes(30);
+    private const int CleanupInterval = 100;
+    private static int _cleanupCounter;
 
     public static async Task<string?> GetStringThrottledAsync(
         HttpClient http,
@@ -19,10 +24,16 @@ internal static class HttpThrottle
         int maxAttempts = 3,
         Action<string>? log = null)
     {
+        if (Interlocked.Increment(ref _cleanupCounter) % CleanupInterval == 0)
+        {
+            CleanupGates();
+        }
+
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
             return null;
 
         var gate = _byHost.GetOrAdd(uri.Host, _ => new Gate());
+        gate.LastUsedUtc = DateTimeOffset.UtcNow;
 
         await gate.Mutex.WaitAsync(ct).ConfigureAwait(false);
         try
@@ -117,6 +128,16 @@ internal static class HttpThrottle
         finally
         {
             gate.Mutex.Release();
+        }
+    }
+
+    private static void CleanupGates()
+    {
+        var cutoff = DateTimeOffset.UtcNow - GateIdleTtl;
+        foreach (var kv in _byHost)
+        {
+            if (kv.Value.LastUsedUtc < cutoff)
+                _byHost.TryRemove(kv.Key, out _);
         }
     }
 

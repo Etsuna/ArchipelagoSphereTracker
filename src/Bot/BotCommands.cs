@@ -8,6 +8,12 @@ using System.Text.RegularExpressions;
 
 public static class BotCommands
 {
+    private static readonly SemaphoreSlim RegisterCommandsLock = new(1, 1);
+    private static readonly TimeSpan RegisterCommandsDelay = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan RegisterCommandsCooldown = TimeSpan.FromSeconds(10);
+    private static DateTimeOffset _lastRegisterCommandsAt = DateTimeOffset.MinValue;
+    private static bool _handlersRegistered;
+
     #region Setup
 
     public static Task InstallCommandsAsync()
@@ -21,18 +27,41 @@ public static class BotCommands
 
     public static async Task RegisterCommandsAsync()
     {
-        var commands = SlashCommandDefinitions.GetAll();
-        var builtCommands = commands
-            .Select(cmd => cmd.Build() as ApplicationCommandProperties)
-            .ToArray();
+        await RegisterCommandsLock.WaitAsync();
+        try
+        {
+            var now = DateTimeOffset.UtcNow;
+            if (now - _lastRegisterCommandsAt < RegisterCommandsCooldown)
+            {
+                return;
+            }
 
-        var registrationTasks = Declare.Client.Guilds
-            .Select(guild => Declare.Client.Rest.BulkOverwriteGuildCommands(builtCommands, guild.Id));
+            _lastRegisterCommandsAt = now;
 
-        await Task.WhenAll(registrationTasks);
+            var commands = SlashCommandDefinitions.GetAll();
+            var builtCommands = commands
+                .Select(cmd => cmd.Build() as ApplicationCommandProperties)
+                .ToArray();
 
-        Declare.Client.SlashCommandExecuted += HandleSlashCommandAsync;
-        Declare.Client.AutocompleteExecuted += HandleAutocompleteAsync;
+            foreach (var guild in Declare.Client.Guilds)
+            {
+                Console.WriteLine("Registering commands for guild: " + guild.Name);
+                await Declare.Client.Rest.BulkOverwriteGuildCommands(builtCommands, guild.Id);
+                await Task.Delay(RegisterCommandsDelay);
+            }
+
+            if (!_handlersRegistered)
+            {
+                Console.WriteLine("Registering command handlers");
+                Declare.Client.SlashCommandExecuted += HandleSlashCommandAsync;
+                Declare.Client.AutocompleteExecuted += HandleAutocompleteAsync;
+                _handlersRegistered = true;
+            }
+        }
+        finally
+        {
+            RegisterCommandsLock.Release();
+        }
     }
 
     #endregion

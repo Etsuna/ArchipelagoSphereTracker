@@ -378,25 +378,6 @@ public static class ChannelsAndUrlsCommands
     }
 
     // =================================================
-    // 🎯 SHOULD RUN CHECKS (READ)
-    // =================================================
-    public static (bool ShouldRun, TimeSpan CherckFrequency) ShouldRunChecks(string checkFrequencyStr, string? lastCheckStr)
-    {
-        var minCheckFrequency = TimeSpan.FromMinutes(5);
-        var checkFrequency = CheckFrequencyParser.ParseOrDefault(checkFrequencyStr, minCheckFrequency, minCheckFrequency, null);
-
-        if (string.IsNullOrWhiteSpace(lastCheckStr))
-            return (true, checkFrequency);
-
-        if (!DateTimeOffset.TryParse(lastCheckStr, CultureInfo.InvariantCulture,
-                                     DateTimeStyles.AssumeUniversal, out var last))
-            return (true, checkFrequency);
-
-        var shouldRun = DateTimeOffset.UtcNow - last >= checkFrequency;
-        return (shouldRun, checkFrequency);
-    }
-
-    // =================================================
     // 🎯 UPDATE LAST CHECK (WRITE)
     // =================================================
     public static async Task UpdateLastCheckAsync(string guildId, string channelId)

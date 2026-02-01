@@ -23,7 +23,9 @@ public static class SlashCommandDefinitions
                     .AddChoice($"{Resource.Filler}", "1")
                     .AddChoice($"{Resource.Trap}", "16")
                     .AddChoice($"{Resource.Filler} + {Resource.Trap}", "17")
-                    .AddChoice($"{Resource.Filler} + {Resource.Trap} + {Resource.Useful}", "21")),
+                    .AddChoice($"{Resource.Filler} + {Resource.Trap} + {Resource.Useful}", "21")
+                    .AddChoice($"{Resource.Filler} + {Resource.Trap} + {Resource.Useful} + {Resource.Required}", "27")
+                    .AddChoice($"{Resource.Filler} + {Resource.Trap} + {Resource.Useful} + {Resource.Required} + {Resource.Progression}", "31")),
 
             new SlashCommandBuilder()
                 .WithName("delete-alias")
