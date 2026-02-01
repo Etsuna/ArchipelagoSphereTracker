@@ -191,7 +191,13 @@ class Program
             RequestShutdown();
         };
         AppDomain.CurrentDomain.ProcessExit += (_, _) => RequestShutdown();
-
+        PosixSignalRegistration? sigTermRegistration = null;
+        PosixSignalRegistration? sigIntRegistration = null;
+        if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+        {
+            sigTermRegistration = PosixSignalRegistration.Create(PosixSignal.SIGTERM, _ => RequestShutdown());
+            sigIntRegistration = PosixSignalRegistration.Create(PosixSignal.SIGINT, _ => RequestShutdown());
+        }
 
         await Declare.Client.SetCustomStatusAsync(version);
 
@@ -209,6 +215,9 @@ class Program
         }
 
         await ShutdownAsync();
+        sigTermRegistration?.Dispose();
+        sigIntRegistration?.Dispose();
+        shutdownSignal.Dispose();
 
         static Task OnDisconnected(Exception _)
         {
