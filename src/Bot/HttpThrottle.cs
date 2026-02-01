@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Net.Http.Headers;
-using System.Threading;
 
 internal static class HttpThrottle
 {

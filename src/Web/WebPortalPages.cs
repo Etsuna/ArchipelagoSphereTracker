@@ -1,8 +1,5 @@
-using System;
-using System.IO;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 
 public static class WebPortalPages
 {
@@ -419,9 +416,9 @@ public static class WebPortalPages
     const itemsRoot = document.getElementById('items-root');
     const hintsRoot = document.getElementById('hints-root');
 
-    const path = window.location.pathname; // ex: /randophilia/portal/g/c/u/
+    const path = window.location.pathname; // ex: /AST/portal/g/c/u/
     const i = path.indexOf('/portal/');
-    const prefix = i >= 0 ? path.substring(0, i) : ''; // ex: /randophilia ou '' en direct
+    const prefix = i >= 0 ? path.substring(0, i) : ''; // ex: /AST ou '' en direct
     const apiBase = `${{window.location.origin}}${{prefix}}/api/portal/${{ctx.guildId}}/${{ctx.channelId}}/${{ctx.userId}}`;
 
     const escapeHtml = (value) => {{

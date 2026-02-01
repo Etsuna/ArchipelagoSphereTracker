@@ -87,7 +87,6 @@ public class InstallClass : Declare
         }
 
         Console.WriteLine(Resource.InstallImportApworldsDatabase);
-        await ApworldListDatabase.Import();
 
         await File.WriteAllTextAsync(VersionFile, ReleaseVersion);
 

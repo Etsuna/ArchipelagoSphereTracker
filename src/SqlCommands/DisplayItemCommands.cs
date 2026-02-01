@@ -1,5 +1,4 @@
-﻿using ArchipelagoSphereTracker.src.Resources;
-using System.Data.SQLite;
+﻿using System.Data.SQLite;
 
 public static class DisplayItemCommands
 {

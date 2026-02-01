@@ -1,6 +1,5 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using Discord;
-using System.Threading.Channels;
 
 public static class SlashCommandDefinitions
 {

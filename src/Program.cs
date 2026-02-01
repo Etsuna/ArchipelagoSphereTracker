@@ -3,11 +3,9 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using DotNetEnv;
+using Prometheus;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
-using Prometheus;
 
 class Program
 {
@@ -316,6 +314,7 @@ class Program
             await DBMigration_5.Migrate_5_0_2(cts.Token);
             await DBMigration_5.Migrate_5_0_3(cts.Token);
             await DBMigration_5.Migrate_5_0_4(cts.Token);
+            await DBMigration_5.Migrate_5_0_5(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }
@@ -345,6 +344,12 @@ class Program
         {
             Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
             await DBMigration_5.Migrate_5_0_4(cts.Token);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+        }
+        else if (bddVersion == "5.0.4")
+        {
+            Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
+            await DBMigration_5.Migrate_5_0_5(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else

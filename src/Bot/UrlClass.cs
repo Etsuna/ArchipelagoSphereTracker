@@ -2,7 +2,6 @@
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Discord;
 using Discord.WebSocket;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using TrackerLib.Models;
