@@ -5,6 +5,8 @@ using Discord.WebSocket;
 using DotNetEnv;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using Prometheus;
 
 class Program
@@ -170,6 +172,27 @@ class Program
         Declare.Client.Connected += OnConnected;
         Declare.Client.Disconnected += OnDisconnected;
 
+        var shutdownSignal = new CancellationTokenSource();
+        void RequestShutdown()
+        {
+            try
+            {
+                if (!shutdownSignal.IsCancellationRequested)
+                    shutdownSignal.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            RequestShutdown();
+        };
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => RequestShutdown();
+
+
         await Declare.Client.SetCustomStatusAsync(version);
 
         await BotCommands.InstallCommandsAsync();
@@ -177,12 +200,33 @@ class Program
         await Declare.Client.LoginAsync(TokenType.Bot, Declare.DiscordToken);
         await Declare.Client.StartAsync();
 
-        await Task.Delay(-1);
+        try
+        {
+            await Task.Delay(Timeout.Infinite, shutdownSignal.Token);
+        }
+        catch (TaskCanceledException)
+        {
+        }
+
+        await ShutdownAsync();
 
         static Task OnDisconnected(Exception _)
         {
             Declare.Cts?.Cancel();
             return Task.CompletedTask;
+        }
+
+        static async Task ShutdownAsync()
+        {
+            Declare.Cts?.Cancel();
+            await WebPortalServer.StopAsync();
+
+            if (Declare.Client != null)
+            {
+                await Declare.Client.StopAsync();
+                await Declare.Client.LogoutAsync();
+                Declare.Client.Dispose();
+            }
         }
 
         static Task OnConnected()

@@ -2,10 +2,15 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
 
 public static class WebPortalServer
 {
     private static WebApplication? _app;
+    private static Task? _runTask;
 
     public static void Start()
     {
@@ -97,9 +102,23 @@ public static class WebPortalServer
 
         app.MapPost("/telemetry.php", () => Results.NoContent());
 
-        _ = app.RunAsync();
+        _runTask = app.RunAsync();
         Console.WriteLine($"[Portal] Web portal running on port {port}.");
     }
+
+    public static async Task StopAsync()
+    {
+        var app = _app;
+        if (app == null)
+            return;
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        await app.StopAsync(cts.Token);
+        await app.DisposeAsync();
+        _app = null;
+        _runTask = null;
+    }
+
 
     private record PortalSummary(
         string GuildId,
