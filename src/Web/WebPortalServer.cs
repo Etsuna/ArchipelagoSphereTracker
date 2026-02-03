@@ -41,8 +41,14 @@ public static class WebPortalServer
             RequestPath = "/portal"
         });
 
-        app.MapGet("/api/portal/{guildId}/{channelId}/{userId}/summary", async (string guildId, string channelId, string userId) =>
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/summary", async (string guildId, string channelId, string token) =>
         {
+            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Results.NotFound();
+            }
+
             var aliases = await RecapListCommands.GetAliasesForUserAsync(guildId, channelId, userId);
             var recapMap = await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId);
 
@@ -81,12 +87,16 @@ public static class WebPortalServer
             return Results.Ok(summary);
         });
 
-        app.MapPost("/api/portal/{guildId}/{channelId}/{userId}/recap/delete", async (
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/recap/delete", async (
             string guildId,
             string channelId,
-            string userId,
+            string token,
             HttpRequest request) =>
         {
+            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
+            if (string.IsNullOrWhiteSpace(userId))
+                return Results.NotFound();
+
             var form = await request.ReadFormAsync();
             var alias = form["alias"].FirstOrDefault();
             if (string.IsNullOrWhiteSpace(alias))

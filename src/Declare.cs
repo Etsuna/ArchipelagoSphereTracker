@@ -11,7 +11,7 @@ public class Declare
     public static string ReleaseVersion = Version;
 #endif
     public static string BotVersion = GetLocalSemVer();
-    public static string BddVersion = "5.0.5";
+    public static string BddVersion = "5.0.6";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool ExportMetrics = (Environment.GetEnvironmentVariable("EXPORT_METRICS") ?? "false").Trim().ToLower() == "true";

@@ -3,10 +3,10 @@ using System.Text;
 
 public static class WebPortalPages
 {
-    public static string GetUserPortalUrl(string guildId, string channelId, string userId)
+    private static string GetUserPortalUrl(string guildId, string channelId, string token)
     {
         var baseUrl = GetPortalBaseUrl();
-        return $"{baseUrl}/portal/{guildId}/{channelId}/{userId}/";
+        return $"{baseUrl}/portal/{guildId}/{channelId}/{token}/";
     }
 
     public static async Task<string?> EnsureUserPageAsync(string guildId, string channelId, string userId)
@@ -16,14 +16,16 @@ public static class WebPortalPages
             return null;
         }
 
-        var userFolder = GetUserFolder(guildId, channelId, userId);
+        var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
+        var userFolder = GetUserFolder(guildId, channelId, token);
+
         Directory.CreateDirectory(userFolder);
 
         var htmlPath = Path.Combine(userFolder, "index.html");
-        var html = BuildHtmlPage(guildId, channelId, userId);
+        var html = BuildHtmlPage(guildId, channelId, token);
         await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
 
-        return GetUserPortalUrl(guildId, channelId, userId);
+        return GetUserPortalUrl(guildId, channelId, token);
     }
 
     public static async Task EnsureMissingUserPagesAsync()
@@ -42,7 +44,8 @@ public static class WebPortalPages
 
     private static async Task EnsureUserPageIfMissingAsync(string guildId, string channelId, string userId)
     {
-        var userFolder = GetUserFolder(guildId, channelId, userId);
+        var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
+        var userFolder = GetUserFolder(guildId, channelId, token);
         Directory.CreateDirectory(userFolder);
 
         var htmlPath = Path.Combine(userFolder, "index.html");
@@ -51,7 +54,7 @@ public static class WebPortalPages
             return;
         }
 
-        var html = BuildHtmlPage(guildId, channelId, userId);
+        var html = BuildHtmlPage(guildId, channelId, token);
         await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
     }
 
@@ -66,6 +69,13 @@ public static class WebPortalPages
         if (Directory.Exists(channelFolder))
         {
             Directory.Delete(channelFolder, true);
+        }
+
+        var guildFolder = Path.Combine(Declare.WebPortalPath, guildId);
+        if (Directory.Exists(guildFolder)
+            && !Directory.EnumerateFileSystemEntries(guildFolder).Any())
+        {
+            Directory.Delete(guildFolder, true);
         }
     }
 
@@ -93,16 +103,16 @@ public static class WebPortalPages
         return $"http://localhost:{Declare.WebPortalPort}".TrimEnd('/');
     }
 
-    private static string GetUserFolder(string guildId, string channelId, string userId)
+    private static string GetUserFolder(string guildId, string channelId, string token)
     {
-        return Path.Combine(Declare.WebPortalPath, guildId, channelId, userId);
+        return Path.Combine(Declare.WebPortalPath, guildId, channelId, token);
     }
 
-    private static string BuildHtmlPage(string guildId, string channelId, string userId)
+    private static string BuildHtmlPage(string guildId, string channelId, string token)
     {
         var safeGuildId = WebUtility.HtmlEncode(guildId);
         var safeChannelId = WebUtility.HtmlEncode(channelId);
-        var safeUserId = WebUtility.HtmlEncode(userId);
+        var safeToken = WebUtility.HtmlEncode(token);
 
         return $@"<!doctype html>
 <html lang=""fr"">
@@ -363,14 +373,14 @@ public static class WebPortalPages
     }}
   </style>
 </head>
-<body data-guild=""{safeGuildId}"" data-channel=""{safeChannelId}"" data-user=""{safeUserId}"">
+<body data-guild=""{safeGuildId}"" data-channel=""{safeChannelId}"" data-token=""{safeToken}"">
   <header>
     <div class=""hero"">
       <div class=""title"">
         <h1>Archipelago Recap Nexus</h1>
         <span>🌌 Sphere Tracker · Portail personnel</span>
       </div>
-      <div class=""badge"">UserId: {safeUserId}</div>
+      <div class=""badge"">Accès: {safeToken}</div>
     </div>
     <div class=""meta"">Guild: {safeGuildId} · Channel: {safeChannelId}</div>
   </header>
@@ -408,7 +418,7 @@ public static class WebPortalPages
     const ctx = {{
       guildId: document.body.dataset.guild,
       channelId: document.body.dataset.channel,
-      userId: document.body.dataset.user
+      token: document.body.dataset.token
     }};
 
     const status = document.getElementById('status');
@@ -416,10 +426,10 @@ public static class WebPortalPages
     const itemsRoot = document.getElementById('items-root');
     const hintsRoot = document.getElementById('hints-root');
 
-    const path = window.location.pathname; // ex: /AST/portal/g/c/u/
+    const path = window.location.pathname; // ex: /AST/portal/g/c/token/
     const i = path.indexOf('/portal/');
     const prefix = i >= 0 ? path.substring(0, i) : ''; // ex: /AST ou '' en direct
-    const apiBase = `${{window.location.origin}}${{prefix}}/api/portal/${{ctx.guildId}}/${{ctx.channelId}}/${{ctx.userId}}`;
+    const apiBase = `${{window.location.origin}}${{prefix}}/api/portal/${{ctx.guildId}}/${{ctx.channelId}}/${{ctx.token}}`;
 
     const escapeHtml = (value) => {{
       const div = document.createElement('div');

@@ -66,6 +66,19 @@ CREATE TABLE IF NOT EXISTS RecapListItemsTable (
 );
 
 -- ==========================
+-- 🎯 PortalAccessTable
+-- ==========================
+CREATE TABLE IF NOT EXISTS PortalAccessTable (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    GuildId   TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    UserId    TEXT NOT NULL,
+    Token     TEXT NOT NULL,
+    UNIQUE (GuildId, ChannelId, UserId),
+    UNIQUE (Token)
+);
+
+-- ==========================
 -- 🎯 ReceiverAliasesTable
 -- ==========================
 CREATE TABLE IF NOT EXISTS ReceiverAliasesTable (

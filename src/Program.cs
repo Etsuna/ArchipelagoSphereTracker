@@ -315,6 +315,7 @@ class Program
             await DBMigration_5.Migrate_5_0_3(cts.Token);
             await DBMigration_5.Migrate_5_0_4(cts.Token);
             await DBMigration_5.Migrate_5_0_5(cts.Token);
+            await DBMigration_5.Migrate_5_0_6(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }
@@ -352,6 +353,12 @@ class Program
             await DBMigration_5.Migrate_5_0_5(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
+        else if (bddVersion == "5.0.5")
+        {
+            Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
+            await DBMigration_5.Migrate_5_0_6(cts.Token);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+        }
         else
         {
             Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
@@ -360,6 +367,8 @@ class Program
             await DBMigration_5.Migrate_5_0_2(cts.Token);
             await DBMigration_5.Migrate_5_0_3(cts.Token);
             await DBMigration_5.Migrate_5_0_4(cts.Token);
+            await DBMigration_5.Migrate_5_0_5(cts.Token);
+            await DBMigration_5.Migrate_5_0_6(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }

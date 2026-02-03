@@ -315,4 +315,50 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
 
         await PostMigrationMaintenanceAsync();
     }
+
+    public static async Task Migrate_5_0_6(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.6: Adding PortalAccessTable for web portal access tokens.");
+
+        await using var conn = await Db.OpenWriteAsync();
+
+        using (var pragma = conn.CreateCommand())
+        {
+            pragma.CommandText = @"
+                PRAGMA journal_mode=WAL;
+                PRAGMA synchronous=NORMAL;
+                PRAGMA foreign_keys=ON;
+                PRAGMA temp_store=MEMORY;
+            ";
+            pragma.ExecuteNonQuery();
+        }
+
+        using (var transaction = conn.BeginTransaction())
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = transaction;
+            cmd.CommandText = @"
+            CREATE TABLE IF NOT EXISTS PortalAccessTable (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                GuildId   TEXT NOT NULL,
+                ChannelId TEXT NOT NULL,
+                UserId    TEXT NOT NULL,
+                Token     TEXT NOT NULL,
+                UNIQUE (GuildId, ChannelId, UserId),
+                UNIQUE (Token)
+            );";
+            cmd.ExecuteNonQuery();
+
+            transaction.Commit();
+        }
+
+        using (var pragmaOn = conn.CreateCommand())
+        {
+            pragmaOn.CommandText = "PRAGMA foreign_keys = ON;";
+            pragmaOn.ExecuteNonQuery();
+        }
+
+        await PostMigrationMaintenanceAsync();
+    }
+
 }
