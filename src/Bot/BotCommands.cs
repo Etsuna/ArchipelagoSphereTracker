@@ -194,6 +194,7 @@ public static class BotCommands
             "info" => await HelperClass.Info(channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, channelId, guildId),
             "portal-link" => await WebPortalLinkAsync(channelId, guildId, command.User.Id.ToString()),
+            "portal-url" => await WebPortalCommandsLinkAsync(guildId, channelId),
             "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, channelId, guildId),
             "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, alias, channelId, guildId),
             "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
@@ -208,6 +209,7 @@ public static class BotCommands
         return command.CommandName switch
         {
             "add-url" => await UrlClass.AddUrl(command, user, channelId, guildId, (ITextChannel)command.Channel),
+            "portal-url" => await WebPortalCommandsLinkAsync(guildId, channelId),
             "list-yamls" => YamlClass.ListYamls(channelId),
             "backup-yamls" => await YamlClass.BackupYamls(command, channelId),
             "delete-yaml" => YamlClass.DeleteYaml(command, channelId),
@@ -236,6 +238,19 @@ public static class BotCommands
         return string.IsNullOrWhiteSpace(portalUrl)
             ? Resource.WebPortalDisabled
             : string.Format(Resource.WebPortalLink, portalUrl);
+    }
+
+    private static async Task<string> WebPortalCommandsLinkAsync(string guildId, string channelId)
+    {
+        if (!Declare.EnableWebPortal)
+        {
+            return Resource.WebPortalDisabled;
+        }
+
+        var portalUrl = await WebPortalPages.EnsureCommandsPageAsync(guildId, channelId);
+        return string.IsNullOrWhiteSpace(portalUrl)
+            ? Resource.WebPortalDisabled
+            : string.Format(Resource.WebPortalCommandsLink, portalUrl);
     }
 
 
@@ -333,4 +348,3 @@ public static class BotCommands
 
     #endregion
 }
-

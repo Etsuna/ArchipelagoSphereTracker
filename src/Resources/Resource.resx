@@ -1197,4 +1197,12 @@
     <value>Web portal is disabled.</value>
     <comment>Message shown when the web portal is disabled.</comment>
   </data>
+  <data name="SCPortalUrlDescription" xml:space="preserve">
+    <value>Get the web portal commands page.</value>
+    <comment>Slash command description for portal-url.</comment>
+  </data>
+  <data name="WebPortalCommandsLink" xml:space="preserve">
+    <value>🌌 Portal commands: {0}</value>
+    <comment>Web portal link for the guild commands page.</comment>
+  </data>
 </root>

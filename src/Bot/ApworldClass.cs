@@ -35,6 +35,33 @@ public class ApworldClass : Declare
         return message;
     }
 
+    public static async Task<string> SendApworldFromStreamAsync(string fileName, Stream content)
+    {
+        if (string.IsNullOrWhiteSpace(fileName) || !fileName.EndsWith(".apworld", StringComparison.OrdinalIgnoreCase))
+        {
+            return Resource.ApworldWrongFile;
+        }
+
+        var customWorldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
+        Directory.CreateDirectory(customWorldPath);
+
+        var filePath = Path.Combine(customWorldPath, Path.GetFileName(fileName));
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
+        await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
+        {
+            await content.CopyToAsync(fs);
+        }
+
+        CustomApworldClass.GenerateYamls();
+        var message = string.Format(Resource.ApworldFileSent, Path.GetFileName(fileName));
+        return message;
+    }
+
     public static async Task<string> BackupApworld(SocketSlashCommand command)
     {
         var message = string.Empty;
@@ -67,6 +94,41 @@ public class ApworldClass : Declare
             await command.FollowupWithFileAsync(zipPath, $"backup_apworld.zip");
 
             File.Delete(zipPath);
+        }
+        else
+        {
+            message += Resource.ApworldFileNotFound;
+        }
+
+        return message;
+    }
+
+    public static async Task<string> BackupApworldToFileAsync(string zipPath)
+    {
+        var message = string.Empty;
+        var apworldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
+        if (Directory.Exists(apworldPath))
+        {
+            var zipDirectory = Path.GetDirectoryName(zipPath);
+            if (!string.IsNullOrEmpty(zipDirectory))
+            {
+                Directory.CreateDirectory(zipDirectory);
+            }
+
+            if (File.Exists(zipPath))
+            {
+                File.Delete(zipPath);
+            }
+
+            using (var zipArchive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            {
+                var files = Directory.GetFiles(apworldPath, "*.apworld");
+                foreach (var file in files)
+                {
+                    var fileName = Path.GetFileName(file);
+                    zipArchive.CreateEntryFromFile(file, fileName);
+                }
+            }
         }
         else
         {

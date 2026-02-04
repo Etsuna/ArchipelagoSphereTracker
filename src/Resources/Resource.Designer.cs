@@ -22,7 +22,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public class Resource {
+    internal class Resource {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -540,7 +540,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à check-frequency.
         /// </summary>
-        public static string CheckFrequency {
+        internal static string CheckFrequency {
             get {
                 return ResourceManager.GetString("CheckFrequency", resourceCulture);
             }
@@ -1584,7 +1584,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à skip_mention_items.
         /// </summary>
-        public static string SCAddAliasSkipMention {
+        internal static string SCAddAliasSkipMention {
             get {
                 return ResourceManager.GetString("SCAddAliasSkipMention", resourceCulture);
             }
@@ -1870,6 +1870,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Get the web portal commands page..
+        /// </summary>
+        internal static string SCPortalUrlDescription {
+            get {
+                return ResourceManager.GetString("SCPortalUrlDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Recap list of items for all games.
         /// </summary>
         internal static string SCRecapAllDescription {
@@ -1935,7 +1944,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à silent.
         /// </summary>
-        public static string SCSilentOption {
+        internal static string SCSilentOption {
             get {
                 return ResourceManager.GetString("SCSilentOption", resourceCulture);
             }
@@ -1971,7 +1980,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à thread-name.
         /// </summary>
-        public static string SCThreadName {
+        internal static string SCThreadName {
             get {
                 return ResourceManager.GetString("SCThreadName", resourceCulture);
             }
@@ -2007,7 +2016,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         /// <summary>
         ///   Recherche une chaîne localisée semblable à thread-type.
         /// </summary>
-        public static string SCThreadType {
+        internal static string SCThreadType {
             get {
                 return ResourceManager.GetString("SCThreadType", resourceCulture);
             }
@@ -2361,6 +2370,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string Useful {
             get {
                 return ResourceManager.GetString("Useful", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 🌌 Portal commands: {0}.
+        /// </summary>
+        internal static string WebPortalCommandsLink {
+            get {
+                return ResourceManager.GetString("WebPortalCommandsLink", resourceCulture);
             }
         }
         

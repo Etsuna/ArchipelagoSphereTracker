@@ -28,6 +28,23 @@ public static class WebPortalPages
         return GetUserPortalUrl(guildId, channelId, token);
     }
 
+    public static async Task<string?> EnsureCommandsPageAsync(string guildId, string channelId)
+    {
+        if (!Declare.EnableWebPortal)
+        {
+            return null;
+        }
+
+        var channelFolder = Path.Combine(Declare.WebPortalPath, guildId, channelId);
+        Directory.CreateDirectory(channelFolder);
+
+        var htmlPath = Path.Combine(channelFolder, "commands.html");
+        var html = BuildCommandsPage(channelId);
+        await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
+
+        return GetCommandsPortalUrl(guildId, channelId);
+    }
+
     public static async Task EnsureMissingUserPagesAsync()
     {
         if (!Declare.EnableWebPortal)
@@ -103,6 +120,12 @@ public static class WebPortalPages
         return $"http://localhost:{Declare.WebPortalPort}".TrimEnd('/');
     }
 
+    private static string GetCommandsPortalUrl(string guildId, string channelId)
+    {
+        var baseUrl = GetPortalBaseUrl();
+        return $"{baseUrl}/portal/{guildId}/{channelId}/commands.html";
+    }
+
     private static string GetUserFolder(string guildId, string channelId, string token)
     {
         return Path.Combine(Declare.WebPortalPath, guildId, channelId, token);
@@ -119,7 +142,7 @@ public static class WebPortalPages
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
-  <title>Archipelago Recap Nexus</title>
+  <title>AST Recap Portal</title>
   <style>
     :root {{
       color-scheme: dark;
@@ -377,7 +400,7 @@ public static class WebPortalPages
   <header>
     <div class=""hero"">
       <div class=""title"">
-        <h1>Archipelago Recap Nexus</h1>
+        <h1>AST Recap Portal</h1>
         <span>🌌 Sphere Tracker · Portail personnel</span>
       </div>
       <div class=""badge"">Accès: {safeToken}</div>
@@ -682,6 +705,342 @@ public static class WebPortalPages
 
     document.getElementById('refresh').addEventListener('click', loadData);
     loadData();
+  </script>
+</body>
+</html>";
+    }
+
+    private static string BuildCommandsPage(string channelId)
+    {
+        var modeLabel = Declare.IsArchipelagoMode ? "Archipelago" : "Standard";
+        var archipelagoSections = Declare.IsArchipelagoMode
+            ? $@"
+    <section class=""panel"">
+      <h2>YAML</h2>
+      <form data-command=""list-yamls"">
+        <button type=""submit"">Lister les YAML</button>
+        <div class=""result"" data-result></div>
+      </form>
+
+      <form data-command=""backup-yamls"">
+        <button type=""submit"">Backup YAML (ZIP)</button>
+        <div class=""result"" data-result></div>
+      </form>
+
+      <form data-command=""delete-yaml"">
+        <label>Nom du fichier YAML
+          <input name=""fileName"" placeholder=""example.yaml"" required />
+        </label>
+        <button type=""submit"">Supprimer le YAML</button>
+        <div class=""result"" data-result></div>
+      </form>
+
+      <form data-command=""clean-yamls"">
+        <button type=""submit"">Nettoyer tous les YAML</button>
+        <div class=""result"" data-result></div>
+      </form>
+
+      <form data-command=""send-yaml"">
+        <label>Uploader un YAML
+          <input type=""file"" name=""file"" accept="".yaml"" required />
+        </label>
+        <button type=""submit"">Envoyer le YAML</button>
+        <div class=""result"" data-result></div>
+      </form>
+
+      <form data-command=""download-template"">
+        <label>Template YAML
+          <input name=""template"" placeholder=""template.yaml"" required />
+        </label>
+        <button type=""submit"">Télécharger le template</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>APWorld</h2>
+      <form data-command=""list-apworld"">
+        <button type=""submit"">Lister les APWorld</button>
+        <div class=""result"" data-result></div>
+      </form>
+
+      <form data-command=""backup-apworld"">
+        <button type=""submit"">Backup APWorld (ZIP)</button>
+        <div class=""result"" data-result></div>
+      </form>
+
+      <form data-command=""send-apworld"">
+        <label>Uploader un APWorld
+          <input type=""file"" name=""file"" accept="".apworld"" required />
+        </label>
+        <button type=""submit"">Envoyer l'APWorld</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>Génération</h2>
+      <form data-command=""generate"">
+        <button type=""submit"">Générer</button>
+        <div class=""result"" data-result></div>
+      </form>
+
+      <form data-command=""test-generate"">
+        <button type=""submit"">Test génération</button>
+        <div class=""result"" data-result></div>
+      </form>
+
+      <form data-command=""generate-with-zip"">
+        <label>ZIP de YAML
+          <input type=""file"" name=""file"" accept="".zip"" required />
+        </label>
+        <button type=""submit"">Générer avec ZIP</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>"
+            : string.Empty;
+
+        return $@"<!doctype html>
+<html lang=""fr"">
+<head>
+  <meta charset=""utf-8"" />
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
+  <title>Commandes Discord</title>
+  <style>
+    :root {{
+      color-scheme: dark;
+      --bg: #0b0f1f;
+      --panel: rgba(18, 22, 40, 0.92);
+      --accent: #b77bff;
+      --text: #e8ecff;
+      --muted: #9aa3c7;
+    }}
+
+    * {{
+      box-sizing: border-box;
+    }}
+
+    body {{
+      margin: 0;
+      font-family: ""Segoe UI"", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #1a1f3d 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 20px 48px;
+    }}
+
+    main {{
+      max-width: 1000px;
+      margin: 0 auto;
+      background: var(--panel);
+      padding: 28px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    }}
+
+    h1 {{
+      margin-top: 0;
+      font-size: 26px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }}
+
+    .mode {{
+      color: var(--muted);
+      margin-top: -8px;
+      margin-bottom: 24px;
+    }}
+
+    .meta {{
+      color: var(--muted);
+      font-size: 14px;
+    }}
+
+    .panel {{
+      border: 1px solid rgba(183, 123, 255, 0.2);
+      border-radius: 16px;
+      background: rgba(13, 16, 32, 0.7);
+      padding: 18px;
+      margin-bottom: 18px;
+      display: grid;
+      gap: 12px;
+    }}
+
+    form {{
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(9, 11, 24, 0.6);
+    }}
+
+    label {{
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--muted);
+    }}
+
+    input, select, button {{
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(6, 8, 20, 0.8);
+      color: var(--text);
+      font-size: 14px;
+    }}
+
+    button {{
+      cursor: pointer;
+      background: linear-gradient(135deg, rgba(183, 123, 255, 0.35), rgba(94, 225, 255, 0.35));
+      border-color: rgba(183, 123, 255, 0.5);
+      font-weight: 600;
+    }}
+
+    .result {{
+      font-size: 13px;
+      color: var(--muted);
+    }}
+
+    .result a {{
+      color: var(--accent);
+      text-decoration: none;
+    }}
+
+    .layout {{
+      display: grid;
+      gap: 18px;
+    }}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Commandes disponibles</h1>
+    <p class=""mode"">Mode: {WebUtility.HtmlEncode(modeLabel)}</p>
+
+    <section class=""panel"">
+      <h2>Configuration</h2>
+      <div class=""meta"">Channel ID: {WebUtility.HtmlEncode(channelId)}</div>
+      <label>User ID (optionnel, utile pour threads privés)
+        <input id=""user-id"" placeholder=""123456789012345678"" />
+      </label>
+    </section>
+
+    <section class=""panel"">
+      <h2>Créer un thread via /add-url</h2>
+      <form data-command=""add-url"">
+        <input type=""hidden"" name=""userId"" />
+        <label>URL Archipelago
+          <input name=""url"" placeholder=""https://archipelago.gg/room/XXXX"" required />
+        </label>
+        <label>Nom du thread
+          <input name=""threadName"" placeholder=""Archipelago"" />
+        </label>
+        <label>Type de thread
+          <select name=""threadType"">
+            <option value=""Private"">Privé</option>
+            <option value=""Public"">Public</option>
+          </select>
+        </label>
+        <label>Auto-ajouter les membres (public)
+          <select name=""autoAddMembers"">
+            <option value=""false"">Non</option>
+            <option value=""true"">Oui</option>
+          </select>
+        </label>
+        <label>Mode silencieux
+          <select name=""silent"">
+            <option value=""false"">Non</option>
+            <option value=""true"">Oui</option>
+          </select>
+        </label>
+        <label>Fréquence de check
+          <select name=""checkFrequency"">
+            <option value=""5m"">Toutes les 5 minutes</option>
+            <option value=""15m"">Toutes les 15 minutes</option>
+            <option value=""30m"">Toutes les 30 minutes</option>
+            <option value=""1h"">Toutes les 1h</option>
+            <option value=""6h"">Toutes les 6h</option>
+            <option value=""12h"">Toutes les 12h</option>
+            <option value=""18h"">Toutes les 18h</option>
+            <option value=""1d"">Chaque jour</option>
+          </select>
+        </label>
+        <button type=""submit"">Créer le thread</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>Infos utiles</h2>
+      <form data-command=""apworlds-info"">
+        <button type=""submit"">APWorlds info</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""discord"">
+        <button type=""submit"">Discord</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    {archipelagoSections}
+  </main>
+  <script>
+    const path = window.location.pathname; // ex: /portal/guildId/channelId/commands.html
+    const i = path.indexOf('/portal/');
+    const prefix = i >= 0 ? path.substring(0, i) : '';
+    const parts = path.split('/').filter(Boolean);
+    const guildId = parts[1] || '';
+    const channelId = parts[2] || '';
+    const apiBase = `${{window.location.origin}}${{prefix}}/api/portal/${{guildId}}/${{channelId}}/commands/execute`;
+    const userInput = document.getElementById('user-id');
+
+    const showResult = (container, message, downloadUrl) => {{
+      container.innerHTML = '';
+      if (message) {{
+        const msg = document.createElement('div');
+        msg.textContent = message;
+        container.appendChild(msg);
+      }}
+      if (downloadUrl) {{
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.textContent = 'Télécharger le fichier';
+        link.target = '_blank';
+        container.appendChild(link);
+      }}
+    }};
+
+    document.querySelectorAll('form[data-command]').forEach((form) => {{
+      form.addEventListener('submit', async (event) => {{
+        event.preventDefault();
+        const result = form.querySelector('[data-result]');
+        const data = new FormData(form);
+        data.set('command', form.dataset.command);
+        if (form.dataset.command === 'add-url' && userInput.value.trim()) {{
+          data.set('userId', userInput.value.trim());
+        }}
+
+        showResult(result, 'Traitement en cours...', null);
+
+        try {{
+          const response = await fetch(apiBase, {{
+            method: 'POST',
+            body: data
+          }});
+
+          const payload = await response.json().catch(() => ({{ message: 'Réponse invalide.' }}));
+          if (!response.ok) {{
+            showResult(result, payload.message || 'Erreur lors de la commande.', null);
+            return;
+          }}
+
+          showResult(result, payload.message || 'Commande exécutée.', payload.downloadUrl);
+        }} catch (error) {{
+          showResult(result, 'Impossible de joindre le serveur.', null);
+        }}
+      }});
+    }});
   </script>
 </body>
 </html>";

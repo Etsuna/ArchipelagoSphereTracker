@@ -8,19 +8,54 @@ using TrackerLib.Models;
 
 public class UrlClass
 {
+    public record UrlAddOptions(
+        string Url,
+        string ThreadTitle,
+        string ThreadType,
+        bool AutoAddMembers,
+        bool Silent,
+        string CheckFrequency,
+        IGuildUser? RequestUser);
+
     public static async Task<string> AddUrl(SocketSlashCommand command, IGuildUser? guildUser, string channelId, string guildId, ITextChannel channel)
     {
-        string baseUrl = string.Empty;
-        string? tracker = string.Empty;
-        string? room = string.Empty;
-        string port = string.Empty;
-
         var newUrl = command.Data.Options.ElementAt(0)?.Value as string;
         var threadTitle = command.Data.Options.ElementAt(1)?.Value as string ?? "Archipelago";
         var threadType = command.Data.Options.ElementAt(2)?.Value as string ?? "Private";
         var autoAddMembers = command.Data.Options.ElementAtOrDefault(3)?.Value as bool? ?? false;
         var silent = command.Data.Options.ElementAtOrDefault(4)?.Value as bool? ?? false;
         var checkFrequencyStr = command.Data.Options.ElementAtOrDefault(5)?.Value as string ?? "5m";
+        var options = new UrlAddOptions(
+            newUrl ?? string.Empty,
+            threadTitle,
+            threadType,
+            autoAddMembers,
+            silent,
+            checkFrequencyStr,
+            guildUser);
+
+        return await AddUrlInternalAsync(options, channelId, guildId, channel);
+    }
+
+    public static async Task<string> AddUrlFromWebAsync(UrlAddOptions options, string channelId, string guildId, ITextChannel channel)
+    {
+        return await AddUrlInternalAsync(options, channelId, guildId, channel);
+    }
+
+    private static async Task<string> AddUrlInternalAsync(UrlAddOptions options, string channelId, string guildId, ITextChannel channel)
+    {
+        string baseUrl = string.Empty;
+        string? tracker = string.Empty;
+        string? room = string.Empty;
+        string port = string.Empty;
+
+        var newUrl = options.Url;
+        var threadTitle = options.ThreadTitle;
+        var threadType = options.ThreadType;
+        var autoAddMembers = options.AutoAddMembers;
+        var silent = options.Silent;
+        var checkFrequencyStr = options.CheckFrequency;
+        var guildUser = options.RequestUser;
         var message = string.Empty;
 
         if (Declare.IsBigAsync)
@@ -38,9 +73,9 @@ public class UrlClass
             checkFrequencyStr = "1h";
         }
 
-        if (newUrl == null)
+        if (string.IsNullOrWhiteSpace(newUrl))
         {
-            message = "Is Null";
+            message = Resource.URLEmpty;
             return message;
         }
 
@@ -104,11 +139,7 @@ public class UrlClass
 
         if (await CanAddUrlAsync(guildId, channelId))
         {
-            if (string.IsNullOrEmpty(newUrl))
-            {
-                message = Resource.URLEmpty;
-            }
-            else if (!IsValidUrl(newUrl))
+            if (!IsValidUrl(newUrl))
             {
                 message = Resource.URLNotValid;
             }
@@ -139,8 +170,8 @@ public class UrlClass
 
                     if (type == ThreadType.PrivateThread)
                     {
-                        if (command.User is IGuildUser user)
-                            await thread.AddUserAsync(user);
+                        if (guildUser != null)
+                            await thread.AddUserAsync(guildUser);
                         else
                             message = Resource.UrlPrivateThreadUserNotFound;
                     }
@@ -156,8 +187,8 @@ public class UrlClass
                         }
                         else
                         {
-                            if (command.User is IGuildUser user)
-                                await thread.AddUserAsync(user);
+                            if (guildUser != null)
+                                await thread.AddUserAsync(guildUser);
                             else
                                 message = Resource.UrlPrivateThreadUserNotFound;
                         }

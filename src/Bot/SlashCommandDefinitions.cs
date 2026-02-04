@@ -154,6 +154,10 @@ public static class SlashCommandDefinitions
                 .WithName("portal-link")
                 .WithDescription(Resource.SCPortalLinkDescription),
 
+            new SlashCommandBuilder()
+                .WithName("portal-url")
+                .WithDescription(Resource.SCPortalUrlDescription),
+
         };
 
         if (Declare.IsArchipelagoMode)

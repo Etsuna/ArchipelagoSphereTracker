@@ -927,4 +927,10 @@
   <data name="WebPortalDisabled" xml:space="preserve">
     <value>Le portail web est désactivé.</value>
   </data>
+  <data name="SCPortalUrlDescription" xml:space="preserve">
+    <value>Obtenez la page des commandes du portail Web.</value>
+  </data>
+  <data name="WebPortalCommandsLink" xml:space="preserve">
+    <value>🌌 Commandes du portail : {0}</value>
+  </data>
 </root>
