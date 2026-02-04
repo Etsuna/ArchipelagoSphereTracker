@@ -152,7 +152,7 @@ public static class BotCommands
                 }
                 else
                 {
-                    message = await HandleChannelCommand(command, guildUser, alias, channelId, guildId);
+                    message = await HandleGuildCommand(command, guildUser, alias, channelId, guildId);
                     if (!string.IsNullOrWhiteSpace(message))
                         await command.FollowupAsync(message);
                     else
@@ -193,8 +193,7 @@ public static class BotCommands
             "status-games-list" => await HelperClass.StatusGameList(channelId, guildId),
             "info" => await HelperClass.Info(channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, channelId, guildId),
-            "portal-link" => await WebPortalLinkAsync(channelId, guildId, command.User.Id.ToString()),
-            "portal-url" => await WebPortalCommandsLinkAsync(guildId, channelId),
+            "ast-user-portal" => await WebPortalLinkAsync(channelId, guildId, command.User.Id.ToString()),
             "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, channelId, guildId),
             "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, alias, channelId, guildId),
             "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
@@ -204,12 +203,12 @@ public static class BotCommands
         };
     }
 
-    private static async Task<string> HandleChannelCommand(SocketSlashCommand command, IGuildUser? user, string? alias, string channelId, string guildId)
+    private static async Task<string> HandleGuildCommand(SocketSlashCommand command, IGuildUser? user, string? alias, string channelId, string guildId)
     {
         return command.CommandName switch
         {
             "add-url" => await UrlClass.AddUrl(command, user, channelId, guildId, (ITextChannel)command.Channel),
-            "portal-url" => await WebPortalCommandsLinkAsync(guildId, channelId),
+            "ast-portal" => await WebPortalCommandsLinkAsync(guildId, channelId),
             "list-yamls" => YamlClass.ListYamls(channelId),
             "backup-yamls" => await YamlClass.BackupYamls(command, channelId),
             "delete-yaml" => YamlClass.DeleteYaml(command, channelId),

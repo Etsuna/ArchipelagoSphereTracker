@@ -151,11 +151,11 @@ public static class SlashCommandDefinitions
                 .AddOption(ItemsOption("delete-items")),
 
             new SlashCommandBuilder()
-                .WithName("portal-link")
+                .WithName("ast-user-portal")
                 .WithDescription(Resource.SCPortalLinkDescription),
 
             new SlashCommandBuilder()
-                .WithName("portal-url")
+                .WithName("ast-portal")
                 .WithDescription(Resource.SCPortalUrlDescription),
 
         };

@@ -87,13 +87,6 @@ public static class WebPortalPages
         {
             Directory.Delete(channelFolder, true);
         }
-
-        var guildFolder = Path.Combine(Declare.WebPortalPath, guildId);
-        if (Directory.Exists(guildFolder)
-            && !Directory.EnumerateFileSystemEntries(guildFolder).Any())
-        {
-            Directory.Delete(guildFolder, true);
-        }
     }
 
     public static void DeleteGuildPages(string guildId)
@@ -400,7 +393,7 @@ public static class WebPortalPages
   <header>
     <div class=""hero"">
       <div class=""title"">
-        <h1>AST Recap Portal</h1>
+        <h1>AST User Portal</h1>
         <span>🌌 Sphere Tracker · Portail personnel</span>
       </div>
       <div class=""badge"">Accès: {safeToken}</div>
@@ -810,10 +803,13 @@ public static class WebPortalPages
     :root {{
       color-scheme: dark;
       --bg: #0b0f1f;
-      --panel: rgba(18, 22, 40, 0.92);
+      --bg-2: #13172b;
+      --panel: rgba(18, 22, 40, 0.88);
       --accent: #b77bff;
+      --accent-2: #5ee1ff;
       --text: #e8ecff;
       --muted: #9aa3c7;
+      --glow: 0 0 16px rgba(183, 123, 255, 0.35);
     }}
 
     * {{
@@ -823,32 +819,104 @@ public static class WebPortalPages
     body {{
       margin: 0;
       font-family: ""Segoe UI"", system-ui, sans-serif;
-      background: radial-gradient(circle at top, #1a1f3d 0%, var(--bg) 55%);
+      background: radial-gradient(circle at top, #1a1f3d 0%, var(--bg) 50%), linear-gradient(145deg, #0b0f1f, #13172b);
       color: var(--text);
       min-height: 100vh;
-      padding: 32px 20px 48px;
+      position: relative;
+      overflow-x: hidden;
+    }}
+
+    body::before {{
+      content: """";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(#fff3 1px, transparent 1px);
+      background-size: 120px 120px;
+      opacity: 0.2;
+      pointer-events: none;
+    }}
+
+    header {{
+      position: sticky;
+      top: 0;
+      background: rgba(10, 12, 24, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 24px;
+      z-index: 2;
+    }}
+
+    .hero {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }}
+
+    .title {{
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }}
+
+    .title h1 {{
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }}
+
+    .title span {{
+      color: var(--muted);
+      font-size: 14px;
+    }}
+
+    .badge {{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: linear-gradient(120deg, rgba(183, 123, 255, 0.2), rgba(94, 225, 255, 0.2));
+      border: 1px solid rgba(183, 123, 255, 0.35);
+      font-size: 12px;
+      color: var(--text);
+      box-shadow: var(--glow);
     }}
 
     main {{
-      max-width: 1000px;
+      padding: 32px 24px 64px;
+      display: grid;
+      gap: 24px;
+      max-width: 1200px;
       margin: 0 auto;
-      background: var(--panel);
-      padding: 28px;
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      position: relative;
+      z-index: 1;
     }}
 
-    h1 {{
+    .panel {{
+      background: var(--panel);
+      border-radius: 20px;
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      display: grid;
+      gap: 12px;
+    }}
+
+    .panel h2 {{
       margin-top: 0;
-      font-size: 26px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
     }}
 
     .mode {{
       color: var(--muted);
-      margin-top: -8px;
-      margin-bottom: 24px;
+      margin-top: -4px;
+      margin-bottom: 8px;
     }}
 
     .meta {{
@@ -856,22 +924,12 @@ public static class WebPortalPages
       font-size: 14px;
     }}
 
-    .panel {{
-      border: 1px solid rgba(183, 123, 255, 0.2);
-      border-radius: 16px;
-      background: rgba(13, 16, 32, 0.7);
-      padding: 18px;
-      margin-bottom: 18px;
-      display: grid;
-      gap: 12px;
-    }}
-
     form {{
       display: grid;
       gap: 10px;
-      padding: 12px;
-      border-radius: 12px;
-      background: rgba(9, 11, 24, 0.6);
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(9, 11, 24, 0.55);
     }}
 
     label {{
@@ -893,8 +951,14 @@ public static class WebPortalPages
     button {{
       cursor: pointer;
       background: linear-gradient(135deg, rgba(183, 123, 255, 0.35), rgba(94, 225, 255, 0.35));
-      border-color: rgba(183, 123, 255, 0.5);
+      border: 1px solid rgba(183, 123, 255, 0.45);
       font-weight: 600;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }}
+
+    button:hover {{
+      transform: translateY(-1px);
+      box-shadow: var(--glow);
     }}
 
     .result {{
@@ -906,21 +970,24 @@ public static class WebPortalPages
       color: var(--accent);
       text-decoration: none;
     }}
-
-    .layout {{
-      display: grid;
-      gap: 18px;
-    }}
   </style>
 </head>
 <body>
-  <main>
-    <h1>Commandes disponibles</h1>
-    <p class=""mode"">Mode: {WebUtility.HtmlEncode(modeLabel)}</p>
+  <header>
+    <div class=""hero"">
+      <div class=""title"">
+        <h1>AST Portal</h1>
+        <span>⚙️ Commandes Discord</span>
+      </div>
+      <div class=""badge"">Mode: {WebUtility.HtmlEncode(modeLabel)}</div>
+    </div>
+    <div class=""meta"">Channel ID: {WebUtility.HtmlEncode(channelId)}</div>
+  </header>
 
+  <main>
     <section class=""panel"">
       <h2>Configuration</h2>
-      <div class=""meta"">Channel ID: {WebUtility.HtmlEncode(channelId)}</div>
+      <p class=""mode"">Renseignez un user ID si vous ciblez un thread privé.</p>
       <label>User ID (optionnel, utile pour threads privés)
         <input id=""user-id"" placeholder=""123456789012345678"" />
       </label>
