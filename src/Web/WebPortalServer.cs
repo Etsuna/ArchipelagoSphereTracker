@@ -44,6 +44,17 @@ public static class WebPortalServer
             RequestPath = "/portal"
         });
 
+        app.MapGet("/portal/{guildId}/{channelId}/commands.html", (string guildId, string channelId) =>
+        {
+            var commandsPath = Path.Combine(Declare.WebPortalPath, "commands.html");
+            if (!File.Exists(commandsPath))
+            {
+                return Results.NotFound();
+            }
+
+            return Results.File(commandsPath, "text/html; charset=utf-8");
+        });
+
         app.MapGet("/api/portal/{guildId}/{channelId}/{token}/summary", async (string guildId, string channelId, string token) =>
         {
             var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);

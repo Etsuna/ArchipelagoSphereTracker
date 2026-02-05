@@ -35,11 +35,10 @@ public static class WebPortalPages
             return null;
         }
 
-        var channelFolder = Path.Combine(Declare.WebPortalPath, guildId, channelId);
-        Directory.CreateDirectory(channelFolder);
+        Directory.CreateDirectory(Declare.WebPortalPath);
 
-        var htmlPath = Path.Combine(channelFolder, "commands.html");
-        var html = BuildCommandsPage(channelId);
+        var htmlPath = Path.Combine(Declare.WebPortalPath, "commands.html");
+        var html = BuildCommandsPage();
         await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
 
         return GetCommandsPortalUrl(guildId, channelId);
@@ -703,7 +702,7 @@ public static class WebPortalPages
 </html>";
     }
 
-    private static string BuildCommandsPage(string channelId)
+    private static string BuildCommandsPage()
     {
         var modeLabel = Declare.IsArchipelagoMode ? "Archipelago" : "Standard";
         var archipelagoSections = Declare.IsArchipelagoMode
@@ -981,7 +980,7 @@ public static class WebPortalPages
       </div>
       <div class=""badge"">Mode: {WebUtility.HtmlEncode(modeLabel)}</div>
     </div>
-    <div class=""meta"">Channel ID: {WebUtility.HtmlEncode(channelId)}</div>
+    <div class=""meta"" id=""channel-meta"">Channel ID: —</div>
   </header>
 
   <main>
@@ -1053,12 +1052,17 @@ public static class WebPortalPages
     {archipelagoSections}
   </main>
   <script>
-    const path = window.location.pathname; // ex: /portal/guildId/channelId/commands.html
+    const path = window.location.pathname; // ex: /portal/commands.html or /portal/guildId/channelId/commands.html
     const i = path.indexOf('/portal/');
     const prefix = i >= 0 ? path.substring(0, i) : '';
     const parts = path.split('/').filter(Boolean);
-    const guildId = parts[1] || '';
-    const channelId = parts[2] || '';
+    const params = new URLSearchParams(window.location.search);
+    const guildId = params.get('guildId') || parts[1] || '';
+    const channelId = params.get('channelId') || parts[2] || '';
+    const meta = document.getElementById('channel-meta');
+    if (meta) {{
+      meta.textContent = channelId ? `Channel ID: ${{channelId}}` : 'Channel ID: —';
+    }}
     const apiBase = `${{window.location.origin}}${{prefix}}/api/portal/${{guildId}}/${{channelId}}/commands/execute`;
     const userInput = document.getElementById('user-id');
 
