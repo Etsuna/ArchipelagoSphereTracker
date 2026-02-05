@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Threading.Channels;
 
 public static class WebPortalPages
 {
@@ -12,9 +13,7 @@ public static class WebPortalPages
     public static async Task<string?> EnsureUserPageAsync(string guildId, string channelId, string userId)
     {
         if (!Declare.EnableWebPortal)
-        {
             return null;
-        }
 
         var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
         var userFolder = GetUserFolder(guildId, channelId, token);
@@ -31,9 +30,7 @@ public static class WebPortalPages
     public static async Task<string?> EnsureCommandsPageAsync(string guildId, string channelId)
     {
         if (!Declare.EnableWebPortal)
-        {
             return null;
-        }
 
         Directory.CreateDirectory(Declare.WebPortalPath);
 
@@ -47,15 +44,11 @@ public static class WebPortalPages
     public static async Task EnsureMissingUserPagesAsync()
     {
         if (!Declare.EnableWebPortal)
-        {
             return;
-        }
 
         var users = await RecapListCommands.GetPortalUsersAsync();
         foreach (var (guildId, channelId, userId) in users)
-        {
             await EnsureUserPageIfMissingAsync(guildId, channelId, userId);
-        }
     }
 
     private static async Task EnsureUserPageIfMissingAsync(string guildId, string channelId, string userId)
@@ -66,9 +59,7 @@ public static class WebPortalPages
 
         var htmlPath = Path.Combine(userFolder, "index.html");
         if (File.Exists(htmlPath))
-        {
             return;
-        }
 
         var html = BuildHtmlPage(guildId, channelId, token);
         await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
@@ -77,37 +68,27 @@ public static class WebPortalPages
     public static void DeleteChannelPages(string guildId, string channelId)
     {
         if (!Declare.EnableWebPortal)
-        {
             return;
-        }
 
         var channelFolder = Path.Combine(Declare.WebPortalPath, guildId, channelId);
         if (Directory.Exists(channelFolder))
-        {
             Directory.Delete(channelFolder, true);
-        }
     }
 
     public static void DeleteGuildPages(string guildId)
     {
         if (!Declare.EnableWebPortal)
-        {
             return;
-        }
 
         var guildFolder = Path.Combine(Declare.WebPortalPath, guildId);
         if (Directory.Exists(guildFolder))
-        {
             Directory.Delete(guildFolder, true);
-        }
     }
 
     private static string GetPortalBaseUrl()
     {
         if (!string.IsNullOrWhiteSpace(Declare.WebPortalBaseUrl))
-        {
             return Declare.WebPortalBaseUrl.TrimEnd('/');
-        }
 
         return $"http://localhost:{Declare.WebPortalPort}".TrimEnd('/');
     }
@@ -149,9 +130,7 @@ public static class WebPortalPages
       --glow: 0 0 16px rgba(183, 123, 255, 0.35);
     }}
 
-    * {{
-      box-sizing: border-box;
-    }}
+    * {{ box-sizing: border-box; }}
 
     body {{
       margin: 0;
@@ -252,9 +231,7 @@ public static class WebPortalPages
       user-select: none;
     }}
 
-    details.panel > summary::-webkit-details-marker {{
-      display: none;
-    }}
+    details.panel > summary::-webkit-details-marker {{ display: none; }}
 
     details.panel > summary::after {{
       content: ""▾"";
@@ -263,9 +240,7 @@ public static class WebPortalPages
       transition: transform 0.2s ease;
     }}
 
-    details.panel[open] > summary::after {{
-      transform: rotate(180deg);
-    }}
+    details.panel[open] > summary::after {{ transform: rotate(180deg); }}
 
     .panel-content {{
       padding: 0 24px 24px;
@@ -289,10 +264,7 @@ public static class WebPortalPages
       font-size: 20px;
     }}
 
-    .grid {{
-      display: grid;
-      gap: 16px;
-    }}
+    .grid {{ display: grid; gap: 16px; }}
 
     .alias-card {{
       border: 1px solid rgba(183, 123, 255, 0.3);
@@ -326,10 +298,7 @@ public static class WebPortalPages
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }}
 
-    .button:hover {{
-      transform: translateY(-1px);
-      box-shadow: var(--glow);
-    }}
+    .button:hover {{ transform: translateY(-1px); box-shadow: var(--glow); }}
 
     .button.danger {{
       background: rgba(255, 107, 122, 0.15);
@@ -371,21 +340,11 @@ public static class WebPortalPages
       color: var(--accent-2);
     }}
 
-    .meta {{
-      color: var(--muted);
-      font-size: 12px;
-    }}
+    .meta {{ color: var(--muted); font-size: 12px; }}
 
-    .status {{
-      margin-top: 8px;
-      color: var(--accent-2);
-      font-size: 13px;
-    }}
+    .status {{ margin-top: 8px; color: var(--accent-2); font-size: 13px; }}
 
-    .empty {{
-      color: var(--muted);
-      font-style: italic;
-    }}
+    .empty {{ color: var(--muted); font-style: italic; }}
   </style>
 </head>
 <body data-guild=""{safeGuildId}"" data-channel=""{safeChannelId}"" data-token=""{safeToken}"">
@@ -408,23 +367,17 @@ public static class WebPortalPages
     </section>
 
     <details class=""panel"" open>
-      <summary>
-        <h2>📜 Recap en cours</h2>
-      </summary>
+      <summary><h2>📜 Recap en cours</h2></summary>
       <div id=""recap-root"" class=""grid panel-content""></div>
     </details>
 
     <details class=""panel"" open>
-      <summary>
-        <h2>✨ Hints actifs</h2>
-      </summary>
+      <summary><h2>✨ Hints actifs</h2></summary>
       <div id=""hints-root"" class=""grid panel-content""></div>
     </details>
 
     <details class=""panel"" open>
-      <summary>
-        <h2>🎁 Items reçus</h2>
-      </summary>
+      <summary><h2>🎁 Items reçus</h2></summary>
       <div id=""items-root"" class=""grid panel-content""></div>
     </details>
   </main>
@@ -442,9 +395,9 @@ public static class WebPortalPages
     const hintsRoot = document.getElementById('hints-root');
 
     const path = window.location.pathname; // ex: /AST/portal/g/c/token/
-    const i = path.indexOf('/portal/');
-    const prefix = i >= 0 ? path.substring(0, i) : ''; // ex: /AST ou '' en direct
-    const apiBase = `${{window.location.origin}}${{prefix}}/api/portal/${{ctx.guildId}}/${{ctx.channelId}}/${{ctx.token}}`;
+    const idx = path.indexOf('/portal/');
+    const basePath = idx >= 0 ? path.substring(0, idx) : '';
+    const apiBase = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/' + ctx.channelId + '/' + ctx.token;
 
     const escapeHtml = (value) => {{
       const div = document.createElement('div');
@@ -467,9 +420,7 @@ public static class WebPortalPages
       title.textContent = alias;
       header.appendChild(title);
 
-      if (actions) {{
-        header.appendChild(actions);
-      }}
+      if (actions) header.appendChild(actions);
 
       card.appendChild(header);
       card.appendChild(content);
@@ -489,17 +440,15 @@ public static class WebPortalPages
         if (!recap.groups || recap.groups.length === 0) {{
           const list = document.createElement('ul');
           list.className = 'list';
-
           const item = document.createElement('li');
           item.textContent = 'Aucun item en attente.';
           list.appendChild(item);
-
           container.appendChild(list);
         }} else {{
           recap.groups.forEach(group => {{
             const title = document.createElement('div');
             title.className = 'group-title';
-            title.textContent = `Flag: ${{group.flagLabel}}`;
+            title.textContent = 'Flag: ' + group.flagLabel;
             container.appendChild(title);
 
             const list = document.createElement('ul');
@@ -512,8 +461,8 @@ public static class WebPortalPages
             }} else {{
               group.items.forEach(it => {{
                 const item = document.createElement('li');
-                const suffix = it.count > 1 ? ` ×${{it.count}}` : '';
-                item.innerHTML = `<strong>${{escapeHtml(it.item)}}</strong>${{suffix}}`;
+                const suffix = it.count > 1 ? (' ×' + it.count) : '';
+                item.innerHTML = '<strong>' + escapeHtml(it.item) + '</strong>' + suffix;
 
                 const badge = document.createElement('span');
                 badge.className = 'tag';
@@ -550,17 +499,15 @@ public static class WebPortalPages
         if (!group.groups || group.groups.length === 0) {{
           const list = document.createElement('ul');
           list.className = 'list';
-
           const entry = document.createElement('li');
           entry.textContent = 'Aucun item reçu.';
           list.appendChild(entry);
-
           container.appendChild(list);
         }} else {{
           group.groups.forEach(flagGroup => {{
             const title = document.createElement('div');
             title.className = 'group-title';
-            title.textContent = `Flag: ${{flagGroup.flagLabel}}`;
+            title.textContent = 'Flag: ' + flagGroup.flagLabel;
             container.appendChild(title);
 
             const list = document.createElement('ul');
@@ -573,11 +520,13 @@ public static class WebPortalPages
             }} else {{
               flagGroup.items.forEach(it => {{
                 const entry = document.createElement('li');
-                entry.innerHTML = `<strong>${{escapeHtml(it.item)}}</strong> <span class=""meta"">(${{escapeHtml(it.game)}})</span>`;
+                entry.innerHTML =
+                  '<strong>' + escapeHtml(it.item) + '</strong> ' +
+                  '<span class=""meta"">(' + escapeHtml(it.game) + ')</span>';
 
                 const detail = document.createElement('div');
                 detail.className = 'meta';
-                detail.textContent = `Finder: ${{it.finder}} · Location: ${{it.location}}`;
+                detail.textContent = 'Finder: ' + it.finder + ' · Location: ' + it.location;
                 entry.appendChild(detail);
 
                 const badge = document.createElement('span');
@@ -595,6 +544,15 @@ public static class WebPortalPages
 
         itemsRoot.appendChild(createAliasCard(group.alias, container));
       }});
+    }};
+
+    const makeHintMeta = (hint, isReceiver) => {{
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = isReceiver
+        ? ('Finder: ' + hint.finder + ' · Game: ' + hint.game)
+        : ('Receiver: ' + hint.receiver + ' · Game: ' + hint.game);
+      return meta;
     }};
 
     const renderHints = (hints) => {{
@@ -617,7 +575,9 @@ public static class WebPortalPages
         }} else {{
           group.asReceiver.forEach(hint => {{
             const entry = document.createElement('li');
-            entry.innerHTML = `<strong>${{escapeHtml(hint.item)}}</strong> <span class=""meta"">@${{escapeHtml(hint.location)}}</span>`;
+            entry.innerHTML =
+              '<strong>' + escapeHtml(hint.item) + '</strong> ' +
+              '<span class=""meta"">@' + escapeHtml(hint.location) + '</span>';
             entry.appendChild(makeHintMeta(hint, true));
             receiverList.appendChild(entry);
           }});
@@ -632,7 +592,9 @@ public static class WebPortalPages
         }} else {{
           group.asFinder.forEach(hint => {{
             const entry = document.createElement('li');
-            entry.innerHTML = `<strong>${{escapeHtml(hint.item)}}</strong> <span class=""meta"">@${{escapeHtml(hint.location)}}</span>`;
+            entry.innerHTML =
+              '<strong>' + escapeHtml(hint.item) + '</strong> ' +
+              '<span class=""meta"">@' + escapeHtml(hint.location) + '</span>';
             entry.appendChild(makeHintMeta(hint, false));
             finderList.appendChild(entry);
           }});
@@ -653,27 +615,18 @@ public static class WebPortalPages
       }});
     }};
 
-    const makeHintMeta = (hint, isReceiver) => {{
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      meta.textContent = isReceiver
-        ? `Finder: ${{hint.finder}} · Game: ${{hint.game}}`
-        : `Receiver: ${{hint.receiver}} · Game: ${{hint.game}}`;
-      return meta;
-    }};
-
     const deleteRecap = async (alias) => {{
       setStatus('Suppression du recap...');
       const formData = new FormData();
       formData.append('alias', alias);
 
-      const res = await fetch(`${{apiBase}}/recap/delete`, {{
+      const res = await fetch(apiBase + '/recap/delete', {{
         method: 'POST',
         body: formData
       }});
 
       if (res.ok) {{
-        setStatus(`Recap supprimé pour ${{alias}}.`);
+        setStatus('Recap supprimé pour ' + alias + '.');
         await loadData();
       }} else {{
         setStatus('Impossible de supprimer le recap.');
@@ -682,7 +635,7 @@ public static class WebPortalPages
 
     const loadData = async () => {{
       setStatus('Synchronisation avec la base de données...');
-      const res = await fetch(`${{apiBase}}/summary`);
+      const res = await fetch(apiBase + '/summary');
       if (!res.ok) {{
         setStatus('Portail indisponible.');
         return;
@@ -692,7 +645,7 @@ public static class WebPortalPages
       renderRecaps(data.recaps || []);
       renderItems(data.receivedItems || []);
       renderHints(data.hints || []);
-      setStatus(`Dernière mise à jour: ${{new Date(data.lastUpdated).toLocaleString()}}`);
+      setStatus('Dernière mise à jour: ' + new Date(data.lastUpdated).toLocaleString());
     }};
 
     document.getElementById('refresh').addEventListener('click', loadData);
@@ -811,9 +764,7 @@ public static class WebPortalPages
       --glow: 0 0 16px rgba(183, 123, 255, 0.35);
     }}
 
-    * {{
-      box-sizing: border-box;
-    }}
+    * {{ box-sizing: border-box; }}
 
     body {{
       margin: 0;
@@ -963,6 +914,7 @@ public static class WebPortalPages
     .result {{
       font-size: 13px;
       color: var(--muted);
+      white-space: pre-wrap;
     }}
 
     .result a {{
@@ -1051,19 +1003,25 @@ public static class WebPortalPages
 
     {archipelagoSections}
   </main>
+
   <script>
-    const path = window.location.pathname; // ex: /portal/commands.html or /portal/guildId/channelId/commands.html
-    const i = path.indexOf('/portal/');
-    const prefix = i >= 0 ? path.substring(0, i) : '';
-    const parts = path.split('/').filter(Boolean);
     const params = new URLSearchParams(window.location.search);
-    const guildId = params.get('guildId') || parts[1] || '';
-    const channelId = params.get('channelId') || parts[2] || '';
+
+    // Attend /portal/{{guildId}}/{{channelId}}/commands.html (ids numériques)
+    const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/commands\.html$/);
+
+    const guildId = params.get('guildId') || (m ? m[1] : '');
+    const channelId = params.get('channelId') || (m ? m[2] : '');
+
     const meta = document.getElementById('channel-meta');
-    if (meta) {{
-      meta.textContent = channelId ? `Channel ID: ${{channelId}}` : 'Channel ID: —';
-    }}
-    const apiBase = `${{window.location.origin}}${{prefix}}/api/portal/${{guildId}}/${{channelId}}/commands/execute`;
+    meta.textContent = channelId ? ('Channel ID: ' + channelId) : 'Channel ID: —';
+
+    // Supporte un hébergement sous préfixe (/AST/portal/...)
+    const path = window.location.pathname;
+    const idx = path.indexOf('/portal/');
+    const basePath = idx >= 0 ? path.substring(0, idx) : '';
+    const apiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/commands/execute';
+
     const userInput = document.getElementById('user-id');
 
     const showResult = (container, message, downloadUrl) => {{
@@ -1082,14 +1040,41 @@ public static class WebPortalPages
       }}
     }};
 
+    const parsePayload = async (response) => {{
+      const raw = await response.text();
+      if (!raw) return null;
+      try {{
+        return JSON.parse(raw);
+      }} catch {{
+        return raw; // plain text
+      }}
+    }};
+
+    const extractMessage = (payload, fallback) => {{
+      if (payload == null) return fallback;
+      if (typeof payload === 'string') return payload || fallback;
+      if (typeof payload === 'object' && payload.message) return payload.message;
+      return fallback;
+    }};
+
     document.querySelectorAll('form[data-command]').forEach((form) => {{
       form.addEventListener('submit', async (event) => {{
         event.preventDefault();
+
         const result = form.querySelector('[data-result]');
+        if (!guildId || !channelId) {{
+          showResult(result, 'URL invalide: guildId/channelId introuvables. Ouvre la page via /portal/{{guildId}}/{{channelId}}/commands.html', null);
+          return;
+        }}
+
         const data = new FormData(form);
         data.set('command', form.dataset.command);
-        if (form.dataset.command === 'add-url' && userInput.value.trim()) {{
-          data.set('userId', userInput.value.trim());
+
+        // Ne pas envoyer userId vide
+        if (form.dataset.command === 'add-url') {{
+          const v = userInput.value.trim();
+          if (v) data.set('userId', v);
+          else data.delete('userId');
         }}
 
         showResult(result, 'Traitement en cours...', null);
@@ -1100,14 +1085,17 @@ public static class WebPortalPages
             body: data
           }});
 
-          const payload = await response.json().catch(() => ({{ message: 'Réponse invalide.' }}));
+          const payload = await parsePayload(response);
+          const msg = extractMessage(payload, response.ok ? 'Commande exécutée.' : 'Erreur lors de la commande.');
+
           if (!response.ok) {{
-            showResult(result, payload.message || 'Erreur lors de la commande.', null);
+            showResult(result, msg, null);
             return;
           }}
 
-          showResult(result, payload.message || 'Commande exécutée.', payload.downloadUrl);
-        }} catch (error) {{
+          const downloadUrl = (payload && typeof payload === 'object') ? payload.downloadUrl : null;
+          showResult(result, msg, downloadUrl);
+        }} catch {{
           showResult(result, 'Impossible de joindre le serveur.', null);
         }}
       }});
