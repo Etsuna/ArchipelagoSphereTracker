@@ -136,7 +136,10 @@ public static class WebPortalServer
             }
 
             var downloadRoot = Path.Combine(Declare.WebPortalPath, guildId, "downloads");
-            Directory.CreateDirectory(downloadRoot);
+            if (Declare.IsArchipelagoMode)
+            {
+                Directory.CreateDirectory(downloadRoot);
+            }
 
             static string SanitizeFileName(string fileName)
             {
