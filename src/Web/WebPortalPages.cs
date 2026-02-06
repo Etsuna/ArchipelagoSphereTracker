@@ -657,6 +657,20 @@ public static class WebPortalPages
 
     private static string BuildCommandsPage()
     {
+        var templatesPath = Path.Combine(Declare.BasePath, "extern", "Archipelago", "Players", "Templates");
+        var templateOptions = Directory.Exists(templatesPath)
+            ? Directory.EnumerateFiles(templatesPath, "*.yaml")
+                .Select(Path.GetFileName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .Select(name => $"<option value=\"{WebUtility.HtmlEncode(name)}\">{WebUtility.HtmlEncode(name)}</option>")
+                .ToList()
+            : new List<string>();
+
+        var templateSelectOptions = templateOptions.Any()
+            ? string.Join(Environment.NewLine, templateOptions)
+            : @"<option value=\""disabled selected>Aucun template disponible</option>";
+
         var modeLabel = Declare.IsArchipelagoMode ? "Archipelago" : "Standard";
         var archipelagoSections = Declare.IsArchipelagoMode
             ? $@"
@@ -695,7 +709,9 @@ public static class WebPortalPages
 
       <form data-command=""download-template"">
         <label>Template YAML
-          <input name=""template"" placeholder=""template.yaml"" required />
+          <select name=""template"" required>
+            {templateSelectOptions}
+          </select>
         </label>
         <button type=""submit"">Télécharger le template</button>
         <div class=""result"" data-result></div>

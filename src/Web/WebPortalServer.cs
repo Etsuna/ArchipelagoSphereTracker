@@ -117,6 +117,26 @@ public static class WebPortalServer
             return Results.Ok(new { message = "ok" });
         });
 
+        app.MapGet("/extern/Archipelago/Players/Templates/{templateName}", (string templateName) =>
+        {
+            if (!Declare.IsArchipelagoMode)
+                return Results.BadRequest(new { message = "Archipelago mode is disabled." });
+
+            var safeTemplateName = Path.GetFileName(templateName);
+            if (string.IsNullOrWhiteSpace(safeTemplateName) ||
+                !string.Equals(safeTemplateName, templateName, StringComparison.Ordinal) ||
+                !safeTemplateName.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.BadRequest(new { message = "Invalid template name." });
+            }
+
+            var templatePath = Path.Combine(Declare.BasePath, "extern", "Archipelago", "Players", "Templates", safeTemplateName);
+            if (!File.Exists(templatePath))
+                return Results.NotFound(new { message = "Template not found." });
+
+            return Results.File(templatePath, "application/x-yaml", safeTemplateName);
+        });
+
         app.MapPost("/api/portal/{guildId}/{channelId}/commands/execute", async (string guildId, string channelId, HttpRequest request) =>
         {
             if (!Declare.EnableWebPortal)
@@ -132,11 +152,6 @@ public static class WebPortalServer
             if (Declare.IsArchipelagoMode)
             {
                 Directory.CreateDirectory(downloadRoot);
-            }
-
-            static string SanitizeFileName(string fileName)
-            {
-                return string.Join("_", fileName.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
             }
 
             string? downloadUrl = null;
@@ -218,11 +233,22 @@ public static class WebPortalServer
                 case "download-template":
                     {
                         var template = form["template"].FirstOrDefault() ?? string.Empty;
-                        var safeName = SanitizeFileName(template);
-                        var destinationPath = Path.Combine(downloadRoot, safeName);
-                        message = YamlClass.DownloadTemplateToFile(template, destinationPath);
-                        if (string.IsNullOrWhiteSpace(message))
-                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(safeName)}";
+                        var safeTemplate = Path.GetFileName(template);
+                        if (string.IsNullOrWhiteSpace(safeTemplate) || !safeTemplate.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
+                        {
+                            message = Resource.NoFileSelected;
+                            break;
+                        }
+
+                        var templatePath = Path.Combine(Declare.BasePath, "extern", "Archipelago", "Players", "Templates", safeTemplate);
+                        if (!File.Exists(templatePath))
+                        {
+                            message = Resource.YamlFileNotExists;
+                            break;
+                        }
+
+                        message = string.Empty;
+                        downloadUrl = "extern/Archipelago/Players/Templates/" + Uri.EscapeDataString(safeTemplate);
                         break;
                     }
 
