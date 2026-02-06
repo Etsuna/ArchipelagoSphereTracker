@@ -1005,102 +1005,142 @@ public static class WebPortalPages
   </main>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(window.location.search);
 
-    // Attend /portal/{{guildId}}/{{channelId}}/commands.html (ids numériques)
-    const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/commands\.html$/);
+  // Attend /portal/{{guildId}}/{{channelId}}/commands.html (ids numériques)
+  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/commands\.html$/);
 
-    const guildId = params.get('guildId') || (m ? m[1] : '');
-    const channelId = params.get('channelId') || (m ? m[2] : '');
+  const guildId = params.get('guildId') || (m ? m[1] : '');
+  const channelId = params.get('channelId') || (m ? m[2] : '');
 
-    const meta = document.getElementById('channel-meta');
-    meta.textContent = channelId ? ('Channel ID: ' + channelId) : 'Channel ID: —';
+  const meta = document.getElementById('channel-meta');
+  meta.textContent = channelId ? ('Channel ID: ' + channelId) : 'Channel ID: —';
 
-    // Supporte un hébergement sous préfixe (/AST/portal/...)
-    const path = window.location.pathname;
-    const idx = path.indexOf('/portal/');
-    const basePath = idx >= 0 ? path.substring(0, idx) : '';
-    const apiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/commands/execute';
+  // Supporte un hébergement sous préfixe (/AST/portal/...)
+  const path = window.location.pathname;
+  const idx = path.indexOf('/portal/');
+  const basePath = idx >= 0 ? path.substring(0, idx) : '';
 
-    const userInput = document.getElementById('user-id');
+  // Base API (garde le préfixe dynamique)
+  const apiBase =
+    window.location.origin +
+    basePath +
+    '/api/portal/' +
+    guildId +
+    '/' +
+    channelId +
+    '/commands/execute';
 
-    const showResult = (container, message, downloadUrl) => {{
-      container.innerHTML = '';
-      if (message) {{
-        const msg = document.createElement('div');
-        msg.textContent = message;
-        container.appendChild(msg);
+  const userInput = document.getElementById('user-id');
+
+  // Corrige les URL de download renvoyées par l’API (ex: /portal/... -> /AST/portal/...)
+  const normalizeDownloadUrl = (u) => {{
+    if (!u) return null;
+
+    // Si déjà absolu (http/https), ne rien faire
+    if (/^https?:\/\//i.test(u)) return u;
+
+    // Si l'API renvoie déjà /AST/portal/..., ne pas doubler
+    if (basePath && u.startsWith(basePath + '/')) return u;
+
+    // Si l’API renvoie un chemin absolu à la racine (/portal/...), on ajoute le basePath (/AST)
+    if (u.startsWith('/')) return basePath + u;
+
+    // Sinon : chemin relatif -> on le rend absolu sous basePath
+    return basePath + '/' + u.replace(/^\/+/, '');
+  }};
+
+  const showResult = (container, message, downloadUrl) => {{
+    container.innerHTML = '';
+
+    if (message) {{
+      const msg = document.createElement('div');
+      msg.textContent = message;
+      container.appendChild(msg);
+    }}
+
+    const fixedUrl = normalizeDownloadUrl(downloadUrl);
+    if (fixedUrl) {{
+      const link = document.createElement('a');
+      link.href = fixedUrl;
+      link.textContent = 'Télécharger le fichier';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      container.appendChild(link);
+    }}
+  }};
+
+  const parsePayload = async (response) => {{
+    const raw = await response.text();
+    if (!raw) return null;
+    try {{
+      return JSON.parse(raw);
+    }} catch {{
+      return raw; // plain text
+    }}
+  }};
+
+  const extractMessage = (payload, fallback) => {{
+    if (payload == null) return fallback;
+    if (typeof payload === 'string') return payload || fallback;
+    if (typeof payload === 'object' && payload.message) return payload.message;
+    return fallback;
+  }};
+
+  document.querySelectorAll('form[data-command]').forEach((form) => {{
+    form.addEventListener('submit', async (event) => {{
+      event.preventDefault();
+
+      const result = form.querySelector('[data-result]');
+      if (!guildId || !channelId) {{
+        showResult(
+          result,
+          'URL invalide: guildId/channelId introuvables. Ouvre la page via /portal/{{guildId}}/{{channelId}}/commands.html',
+          null
+        );
+        return;
       }}
-      if (downloadUrl) {{
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.textContent = 'Télécharger le fichier';
-        link.target = '_blank';
-        container.appendChild(link);
-      }}
-    }};
 
-    const parsePayload = async (response) => {{
-      const raw = await response.text();
-      if (!raw) return null;
+      const data = new FormData(form);
+      data.set('command', form.dataset.command);
+
+      // Ne pas envoyer userId vide
+      if (form.dataset.command === 'add-url') {{
+        const v = userInput.value.trim();
+        if (v) data.set('userId', v);
+        else data.delete('userId');
+      }}
+
+      showResult(result, 'Traitement en cours...', null);
+
       try {{
-        return JSON.parse(raw);
-      }} catch {{
-        return raw; // plain text
-      }}
-    }};
+        const response = await fetch(apiBase, {{
+          method: 'POST',
+          body: data
+        }});
 
-    const extractMessage = (payload, fallback) => {{
-      if (payload == null) return fallback;
-      if (typeof payload === 'string') return payload || fallback;
-      if (typeof payload === 'object' && payload.message) return payload.message;
-      return fallback;
-    }};
+        const payload = await parsePayload(response);
+        const msg = extractMessage(
+          payload,
+          response.ok ? 'Commande exécutée.' : 'Erreur lors de la commande.'
+        );
 
-    document.querySelectorAll('form[data-command]').forEach((form) => {{
-      form.addEventListener('submit', async (event) => {{
-        event.preventDefault();
-
-        const result = form.querySelector('[data-result]');
-        if (!guildId || !channelId) {{
-          showResult(result, 'URL invalide: guildId/channelId introuvables. Ouvre la page via /portal/{{guildId}}/{{channelId}}/commands.html', null);
+        if (!response.ok) {{
+          showResult(result, msg, null);
           return;
         }}
 
-        const data = new FormData(form);
-        data.set('command', form.dataset.command);
+        const downloadUrl =
+          payload && typeof payload === 'object' ? payload.downloadUrl : null;
 
-        // Ne pas envoyer userId vide
-        if (form.dataset.command === 'add-url') {{
-          const v = userInput.value.trim();
-          if (v) data.set('userId', v);
-          else data.delete('userId');
-        }}
-
-        showResult(result, 'Traitement en cours...', null);
-
-        try {{
-          const response = await fetch(apiBase, {{
-            method: 'POST',
-            body: data
-          }});
-
-          const payload = await parsePayload(response);
-          const msg = extractMessage(payload, response.ok ? 'Commande exécutée.' : 'Erreur lors de la commande.');
-
-          if (!response.ok) {{
-            showResult(result, msg, null);
-            return;
-          }}
-
-          const downloadUrl = (payload && typeof payload === 'object') ? payload.downloadUrl : null;
-          showResult(result, msg, downloadUrl);
-        }} catch {{
-          showResult(result, 'Impossible de joindre le serveur.', null);
-        }}
-      }});
+        // IMPORTANT : showResult corrigera /portal/... en /AST/portal/... automatiquement
+        showResult(result, msg, downloadUrl);
+      }} catch {{
+        showResult(result, 'Impossible de joindre le serveur.', null);
+      }}
     }});
-  </script>
+  }});
+</script>
 </body>
 </html>";
     }

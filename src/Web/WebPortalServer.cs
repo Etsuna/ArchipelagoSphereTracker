@@ -129,7 +129,10 @@ public static class WebPortalServer
                 return Results.BadRequest(new { message = "command and channelId are required." });
 
             var downloadRoot = Path.Combine(Declare.WebPortalPath, guildId, "downloads");
-            Directory.CreateDirectory(downloadRoot);
+            if (Declare.IsArchipelagoMode)
+            {
+                Directory.CreateDirectory(downloadRoot);
+            }
 
             static string SanitizeFileName(string fileName)
             {
@@ -137,6 +140,7 @@ public static class WebPortalServer
             }
 
             string? downloadUrl = null;
+            var prefix = request.PathBase.Value?.TrimEnd('/') ?? "";
             string message;
 
             switch (command)
@@ -185,7 +189,7 @@ public static class WebPortalServer
                         var zipPath = Path.Combine(downloadRoot, fileName);
                         message = await YamlClass.BackupYamlsToFileAsync(channelId, zipPath);
                         if (string.IsNullOrWhiteSpace(message))
-                            downloadUrl = $"/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
+                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
                         break;
                     }
 
@@ -218,7 +222,7 @@ public static class WebPortalServer
                         var destinationPath = Path.Combine(downloadRoot, safeName);
                         message = YamlClass.DownloadTemplateToFile(template, destinationPath);
                         if (string.IsNullOrWhiteSpace(message))
-                            downloadUrl = $"/portal/{guildId}/downloads/{WebUtility.UrlEncode(safeName)}";
+                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(safeName)}";
                         break;
                     }
 
@@ -236,7 +240,7 @@ public static class WebPortalServer
                         var zipPath = Path.Combine(downloadRoot, fileName);
                         message = await ApworldClass.BackupApworldToFileAsync(zipPath);
                         if (string.IsNullOrWhiteSpace(message))
-                            downloadUrl = $"/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
+                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
                         break;
                     }
 
@@ -260,7 +264,7 @@ public static class WebPortalServer
                             var fileName = $"{Path.GetFileNameWithoutExtension(result.ZipPath)}_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}.zip";
                             var destinationPath = Path.Combine(downloadRoot, fileName);
                             File.Copy(result.ZipPath, destinationPath, overwrite: true);
-                            downloadUrl = $"/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
+                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
                         }
                         break;
                     }
@@ -284,7 +288,7 @@ public static class WebPortalServer
                             var fileName = $"{Path.GetFileNameWithoutExtension(result.ZipPath)}_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}.zip";
                             var destinationPath = Path.Combine(downloadRoot, fileName);
                             File.Copy(result.ZipPath, destinationPath, overwrite: true);
-                            downloadUrl = $"/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
+                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
                         }
                         break;
                     }
