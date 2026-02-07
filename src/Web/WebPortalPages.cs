@@ -1262,22 +1262,181 @@ public static class WebPortalPages
   <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
   <title>AST Room Portal</title>
   <style>
-    body {{font-family: ""Segoe UI"", system-ui, sans-serif; margin: 0; padding: 24px; background:#0b0f1f; color:#e8ecff;}}
-    .container {{max-width: 900px; margin: 0 auto;}}
-    h1 {{margin-top: 0;}}
-    .panel {{background: rgba(18,22,40,.88); border:1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;}}
-    label {{display:block; margin-bottom: 8px;}}
-    input, select, button {{width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #39406a; background:#13172b; color:#e8ecff;}}
-    button {{cursor:pointer; margin-top: 10px;}}
-    .result {{margin-top: 10px; color:#9aa3c7; white-space: pre-wrap;}}
-    .meta {{color:#9aa3c7; margin-bottom: 20px;}}
+    :root {{
+      color-scheme: dark;
+      --bg: #0b0f1f;
+      --bg-2: #13172b;
+      --panel: rgba(18, 22, 40, 0.88);
+      --accent: #b77bff;
+      --accent-2: #5ee1ff;
+      --text: #e8ecff;
+      --muted: #9aa3c7;
+      --glow: 0 0 16px rgba(183, 123, 255, 0.35);
+    }}
+
+    * {{ box-sizing: border-box; }}
+
+    body {{
+      margin: 0;
+      font-family: ""Segoe UI"", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #1a1f3d 0%, var(--bg) 50%), linear-gradient(145deg, #0b0f1f, #13172b);
+      color: var(--text);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }}
+
+    body::before {{
+      content: """";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(#fff3 1px, transparent 1px);
+      background-size: 120px 120px;
+      opacity: 0.2;
+      pointer-events: none;
+    }}
+
+    header {{
+      position: sticky;
+      top: 0;
+      background: rgba(10, 12, 24, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 24px;
+      z-index: 2;
+    }}
+
+    .hero {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }}
+
+    .title {{
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }}
+
+    .title h1 {{
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }}
+
+    .title span {{
+      color: var(--muted);
+      font-size: 14px;
+    }}
+
+    .badge {{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: linear-gradient(120deg, rgba(183, 123, 255, 0.2), rgba(94, 225, 255, 0.2));
+      border: 1px solid rgba(183, 123, 255, 0.35);
+      font-size: 12px;
+      color: var(--text);
+      box-shadow: var(--glow);
+    }}
+
+    main {{
+      padding: 32px 24px 64px;
+      display: grid;
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }}
+
+    .panel {{
+      background: var(--panel);
+      border-radius: 20px;
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      display: grid;
+      gap: 16px;
+    }}
+
+    .panel h2 {{
+      margin: 0;
+      font-size: 20px;
+    }}
+
+    form {{
+      display: grid;
+      gap: 10px;
+    }}
+
+    label {{
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--muted);
+    }}
+
+    input,
+    select,
+    button {{
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(183, 123, 255, 0.35);
+      background: rgba(19, 23, 43, 0.95);
+      color: var(--text);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }}
+
+    input:focus,
+    select:focus {{
+      outline: none;
+      border-color: rgba(94, 225, 255, 0.6);
+      box-shadow: 0 0 0 2px rgba(94, 225, 255, 0.15);
+    }}
+
+    button {{
+      cursor: pointer;
+      font-weight: 600;
+      background: linear-gradient(135deg, rgba(183, 123, 255, 0.35), rgba(94, 225, 255, 0.35));
+    }}
+
+    button:hover {{
+      transform: translateY(-1px);
+      box-shadow: var(--glow);
+    }}
+
+    .result {{
+      color: var(--muted);
+      white-space: pre-wrap;
+      font-size: 14px;
+    }}
+
+    .meta {{
+      color: var(--muted);
+      font-size: 13px;
+    }}
   </style>
 </head>
 <body>
-  <div class=""container"">
-    <h1>AST Room Portal</h1>
+  <header>
+    <div class=""hero"">
+      <div class=""title"">
+        <h1>AST Room Portal</h1>
+        <span>🌌 Sphere Tracker · Commandes du thread</span>
+      </div>
+      <div class=""badge"">Mode: Thread</div>
+    </div>
     <div id=""channel-meta"" class=""meta"">Channel ID: —</div>
+  </header>
 
+  <main>
     <section class=""panel"">
       <h2>Info</h2>
       <form data-command=""info"">
@@ -1346,7 +1505,7 @@ public static class WebPortalPages
         <div class=""result"" data-result></div>
       </form>
     </section>
-  </div>
+  </main>
 
 <script>
   const params = new URLSearchParams(window.location.search);
