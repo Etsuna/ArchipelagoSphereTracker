@@ -687,8 +687,10 @@ public static class WebPortalPages
       </form>
 
       <form data-command=""delete-yaml"">
-        <label>Nom du fichier YAML
-          <input name=""fileName"" placeholder=""example.yaml"" required />
+        <label>Fichier YAML à supprimer
+          <select name=""fileName"" data-yaml-select required>
+            <option value="""" selected disabled>Chargement des YAML...</option>
+          </select>
         </label>
         <button type=""submit"">Supprimer le YAML</button>
         <div class=""result"" data-result></div>
@@ -1047,7 +1049,17 @@ public static class WebPortalPages
     channelId +
     '/commands/execute';
 
+  const yamlsApi =
+    window.location.origin +
+    basePath +
+    '/api/portal/' +
+    guildId +
+    '/' +
+    channelId +
+    '/commands/yamls';
+
   const userInput = document.getElementById('user-id');
+  const yamlSelect = document.querySelector('[data-yaml-select]');
 
   // Corrige les URL de download renvoyées par l’API (ex: /portal/... -> /AST/portal/...)
   const normalizeDownloadUrl = (u) => {{
@@ -1103,6 +1115,35 @@ public static class WebPortalPages
     return fallback;
   }};
 
+  const loadYamlOptions = async () => {{
+    if (!yamlSelect || !guildId || !channelId) return;
+
+    yamlSelect.innerHTML = '<option value="" selected disabled>Chargement des YAML...</option>';
+
+    try {{
+      const response = await fetch(yamlsApi);
+      const payload = await parsePayload(response);
+      const files = payload && typeof payload === 'object' && Array.isArray(payload.files)
+        ? payload.files
+        : [];
+
+      if (!response.ok || files.length === 0) {{
+        yamlSelect.innerHTML = '<option value="" selected disabled>Aucun YAML disponible</option>';
+        return;
+      }}
+
+      yamlSelect.innerHTML = '<option value="" selected disabled>Sélectionner un YAML</option>';
+      files.forEach((fileName) => {{
+        const option = document.createElement('option');
+        option.value = fileName;
+        option.textContent = fileName;
+        yamlSelect.appendChild(option);
+      }});
+    }} catch {{
+      yamlSelect.innerHTML = '<option value="" selected disabled>Erreur de chargement des YAML</option>';
+    }}
+  }};
+
   document.querySelectorAll('form[data-command]').forEach((form) => {{
     form.addEventListener('submit', async (event) => {{
       event.preventDefault();
@@ -1119,6 +1160,14 @@ public static class WebPortalPages
 
       const data = new FormData(form);
       data.set('command', form.dataset.command);
+
+      if (form.dataset.command === 'delete-yaml') {{
+        const selectedYaml = data.get('fileName');
+        if (!selectedYaml) {{
+          showResult(result, 'Aucun YAML sélectionné.', null);
+          return;
+        }}
+      }}
 
       // Ne pas envoyer userId vide
       if (form.dataset.command === 'add-url') {{
@@ -1151,11 +1200,17 @@ public static class WebPortalPages
 
         // IMPORTANT : showResult corrigera /portal/... en /AST/portal/... automatiquement
         showResult(result, msg, downloadUrl);
+
+        if (['send-yaml', 'delete-yaml', 'clean-yamls'].includes(form.dataset.command)) {{
+          await loadYamlOptions();
+        }}
       }} catch {{
         showResult(result, 'Impossible de joindre le serveur.', null);
       }}
     }});
   }});
+
+  loadYamlOptions();
 </script>
 </body>
 </html>";

@@ -141,6 +141,15 @@ public static class WebPortalServer
             return Results.File(templatePath, "application/x-yaml", safeTemplateName);
         });
 
+        app.MapGet("/api/portal/{guildId}/{channelId}/commands/yamls", (string guildId, string channelId) =>
+        {
+            if (!Declare.IsArchipelagoMode)
+                return Results.BadRequest(new { message = "Archipelago mode is disabled." });
+
+            var yamls = YamlClass.GetYamlFileNames(channelId);
+            return Results.Ok(new { files = yamls });
+        });
+
         app.MapPost("/api/portal/{guildId}/{channelId}/commands/execute", async (string guildId, string channelId, HttpRequest request) =>
         {
             if (!Declare.EnableWebPortal)

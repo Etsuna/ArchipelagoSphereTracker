@@ -290,14 +290,7 @@ public class YamlClass : Declare
 
     public static string ListYamls(string channelId)
     {
-        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
-
-        if (!Directory.Exists(playersFolderChannel))
-            return Resource.YamlNoYaml;
-
-        var yamls = Directory.EnumerateFiles(playersFolderChannel, "*.yaml")
-                             .OrderBy(Path.GetFileName)
-                             .ToList();
+        var yamls = GetYamlFileNames(channelId).ToList();
 
         if (!yamls.Any())
             return Resource.YamlNoYaml;
@@ -306,9 +299,23 @@ public class YamlClass : Declare
         sb.AppendLine();
         foreach (var yml in yamls)
         {
-            sb.AppendLine(Path.GetFileName(yml));
+            sb.AppendLine(yml);
         }
 
         return sb.ToString();
+    }
+
+    public static IReadOnlyList<string> GetYamlFileNames(string channelId)
+    {
+        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+
+        if (!Directory.Exists(playersFolderChannel))
+            return Array.Empty<string>();
+
+        return Directory.EnumerateFiles(playersFolderChannel, "*.yaml")
+            .Select(Path.GetFileName)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ToList()!;
     }
 }
