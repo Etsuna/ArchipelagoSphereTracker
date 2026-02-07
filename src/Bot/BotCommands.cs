@@ -194,6 +194,7 @@ public static class BotCommands
             "info" => await HelperClass.Info(channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, channelId, guildId),
             "ast-user-portal" => await WebPortalLinkAsync(channelId, guildId, command.User.Id.ToString()),
+            "ast-room-portal" => await WebPortalThreadCommandsLinkAsync(channelId, guildId),
             "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, channelId, guildId),
             "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, alias, channelId, guildId),
             "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
@@ -234,6 +235,19 @@ public static class BotCommands
         }
 
         var portalUrl = await WebPortalPages.EnsureUserPageAsync(guildId, channelId, userId);
+        return string.IsNullOrWhiteSpace(portalUrl)
+            ? Resource.WebPortalDisabled
+            : string.Format(Resource.WebPortalLink, portalUrl);
+    }
+
+    private static async Task<string> WebPortalThreadCommandsLinkAsync(string channelId, string guildId)
+    {
+        if (!Declare.EnableWebPortal)
+        {
+            return Resource.WebPortalDisabled;
+        }
+
+        var portalUrl = await WebPortalPages.EnsureThreadCommandsPageAsync(guildId, channelId);
         return string.IsNullOrWhiteSpace(portalUrl)
             ? Resource.WebPortalDisabled
             : string.Format(Resource.WebPortalLink, portalUrl);

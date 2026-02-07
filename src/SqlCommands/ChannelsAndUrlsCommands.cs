@@ -417,7 +417,17 @@ public static class ChannelsAndUrlsCommands
     public static async Task<string> UpdateSilentOption(SocketSlashCommand command, string channelId, string guildId)
     {
         bool getSilentOption = command.Data.Options.FirstOrDefault()?.Value?.ToString()?.ToLowerInvariant() == "true";
+        return await UpdateSilentOptionInternal(getSilentOption, channelId, guildId);
+    }
 
+    public static async Task<string> UpdateSilentOptionFromWeb(string? silentOption, string channelId, string guildId)
+    {
+        bool getSilentOption = string.Equals(silentOption, "true", StringComparison.OrdinalIgnoreCase);
+        return await UpdateSilentOptionInternal(getSilentOption, channelId, guildId);
+    }
+
+    private static async Task<string> UpdateSilentOptionInternal(bool getSilentOption, string channelId, string guildId)
+    {
         try
         {
             await Db.WriteAsync(async conn =>
@@ -533,11 +543,20 @@ public static class ChannelsAndUrlsCommands
     // ================================================
     public static async Task<string> UpdateFrequencyCheck(SocketSlashCommand command, string channelId, string guildId)
     {
+        var newFrequency = command.Data.Options.FirstOrDefault()?.Value?.ToString();
+        return await UpdateFrequencyCheckInternal(newFrequency, channelId, guildId);
+    }
+
+    public static async Task<string> UpdateFrequencyCheckFromWeb(string? newFrequency, string channelId, string guildId)
+    {
+        return await UpdateFrequencyCheckInternal(newFrequency, channelId, guildId);
+    }
+
+    private static async Task<string> UpdateFrequencyCheckInternal(string? newFrequency, string channelId, string guildId)
+    {
         var message = string.Empty;
         try
         {
-            var newFrequency = command.Data.Options.FirstOrDefault()?.Value?.ToString();
-
             if (string.IsNullOrWhiteSpace(newFrequency))
             {
                 newFrequency = "5m";

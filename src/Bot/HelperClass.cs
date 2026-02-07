@@ -7,8 +7,14 @@ public class HelperClass
 {
     public static async Task<string> GetPatch(SocketSlashCommand command, string channelId, string guildId)
     {
-        var message = string.Empty;
         var userId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
+
+        return await GetPatchByAlias(userId, channelId, guildId);
+    }
+
+    public static async Task<string> GetPatchByAlias(string? userId, string channelId, string guildId)
+    {
+        var message = string.Empty;
 
         if (string.IsNullOrWhiteSpace(userId))
         {

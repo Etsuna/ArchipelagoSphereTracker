@@ -58,6 +58,15 @@ public static class WebPortalServer
             return Results.File(commandsPath, "text/html; charset=utf-8");
         });
 
+        app.MapGet("/portal/{guildId}/{channelId}/thread-commands.html", (string guildId, string channelId) =>
+        {
+            var threadCommandsPath = Path.Combine(Declare.WebPortalPath, "thread-commands.html");
+            if (!File.Exists(threadCommandsPath))
+                return Results.NotFound(new { message = "thread-commands.html not found" });
+
+            return Results.File(threadCommandsPath, "text/html; charset=utf-8");
+        });
+
         app.MapGet("/api/portal/{guildId}/{channelId}/{token}/summary", async (string guildId, string channelId, string token) =>
         {
             var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
@@ -170,6 +179,55 @@ public static class WebPortalServer
             return Results.File(yamlPath, "application/x-yaml", safeYamlName);
         });
 
+        app.MapPost("/api/portal/{guildId}/{channelId}/thread-commands/execute", async (string guildId, string channelId, HttpRequest request) =>
+        {
+            if (!Declare.EnableWebPortal)
+                return Results.BadRequest(new { message = "Web portal is disabled." });
+
+            var form = await request.ReadFormAsync();
+            var command = form["command"].FirstOrDefault();
+
+            if (string.IsNullOrWhiteSpace(command) || string.IsNullOrWhiteSpace(channelId))
+                return Results.BadRequest(new { message = "command and channelId are required." });
+
+            string message;
+
+            switch (command)
+            {
+                case "info":
+                    message = await HelperClass.Info(channelId, guildId);
+                    break;
+                case "status-games-list":
+                    message = await HelperClass.StatusGameList(channelId, guildId);
+                    break;
+                case "get-patch":
+                    {
+                        var alias = form["alias"].FirstOrDefault();
+                        message = await HelperClass.GetPatchByAlias(alias, channelId, guildId);
+                        break;
+                    }
+                case "update-frequency-check":
+                    {
+                        var checkFrequency = form["checkFrequency"].FirstOrDefault();
+                        message = await ChannelsAndUrlsCommands.UpdateFrequencyCheckFromWeb(checkFrequency, channelId, guildId);
+                        break;
+                    }
+                case "update-silent-option":
+                    {
+                        var silent = form["silent"].FirstOrDefault();
+                        message = await ChannelsAndUrlsCommands.UpdateSilentOptionFromWeb(silent, channelId, guildId);
+                        break;
+                    }
+                case "delete-url":
+                    message = await UrlClass.DeleteChannelAndUrl(channelId, guildId);
+                    break;
+                default:
+                    return Results.BadRequest(new { message = "Unknown command." });
+            }
+
+            return Results.Ok(new { message });
+        });
+        
         app.MapPost("/api/portal/{guildId}/{channelId}/commands/execute", async (string guildId, string channelId, HttpRequest request) =>
         {
             if (!Declare.EnableWebPortal)

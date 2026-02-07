@@ -155,6 +155,10 @@ public static class SlashCommandDefinitions
                 .WithDescription(Resource.SCPortalLinkDescription),
 
             new SlashCommandBuilder()
+                .WithName("ast-room-portal")
+                .WithDescription("Afficher la page web des commandes du thread"),
+
+            new SlashCommandBuilder()
                 .WithName("ast-portal")
                 .WithDescription(Resource.SCPortalUrlDescription),
 

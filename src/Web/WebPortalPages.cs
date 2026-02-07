@@ -27,6 +27,20 @@ public static class WebPortalPages
         return GetUserPortalUrl(guildId, channelId, token);
     }
 
+    public static async Task<string?> EnsureThreadCommandsPageAsync(string guildId, string channelId)
+    {
+        if (!Declare.EnableWebPortal)
+            return null;
+
+        Directory.CreateDirectory(Declare.WebPortalPath);
+
+        var htmlPath = Path.Combine(Declare.WebPortalPath, "thread-commands.html");
+        var html = BuildThreadCommandsPage();
+        await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
+
+        return GetThreadCommandsPortalUrl(guildId, channelId);
+    }
+
     public static async Task<string?> EnsureCommandsPageAsync(string guildId, string channelId)
     {
         if (!Declare.EnableWebPortal)
@@ -97,6 +111,12 @@ public static class WebPortalPages
     {
         var baseUrl = GetPortalBaseUrl();
         return $"{baseUrl}/portal/{guildId}/{channelId}/commands.html";
+    }
+
+    private static string GetThreadCommandsPortalUrl(string guildId, string channelId)
+    {
+        var baseUrl = GetPortalBaseUrl();
+        return $"{baseUrl}/portal/{guildId}/{channelId}/thread-commands.html";
     }
 
     private static string GetUserFolder(string guildId, string channelId, string token)
@@ -1233,4 +1253,160 @@ public static class WebPortalPages
 </body>
 </html>";
     }
+    private static string BuildThreadCommandsPage()
+    {
+        return @$"<!doctype html>
+<html lang=""fr"">
+<head>
+  <meta charset=""utf-8"" />
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
+  <title>AST Room Portal</title>
+  <style>
+    body {{font-family: ""Segoe UI"", system-ui, sans-serif; margin: 0; padding: 24px; background:#0b0f1f; color:#e8ecff;}}
+    .container {{max-width: 900px; margin: 0 auto;}}
+    h1 {{margin-top: 0;}}
+    .panel {{background: rgba(18,22,40,.88); border:1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;}}
+    label {{display:block; margin-bottom: 8px;}}
+    input, select, button {{width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #39406a; background:#13172b; color:#e8ecff;}}
+    button {{cursor:pointer; margin-top: 10px;}}
+    .result {{margin-top: 10px; color:#9aa3c7; white-space: pre-wrap;}}
+    .meta {{color:#9aa3c7; margin-bottom: 20px;}}
+  </style>
+</head>
+<body>
+  <div class=""container"">
+    <h1>AST Room Portal</h1>
+    <div id=""channel-meta"" class=""meta"">Channel ID: —</div>
+
+    <section class=""panel"">
+      <h2>Info</h2>
+      <form data-command=""info"">
+        <button type=""submit"">Afficher les infos du thread</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>Status games list</h2>
+      <form data-command=""status-games-list"">
+        <button type=""submit"">Afficher le statut des jeux</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>Get patch</h2>
+      <form data-command=""get-patch"">
+        <label>Alias
+          <input type=""text"" name=""alias"" required />
+        </label>
+        <button type=""submit"">Récupérer le patch</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>Update frequency check</h2>
+      <form data-command=""update-frequency-check"">
+        <label>Fréquence
+          <select name=""checkFrequency"" required>
+            <option value=""5m"">Toutes les 5 minutes</option>
+            <option value=""15m"">Toutes les 15 minutes</option>
+            <option value=""30m"">Toutes les 30 minutes</option>
+            <option value=""1h"">Toutes les 1 heure</option>
+            <option value=""6h"">Toutes les 6 heures</option>
+            <option value=""12h"">Toutes les 12 heures</option>
+            <option value=""18h"">Toutes les 18 heures</option>
+            <option value=""1d"">Tous les jours</option>
+          </select>
+        </label>
+        <button type=""submit"">Mettre à jour la fréquence</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>Update silent option</h2>
+      <form data-command=""update-silent-option"">
+        <label>Mode silencieux
+          <select name=""silent"" required>
+            <option value=""true"">Activé</option>
+            <option value=""false"">Désactivé</option>
+          </select>
+        </label>
+        <button type=""submit"">Mettre à jour le mode silencieux</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>Delete URL</h2>
+      <form data-command=""delete-url"">
+        <button type=""submit"">Supprimer l'URL du thread</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/thread-commands\.html$/);
+
+  const guildId = params.get('guildId') || (m ? m[1] : '');
+  const channelId = params.get('channelId') || (m ? m[2] : '');
+
+  document.getElementById('channel-meta').textContent = channelId ? ('Channel ID: ' + channelId) : 'Channel ID: —';
+
+  const path = window.location.pathname;
+  const idx = path.indexOf('/portal/');
+  const basePath = idx >= 0 ? path.substring(0, idx) : '';
+
+  const apiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/execute';
+
+  const parsePayload = async (response) => {{
+    const raw = await response.text();
+    if (!raw) return null;
+    try {{return JSON.parse(raw);}} catch {{return raw;}}
+ }};
+
+  const extractMessage = (payload, fallback) => {{
+    if (payload == null) return fallback;
+    if (typeof payload === 'string') return payload || fallback;
+    if (typeof payload === 'object' && payload.message) return payload.message;
+    return fallback;
+ }};
+
+  const showResult = (container, message) => {{
+    container.textContent = message || '';
+ }};
+
+  document.querySelectorAll('form[data-command]').forEach((form) => {{
+    form.addEventListener('submit', async (event) => {{
+      event.preventDefault();
+      const result = form.querySelector('[data-result]');
+
+      if (!guildId || !channelId) {{
+        showResult(result, 'URL invalide: guildId/channelId introuvables.');
+        return;
+     }}
+
+      const data = new FormData(form);
+      data.set('command', form.dataset.command);
+
+      showResult(result, 'Traitement en cours...');
+
+      try {{
+        const response = await fetch(apiBase, {{method: 'POST', body: data}});
+        const payload = await parsePayload(response);
+        const msg = extractMessage(payload, response.ok ? 'Commande exécutée.' : 'Erreur lors de la commande.');
+        showResult(result, msg);
+     }} catch {{
+        showResult(result, 'Impossible de joindre le serveur.');
+     }}
+   }});
+ }});
+</script>
+</body>
+</html>";
+   }
 }
