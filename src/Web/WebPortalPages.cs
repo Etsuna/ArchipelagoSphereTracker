@@ -1182,6 +1182,7 @@ public static class WebPortalPages
     }}
   }};
 
+
   document.querySelectorAll('form[data-command]').forEach((form) => {{
     form.addEventListener('submit', async (event) => {{
       event.preventDefault();
@@ -1455,12 +1456,13 @@ public static class WebPortalPages
 
     <section class=""panel"">
       <h2>Get patch</h2>
-      <form data-command=""get-patch"">
+      <form id=""patch-form"">
         <label>Alias
-          <input type=""text"" name=""alias"" required />
+          <select id=""patch-alias-select"" name=""alias"" required>
+            <option value="""">Chargement des alias…</option>
+          </select>
         </label>
-        <button type=""submit"">Récupérer le patch</button>
-        <div class=""result"" data-result></div>
+        <div class=""result"" id=""patch-link-result""></div>
       </form>
     </section>
 
@@ -1521,6 +1523,7 @@ public static class WebPortalPages
   const basePath = idx >= 0 ? path.substring(0, idx) : '';
 
   const apiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/execute';
+  const patchAliasesApi = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/patches';
 
   const parsePayload = async (response) => {{
     const raw = await response.text();
@@ -1538,6 +1541,110 @@ public static class WebPortalPages
   const showResult = (container, message) => {{
     container.textContent = message || '';
  }};
+
+  const patchAliasSelect = document.getElementById('patch-alias-select');
+  const patchLinkResult = document.getElementById('patch-link-result');
+  const patchAliasData = new Map();
+
+  const escapeHtml = (value) => {{
+    const div = document.createElement('div');
+    div.textContent = value || '';
+    return div.innerHTML;
+ }};
+
+  const getValidPatchUrl = (value) => {{
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    try {{
+      const candidate = new URL(trimmed);
+      if (candidate.protocol === 'http:' || candidate.protocol === 'https:') return candidate.toString();
+      return null;
+    }} catch {{
+      return null;
+    }}
+ }};
+
+  const renderPatchForAlias = (alias) => {{
+    if (!patchLinkResult) return;
+
+    if (!alias) {{
+      patchLinkResult.textContent = 'Sélectionnez un alias pour voir le patch.';
+      return;
+    }}
+
+    const entry = patchAliasData.get(alias);
+    if (!entry) {{
+      patchLinkResult.textContent = 'Alias introuvable.';
+      return;
+    }}
+
+    const validPatchUrl = getValidPatchUrl(entry.patch);
+    const gameLabel = entry.gameName ? ('Jeu: ' + entry.gameName) : 'Jeu: inconnu';
+
+    if (validPatchUrl) {{
+      patchLinkResult.innerHTML = gameLabel + '<br><a href=""' + escapeHtml(validPatchUrl) + '"" target=""_blank"" rel=""noopener noreferrer"">' + escapeHtml(validPatchUrl) + '</a>';
+      return;
+    }}
+
+    patchLinkResult.textContent = gameLabel + '\nAucun lien de patch disponible pour cet alias.';
+ }};
+
+  const loadPatchAliases = async () => {{
+    if (!patchAliasSelect || !patchLinkResult) return;
+
+    if (!guildId || !channelId) {{
+      patchAliasSelect.innerHTML = '<option value="""">Alias indisponibles</option>';
+      patchAliasSelect.disabled = true;
+      patchLinkResult.textContent = 'URL invalide: guildId/channelId introuvables.';
+      return;
+    }}
+
+    patchAliasSelect.disabled = true;
+    patchAliasSelect.innerHTML = '<option value="""">Chargement des alias…</option>';
+
+    try {{
+      const response = await fetch(patchAliasesApi);
+      const payload = await parsePayload(response);
+
+      if (!response.ok) {{
+        const msg = extractMessage(payload, 'Erreur lors du chargement des alias.');
+        patchAliasSelect.innerHTML = '<option value="""">Alias indisponibles</option>';
+        patchLinkResult.textContent = msg;
+        return;
+      }}
+
+      const aliases = payload && Array.isArray(payload.aliases) ? payload.aliases : [];
+      patchAliasData.clear();
+
+      if (aliases.length === 0) {{
+        patchAliasSelect.innerHTML = '<option value="""">Aucun alias disponible</option>';
+        patchLinkResult.textContent = 'Aucun alias trouvé pour ce thread.';
+        return;
+      }}
+
+      const options = ['<option value="""">Sélectionnez un alias</option>'];
+      aliases.forEach((entry) => {{
+        if (!entry || !entry.alias) return;
+        patchAliasData.set(entry.alias, {{ gameName: entry.gameName || '', patch: entry.patch || '' }});
+        options.push('<option value=""' + escapeHtml(entry.alias) + '"">' + escapeHtml(entry.alias) + '</option>');
+      }});
+
+      patchAliasSelect.innerHTML = options.join('');
+      patchAliasSelect.disabled = false;
+      patchLinkResult.textContent = 'Sélectionnez un alias pour voir le patch.';
+    }} catch {{
+      patchAliasSelect.innerHTML = '<option value="""">Alias indisponibles</option>';
+      patchLinkResult.textContent = 'Impossible de charger les alias.';
+    }}
+ }};
+
+  if (patchAliasSelect) {{
+    patchAliasSelect.addEventListener('change', () => renderPatchForAlias(patchAliasSelect.value));
+ }}
+
+  loadPatchAliases();
 
   document.querySelectorAll('form[data-command]').forEach((form) => {{
     form.addEventListener('submit', async (event) => {{

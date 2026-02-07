@@ -179,6 +179,28 @@ public static class WebPortalServer
             return Results.File(yamlPath, "application/x-yaml", safeYamlName);
         });
 
+
+        app.MapGet("/api/portal/{guildId}/{channelId}/thread-commands/patches", async (string guildId, string channelId) =>
+        {
+            if (!Declare.EnableWebPortal)
+                return Results.BadRequest(new { message = "Web portal is disabled." });
+
+            var patches = await ChannelsAndUrlsCommands.GetPatchesForChannelAsync(guildId, channelId);
+
+            var aliases = patches
+                .GroupBy(x => x.Alias, StringComparer.OrdinalIgnoreCase)
+                .Select(group =>
+                {
+                    var withPatch = group.FirstOrDefault(item => !string.IsNullOrWhiteSpace(item.Patch));
+                    var selected = string.IsNullOrWhiteSpace(withPatch.Patch) ? group.First() : withPatch;
+                    return new PortalPatchAlias(selected.Alias, selected.GameName, selected.Patch);
+                })
+                .OrderBy(item => item.Alias, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return Results.Ok(new { aliases });
+        });
+
         app.MapPost("/api/portal/{guildId}/{channelId}/thread-commands/execute", async (string guildId, string channelId, HttpRequest request) =>
         {
             if (!Declare.EnableWebPortal)
@@ -485,6 +507,7 @@ public static class WebPortalServer
 
     private record PortalAliasHints(string Alias, List<PortalHintItem> AsReceiver, List<PortalHintItem> AsFinder);
     private record PortalHintItem(string Finder, string Receiver, string Item, string Location, string Game);
+    private record PortalPatchAlias(string Alias, string GameName, string Patch);
 
     private static List<PortalRecapGroup> GroupRecapItemsByFlag(List<(string Item, long? Flag)> items)
     {

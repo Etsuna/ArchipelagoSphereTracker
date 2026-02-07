@@ -245,6 +245,53 @@ public static class ChannelsAndUrlsCommands
         }
     }
 
+    public static async Task<List<(string Alias, string GameName, string Patch)>> GetPatchesForChannelAsync(
+        string guildId,
+        string channelId)
+    {
+        var patches = new List<(string Alias, string GameName, string Patch)>();
+
+        try
+        {
+            await using var connection = await Db.OpenReadAsync();
+
+            long guildChannelId = await DatabaseCommands
+                .GetGuildChannelIdAsync(guildId, channelId, "ChannelsAndUrlsTable");
+
+            if (guildChannelId == -1)
+            {
+                return patches;
+            }
+
+            using var command = new SQLiteCommand(@"
+                SELECT Alias, GameName, Patch
+                FROM UrlAndChannelPatchTable
+                WHERE ChannelsAndUrlsTableId = @ChannelsAndUrlsTableId
+                ORDER BY Alias COLLATE NOCASE;", connection);
+
+            command.Parameters.AddWithValue("@ChannelsAndUrlsTableId", guildChannelId);
+
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var alias = reader["Alias"]?.ToString() ?? string.Empty;
+                var gameName = reader["GameName"]?.ToString() ?? string.Empty;
+                var patch = reader["Patch"]?.ToString() ?? string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(alias))
+                {
+                    patches.Add((alias, gameName, patch));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while retrieving patches for channel: {ex.Message}");
+        }
+
+        return patches;
+    }
+
     // ==============================
     // 🎯 GET ALL PATCHES FOR CHANNEL (READ)
     // ==============================
