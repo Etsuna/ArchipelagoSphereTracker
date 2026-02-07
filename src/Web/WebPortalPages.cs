@@ -716,6 +716,11 @@ public static class WebPortalPages
         <div class=""result"" data-result></div>
       </form>
 
+      <form data-command=""clean-yamls"">
+        <button type=""submit"">Nettoyer tous les YAML</button>
+        <div class=""result"" data-result></div>
+      </form>
+
       <form data-command=""download-yaml"">
         <label>Fichier YAML à télécharger
           <select name=""fileName"" data-yaml-select required>
@@ -723,11 +728,6 @@ public static class WebPortalPages
           </select>
         </label>
         <button type=""submit"">Télécharger le YAML</button>
-        <div class=""result"" data-result></div>
-      </form>
-
-      <form data-command=""clean-yamls"">
-        <button type=""submit"">Nettoyer tous les YAML</button>
         <div class=""result"" data-result></div>
       </form>
 
@@ -1538,7 +1538,22 @@ public static class WebPortalPages
     return fallback;
  }};
 
-  const showResult = (container, message) => {{
+  const formatDiscordStatusMessage = (message) => {{
+    if (!message) return '';
+
+    let html = escapeHtml(message);
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/~~([^~]+)~~/g, '<s>$1</s>');
+    html = html.replace(/\r?\n/g, '<br>');
+    return html;
+ }};
+
+  const showResult = (container, message, command) => {{
+    if (command === 'status-games-list') {{
+      container.innerHTML = formatDiscordStatusMessage(message || '');
+      return;
+    }}
+
     container.textContent = message || '';
  }};
 
@@ -1652,22 +1667,22 @@ public static class WebPortalPages
       const result = form.querySelector('[data-result]');
 
       if (!guildId || !channelId) {{
-        showResult(result, 'URL invalide: guildId/channelId introuvables.');
+        showResult(result, 'URL invalide: guildId/channelId introuvables.', form.dataset.command);
         return;
      }}
 
       const data = new FormData(form);
       data.set('command', form.dataset.command);
 
-      showResult(result, 'Traitement en cours...');
+      showResult(result, 'Traitement en cours...', form.dataset.command);
 
       try {{
         const response = await fetch(apiBase, {{method: 'POST', body: data}});
         const payload = await parsePayload(response);
         const msg = extractMessage(payload, response.ok ? 'Commande exécutée.' : 'Erreur lors de la commande.');
-        showResult(result, msg);
+        showResult(result, msg, form.dataset.command);
      }} catch {{
-        showResult(result, 'Impossible de joindre le serveur.');
+        showResult(result, 'Impossible de joindre le serveur.', form.dataset.command);
      }}
    }});
  }});
