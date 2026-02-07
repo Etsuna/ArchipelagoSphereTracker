@@ -150,6 +150,26 @@ public static class WebPortalServer
             return Results.Ok(new { files = yamls });
         });
 
+        app.MapGet("/extern/Archipelago/Players/{channelId}/yaml/{yamlName}", (string channelId, string yamlName) =>
+        {
+            if (!Declare.IsArchipelagoMode)
+                return Results.BadRequest(new { message = "Archipelago mode is disabled." });
+
+            var safeYamlName = Path.GetFileName(yamlName);
+            if (string.IsNullOrWhiteSpace(safeYamlName) ||
+                !string.Equals(safeYamlName, yamlName, StringComparison.Ordinal) ||
+                !safeYamlName.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.BadRequest(new { message = "Invalid yaml name." });
+            }
+
+            var yamlPath = Path.Combine(Declare.BasePath, "extern", "Archipelago", "Players", channelId, "yaml", safeYamlName);
+            if (!File.Exists(yamlPath))
+                return Results.NotFound(new { message = "Yaml not found." });
+
+            return Results.File(yamlPath, "application/x-yaml", safeYamlName);
+        });
+
         app.MapPost("/api/portal/{guildId}/{channelId}/commands/execute", async (string guildId, string channelId, HttpRequest request) =>
         {
             if (!Declare.EnableWebPortal)
@@ -225,6 +245,28 @@ public static class WebPortalServer
                     {
                         var fileName = form["fileName"].FirstOrDefault();
                         message = YamlClass.DeleteYamlByName(channelId, fileName);
+                        break;
+                    }
+
+                case "download-yaml":
+                    {
+                        var fileName = form["fileName"].FirstOrDefault() ?? string.Empty;
+                        var safeFileName = Path.GetFileName(fileName);
+                        if (string.IsNullOrWhiteSpace(safeFileName) || !safeFileName.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
+                        {
+                            message = Resource.NoFileSelected;
+                            break;
+                        }
+
+                        var yamlPath = Path.Combine(Declare.BasePath, "extern", "Archipelago", "Players", channelId, "yaml", safeFileName);
+                        if (!File.Exists(yamlPath))
+                        {
+                            message = Resource.YamlFileNotExists;
+                            break;
+                        }
+
+                        message = string.Empty;
+                        downloadUrl = $"extern/Archipelago/Players/{Uri.EscapeDataString(channelId)}/yaml/{Uri.EscapeDataString(safeFileName)}";
                         break;
                     }
 

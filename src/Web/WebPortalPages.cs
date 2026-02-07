@@ -696,6 +696,16 @@ public static class WebPortalPages
         <div class=""result"" data-result></div>
       </form>
 
+      <form data-command=""download-yaml"">
+        <label>Fichier YAML à télécharger
+          <select name=""fileName"" data-yaml-select required>
+            <option value="""" selected disabled>Chargement des YAML...</option>
+          </select>
+        </label>
+        <button type=""submit"">Télécharger le YAML</button>
+        <div class=""result"" data-result></div>
+      </form>
+
       <form data-command=""clean-yamls"">
         <button type=""submit"">Nettoyer tous les YAML</button>
         <div class=""result"" data-result></div>
@@ -1059,7 +1069,7 @@ public static class WebPortalPages
     '/commands/yamls';
 
   const userInput = document.getElementById('user-id');
-  const yamlSelect = document.querySelector('[data-yaml-select]');
+  const yamlSelects = document.querySelectorAll('[data-yaml-select]');
 
   // Corrige les URL de download renvoyées par l’API (ex: /portal/... -> /AST/portal/...)
   const normalizeDownloadUrl = (u) => {{
@@ -1115,10 +1125,16 @@ public static class WebPortalPages
     return fallback;
   }};
 
-  const loadYamlOptions = async () => {{
-    if (!yamlSelect || !guildId || !channelId) return;
+  const setYamlSelectOptions = (optionsMarkup) => {{
+    yamlSelects.forEach((select) => {{
+      select.innerHTML = optionsMarkup;
+    }});
+  }};
 
-    yamlSelect.innerHTML = '<option value="" selected disabled>Chargement des YAML...</option>';
+  const loadYamlOptions = async () => {{
+    if (!yamlSelects.length || !guildId || !channelId) return;
+
+    setYamlSelectOptions('<option value="" selected disabled>Chargement des YAML...</option>');
 
     try {{
       const response = await fetch(yamlsApi);
@@ -1128,19 +1144,21 @@ public static class WebPortalPages
         : [];
 
       if (!response.ok || files.length === 0) {{
-        yamlSelect.innerHTML = '<option value="" selected disabled>Aucun YAML disponible</option>';
+        setYamlSelectOptions('<option value="" selected disabled>Aucun YAML disponible</option>');
         return;
       }}
 
-      yamlSelect.innerHTML = '<option value="" selected disabled>Sélectionner un YAML</option>';
-      files.forEach((fileName) => {{
-        const option = document.createElement('option');
-        option.value = fileName;
-        option.textContent = fileName;
-        yamlSelect.appendChild(option);
+      yamlSelects.forEach((select) => {{
+        select.innerHTML = '<option value="" selected disabled>Sélectionner un YAML</option>';
+        files.forEach((fileName) => {{
+          const option = document.createElement('option');
+          option.value = fileName;
+          option.textContent = fileName;
+          select.appendChild(option);
+        }});
       }});
     }} catch {{
-      yamlSelect.innerHTML = '<option value="" selected disabled>Erreur de chargement des YAML</option>';
+      setYamlSelectOptions('<option value="" selected disabled>Erreur de chargement des YAML</option>');
     }}
   }};
 
@@ -1161,7 +1179,7 @@ public static class WebPortalPages
       const data = new FormData(form);
       data.set('command', form.dataset.command);
 
-      if (form.dataset.command === 'delete-yaml') {{
+      if (['delete-yaml', 'download-yaml'].includes(form.dataset.command)) {{
         const selectedYaml = data.get('fileName');
         if (!selectedYaml) {{
           showResult(result, 'Aucun YAML sélectionné.', null);
