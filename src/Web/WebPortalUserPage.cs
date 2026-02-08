@@ -303,7 +303,7 @@ public static class WebPortalUserPage
       <div id=""status"" class=""status""></div>
     </section>
    
-    <details class=""panel"" open>
+    <details class=""panel"" close>
       <summary><h2>🧑‍🚀 Vos alias</h2></summary>
       <div class=""actions-grid panel-content"">
         <div class=""action-group"">
@@ -329,7 +329,7 @@ public static class WebPortalUserPage
       <div id=""hints-root"" class=""grid panel-content""></div>
     </details>
 
-    <details class=""panel"" open>
+    <details class=""panel"" close>
       <summary><h2>🎁 Items reçus</h2></summary>
       <div id=""items-root"" class=""grid panel-content""></div>
     </details>
