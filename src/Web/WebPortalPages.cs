@@ -326,6 +326,32 @@ public static class WebPortalPages
       color: #ffd7dc;
     }}
 
+    .actions-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }}
+
+    .action-group {{
+      display: grid;
+      gap: 8px;
+    }}
+
+    .action-group label {{
+      font-size: 13px;
+      color: var(--muted);
+    }}
+
+    .action-group select {{
+      width: 100%;
+      border-radius: 10px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(11, 15, 31, 0.85);
+      color: var(--text);
+    }}
+
     .list {{
       list-style: none;
       padding: 0;
@@ -383,6 +409,22 @@ public static class WebPortalPages
     <section class=""panel"">
       <h2>🔭 Actions rapides</h2>
       <button class=""button"" id=""refresh"">Rafraîchir les données</button>
+      <div class=""actions-grid"">
+        <div class=""action-group"">
+          <label for=""add-alias-select"">Ajouter un alias (comme /add-alias)</label>
+          <select id=""add-alias-select"" required>
+            <option value="""">Chargement des alias du thread...</option>
+          </select>
+          <button class=""button"" id=""add-alias-button"">Ajouter l'alias</button>
+        </div>
+        <div class=""action-group"">
+          <label for=""delete-alias-select"">Supprimer un de mes alias (comme /delete-alias)</label>
+          <select id=""delete-alias-select"" required>
+            <option value="""">Chargement de vos alias...</option>
+          </select>
+          <button class=""button danger"" id=""delete-alias-button"">Supprimer l'alias</button>
+        </div>
+      </div>
       <div id=""status"" class=""status""></div>
     </section>
 
@@ -413,6 +455,10 @@ public static class WebPortalPages
     const recapRoot = document.getElementById('recap-root');
     const itemsRoot = document.getElementById('items-root');
     const hintsRoot = document.getElementById('hints-root');
+    const addAliasSelect = document.getElementById('add-alias-select');
+    const deleteAliasSelect = document.getElementById('delete-alias-select');
+    const addAliasButton = document.getElementById('add-alias-button');
+    const deleteAliasButton = document.getElementById('delete-alias-button');
 
     const path = window.location.pathname; // ex: /AST/portal/g/c/token/
     const idx = path.indexOf('/portal/');
@@ -653,10 +699,97 @@ public static class WebPortalPages
       }}
     }};
 
+    const fillSelect = (select, aliases, emptyLabel, placeholder) => {{
+      if (!aliases || aliases.length === 0) {{
+        select.innerHTML = '<option value="""">' + emptyLabel + '</option>';
+        return;
+      }}
+
+      const options = ['<option value="""">' + placeholder + '</option>'];
+      aliases.forEach(alias => {{
+        options.push('<option value=""' + escapeHtml(alias) + '"">' + escapeHtml(alias) + '</option>');
+      }});
+      select.innerHTML = options.join('');
+    }};
+
+    const loadAliasLists = async () => {{
+      addAliasSelect.innerHTML = '<option value="""">Chargement des alias du thread...</option>';
+      deleteAliasSelect.innerHTML = '<option value="""">Chargement de vos alias...</option>';
+
+      try {{
+        const [allRes, userRes] = await Promise.all([
+          fetch(apiBase + '/aliases'),
+          fetch(apiBase + '/aliases/user')
+        ]);
+
+        if (allRes.ok) {{
+          const payload = await allRes.json();
+          fillSelect(addAliasSelect, payload.aliases || [], 'Aucun alias disponible dans ce thread', 'Sélectionnez un alias');
+        }} else {{
+          fillSelect(addAliasSelect, [], 'Impossible de charger les alias du thread', 'Sélectionnez un alias');
+        }}
+
+        if (userRes.ok) {{
+          const payload = await userRes.json();
+          fillSelect(deleteAliasSelect, payload.aliases || [], 'Vous n\'avez aucun alias enregistré', 'Sélectionnez un alias');
+        }} else {{
+          fillSelect(deleteAliasSelect, [], 'Impossible de charger vos alias', 'Sélectionnez un alias');
+        }}
+      }} catch (e) {{
+        fillSelect(addAliasSelect, [], 'Impossible de charger les alias du thread', 'Sélectionnez un alias');
+        fillSelect(deleteAliasSelect, [], 'Impossible de charger vos alias', 'Sélectionnez un alias');
+      }}
+    }};
+
+    const addAliasFromPortal = async () => {{
+      const alias = addAliasSelect.value;
+      if (!alias) {{
+        setStatus('Sélectionnez un alias à ajouter.');
+        return;
+      }}
+
+      setStatus(""Ajout de l'alias..."");
+      const formData = new FormData();
+      formData.append('alias', alias);
+
+      const res = await fetch(apiBase + '/alias/add', {{ method: 'POST', body: formData }});
+      if (res.ok) {{
+        setStatus('Alias ajouté: ' + alias + '.');
+        await loadData();
+        return;
+      }}
+
+      const payload = await res.json().catch(() => ({{}}));
+      setStatus(payload.message || ""Impossible d'ajouter cet alias."");
+    }};
+
+    const deleteAliasFromPortal = async () => {{
+      const alias = deleteAliasSelect.value;
+      if (!alias) {{
+        setStatus('Sélectionnez un alias à supprimer.');
+        return;
+      }}
+
+      setStatus(""Suppression de l'alias..."");
+      const formData = new FormData();
+      formData.append('alias', alias);
+
+      const res = await fetch(apiBase + '/alias/delete', {{ method: 'POST', body: formData }});
+      if (res.ok) {{
+        setStatus('Alias supprimé: ' + alias + '.');
+        await loadData();
+        return;
+      }}
+
+      const payload = await res.json().catch(() => ({{}}));
+      setStatus(payload.message || 'Impossible de supprimer cet alias.');
+    }};
+
     const loadData = async () => {{
       setStatus('Synchronisation avec la base de données...');
       const res = await fetch(apiBase + '/summary');
       if (!res.ok) {{
+        await loadAliasLists();
         setStatus('Portail indisponible.');
         return;
       }}
@@ -665,10 +798,13 @@ public static class WebPortalPages
       renderRecaps(data.recaps || []);
       renderItems(data.receivedItems || []);
       renderHints(data.hints || []);
+      await loadAliasLists();
       setStatus('Dernière mise à jour: ' + new Date(data.lastUpdated).toLocaleString());
     }};
 
     document.getElementById('refresh').addEventListener('click', loadData);
+    addAliasButton.addEventListener('click', addAliasFromPortal);
+    deleteAliasButton.addEventListener('click', deleteAliasFromPortal);
     loadData();
   </script>
 </body>

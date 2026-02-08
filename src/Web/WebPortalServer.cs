@@ -130,6 +130,100 @@ public static class WebPortalServer
             return Results.Ok(new { message = "ok" });
         });
 
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/aliases", async (string guildId, string channelId, string token) =>
+        {
+            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
+            if (string.IsNullOrWhiteSpace(userId))
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var aliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId);
+            if (aliases.Count == 0)
+            {
+                aliases = await ReceiverAliasesCommands.GetReceiver(guildId, channelId);
+            }
+
+            var uniqueAliases = aliases
+                .Where(alias => !string.IsNullOrWhiteSpace(alias))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(alias => alias, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return Results.Ok(new { aliases = uniqueAliases });
+        });
+
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/aliases/user", async (string guildId, string channelId, string token) =>
+        {
+            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
+            if (string.IsNullOrWhiteSpace(userId))
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var aliases = await RecapListCommands.GetAliasesForUserAsync(guildId, channelId, userId);
+            var uniqueAliases = aliases
+                .Where(alias => !string.IsNullOrWhiteSpace(alias))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(alias => alias, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return Results.Ok(new { aliases = uniqueAliases });
+        });
+
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/alias/add", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
+        {
+            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
+            if (string.IsNullOrWhiteSpace(userId))
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var form = await request.ReadFormAsync();
+            var alias = form["alias"].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(alias))
+                return Results.BadRequest(new { message = "alias is required" });
+
+            var owners = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
+            if (owners.Contains(userId))
+                return Results.Conflict(new { message = "Alias already registered for this user." });
+
+            await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, "0");
+
+            var recapExists = await RecapListCommands.CheckIfExists(guildId, channelId, userId, alias);
+            if (!recapExists)
+                await RecapListCommands.AddOrEditRecapListAsync(guildId, channelId, userId, alias);
+
+            var aliasItems = await DisplayItemCommands.GetAliasItems(guildId, channelId, alias);
+            if (aliasItems != null)
+                await RecapListCommands.AddOrEditRecapListItemsAsync(guildId, channelId, alias, aliasItems);
+
+            return Results.Ok(new { message = "ok" });
+        });
+
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/alias/delete", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
+        {
+            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
+            if (string.IsNullOrWhiteSpace(userId))
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var form = await request.ReadFormAsync();
+            var alias = form["alias"].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(alias))
+                return Results.BadRequest(new { message = "alias is required" });
+
+            var owners = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
+            if (!owners.Contains(userId))
+                return Results.NotFound(new { message = "Alias not found for this user." });
+
+            await ReceiverAliasesCommands.DeleteReceiverAlias(guildId, channelId, alias);
+            await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, userId, alias);
+
+            return Results.Ok(new { message = "ok" });
+        });
+
         app.MapGet("/extern/Archipelago/Players/Templates/{templateName}", (string templateName) =>
         {
             if (!Declare.IsArchipelagoMode)
