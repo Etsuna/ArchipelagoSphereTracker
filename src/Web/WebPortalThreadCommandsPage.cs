@@ -169,6 +169,18 @@
       color: var(--muted);
       font-size: 13px;
     }}
+
+    .hero-info {{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }}
+
+    .hero-info a {{
+      color: var(--accent-2);
+    }}
   </style>
 </head>
 <body>
@@ -181,17 +193,10 @@
       <div class=""badge"">Mode: Thread</div>
     </div>
     <div id=""channel-meta"" class=""meta"">Channel ID: —</div>
+    <div id=""hero-info"" class=""hero-info"">Chargement des infos…</div>
   </header>
 
   <main>
-    <section class=""panel"">
-      <h2>Info</h2>
-      <form data-command=""info"">
-        <button type=""submit"">Afficher les infos du thread</button>
-        <div class=""result"" data-result></div>
-      </form>
-    </section>
-
     <section class=""panel"">
       <h2>Status games list</h2>
       <form data-command=""status-games-list"">
@@ -270,6 +275,7 @@
 
   const apiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/execute';
   const patchAliasesApi = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/patches';
+  const infoApi = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/info';
 
   const parsePayload = async (response) => {{
     const raw = await response.text();
@@ -305,6 +311,7 @@
 
   const patchAliasSelect = document.getElementById('patch-alias-select');
   const patchLinkResult = document.getElementById('patch-link-result');
+  const heroInfo = document.getElementById('hero-info');
   const patchAliasData = new Map();
 
   const escapeHtml = (value) => {{
@@ -405,7 +412,32 @@
     patchAliasSelect.addEventListener('change', () => renderPatchForAlias(patchAliasSelect.value));
  }}
 
+  const linkifyText = (message) => {{
+    const safe = escapeHtml(message || '');
+    return safe
+      .replace(/(https?:\/\/[^\s<]+)/g, '<a href=""$1"" target=""_blank"" rel=""noopener noreferrer"">$1</a>')
+      .replace(/\r?\n/g, '<br>');
+  }};
+
+  const loadHeroInfo = async () => {{
+    if (!heroInfo) return;
+    if (!guildId || !channelId) {{
+      heroInfo.textContent = 'Infos indisponibles: guildId/channelId introuvables.';
+      return;
+    }}
+
+    try {{
+      const response = await fetch(infoApi);
+      const payload = await parsePayload(response);
+      const message = extractMessage(payload, response.ok ? '' : 'Impossible de charger les infos.');
+      heroInfo.innerHTML = linkifyText(message || 'Aucune info disponible.');
+    }} catch {{
+      heroInfo.textContent = 'Impossible de charger les infos.';
+    }}
+  }};
+
   loadPatchAliases();
+  loadHeroInfo();
 
   document.querySelectorAll('form[data-command]').forEach((form) => {{
     form.addEventListener('submit', async (event) => {{

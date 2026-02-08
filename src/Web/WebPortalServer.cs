@@ -295,6 +295,18 @@ public static class WebPortalServer
             return Results.Ok(new { aliases });
         });
 
+        app.MapGet("/api/portal/{guildId}/{channelId}/info", async (string guildId, string channelId) =>
+        {
+            if (!Declare.EnableWebPortal)
+                return Results.BadRequest(new { message = "Web portal is disabled." });
+
+            if (string.IsNullOrWhiteSpace(channelId))
+                return Results.BadRequest(new { message = "channelId is required." });
+
+            var message = await HelperClass.Info(channelId, guildId);
+            return Results.Ok(new { message });
+        });
+
         app.MapPost("/api/portal/{guildId}/{channelId}/thread-commands/execute", async (string guildId, string channelId, HttpRequest request) =>
         {
             if (!Declare.EnableWebPortal)

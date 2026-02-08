@@ -266,6 +266,18 @@ public static class WebPortalUserPage
 
     .meta {{ color: var(--muted); font-size: 12px; }}
 
+    .hero-info {{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }}
+
+    .hero-info a {{
+      color: var(--accent-2);
+    }}
+
     .status {{ margin-top: 8px; color: var(--accent-2); font-size: 13px; }}
 
     .empty {{ color: var(--muted); font-style: italic; }}
@@ -281,30 +293,31 @@ public static class WebPortalUserPage
       <div class=""badge"">Accès: {safeToken}</div>
     </div>
     <div class=""meta"">Guild: {safeGuildId} · Channel: {safeChannelId}</div>
+    <div class=""hero-info"" id=""hero-info"">Chargement des infos…</div>
   </header>
 
   <main>
     <section class=""panel"">
       <h2>🔭 Actions rapides</h2>
       <button class=""button"" id=""refresh"">Rafraîchir les données</button>
-      <div class=""actions-grid"">
-        <div class=""action-group"">
-          <label for=""add-alias-select"">Ajouter un alias (comme /add-alias)</label>
-          <select id=""add-alias-select"" required>
-            <option value="""">Chargement des alias du thread...</option>
-          </select>
-          <button class=""button"" id=""add-alias-button"">Ajouter l'alias</button>
-        </div>
-        <div class=""action-group"">
-          <label for=""delete-alias-select"">Supprimer un de mes alias (comme /delete-alias)</label>
-          <select id=""delete-alias-select"" required>
-            <option value="""">Chargement de vos alias...</option>
-          </select>
-          <button class=""button danger"" id=""delete-alias-button"">Supprimer l'alias</button>
-        </div>
-      </div>
       <div id=""status"" class=""status""></div>
     </section>
+   
+    <details class=""panel"" open>
+      <summary><h2>🧑‍🚀 Vos alias</h2></summary>
+      <div class=""actions-grid panel-content"">
+        <div class=""action-group"">
+          <label for=""add-alias-select"">Ajouter un alias existant dans ce thread:</label>
+          <select id=""add-alias-select""></select>
+          <button class=""button"" id=""add-alias-button"">Ajouter l'alias sélectionné</button>
+        </div>
+        <div class=""action-group"">
+          <label for=""delete-alias-select"">Supprimer un alias de votre liste:</label>
+          <select id=""delete-alias-select""></select>
+          <button class=""button danger"" id=""delete-alias-button"">Supprimer l'alias sélectionné</button>
+        </div>
+      </div>
+    </details>
 
     <details class=""panel"" open>
       <summary><h2>📜 Recap en cours</h2></summary>
@@ -337,11 +350,13 @@ public static class WebPortalUserPage
     const deleteAliasSelect = document.getElementById('delete-alias-select');
     const addAliasButton = document.getElementById('add-alias-button');
     const deleteAliasButton = document.getElementById('delete-alias-button');
+    const heroInfo = document.getElementById('hero-info');
 
     const path = window.location.pathname; // ex: /AST/portal/g/c/token/
     const idx = path.indexOf('/portal/');
     const basePath = idx >= 0 ? path.substring(0, idx) : '';
     const apiBase = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/' + ctx.channelId + '/' + ctx.token;
+    const infoApi = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/' + ctx.channelId + '/info';
 
     const escapeHtml = (value) => {{
       const div = document.createElement('div');
@@ -351,6 +366,26 @@ public static class WebPortalUserPage
 
     const setStatus = (message) => {{
       status.textContent = message;
+    }};
+
+    const linkifyText = (message) => {{
+      const safe = escapeHtml(message || '');
+      return safe
+        .replace(/(https?:\/\/[^\s<]+)/g, '<a href=""$1"" target=""_blank"" rel=""noopener noreferrer"">$1</a>')
+        .replace(/\r?\n/g, '<br>');
+    }};
+
+    const loadHeroInfo = async () => {{
+      if (!heroInfo) return;
+
+      try {{
+        const response = await fetch(infoApi);
+        const payload = await response.json().catch(() => ({{}}));
+        const message = payload && payload.message ? payload.message : (response.ok ? '' : 'Impossible de charger les infos.');
+        heroInfo.innerHTML = linkifyText(message || 'Aucune info disponible.');
+      }} catch {{
+        heroInfo.textContent = 'Impossible de charger les infos.';
+      }}
     }};
 
     const createAliasCard = (alias, content, actions) => {{
@@ -683,6 +718,7 @@ public static class WebPortalUserPage
     document.getElementById('refresh').addEventListener('click', loadData);
     addAliasButton.addEventListener('click', addAliasFromPortal);
     deleteAliasButton.addEventListener('click', deleteAliasFromPortal);
+    loadHeroInfo();
     loadData();
   </script>
 </body>
