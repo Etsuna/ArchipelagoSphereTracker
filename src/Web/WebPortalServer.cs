@@ -1,5 +1,6 @@
 using ArchipelagoSphereTracker.src.Resources;
 using Discord;
+using Discord.WebSocket;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -305,6 +306,36 @@ public static class WebPortalServer
 
             var message = await HelperClass.Info(channelId, guildId);
             return Results.Ok(new { message });
+        });
+
+
+        app.MapGet("/api/portal/{guildId}/room-links", async (string guildId) =>
+        {
+            if (!Declare.EnableWebPortal)
+                return Results.BadRequest(new { message = "Web portal is disabled." });
+
+            if (string.IsNullOrWhiteSpace(guildId))
+                return Results.BadRequest(new { message = "guildId is required." });
+
+            var channels = await DatabaseCommands.GetAllChannelsAsync(guildId, "ChannelsAndUrlsTable");
+            var distinctChannels = channels
+                .Where(channel => !string.IsNullOrWhiteSpace(channel))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(channel => channel, StringComparer.Ordinal)
+                .ToList();
+
+            SocketGuild? guild = null;
+            if (ulong.TryParse(guildId, out var guildIdValue))
+                guild = Declare.Client.GetGuild(guildIdValue);
+
+            var links = distinctChannels
+                .Select(channel => new PortalThreadLink(
+                    channel,
+                    ResolveThreadName(guild, channel),
+                    $"/portal/{guildId}/{channel}/thread-commands.html"))
+                .ToList();
+
+            return Results.Ok(new { links });
         });
 
         app.MapPost("/api/portal/{guildId}/{channelId}/thread-commands/execute", async (string guildId, string channelId, HttpRequest request) =>
@@ -614,6 +645,18 @@ public static class WebPortalServer
     private record PortalAliasHints(string Alias, List<PortalHintItem> AsReceiver, List<PortalHintItem> AsFinder);
     private record PortalHintItem(string Finder, string Receiver, string Item, string Location, string Game);
     private record PortalPatchAlias(string Alias, string GameName, string Patch);
+    private record PortalThreadLink(string ChannelId, string ThreadName, string Url);
+
+    private static string ResolveThreadName(SocketGuild? guild, string channelId)
+    {
+        if (guild == null || !ulong.TryParse(channelId, out var channelIdValue))
+            return $"Thread {channelId}";
+
+        var channel = guild.GetChannel(channelIdValue);
+        return string.IsNullOrWhiteSpace(channel?.Name)
+            ? $"Thread {channelId}"
+            : channel.Name;
+    }
 
     private static List<PortalRecapGroup> GroupRecapItemsByFlag(List<(string Item, long? Flag)> items)
     {

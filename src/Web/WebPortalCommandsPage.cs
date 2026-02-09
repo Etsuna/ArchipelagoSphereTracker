@@ -296,6 +296,28 @@ public static class WebPortalCommandsPage
       color: var(--accent);
       text-decoration: none;
     }}
+
+    .room-links-list {{
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }}
+
+    .room-links-list li {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(9, 11, 24, 0.55);
+    }}
+
+    .room-links-list a {{
+      color: var(--accent-2);
+    }}
   </style>
 </head>
 <body>
@@ -317,6 +339,14 @@ public static class WebPortalCommandsPage
       <label>User ID (optionnel, utile pour threads privés)
         <input id=""user-id"" placeholder=""123456789012345678"" />
       </label>
+    </section>
+
+    <section class=""panel"">
+      <h2>AST Room Portals (Guild)</h2>
+      <p class=""mode"">Liens disponibles pour ce Guild ID avec les noms de thread.</p>
+      <ul id=""room-links"" class=""room-links-list"">
+        <li>Chargement des AST Room Portals...</li>
+      </ul>
     </section>
 
     <section class=""panel"">
@@ -417,6 +447,14 @@ public static class WebPortalCommandsPage
 
   const userInput = document.getElementById('user-id');
   const yamlSelects = document.querySelectorAll('[data-yaml-select]');
+  const roomLinksRoot = document.getElementById('room-links');
+
+  const roomLinksApi =
+    window.location.origin +
+    basePath +
+    '/api/portal/' +
+    guildId +
+    '/room-links';
 
   // Corrige les URL de download renvoyées par l’API (ex: /portal/... -> /AST/portal/...)
   const normalizeDownloadUrl = (u) => {{
@@ -476,6 +514,49 @@ public static class WebPortalCommandsPage
     yamlSelects.forEach((select) => {{
       select.innerHTML = optionsMarkup;
     }});
+  }};
+
+  const loadRoomLinks = async () => {{
+    if (!roomLinksRoot) return;
+    if (!guildId) {{
+      roomLinksRoot.innerHTML = '<li>Guild ID introuvable dans l’URL.</li>';
+      return;
+    }}
+
+    roomLinksRoot.innerHTML = '<li>Chargement des AST Room Portals...</li>';
+
+    try {{
+      const response = await fetch(roomLinksApi);
+      const payload = await parsePayload(response);
+      const links = payload && typeof payload === 'object' && Array.isArray(payload.links)
+        ? payload.links
+        : [];
+
+      if (!response.ok || links.length === 0) {{
+        roomLinksRoot.innerHTML = '<li>Aucun AST Room Portal disponible pour ce Guild ID.</li>';
+        return;
+      }}
+
+      roomLinksRoot.innerHTML = '';
+      links.forEach((entry) => {{
+        const item = document.createElement('li');
+
+        const name = document.createElement('strong');
+        name.textContent = entry.threadName || ('Thread ' + (entry.channelId || '?'));
+        item.appendChild(name);
+
+        const link = document.createElement('a');
+        link.href = normalizeDownloadUrl(entry.url || '') || '#';
+        link.textContent = 'Ouvrir';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        item.appendChild(link);
+
+        roomLinksRoot.appendChild(item);
+      }});
+    }} catch {{
+      roomLinksRoot.innerHTML = '<li>Impossible de charger les AST Room Portals.</li>';
+    }}
   }};
 
   const loadYamlOptions = async () => {{
@@ -576,6 +657,7 @@ public static class WebPortalCommandsPage
     }});
   }});
 
+  loadRoomLinks();
   loadYamlOptions();
 </script>
 </body>

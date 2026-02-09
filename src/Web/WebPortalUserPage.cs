@@ -266,8 +266,23 @@ public static class WebPortalUserPage
 
     .meta {{ color: var(--muted); font-size: 12px; }}
 
-    .hero-info {{
+    .hero-details {{
       margin-top: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      background: rgba(9, 11, 24, 0.55);
+      padding: 8px 12px;
+    }}
+
+    .hero-details summary {{
+      cursor: pointer;
+      color: var(--accent-2);
+      font-size: 13px;
+      user-select: none;
+    }}
+
+    .hero-info {{
+      margin-top: 8px;
       color: var(--muted);
       font-size: 13px;
       line-height: 1.5;
@@ -293,7 +308,10 @@ public static class WebPortalUserPage
       <div class=""badge"">Accès: {safeToken}</div>
     </div>
     <div class=""meta"">Guild: {safeGuildId} · Channel: {safeChannelId}</div>
-    <div class=""hero-info"" id=""hero-info"">Chargement des infos…</div>
+    <details class=""hero-details"">
+      <summary>Afficher les infos</summary>
+      <div class=""hero-info"" id=""hero-info"">Chargement des infos…</div>
+    </details>
   </header>
 
   <main>
