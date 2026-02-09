@@ -910,8 +910,8 @@
     <comment>Status for all games:</comment>
   </data>
   <data name="UrlCheckMaxTread" xml:space="preserve">
-    <value>You can't have more than 2 Threads. Delete one before adding a new room url please.</value>
-    <comment>You can't have more than 2 Threads. Delete one before adding a new room url please.</comment>
+    <value>You can't have more than {0} Threads. Delete one before adding a new room url please.</value>
+    <comment>You can't have more than {0} Threads. Delete one before adding a new room url please.</comment>
   </data>
   <data name="BRPlayerFolderMoved" xml:space="preserve">
     <value>Players folder move completed.</value>

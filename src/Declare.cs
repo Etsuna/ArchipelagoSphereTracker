@@ -25,6 +25,7 @@ public class Declare
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();
     public static List<string> AddedChannelId = new List<string>();
     public static readonly int MaxPlayer = 100;
+    public static readonly int MaxThreadByGuild = 3;
     public static bool IsArchipelagoMode { get; set; } = false;
     public static bool IsBigAsync { get; set; } = false;
     public static bool UpdateBdd { get; set; } = false;

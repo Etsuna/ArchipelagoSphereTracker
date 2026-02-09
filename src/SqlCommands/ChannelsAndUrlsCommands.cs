@@ -186,7 +186,7 @@ public static class ChannelsAndUrlsCommands
             var result = await countCommand.ExecuteScalarAsync().ConfigureAwait(false);
             var count = Convert.ToInt32(result ?? 0);
 
-            return count <= 10;
+            return count < Declare.MaxThreadByGuild;
         }
         catch (OperationCanceledException)
         {

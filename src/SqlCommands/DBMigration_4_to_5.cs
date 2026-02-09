@@ -66,7 +66,7 @@ public static class DBMigration
             async Task<(bool isValid, string message)> IsAllUrlIsValidAsync()
             {
                 if (!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId))
-                    return (false, Resource.UrlCheckMaxTread);
+                    return (false, string.Format(Resource.UrlCheckMaxTread, Declare.MaxThreadByGuild.ToString()));
 
                 var playersCount = roomInfo.Players.Count;
                 if (playersCount > Declare.MaxPlayer)

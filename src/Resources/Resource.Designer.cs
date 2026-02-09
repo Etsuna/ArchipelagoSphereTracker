@@ -2284,7 +2284,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à You can&apos;t have more than 2 Threads. Delete one before adding a new room url please..
+        ///   Recherche une chaîne localisée semblable à You can&apos;t have more than {0} Threads. Delete one before adding a new room url please..
         /// </summary>
         internal static string UrlCheckMaxTread {
             get {

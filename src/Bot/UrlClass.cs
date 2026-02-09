@@ -117,7 +117,7 @@ public class UrlClass
         async Task<(bool isValid, string message)> IsAllUrlIsValidAsync()
         {
             if (!await ChannelsAndUrlsCommands.CountChannelByGuildId(guildId))
-                return (false, Resource.UrlCheckMaxTread);
+                return (false, string.Format(Resource.UrlCheckMaxTread, Declare.MaxThreadByGuild.ToString()));
 
             var playersCount = roomInfo.Players.Count;
             

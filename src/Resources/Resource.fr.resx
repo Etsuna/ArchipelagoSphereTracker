@@ -712,7 +712,7 @@
     <value>Status de tous les jeux :</value>
   </data>
   <data name="UrlCheckMaxTread" xml:space="preserve">
-    <value>Vous ne pouvez pas avoir plus de 2 threads. Supprimez-en un avant d’ajouter une nouvelle room url , s’il vous plaît.</value>
+    <value>Vous ne pouvez pas avoir plus de {0} threads. Supprimez-en un avant d’ajouter une nouvelle room url , s’il vous plaît.</value>
   </data>
   <data name="BRPlayerFolderMoved" xml:space="preserve">
     <value>Déplacement du dossier des joueurs terminé.</value>
