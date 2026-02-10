@@ -1305,4 +1305,7 @@
   <data name="WebActiveHints" xml:space="preserve">
     <value>Hints actifs</value>
   </data>
+  <data name="WebUploaderUnYAML" xml:space="preserve">
+    <value>Uploader un YAML</value>
+  </data>
 </root>

@@ -3463,6 +3463,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Upload a YAML.
+        /// </summary>
+        internal static string WebUploaderUnYAML {
+            get {
+                return ResourceManager.GetString("WebUploaderUnYAML", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Useful info.
         /// </summary>
         internal static string WebUsefulInfo {

@@ -63,7 +63,7 @@ public static class WebPortalCommandsPage
       </form>
 
       <form data-command=""send-yaml"">
-        <label>Uploader un YAML
+        <label>{T("WebUploaderUnYAML")}
           <input type=""file"" name=""file"" accept="".yaml"" required />
         </label>
         <button type=""submit"">{T("WebSendYaml")}</button>
@@ -125,7 +125,7 @@ public static class WebPortalCommandsPage
             : string.Empty;
 
         return $@"<!doctype html>
-<html lang=""fr"">
+<html lang=""{Declare.Language}"">
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />

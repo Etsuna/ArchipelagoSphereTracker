@@ -1701,4 +1701,8 @@
     <value>Active Hints</value>
     <comment>Active Hints</comment>
   </data>
+  <data name="WebUploaderUnYAML" xml:space="preserve">
+    <value>Upload a YAML</value>
+    <comment>Upload a YAML</comment>
+  </data>
 </root>

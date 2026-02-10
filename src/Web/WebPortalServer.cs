@@ -4,12 +4,16 @@ using Discord.WebSocket;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.FileProviders;
 using System.Globalization;
+using System.Linq;
 using System.Net;
 
 public static class WebPortalServer
 {
+    
+
     private static readonly TimeSpan DownloadRetention = TimeSpan.FromHours(1);
     private static readonly TimeSpan DownloadCleanupInterval = TimeSpan.FromMinutes(5);
     private static CancellationTokenSource? _cleanupCts;
@@ -28,6 +32,11 @@ public static class WebPortalServer
             return;
         }
 
+        var culture = ResolveCulture(Declare.Language);
+
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
+
         Directory.CreateDirectory(Declare.WebPortalPath);
 
         var builder = WebApplication.CreateBuilder();
@@ -35,6 +44,8 @@ public static class WebPortalServer
 
         var app = builder.Build();
         _app = app;
+
+        app.UseRequestLocalization(CreateLocalizationOptions(culture));
 
         var portalFiles = new PhysicalFileProvider(Declare.WebPortalPath);
 
@@ -275,7 +286,6 @@ public static class WebPortalServer
             return Results.File(yamlPath, "application/x-yaml", safeYamlName);
         });
 
-
         app.MapGet("/api/portal/{guildId}/{channelId}/thread-commands/patches", async (string guildId, string channelId) =>
         {
             if (!Declare.EnableWebPortal)
@@ -308,7 +318,6 @@ public static class WebPortalServer
             var message = await HelperClass.Info(channelId, guildId);
             return Results.Ok(new { message });
         });
-
 
         app.MapGet("/api/portal/{guildId}/room-links", async (string guildId) =>
         {
@@ -387,7 +396,7 @@ public static class WebPortalServer
 
             return Results.Ok(new { message });
         });
-        
+
         app.MapPost("/api/portal/{guildId}/{channelId}/commands/execute", async (string guildId, string channelId, HttpRequest request) =>
         {
             if (!Declare.EnableWebPortal)
@@ -494,7 +503,7 @@ public static class WebPortalServer
 
                 case "send-yaml":
                     {
-                        var file = request.Form.Files.FirstOrDefault();
+                        var file = form.Files.FirstOrDefault();
                         if (file == null)
                             return Results.BadRequest(new { message = "yaml file is required." });
 
@@ -545,7 +554,7 @@ public static class WebPortalServer
 
                 case "send-apworld":
                     {
-                        var file = request.Form.Files.FirstOrDefault();
+                        var file = form.Files.FirstOrDefault();
                         if (file == null)
                             return Results.BadRequest(new { message = "apworld file is required." });
 
@@ -574,7 +583,7 @@ public static class WebPortalServer
 
                 case "generate-with-zip":
                     {
-                        var file = request.Form.Files.FirstOrDefault();
+                        var file = form.Files.FirstOrDefault();
                         if (file == null)
                             return Results.BadRequest(new { message = "zip file is required." });
 
@@ -608,7 +617,7 @@ public static class WebPortalServer
         StartDownloadCleanupWorker();
 
         _runTask = app.RunAsync();
-        Console.WriteLine($"[Portal] Web portal running on port {port}.");
+        Console.WriteLine($"[Portal] Web portal running on port {port}. Culture={culture.Name}");
     }
 
     public static async Task StopAsync()
@@ -799,4 +808,55 @@ public static class WebPortalServer
         }
     }
 
+    // ----------------------------
+    // Helpers localisation/culture
+    // ----------------------------
+    private static RequestLocalizationOptions CreateLocalizationOptions(CultureInfo defaultCulture)
+    {
+        var fallbackEn = CultureInfo.GetCultureInfo("en");
+        var supported = new List<CultureInfo> { defaultCulture };
+        if (!string.Equals(defaultCulture.Name, fallbackEn.Name, StringComparison.OrdinalIgnoreCase))
+            supported.Add(fallbackEn);
+
+        var options = new RequestLocalizationOptions
+        {
+            DefaultRequestCulture = new RequestCulture(defaultCulture),
+            SupportedCultures = supported,
+            SupportedUICultures = supported
+        };
+
+        options.RequestCultureProviders.Clear();
+
+        return options;
+    }
+
+    private static CultureInfo ResolveCulture(string language)
+    {
+        var token = (language ?? "en").Trim();
+
+        token = token
+            .Split(new[] { ':', ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault()
+            ?.Trim() ?? "en";
+
+        token = token.Split('.', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim() ?? "en";
+        token = token.Replace('_', '-');
+
+        try
+        {
+            return CultureInfo.GetCultureInfo(token);
+        }
+        catch (CultureNotFoundException)
+        {
+            var primary = token.Split('-', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "en";
+            try
+            {
+                return CultureInfo.GetCultureInfo(primary);
+            }
+            catch
+            {
+                return CultureInfo.GetCultureInfo("en");
+            }
+        }
+    }
 }
