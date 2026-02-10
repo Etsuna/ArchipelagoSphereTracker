@@ -1,15 +1,19 @@
 ﻿using System.Net;
+using System.Text.Json;
+using ArchipelagoSphereTracker.src.Resources;
 
 public static class WebPortalUserPage
 {
     public static string Build(string guildId, string channelId, string token)
     {
+        static string T(string key) => Resource.ResourceManager.GetString(key) ?? key;
+        static string Js(string key) => JsonSerializer.Serialize(T(key));
         var safeGuildId = WebUtility.HtmlEncode(guildId);
         var safeChannelId = WebUtility.HtmlEncode(channelId);
         var safeToken = WebUtility.HtmlEncode(token);
 
         return $@"<!doctype html>
-<html lang=""fr"">
+<html lang=""{Declare.Language}"">
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
@@ -303,52 +307,52 @@ public static class WebPortalUserPage
     <div class=""hero"">
       <div class=""title"">
         <h1>AST User Portal</h1>
-        <span>🌌 Sphere Tracker · Portail personnel</span>
+        <span>🌌 Sphere Tracker · {T("WebPersonalPortal")}</span>
       </div>
-      <div class=""badge"">Accès: {safeToken}</div>
+      <div class=""badge"">{T("WebAccess")}: {safeToken}</div>
     </div>
     <div class=""meta"">Guild: {safeGuildId} · Channel: {safeChannelId}</div>
     <details class=""hero-details"">
-      <summary>Afficher les infos</summary>
-      <div class=""hero-info"" id=""hero-info"">Chargement des infos…</div>
+      <summary>{T("WebShowInfo")}</summary>
+      <div class=""hero-info"" id=""hero-info"">{T("WebLoadingInfo")}</div>
     </details>
   </header>
 
   <main>
     <section class=""panel"">
-      <h2>🔭 Actions rapides</h2>
-      <button class=""button"" id=""refresh"">Rafraîchir les données</button>
+      <h2>🔭 {T("WebQuickActions")}</h2>
+      <button class=""button"" id=""refresh"">{T("WebRefreshData")}</button>
       <div id=""status"" class=""status""></div>
     </section>
    
     <details class=""panel"" close>
-      <summary><h2>🧑‍🚀 Vos alias</h2></summary>
+      <summary><h2>🧑‍🚀 {T("WebYourAliases")}</h2></summary>
       <div class=""actions-grid panel-content"">
         <div class=""action-group"">
-          <label for=""add-alias-select"">Ajouter un alias existant dans ce thread:</label>
+          <label for=""add-alias-select"">{T("WebAddExistingAliasInThread")}</label>
           <select id=""add-alias-select""></select>
-          <button class=""button"" id=""add-alias-button"">Ajouter l'alias sélectionné</button>
+          <button class=""button"" id=""add-alias-button"">{T("WebAddSelectedAlias")}</button>
         </div>
         <div class=""action-group"">
-          <label for=""delete-alias-select"">Supprimer un alias de votre liste:</label>
+          <label for=""delete-alias-select"">{T("WebDeleteAliasFromYourList")}</label>
           <select id=""delete-alias-select""></select>
-          <button class=""button danger"" id=""delete-alias-button"">Supprimer l'alias sélectionné</button>
+          <button class=""button danger"" id=""delete-alias-button"">{T("WebDeleteSelectedAlias")}</button>
         </div>
       </div>
     </details>
 
     <details class=""panel"" open>
-      <summary><h2>📜 Recap en cours</h2></summary>
+      <summary><h2>📜 {T("WebCurrentRecap")}</h2></summary>
       <div id=""recap-root"" class=""grid panel-content""></div>
     </details>
 
     <details class=""panel"" open>
-      <summary><h2>✨ Hints actifs</h2></summary>
+      <summary><h2>✨ {T("WebActiveHints")}</h2></summary>
       <div id=""hints-root"" class=""grid panel-content""></div>
     </details>
 
     <details class=""panel"" close>
-      <summary><h2>🎁 Items reçus</h2></summary>
+      <summary><h2>🎁 {T("WebReceivedItems")}</h2></summary>
       <div id=""items-root"" class=""grid panel-content""></div>
     </details>
   </main>
@@ -399,10 +403,10 @@ public static class WebPortalUserPage
       try {{
         const response = await fetch(infoApi);
         const payload = await response.json().catch(() => ({{}}));
-        const message = payload && payload.message ? payload.message : (response.ok ? '' : 'Impossible de charger les infos.');
-        heroInfo.innerHTML = linkifyText(message || 'Aucune info disponible.');
+        const message = payload && payload.message ? payload.message : (response.ok ? '' : '{T("WebUnableToLoadInfo")}');
+        heroInfo.innerHTML = linkifyText(message || '{T("WebNoInfoAvailable")}');
       }} catch {{
-        heroInfo.textContent = 'Impossible de charger les infos.';
+        heroInfo.textContent = '{T("WebUnableToLoadInfo")}';
       }}
     }};
 
@@ -427,7 +431,7 @@ public static class WebPortalUserPage
     const renderRecaps = (recaps) => {{
       recapRoot.innerHTML = '';
       if (!recaps || recaps.length === 0) {{
-        recapRoot.innerHTML = '<p class=""empty"">Aucun recap actif pour cet utilisateur.</p>';
+        recapRoot.innerHTML = '<p class=""empty"">{T("WebNoActiveRecapForUser")}</p>';
         return;
       }}
 
@@ -438,7 +442,7 @@ public static class WebPortalUserPage
           const list = document.createElement('ul');
           list.className = 'list';
           const item = document.createElement('li');
-          item.textContent = 'Aucun item en attente.';
+          item.textContent = '{T("WebNoPendingItem")}';
           list.appendChild(item);
           container.appendChild(list);
         }} else {{
@@ -453,7 +457,7 @@ public static class WebPortalUserPage
 
             if (group.items.length === 0) {{
               const item = document.createElement('li');
-              item.textContent = 'Aucun item en attente.';
+              item.textContent = '{T("WebNoPendingItem")}';
               list.appendChild(item);
             }} else {{
               group.items.forEach(it => {{
@@ -476,7 +480,7 @@ public static class WebPortalUserPage
 
         const actions = document.createElement('button');
         actions.className = 'button danger';
-        actions.textContent = 'Supprimer le recap';
+        actions.textContent = '{T("WebDeleteRecap")}';
         actions.addEventListener('click', () => deleteRecap(recap.alias));
 
         recapRoot.appendChild(createAliasCard(recap.alias, container, actions));
@@ -486,7 +490,7 @@ public static class WebPortalUserPage
     const renderItems = (items) => {{
       itemsRoot.innerHTML = '';
       if (!items || items.length === 0) {{
-        itemsRoot.innerHTML = '<p class=""empty"">Aucun item reçu pour le moment.</p>';
+        itemsRoot.innerHTML = '<p class=""empty"">{T("WebNoReceivedItemsYet")}</p>';
         return;
       }}
 
@@ -497,7 +501,7 @@ public static class WebPortalUserPage
           const list = document.createElement('ul');
           list.className = 'list';
           const entry = document.createElement('li');
-          entry.textContent = 'Aucun item reçu.';
+          entry.textContent = '{T("WebNoReceivedItems")}';
           list.appendChild(entry);
           container.appendChild(list);
         }} else {{
@@ -512,7 +516,7 @@ public static class WebPortalUserPage
 
             if (flagGroup.items.length === 0) {{
               const entry = document.createElement('li');
-              entry.textContent = 'Aucun item reçu.';
+              entry.textContent = '{T("WebNoReceivedItems")}';
               list.appendChild(entry);
             }} else {{
               flagGroup.items.forEach(it => {{
@@ -555,7 +559,7 @@ public static class WebPortalUserPage
     const renderHints = (hints) => {{
       hintsRoot.innerHTML = '';
       if (!hints || hints.length === 0) {{
-        hintsRoot.innerHTML = '<p class=""empty"">Aucun hint actif.</p>';
+        hintsRoot.innerHTML = '<p class=""empty"">{T("WebNoActiveHint")}</p>';
         return;
       }}
 
@@ -567,7 +571,7 @@ public static class WebPortalUserPage
         receiverList.className = 'list';
         if (group.asReceiver.length === 0) {{
           const entry = document.createElement('li');
-          entry.textContent = 'Aucun hint en tant que Receiver.';
+          entry.textContent = '{T("WebNoHintAsReceiver")}';
           receiverList.appendChild(entry);
         }} else {{
           group.asReceiver.forEach(hint => {{
@@ -584,7 +588,7 @@ public static class WebPortalUserPage
         finderList.className = 'list';
         if (group.asFinder.length === 0) {{
           const entry = document.createElement('li');
-          entry.textContent = 'Aucun hint en tant que Finder.';
+          entry.textContent = '{T("WebNoHintAsFinder")}';
           finderList.appendChild(entry);
         }} else {{
           group.asFinder.forEach(hint => {{
@@ -613,7 +617,7 @@ public static class WebPortalUserPage
     }};
 
     const deleteRecap = async (alias) => {{
-      setStatus('Suppression du recap...');
+      setStatus('{T("WebDeletingRecap")}');
       const formData = new FormData();
       formData.append('alias', alias);
 
@@ -623,10 +627,10 @@ public static class WebPortalUserPage
       }});
 
       if (res.ok) {{
-        setStatus('Recap supprimé pour ' + alias + '.');
+        setStatus('{T("WebRecapDeletedFor")} ' + alias + '.');
         await loadData();
       }} else {{
-        setStatus('Impossible de supprimer le recap.');
+        setStatus('{T("WebUnableToDeleteRecap")}');
       }}
     }};
 
@@ -644,8 +648,8 @@ public static class WebPortalUserPage
     }};
 
     const loadAliasLists = async () => {{
-      addAliasSelect.innerHTML = '<option value="""">Chargement des alias du thread...</option>';
-      deleteAliasSelect.innerHTML = '<option value="""">Chargement de vos alias...</option>';
+      addAliasSelect.innerHTML = '<option value="""">{T("WebLoadingThreadAliases")}</option>';
+      deleteAliasSelect.innerHTML = '<option value="""">{T("WebLoadingYourAliases")}</option>';
 
       try {{
         const [allRes, userRes] = await Promise.all([
@@ -655,73 +659,73 @@ public static class WebPortalUserPage
 
         if (allRes.ok) {{
           const payload = await allRes.json();
-          fillSelect(addAliasSelect, payload.aliases || [], 'Aucun alias disponible dans ce thread', 'Sélectionnez un alias');
+          fillSelect(addAliasSelect, payload.aliases || [], '{T("WebNoAliasInThread")}', '{T("WebSelectAlias")}');
         }} else {{
-          fillSelect(addAliasSelect, [], 'Impossible de charger les alias du thread', 'Sélectionnez un alias');
+          fillSelect(addAliasSelect, [], '{T("WebUnableToLoadThreadAliases")}', '{T("WebSelectAlias")}');
         }}
 
         if (userRes.ok) {{
           const payload = await userRes.json();
-          fillSelect(deleteAliasSelect, payload.aliases || [], 'Vous n\'avez aucun alias enregistré', 'Sélectionnez un alias');
+          fillSelect(deleteAliasSelect, payload.aliases || [], '{T("WebNoRegisteredAlias")}', '{T("WebSelectAlias")}');
         }} else {{
-          fillSelect(deleteAliasSelect, [], 'Impossible de charger vos alias', 'Sélectionnez un alias');
+          fillSelect(deleteAliasSelect, [], '{T("WebUnableToLoadYourAliases")}', '{T("WebSelectAlias")}');
         }}
       }} catch (e) {{
-        fillSelect(addAliasSelect, [], 'Impossible de charger les alias du thread', 'Sélectionnez un alias');
-        fillSelect(deleteAliasSelect, [], 'Impossible de charger vos alias', 'Sélectionnez un alias');
+        fillSelect(addAliasSelect, [], '{T("WebUnableToLoadThreadAliases")}', '{T("WebSelectAlias")}');
+        fillSelect(deleteAliasSelect, [], '{T("WebUnableToLoadYourAliases")}', '{T("WebSelectAlias")}');
       }}
     }};
 
     const addAliasFromPortal = async () => {{
       const alias = addAliasSelect.value;
       if (!alias) {{
-        setStatus('Sélectionnez un alias à ajouter.');
+        setStatus('{T("WebSelectAliasToAdd")}');
         return;
       }}
 
-      setStatus(""Ajout de l'alias..."");
+      setStatus(""{T("WebAddingAlias")}"");
       const formData = new FormData();
       formData.append('alias', alias);
 
       const res = await fetch(apiBase + '/alias/add', {{ method: 'POST', body: formData }});
       if (res.ok) {{
-        setStatus('Alias ajouté: ' + alias + '.');
+        setStatus('{T("WebAliasAddedPrefix")} ' + alias + '.');
         await loadData();
         return;
       }}
 
       const payload = await res.json().catch(() => ({{}}));
-      setStatus(payload.message || ""Impossible d'ajouter cet alias."");
+      setStatus(payload.message || ""{T("WebUnableToAddAlias")}"");
     }};
 
     const deleteAliasFromPortal = async () => {{
       const alias = deleteAliasSelect.value;
       if (!alias) {{
-        setStatus('Sélectionnez un alias à supprimer.');
+        setStatus('{T("WebSelectAliasToDelete")}');
         return;
       }}
 
-      setStatus(""Suppression de l'alias..."");
+      setStatus(""{T("WebDeletingAlias")}"");
       const formData = new FormData();
       formData.append('alias', alias);
 
       const res = await fetch(apiBase + '/alias/delete', {{ method: 'POST', body: formData }});
       if (res.ok) {{
-        setStatus('Alias supprimé: ' + alias + '.');
+        setStatus('{T("WebAliasDeletedPrefix")} ' + alias + '.');
         await loadData();
         return;
       }}
 
       const payload = await res.json().catch(() => ({{}}));
-      setStatus(payload.message || 'Impossible de supprimer cet alias.');
+      setStatus(payload.message || '{T("WebUnableToDeleteAlias")}');
     }};
 
     const loadData = async () => {{
-      setStatus('Synchronisation avec la base de données...');
+      setStatus('{T("WebSyncingDatabase")}');
       const res = await fetch(apiBase + '/summary');
       if (!res.ok) {{
         await loadAliasLists();
-        setStatus('Portail indisponible.');
+        setStatus('{T("WebPortalUnavailable")}');
         return;
       }}
 
@@ -730,7 +734,7 @@ public static class WebPortalUserPage
       renderItems(data.receivedItems || []);
       renderHints(data.hints || []);
       await loadAliasLists();
-      setStatus('Dernière mise à jour: ' + new Date(data.lastUpdated).toLocaleString());
+      setStatus('{T("WebLastUpdate")}: ' + new Date(data.lastUpdated).toLocaleString());
     }};
 
     document.getElementById('refresh').addEventListener('click', loadData);

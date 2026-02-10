@@ -1,9 +1,15 @@
-﻿public static class WebPortalThreadCommandsPage
+﻿using ArchipelagoSphereTracker.src.Resources;
+using System.Text.Json;
+
+public static class WebPortalThreadCommandsPage
 {
     public static string Build()
     {
+        static string T(string key) => Resource.ResourceManager.GetString(key) ?? key;
+        static string Js(string key) => JsonSerializer.Serialize(T(key));
+
         return @$"<!doctype html>
-<html lang=""fr"">
+<html lang=""{Declare.Language}"">
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
@@ -203,14 +209,14 @@
     <div class=""hero"">
       <div class=""title"">
         <h1>AST Room Portal</h1>
-        <span>🌌 Sphere Tracker · Commandes du thread</span>
+        <span>🌌 Sphere Tracker · {T("WebThreadCommandsSubtitle")}</span>
       </div>
       <div class=""badge"">Mode: Thread</div>
     </div>
     <div id=""channel-meta"" class=""meta"">Channel ID: —</div>
     <details class=""hero-details"">
-      <summary>Afficher les infos</summary>
-      <div id=""hero-info"" class=""hero-info"">Chargement des infos…</div>
+      <summary>{T("WebShowInfo")}</summary>
+      <div id=""hero-info"" class=""hero-info"">{T("WebLoadingInfo")}</div>
     </details>
   </header>
 
@@ -218,7 +224,7 @@
     <section class=""panel"">
       <h2>Status games list</h2>
       <form data-command=""status-games-list"">
-        <button type=""submit"">Afficher le statut des jeux</button>
+        <button type=""submit"">{T("WebShowGameStatus")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>
@@ -228,7 +234,7 @@
       <form id=""patch-form"">
         <label>Alias
           <select id=""patch-alias-select"" name=""alias"" required>
-            <option value="""">Chargement des alias…</option>
+            <option value="""">{T("WebLoadingAliases")}</option>
           </select>
         </label>
         <div class=""result"" id=""patch-link-result""></div>
@@ -238,19 +244,19 @@
     <section class=""panel"">
       <h2>Update frequency check</h2>
       <form data-command=""update-frequency-check"">
-        <label>Fréquence
+        <label>{T("WebFrequency")}
           <select name=""checkFrequency"" required>
-            <option value=""5m"">Toutes les 5 minutes</option>
-            <option value=""15m"">Toutes les 15 minutes</option>
-            <option value=""30m"">Toutes les 30 minutes</option>
-            <option value=""1h"">Toutes les 1 heure</option>
-            <option value=""6h"">Toutes les 6 heures</option>
-            <option value=""12h"">Toutes les 12 heures</option>
-            <option value=""18h"">Toutes les 18 heures</option>
-            <option value=""1d"">Tous les jours</option>
+            <option value=""5m"">{T("WebEvery5Minutes")}</option>
+            <option value=""15m"">{T("WebEvery15Minutes")}</option>
+            <option value=""30m"">{T("WebEvery30Minutes")}</option>
+            <option value=""1h"">{T("WebEvery1Hour")}</option>
+            <option value=""6h"">{T("WebEvery6Hours")}</option>
+            <option value=""12h"">{T("WebEvery12Hours")}</option>
+            <option value=""18h"">{T("WebEvery18Hours")}</option>
+            <option value=""1d"">{T("WebEveryDay")}</option>
           </select>
         </label>
-        <button type=""submit"">Mettre à jour la fréquence</button>
+        <button type=""submit"">{T("WebUpdateFrequency")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>
@@ -258,13 +264,13 @@
     <section class=""panel"">
       <h2>Update silent option</h2>
       <form data-command=""update-silent-option"">
-        <label>Mode silencieux
+        <label>{T("WebSilentMode")}
           <select name=""silent"" required>
-            <option value=""true"">Activé</option>
-            <option value=""false"">Désactivé</option>
+            <option value=""true"">{T("WebEnabled")}</option>
+            <option value=""false"">{T("WebDisabled")}</option>
           </select>
         </label>
-        <button type=""submit"">Mettre à jour le mode silencieux</button>
+        <button type=""submit"">{T("WebUpdateSilentMode")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>
@@ -272,7 +278,7 @@
     <section class=""panel"">
       <h2>Delete URL</h2>
       <form data-command=""delete-url"">
-        <button type=""submit"">Supprimer l'URL du thread</button>
+        <button type=""submit"">{T("WebDeleteThreadUrl")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>
@@ -356,47 +362,47 @@
     if (!patchLinkResult) return;
 
     if (!alias) {{
-      patchLinkResult.textContent = 'Sélectionnez un alias pour voir le patch.';
+      patchLinkResult.textContent = {Js("WebSelectAliasForPatch")};
       return;
     }}
 
     const entry = patchAliasData.get(alias);
     if (!entry) {{
-      patchLinkResult.textContent = 'Alias introuvable.';
+      patchLinkResult.textContent = {Js("WebAliasNotFound")};
       return;
     }}
 
     const validPatchUrl = getValidPatchUrl(entry.patch);
-    const gameLabel = entry.gameName ? ('Jeu: ' + entry.gameName) : 'Jeu: inconnu';
+    const gameLabel = entry.gameName ? ({Js("WebGameLabelPrefix")} + entry.gameName) : {Js("WebGameUnknown")};
 
     if (validPatchUrl) {{
       patchLinkResult.innerHTML = gameLabel + '<br><a href=""' + escapeHtml(validPatchUrl) + '"" target=""_blank"" rel=""noopener noreferrer"">' + escapeHtml(validPatchUrl) + '</a>';
       return;
     }}
 
-    patchLinkResult.textContent = gameLabel + '\nAucun lien de patch disponible pour cet alias.';
+    patchLinkResult.textContent = gameLabel + '\n' + {Js("WebNoPatchLinkForAlias")};
  }};
 
   const loadPatchAliases = async () => {{
     if (!patchAliasSelect || !patchLinkResult) return;
 
     if (!guildId || !channelId) {{
-      patchAliasSelect.innerHTML = '<option value="""">Alias indisponibles</option>';
+      patchAliasSelect.innerHTML = '<option value="""">' + {Js("WebAliasesUnavailable")} + '</option>';
       patchAliasSelect.disabled = true;
-      patchLinkResult.textContent = 'URL invalide: guildId/channelId introuvables.';
+      patchLinkResult.textContent = {Js("WebInvalidUrlMissingIds")};
       return;
     }}
 
     patchAliasSelect.disabled = true;
-    patchAliasSelect.innerHTML = '<option value="""">Chargement des alias…</option>';
+    patchAliasSelect.innerHTML = '<option value="""">{T("WebLoadingAliases")}</option>';
 
     try {{
       const response = await fetch(patchAliasesApi);
       const payload = await parsePayload(response);
 
       if (!response.ok) {{
-        const msg = extractMessage(payload, 'Erreur lors du chargement des alias.');
-        patchAliasSelect.innerHTML = '<option value="""">Alias indisponibles</option>';
+        const msg = extractMessage(payload, {Js("WebErrorLoadingAliases")});
+        patchAliasSelect.innerHTML = '<option value="""">' + {Js("WebAliasesUnavailable")} + '</option>';
         patchLinkResult.textContent = msg;
         return;
       }}
@@ -405,12 +411,12 @@
       patchAliasData.clear();
 
       if (aliases.length === 0) {{
-        patchAliasSelect.innerHTML = '<option value="""">Aucun alias disponible</option>';
-        patchLinkResult.textContent = 'Aucun alias trouvé pour ce thread.';
+        patchAliasSelect.innerHTML = '<option value="""">' + {Js("WebNoAliasAvailable")} + '</option>';
+        patchLinkResult.textContent = {Js("WebNoAliasForThread")};
         return;
       }}
 
-      const options = ['<option value="""">Sélectionnez un alias</option>'];
+      const options = ['<option value="""">' + {Js("WebSelectAlias")} + '</option>'];
       aliases.forEach((entry) => {{
         if (!entry || !entry.alias) return;
         patchAliasData.set(entry.alias, {{ gameName: entry.gameName || '', patch: entry.patch || '' }});
@@ -419,10 +425,10 @@
 
       patchAliasSelect.innerHTML = options.join('');
       patchAliasSelect.disabled = false;
-      patchLinkResult.textContent = 'Sélectionnez un alias pour voir le patch.';
+      patchLinkResult.textContent = {Js("WebSelectAliasForPatch")};
     }} catch {{
-      patchAliasSelect.innerHTML = '<option value="""">Alias indisponibles</option>';
-      patchLinkResult.textContent = 'Impossible de charger les alias.';
+      patchAliasSelect.innerHTML = '<option value="""">' + {Js("WebAliasesUnavailable")} + '</option>';
+      patchLinkResult.textContent = {Js("WebUnableToLoadAliases")};
     }}
  }};
 
@@ -440,17 +446,17 @@
   const loadHeroInfo = async () => {{
     if (!heroInfo) return;
     if (!guildId || !channelId) {{
-      heroInfo.textContent = 'Infos indisponibles: guildId/channelId introuvables.';
+      heroInfo.textContent = {Js("WebInfoUnavailableMissingIds")};
       return;
     }}
 
     try {{
       const response = await fetch(infoApi);
       const payload = await parsePayload(response);
-      const message = extractMessage(payload, response.ok ? '' : 'Impossible de charger les infos.');
-      heroInfo.innerHTML = linkifyText(message || 'Aucune info disponible.');
+      const message = extractMessage(payload, response.ok ? '' : {Js("WebUnableToLoadInfo")});
+      heroInfo.innerHTML = linkifyText(message || {Js("WebNoInfoAvailable")});
     }} catch {{
-      heroInfo.textContent = 'Impossible de charger les infos.';
+      heroInfo.textContent = {Js("WebUnableToLoadInfo")};
     }}
   }};
 
@@ -463,22 +469,22 @@
       const result = form.querySelector('[data-result]');
 
       if (!guildId || !channelId) {{
-        showResult(result, 'URL invalide: guildId/channelId introuvables.', form.dataset.command);
+        showResult(result, {Js("WebInvalidUrlMissingIds")}, form.dataset.command);
         return;
      }}
 
       const data = new FormData(form);
       data.set('command', form.dataset.command);
 
-      showResult(result, 'Traitement en cours...', form.dataset.command);
+      showResult(result, {Js("WebProcessing")}, form.dataset.command);
 
       try {{
         const response = await fetch(apiBase, {{method: 'POST', body: data}});
         const payload = await parsePayload(response);
-        const msg = extractMessage(payload, response.ok ? 'Commande exécutée.' : 'Erreur lors de la commande.');
+        const msg = extractMessage(payload, response.ok ? {Js("WebCommandExecuted")} : {Js("WebCommandError")});
         showResult(result, msg, form.dataset.command);
      }} catch {{
-        showResult(result, 'Impossible de joindre le serveur.', form.dataset.command);
+        showResult(result, {Js("WebUnableToReachServer")}, form.dataset.command);
      }}
    }});
  }});

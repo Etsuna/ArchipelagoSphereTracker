@@ -1,9 +1,13 @@
 ﻿using System.Net;
+using System.Text.Json;
+using ArchipelagoSphereTracker.src.Resources;
 
 public static class WebPortalCommandsPage
 {
     public static string Build()
     {
+        static string T(string key) => Resource.ResourceManager.GetString(key) ?? key;
+        static string Js(string key) => JsonSerializer.Serialize(T(key));
         var templatesPath = Path.Combine(Declare.BasePath, "extern", "Archipelago", "Players", "Templates");
         var templateOptions = Directory.Exists(templatesPath)
             ? Directory.EnumerateFiles(templatesPath, "*.yaml")
@@ -16,7 +20,7 @@ public static class WebPortalCommandsPage
 
         var templateSelectOptions = templateOptions.Any()
             ? string.Join(Environment.NewLine, templateOptions)
-            : @"<option value=\""disabled selected>Aucun template disponible</option>";
+            : $@"<option value=\""disabled selected>{T("WebNoTemplateAvailable")}</option>";
 
         var modeLabel = Declare.IsArchipelagoMode ? "Archipelago" : "Standard";
         var archipelagoSections = Declare.IsArchipelagoMode
@@ -24,7 +28,7 @@ public static class WebPortalCommandsPage
     <section class=""panel"">
       <h2>YAML</h2>
       <form data-command=""list-yamls"">
-        <button type=""submit"">Lister les YAML</button>
+        <button type=""submit"">{T("WebListYamls")}</button>
         <div class=""result"" data-result></div>
       </form>
 
@@ -34,27 +38,27 @@ public static class WebPortalCommandsPage
       </form>
 
       <form data-command=""delete-yaml"">
-        <label>Fichier YAML à supprimer
+        <label>{T("WebYamlFileToDelete")}
           <select name=""fileName"" data-yaml-select required>
-            <option value="""" selected disabled>Chargement des YAML...</option>
+            <option value="""" selected disabled>{T("WebLoadingYamls")}</option>
           </select>
         </label>
-        <button type=""submit"">Supprimer le YAML</button>
+        <button type=""submit"">{T("WebDeleteYaml")}</button>
         <div class=""result"" data-result></div>
       </form>
 
       <form data-command=""clean-yamls"">
-        <button type=""submit"">Nettoyer tous les YAML</button>
+        <button type=""submit"">{T("WebCleanAllYamls")}</button>
         <div class=""result"" data-result></div>
       </form>
 
       <form data-command=""download-yaml"">
-        <label>Fichier YAML à télécharger
+        <label>{T("WebYamlFileToDownload")}
           <select name=""fileName"" data-yaml-select required>
-            <option value="""" selected disabled>Chargement des YAML...</option>
+            <option value="""" selected disabled>{T("WebLoadingYamls")}</option>
           </select>
         </label>
-        <button type=""submit"">Télécharger le YAML</button>
+        <button type=""submit"">{T("WebDownloadYaml")}</button>
         <div class=""result"" data-result></div>
       </form>
 
@@ -62,7 +66,7 @@ public static class WebPortalCommandsPage
         <label>Uploader un YAML
           <input type=""file"" name=""file"" accept="".yaml"" required />
         </label>
-        <button type=""submit"">Envoyer le YAML</button>
+        <button type=""submit"">{T("WebSendYaml")}</button>
         <div class=""result"" data-result></div>
       </form>
 
@@ -72,7 +76,7 @@ public static class WebPortalCommandsPage
             {templateSelectOptions}
           </select>
         </label>
-        <button type=""submit"">Télécharger le template</button>
+        <button type=""submit"">{T("WebDownloadTemplate")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>
@@ -80,7 +84,7 @@ public static class WebPortalCommandsPage
     <section class=""panel"">
       <h2>APWorld</h2>
       <form data-command=""list-apworld"">
-        <button type=""submit"">Lister les APWorld</button>
+        <button type=""submit"">{T("WebAPWorldList")}</button>
         <div class=""result"" data-result></div>
       </form>
 
@@ -93,20 +97,20 @@ public static class WebPortalCommandsPage
         <label>Uploader un APWorld
           <input type=""file"" name=""file"" accept="".apworld"" required />
         </label>
-        <button type=""submit"">Envoyer l'APWorld</button>
+        <button type=""submit"">{T("WebSendApworld")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>
 
     <section class=""panel"">
-      <h2>Génération</h2>
+      <h2>{T("WebGeneration")}</h2>
       <form data-command=""generate"">
-        <button type=""submit"">Générer</button>
+        <button type=""submit"">{T("WebGenerate")}</button>
         <div class=""result"" data-result></div>
       </form>
 
       <form data-command=""test-generate"">
-        <button type=""submit"">Test génération</button>
+        <button type=""submit"">{T("WebTestGeneration")}</button>
         <div class=""result"" data-result></div>
       </form>
 
@@ -114,7 +118,7 @@ public static class WebPortalCommandsPage
         <label>ZIP de YAML
           <input type=""file"" name=""file"" accept="".zip"" required />
         </label>
-        <button type=""submit"">Générer avec ZIP</button>
+        <button type=""submit"">{T("WebGenerateWithZip")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>"
@@ -125,7 +129,7 @@ public static class WebPortalCommandsPage
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
-  <title>Commandes Discord</title>
+  <title>{T("WebDiscordCommands")}</title>
   <style>
     :root {{
       color-scheme: dark;
@@ -325,7 +329,7 @@ public static class WebPortalCommandsPage
     <div class=""hero"">
       <div class=""title"">
         <h1>AST Portal</h1>
-        <span>⚙️ Commandes Discord</span>
+        <span>⚙️ {T("WebDiscordCommands")}</span>
       </div>
       <div class=""badge"">Mode: {WebUtility.HtmlEncode(modeLabel)}</div>
     </div>
@@ -335,67 +339,67 @@ public static class WebPortalCommandsPage
   <main>
     <section class=""panel"">
       <h2>Configuration</h2>
-      <p class=""mode"">Renseignez un user ID si vous ciblez un thread privé.</p>
-      <label>User ID (optionnel, utile pour threads privés)
+      <p class=""mode"">{T("WebProvideUserIdForPrivateThread")}</p>
+      <label>{T("WebUserIdOptionalPrivateThreads")}
         <input id=""user-id"" placeholder=""123456789012345678"" />
       </label>
     </section>
 
     <section class=""panel"">
       <h2>AST Room Portals (Guild)</h2>
-      <p class=""mode"">Liens disponibles pour ce Guild ID avec les noms de thread.</p>
+      <p class=""mode"">{T("WebAvailableLinksForGuild")}</p>
       <ul id=""room-links"" class=""room-links-list"">
-        <li>Chargement des AST Room Portals...</li>
+        <li>{T("WebLoadingAstRoomPortals")}</li>
       </ul>
     </section>
 
     <section class=""panel"">
-      <h2>Créer un thread via /add-url</h2>
+      <h2>{T("WebCreateThreadViaAddUrl")}</h2>
       <form data-command=""add-url"">
         <input type=""hidden"" name=""userId"" />
         <label>URL Archipelago
           <input name=""url"" placeholder=""https://archipelago.gg/room/XXXX"" required />
         </label>
-        <label>Nom du thread
+        <label>{T("WebThreadName")}
           <input name=""threadName"" placeholder=""Archipelago"" />
         </label>
-        <label>Type de thread
+        <label>{T("WebThreadType")}
           <select name=""threadType"">
-            <option value=""Private"">Privé</option>
+            <option value=""Private"">{T("WebPrivate")}</option>
             <option value=""Public"">Public</option>
           </select>
         </label>
-        <label>Auto-ajouter les membres (public)
+        <label>{T("WebAutoAddMembersPublic")}
           <select name=""autoAddMembers"">
-            <option value=""false"">Non</option>
-            <option value=""true"">Oui</option>
+            <option value=""false"">{T("WebNo")}</option>
+            <option value=""true"">{T("WebYes")}</option>
           </select>
         </label>
-        <label>Mode silencieux
+        <label>{T("WebSilentMode")}
           <select name=""silent"">
-            <option value=""false"">Non</option>
-            <option value=""true"">Oui</option>
+            <option value=""false"">{T("WebNo")}</option>
+            <option value=""true"">{T("WebYes")}</option>
           </select>
         </label>
-        <label>Fréquence de check
+        <label>{T("WebCheckFrequency")}
           <select name=""checkFrequency"">
-            <option value=""5m"">Toutes les 5 minutes</option>
-            <option value=""15m"">Toutes les 15 minutes</option>
-            <option value=""30m"">Toutes les 30 minutes</option>
-            <option value=""1h"">Toutes les 1h</option>
-            <option value=""6h"">Toutes les 6h</option>
-            <option value=""12h"">Toutes les 12h</option>
-            <option value=""18h"">Toutes les 18h</option>
-            <option value=""1d"">Chaque jour</option>
+            <option value=""5m"">{T("WebEvery5Minutes")}</option>
+            <option value=""15m"">{T("WebEvery15Minutes")}</option>
+            <option value=""30m"">{T("WebEvery30Minutes")}</option>
+            <option value=""1h"">{T("WebEvery1h")}</option>
+            <option value=""6h"">{T("WebEvery6h")}</option>
+            <option value=""12h"">{T("WebEvery12h")}</option>
+            <option value=""18h"">{T("WebEvery18h")}</option>
+            <option value=""1d"">{T("WebEveryDay")}</option>
           </select>
         </label>
-        <button type=""submit"">Créer le thread</button>
+        <button type=""submit"">{T("WebCreateThread")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>
 
     <section class=""panel"">
-      <h2>Infos utiles</h2>
+      <h2>{T("WebUsefulInfo")}</h2>
       <form data-command=""apworlds-info"">
         <button type=""submit"">APWorlds info</button>
         <div class=""result"" data-result></div>
@@ -486,7 +490,7 @@ public static class WebPortalCommandsPage
     if (fixedUrl) {{
       const link = document.createElement('a');
       link.href = fixedUrl;
-      link.textContent = 'Télécharger le fichier';
+      link.textContent = '{T("WebDownloadFile")}';
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       container.appendChild(link);
@@ -519,11 +523,11 @@ public static class WebPortalCommandsPage
   const loadRoomLinks = async () => {{
     if (!roomLinksRoot) return;
     if (!guildId) {{
-      roomLinksRoot.innerHTML = '<li>Guild ID introuvable dans l’URL.</li>';
+      roomLinksRoot.innerHTML = '<li>' + {Js("WebGuildIdMissingInUrl")} + '</li>';
       return;
     }}
 
-    roomLinksRoot.innerHTML = '<li>Chargement des AST Room Portals...</li>';
+    roomLinksRoot.innerHTML = '<li>{T("WebLoadingAstRoomPortals")}</li>';
 
     try {{
       const response = await fetch(roomLinksApi);
@@ -533,7 +537,7 @@ public static class WebPortalCommandsPage
         : [];
 
       if (!response.ok || links.length === 0) {{
-        roomLinksRoot.innerHTML = '<li>Aucun AST Room Portal disponible pour ce Guild ID.</li>';
+        roomLinksRoot.innerHTML = '<li>' + {Js("WebNoAstRoomPortalForGuild")} + '</li>';
         return;
       }}
 
@@ -547,7 +551,7 @@ public static class WebPortalCommandsPage
 
         const link = document.createElement('a');
         link.href = normalizeDownloadUrl(entry.url || '') || '#';
-        link.textContent = 'Ouvrir';
+        link.textContent = {Js("WebOpen")};
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         item.appendChild(link);
@@ -555,14 +559,14 @@ public static class WebPortalCommandsPage
         roomLinksRoot.appendChild(item);
       }});
     }} catch {{
-      roomLinksRoot.innerHTML = '<li>Impossible de charger les AST Room Portals.</li>';
+      roomLinksRoot.innerHTML = '<li>' + {Js("WebUnableToLoadAstRoomPortals")} + '</li>';
     }}
   }};
 
   const loadYamlOptions = async () => {{
     if (!yamlSelects.length || !guildId || !channelId) return;
 
-    setYamlSelectOptions('<option value="" selected disabled>Chargement des YAML...</option>');
+    setYamlSelectOptions('<option value="" selected disabled>{T("WebLoadingYamls")}</option>');
 
     try {{
       const response = await fetch(yamlsApi);
@@ -572,12 +576,12 @@ public static class WebPortalCommandsPage
         : [];
 
       if (!response.ok || files.length === 0) {{
-        setYamlSelectOptions('<option value="" selected disabled>Aucun YAML disponible</option>');
+        setYamlSelectOptions('<option value="" selected disabled>{T("WebNoYamlAvailable")}</option>');
         return;
       }}
 
       yamlSelects.forEach((select) => {{
-        select.innerHTML = '<option value="" selected disabled>Sélectionner un YAML</option>';
+        select.innerHTML = '<option value="" selected disabled>{T("WebSelectYaml")}</option>';
         files.forEach((fileName) => {{
           const option = document.createElement('option');
           option.value = fileName;
@@ -586,7 +590,7 @@ public static class WebPortalCommandsPage
         }});
       }});
     }} catch {{
-      setYamlSelectOptions('<option value="" selected disabled>Erreur de chargement des YAML</option>');
+      setYamlSelectOptions('<option value="" selected disabled>{T("WebErrorLoadingYamls")}</option>');
     }}
   }};
 
@@ -599,7 +603,7 @@ public static class WebPortalCommandsPage
       if (!guildId || !channelId) {{
         showResult(
           result,
-          'URL invalide: guildId/channelId introuvables. Ouvre la page via /portal/{{guildId}}/{{channelId}}/commands.html',
+          {Js("WebInvalidUrlOpenViaPortal")},
           null
         );
         return;
@@ -611,7 +615,7 @@ public static class WebPortalCommandsPage
       if (['delete-yaml', 'download-yaml'].includes(form.dataset.command)) {{
         const selectedYaml = data.get('fileName');
         if (!selectedYaml) {{
-          showResult(result, 'Aucun YAML sélectionné.', null);
+          showResult(result, '{T("WebNoYamlSelected")}', null);
           return;
         }}
       }}
@@ -623,7 +627,7 @@ public static class WebPortalCommandsPage
         else data.delete('userId');
       }}
 
-      showResult(result, 'Traitement en cours...', null);
+      showResult(result, '{T("WebProcessing")}', null);
 
       try {{
         const response = await fetch(apiBase, {{
@@ -634,7 +638,7 @@ public static class WebPortalCommandsPage
         const payload = await parsePayload(response);
         const msg = extractMessage(
           payload,
-          response.ok ? 'Commande exécutée.' : 'Erreur lors de la commande.'
+          response.ok ? '{T("WebCommandExecuted")}' : '{T("WebCommandError")}'
         );
 
         if (!response.ok) {{
@@ -652,7 +656,7 @@ public static class WebPortalCommandsPage
           await loadYamlOptions();
         }}
       }} catch {{
-        showResult(result, 'Impossible de joindre le serveur.', null);
+        showResult(result, '{T("WebUnableToReachServer")}', null);
       }}
     }});
   }});
