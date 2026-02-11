@@ -268,6 +268,7 @@ class Program
 
             TrackingDataManager.StartTracking();
             WebPortalServer.Start();
+            await WebPortalPages.EnsureSharedCommandsPagesAsync();
             await WebPortalPages.EnsureMissingUserPagesAsync();
 
             if (Declare.ExportMetrics && !string.IsNullOrEmpty(Declare.MetricsPort))

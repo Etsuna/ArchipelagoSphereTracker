@@ -30,11 +30,7 @@ public static class WebPortalPages
         if (!Declare.EnableWebPortal)
             return null;
 
-        Directory.CreateDirectory(Declare.WebPortalPath);
-
-        var htmlPath = Path.Combine(Declare.WebPortalPath, "thread-commands.html");
-        var html = WebPortalThreadCommandsPage.Build();
-        await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
+        await EnsureSharedCommandsPagesAsync();
 
         return GetThreadCommandsPortalUrl(guildId, channelId);
     }
@@ -44,13 +40,25 @@ public static class WebPortalPages
         if (!Declare.EnableWebPortal)
             return null;
 
-        Directory.CreateDirectory(Declare.WebPortalPath);
-
-        var htmlPath = Path.Combine(Declare.WebPortalPath, "commands.html");
-        var html = WebPortalCommandsPage.Build();
-        await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
+        await EnsureSharedCommandsPagesAsync();
 
         return GetCommandsPortalUrl(guildId, channelId);
+    }
+
+    public static async Task EnsureSharedCommandsPagesAsync()
+    {
+        if (!Declare.EnableWebPortal)
+            return;
+
+        Directory.CreateDirectory(Declare.WebPortalPath);
+
+        var threadCommandsPath = Path.Combine(Declare.WebPortalPath, "thread-commands.html");
+        var threadCommandsHtml = WebPortalThreadCommandsPage.Build();
+        await File.WriteAllTextAsync(threadCommandsPath, threadCommandsHtml, Encoding.UTF8);
+
+        var commandsPath = Path.Combine(Declare.WebPortalPath, "commands.html");
+        var commandsHtml = WebPortalCommandsPage.Build();
+        await File.WriteAllTextAsync(commandsPath, commandsHtml, Encoding.UTF8);
     }
 
     public static async Task EnsureMissingUserPagesAsync()
