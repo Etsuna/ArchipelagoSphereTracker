@@ -1705,4 +1705,12 @@
     <value>Upload a YAML</value>
     <comment>Upload a YAML</comment>
   </data>
+  <data name="ASTUserCommand" xml:space="preserve">
+    <value>Use /ast-user-portal to manage your aliases and recaps.</value>
+    <comment>Use /ast-user-portal to manage your aliases and recaps.</comment>
+  </data>
+  <data name="ASTRoomCommand" xml:space="preserve">
+    <value>Use /ast-room-portal to manage your room.</value>
+    <comment>Use /ast-room-portal to manage your room.</comment>
+  </data>
 </root>

@@ -240,6 +240,8 @@ public class UrlClass
 
                             await BotCommands.SendMessageAsync(Resource.Discord, channelId);
                             await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
+                            await BotCommands.SendMessageAsync(Resource.ASTRoomCommand, channelId);
+                            await BotCommands.SendMessageAsync(Resource.ASTUserCommand, channelId);
                         }
                         finally
                         {

@@ -277,6 +277,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Use /ast-room-portal to manage your room..
+        /// </summary>
+        internal static string ASTRoomCommand {
+            get {
+                return ResourceManager.GetString("ASTRoomCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Use /ast-user-portal to manage your aliases and recaps..
+        /// </summary>
+        internal static string ASTUserCommand {
+            get {
+                return ResourceManager.GetString("ASTUserCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Database at version {0}: forced migration to {1}..
         /// </summary>
         internal static string BDDForceUpdate {

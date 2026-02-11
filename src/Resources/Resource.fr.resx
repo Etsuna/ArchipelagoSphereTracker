@@ -1308,4 +1308,10 @@
   <data name="WebUploaderUnYAML" xml:space="preserve">
     <value>Uploader un YAML</value>
   </data>
+  <data name="ASTUserCommand" xml:space="preserve">
+    <value>Utilisez /ast-user-portal pour gérer vos alias et vos recaps.</value>
+  </data>
+  <data name="ASTRoomCommand" xml:space="preserve">
+    <value>Utilisez /ast-room-portal pour gérer votre room.</value>
+  </data>
 </root>
