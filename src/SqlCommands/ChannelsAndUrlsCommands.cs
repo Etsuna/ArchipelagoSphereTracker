@@ -186,7 +186,7 @@ public static class ChannelsAndUrlsCommands
             var result = await countCommand.ExecuteScalarAsync().ConfigureAwait(false);
             var count = Convert.ToInt32(result ?? 0);
 
-            return count <= 10;
+            return count < Declare.MaxThreadByGuild;
         }
         catch (OperationCanceledException)
         {
@@ -243,6 +243,53 @@ public static class ChannelsAndUrlsCommands
             Console.WriteLine($"Error while retrieving patch/game name: {ex.Message}");
             return Resource.GetPatchAndGameNameForAliasNoRecordFound;
         }
+    }
+
+    public static async Task<List<(string Alias, string GameName, string Patch)>> GetPatchesForChannelAsync(
+        string guildId,
+        string channelId)
+    {
+        var patches = new List<(string Alias, string GameName, string Patch)>();
+
+        try
+        {
+            await using var connection = await Db.OpenReadAsync();
+
+            long guildChannelId = await DatabaseCommands
+                .GetGuildChannelIdAsync(guildId, channelId, "ChannelsAndUrlsTable");
+
+            if (guildChannelId == -1)
+            {
+                return patches;
+            }
+
+            using var command = new SQLiteCommand(@"
+                SELECT Alias, GameName, Patch
+                FROM UrlAndChannelPatchTable
+                WHERE ChannelsAndUrlsTableId = @ChannelsAndUrlsTableId
+                ORDER BY Alias COLLATE NOCASE;", connection);
+
+            command.Parameters.AddWithValue("@ChannelsAndUrlsTableId", guildChannelId);
+
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var alias = reader["Alias"]?.ToString() ?? string.Empty;
+                var gameName = reader["GameName"]?.ToString() ?? string.Empty;
+                var patch = reader["Patch"]?.ToString() ?? string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(alias))
+                {
+                    patches.Add((alias, gameName, patch));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while retrieving patches for channel: {ex.Message}");
+        }
+
+        return patches;
     }
 
     // ==============================
@@ -417,7 +464,17 @@ public static class ChannelsAndUrlsCommands
     public static async Task<string> UpdateSilentOption(SocketSlashCommand command, string channelId, string guildId)
     {
         bool getSilentOption = command.Data.Options.FirstOrDefault()?.Value?.ToString()?.ToLowerInvariant() == "true";
+        return await UpdateSilentOptionInternal(getSilentOption, channelId, guildId);
+    }
 
+    public static async Task<string> UpdateSilentOptionFromWeb(string? silentOption, string channelId, string guildId)
+    {
+        bool getSilentOption = string.Equals(silentOption, "true", StringComparison.OrdinalIgnoreCase);
+        return await UpdateSilentOptionInternal(getSilentOption, channelId, guildId);
+    }
+
+    private static async Task<string> UpdateSilentOptionInternal(bool getSilentOption, string channelId, string guildId)
+    {
         try
         {
             await Db.WriteAsync(async conn =>
@@ -533,11 +590,20 @@ public static class ChannelsAndUrlsCommands
     // ================================================
     public static async Task<string> UpdateFrequencyCheck(SocketSlashCommand command, string channelId, string guildId)
     {
+        var newFrequency = command.Data.Options.FirstOrDefault()?.Value?.ToString();
+        return await UpdateFrequencyCheckInternal(newFrequency, channelId, guildId);
+    }
+
+    public static async Task<string> UpdateFrequencyCheckFromWeb(string? newFrequency, string channelId, string guildId)
+    {
+        return await UpdateFrequencyCheckInternal(newFrequency, channelId, guildId);
+    }
+
+    private static async Task<string> UpdateFrequencyCheckInternal(string? newFrequency, string channelId, string guildId)
+    {
         var message = string.Empty;
         try
         {
-            var newFrequency = command.Data.Options.FirstOrDefault()?.Value?.ToString();
-
             if (string.IsNullOrWhiteSpace(newFrequency))
             {
                 newFrequency = "5m";

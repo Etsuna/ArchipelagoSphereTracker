@@ -1,5 +1,4 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
-using Discord;
 using Discord.WebSocket;
 using System.Data.SQLite;
 

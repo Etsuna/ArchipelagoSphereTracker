@@ -264,4 +264,75 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
 
         await PostMigrationMaintenanceAsync();
     }
+
+    public static async Task Migrate_5_0_5(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.5: Dropping ApWorldItemTable and ApWorldListTable as they are no longer used.");
+        Console.WriteLine("Create PortalAccessTable for ast-user-portal unique Token");
+
+        var guildList = await GetAllGuildChannelMappingsAsync();
+        await Task.Delay(1000, ct);
+
+        await using var conn = await Db.OpenWriteAsync();
+
+        using (var pragma = conn.CreateCommand())
+        {
+            pragma.CommandText = @"
+                PRAGMA journal_mode=WAL;
+                PRAGMA synchronous=NORMAL;
+                PRAGMA foreign_keys=ON;
+                PRAGMA temp_store=MEMORY;
+            ";
+            pragma.ExecuteNonQuery();
+        }
+
+        using (var transaction = conn.BeginTransaction())
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = transaction;
+
+            cmd.CommandText = @"
+            DROP TABLE IF EXISTS ApWorldItemTable;;
+            DROP TABLE IF EXISTS ApWorldListTable;
+            DROP INDEX IF EXISTS idx_apworldlist_title;
+            DROP INDEX IF EXISTS idx_apworlditem_listid;
+            DROP INDEX IF EXISTS idx_displayeditem_guild_channel;
+            DROP INDEX IF EXISTS idx_displayeditem_receiver;
+            DROP INDEX IF EXISTS idx_displayeditem_finder;
+            DROP INDEX IF EXISTS idx_displayeditem_game_item;
+            DROP INDEX IF EXISTS idx_recapitems_tableid;
+            DROP INDEX IF EXISTS idx_receiveraliases_gcu;
+            DROP INDEX IF EXISTS idx_displayeditem_gci; ";
+            cmd.ExecuteNonQuery();
+
+            transaction.Commit();
+        }
+
+        using (var transaction = conn.BeginTransaction())
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = transaction;
+            cmd.CommandText = @"
+            CREATE TABLE IF NOT EXISTS PortalAccessTable (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                GuildId   TEXT NOT NULL,
+                ChannelId TEXT NOT NULL,
+                UserId    TEXT NOT NULL,
+                Token     TEXT NOT NULL,
+                UNIQUE (GuildId, ChannelId, UserId),
+                UNIQUE (Token)
+            );";
+            cmd.ExecuteNonQuery();
+
+            transaction.Commit();
+        }
+
+        using (var pragmaOn = conn.CreateCommand())
+        {
+            pragmaOn.CommandText = "PRAGMA foreign_keys = ON;";
+            pragmaOn.ExecuteNonQuery();
+        }
+
+        await PostMigrationMaintenanceAsync();
+    }
 }

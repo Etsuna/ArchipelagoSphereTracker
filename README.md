@@ -12,32 +12,36 @@ Si vous préférez héberger votre propre bot, téléchargez la dernière releas
 ## Fonctionnalités actuelles
 ### Mode Normal et Mode Archipelago
 * Multi-Discord et multi-channel
-* Ajouter une URL (droits d'admin requis)
-* Supprimer une URL (droits d'admin requis)
-* Récupérer tous les noms depuis le tracker
-* Définir un alias (remplace le nom par celui sur Discord)
-* Supprimer son propre alias (propriétaire ou admin requis)
-* Récapituler la table de loot depuis le dernier nettoyage (uniquement si un alias a été créé)
-* Récapituler et nettoyer la table de loot (uniquement si un alias a été créé)
-* Envoyer automatiquement des messages concernant les nouveaux objets lootés sur Discord (avec tag, uniquement si un alias a été créé)
-* Envoyer automatiquement un message quand un joueur complète son objectif
-* Lister les items reçus par nom de joueur (affichage en retour à la ligne ou séparé par des virgules)
-* Lister les hints par receivers ou par finders
-* Lister les liens de patch
-* Récupérer le port de connexion
-* Suppression automatique du fil après 2 semaine d'inactivité
+* Gestion complète des rooms via `/add-url` et `/delete-url`
+  * options `/add-url` : `url`, `thread-name`, `thread-type` (Public/Private), `auto-add-members`, `silent`, `update-frequency-check`
+* Réglages de suivi en continu
+  * `/update-frequency-check` (5m/15m/30m/1h/6h/12h/18h/1d)
+  * `/update-silent-option`
+* Gestion des alias et des items
+  * `/get-aliases`, `/add-alias`, `/delete-alias`
+  * `/get-patch`, `/list-items`
+  * `/excluded-item`, `/excluded-item-list`, `/delete-excluded-item`
+  * hints : `/hint-from-finder`, `/hint-for-receiver`
+* Recap et nettoyage
+  * `/recap`, `/recap-all`, `/clean`, `/clean-all`, `/recap-and-clean`
+* Monitoring & informations
+  * `/status-games-list`, `/info`, `/discord`, `/apworlds-info`
+* Portail web intégré
+  * `/ast-user-portal`, `/ast-room-portal`, `/ast-portal`
+* Automatisations
+  * Messages automatiques lors de nouveaux objets
+  * Message automatique quand un joueur complète son objectif
+  * Suppression automatique du fil après 2 semaines d'inactivité
 
 ### Mode Archipelago uniquement
 * Fonctionne uniquement sur architecture x64
-* Envoyer des `.yaml` au serveur (filtré par channel)
-* Envoyer des `.apworld` au serveur
-* Backup des `.yaml` envoyés par channel
-* Backup des `.apworlds` envoyés par channel
-* Générer un Multiworld depuis le dossier du serveur
-* Générer un fichier ZIP contenant tous les `.yaml` présents sur le serveur
-* Lister les `Yamls` filtrés par channel
-* Lister les `Apworlds` présents sur le serveur
-* Gestion automatique de la compatibilité Windows et Linux pour la génération des Multiworlds
+* Gestion des fichiers serveur
+  * `/list-yamls`, `/list-apworld`, `/download-template`
+  * `/send-yaml`, `/send-apworld`, `/delete-yaml`, `/clean-yamls`
+  * `/backup-yamls`, `/backup-apworld`
+* Génération Multiworld
+  * `/test-generate`, `/generate`, `/generate-with-zip`
+* Gestion automatique de la compatibilité Windows/Linux pour la génération des Multiworlds
 
 Plus d'informations sont disponibles sur le [Wiki](https://github.com/Etsuna/ArchipelagoSphereTracker/wiki).
 
@@ -103,8 +107,8 @@ dotnet restore
 dotnet build --configuration Release
 
 # Publiez le projet
-Windows x64 : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r win-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
-Linux x64 : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+Windows x64 : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r win-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true /p:Version=X.X.X
+Linux x64 : dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true /p:Version=X.X.X
 
 # Lancez le bot
 Allez dans le dossier .\\bin\\Release\\net8.0\\linux-x64\\publish\\ ou .\\bin\\Release\\net8.0\\win-x64\\publish\\ selon votre OS.
@@ -127,32 +131,36 @@ If you prefer to host your own bot, download the latest release or compile the p
 ## Current Features
 ### Normal Mode and Archipelago Mode
 * Multi-Discord and multi-channel support
-* Add a tracker URL (admin rights required)
-* Remove a tracker URL (admin rights required)
-* Fetch all player names from the tracker
-* Set an alias (replaces the name with your Discord username)
-* Delete your alias (owner or admin required)
-* Summarize the loot table since the last cleanup (only if an alias is set)
-* Summarize and clean the loot table (only if an alias is set)
-* Automatically post messages when new items are received (with Discord tag, only if an alias is set)
-* Automatically announce when a player completes their goal
-* List items received by player name
-* List hints by receivers or by finders
-* List patch links
-* Retrieve the tracker connection port
-* Auto-delete threads after 2 week of inactivity
+* Full room lifecycle management with `/add-url` and `/delete-url`
+  * `/add-url` options: `url`, `thread-name`, `thread-type` (Public/Private), `auto-add-members`, `silent`, `update-frequency-check`
+* Ongoing tracking settings
+  * `/update-frequency-check` (5m/15m/30m/1h/6h/12h/18h/1d)
+  * `/update-silent-option`
+* Alias and item management
+  * `/get-aliases`, `/add-alias`, `/delete-alias`
+  * `/get-patch`, `/list-items`
+  * `/excluded-item`, `/excluded-item-list`, `/delete-excluded-item`
+  * hints: `/hint-from-finder`, `/hint-for-receiver`
+* Recap and cleanup
+  * `/recap`, `/recap-all`, `/clean`, `/clean-all`, `/recap-and-clean`
+* Monitoring & information
+  * `/status-games-list`, `/info`, `/discord`, `/apworlds-info`
+* Built-in web portal commands
+  * `/ast-user-portal`, `/ast-room-portal`, `/ast-portal`
+* Automations
+  * Automatic messages for newly received items
+  * Automatic message when a player completes their goal
+  * Auto-delete threads after 2 weeks of inactivity
 
 ### Archipelago Mode Only
 * Runs only on x64 architecture
-* Upload `.yaml` files to the server (filtered by channel)
-* Upload `.apworld` files to the server
-* Backup uploaded `.yaml` files by channel
-* Backup uploaded `.apworlds` files by channel
-* Generate a Multiworld from the server’s folder
-* Generate a ZIP file containing all `.yaml` files from the server
-* List `Yamls` files filtered by channel
-* List `Apworlds` files on the server
-* Automatic handling of Windows/Linux compatibility for Multiworld generation
+* Server file management
+  * `/list-yamls`, `/list-apworld`, `/download-template`
+  * `/send-yaml`, `/send-apworld`, `/delete-yaml`, `/clean-yamls`
+  * `/backup-yamls`, `/backup-apworld`
+* Multiworld generation
+  * `/test-generate`, `/generate`, `/generate-with-zip`
+* Automatic Windows/Linux compatibility handling for Multiworld generation
 
 More info is available on the [Wiki](https://github.com/Etsuna/ArchipelagoSphereTracker/wiki).
 
@@ -218,8 +226,8 @@ dotnet restore
 dotnet build --configuration Release
 
 # Publish the project
-Windows: dotnet publish ArchipelagoSphereTracker.csproj -c Release -r win-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
-Linux: dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true
+Windows: dotnet publish ArchipelagoSphereTracker.csproj -c Release -r win-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true /p:Version=X.X.X
+Linux: dotnet publish ArchipelagoSphereTracker.csproj -c Release -r linux-x64 /p:SelfContained=true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:IncludeAllContentForSelfExtract=true /p:Version=X.X.X
 
 # Run the bot
 Go to the folder .\\bin\\Release\\net8.0\\linux-x64\\publish\\ or .\\bin\\Release\\net8.0\\win-x64\\publish\\ depending on your OS.

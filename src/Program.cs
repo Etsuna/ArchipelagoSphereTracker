@@ -3,9 +3,9 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using DotNetEnv;
+using Prometheus;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using Prometheus;
 
 class Program
 {
@@ -170,6 +170,33 @@ class Program
         Declare.Client.Connected += OnConnected;
         Declare.Client.Disconnected += OnDisconnected;
 
+        var shutdownSignal = new CancellationTokenSource();
+        void RequestShutdown()
+        {
+            try
+            {
+                if (!shutdownSignal.IsCancellationRequested)
+                    shutdownSignal.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            RequestShutdown();
+        };
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => RequestShutdown();
+        PosixSignalRegistration? sigTermRegistration = null;
+        PosixSignalRegistration? sigIntRegistration = null;
+        if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+        {
+            sigTermRegistration = PosixSignalRegistration.Create(PosixSignal.SIGTERM, _ => RequestShutdown());
+            sigIntRegistration = PosixSignalRegistration.Create(PosixSignal.SIGINT, _ => RequestShutdown());
+        }
+
         await Declare.Client.SetCustomStatusAsync(version);
 
         await BotCommands.InstallCommandsAsync();
@@ -177,12 +204,36 @@ class Program
         await Declare.Client.LoginAsync(TokenType.Bot, Declare.DiscordToken);
         await Declare.Client.StartAsync();
 
-        await Task.Delay(-1);
+        try
+        {
+            await Task.Delay(Timeout.Infinite, shutdownSignal.Token);
+        }
+        catch (TaskCanceledException)
+        {
+        }
+
+        await ShutdownAsync();
+        sigTermRegistration?.Dispose();
+        sigIntRegistration?.Dispose();
+        shutdownSignal.Dispose();
 
         static Task OnDisconnected(Exception _)
         {
             Declare.Cts?.Cancel();
             return Task.CompletedTask;
+        }
+
+        static async Task ShutdownAsync()
+        {
+            Declare.Cts?.Cancel();
+            await WebPortalServer.StopAsync();
+
+            if (Declare.Client != null)
+            {
+                await Declare.Client.StopAsync();
+                await Declare.Client.LogoutAsync();
+                Declare.Client.Dispose();
+            }
         }
 
         static Task OnConnected()
@@ -216,6 +267,9 @@ class Program
             Console.WriteLine(Resource.ProgramBotIsConnected);
 
             TrackingDataManager.StartTracking();
+            WebPortalServer.Start();
+            await WebPortalPages.EnsureSharedCommandsPagesAsync();
+            await WebPortalPages.EnsureMissingUserPagesAsync();
 
             if (Declare.ExportMetrics && !string.IsNullOrEmpty(Declare.MetricsPort))
             {
@@ -261,6 +315,7 @@ class Program
             await DBMigration_5.Migrate_5_0_2(cts.Token);
             await DBMigration_5.Migrate_5_0_3(cts.Token);
             await DBMigration_5.Migrate_5_0_4(cts.Token);
+            await DBMigration_5.Migrate_5_0_5(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }
@@ -292,6 +347,12 @@ class Program
             await DBMigration_5.Migrate_5_0_4(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
+        else if (bddVersion == "5.0.4")
+        {
+            Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
+            await DBMigration_5.Migrate_5_0_5(cts.Token);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+        }
         else
         {
             Console.WriteLine(string.Format(Resource.BDDForceUpdate, bddVersion, Declare.BddVersion));
@@ -300,6 +361,7 @@ class Program
             await DBMigration_5.Migrate_5_0_2(cts.Token);
             await DBMigration_5.Migrate_5_0_3(cts.Token);
             await DBMigration_5.Migrate_5_0_4(cts.Token);
+            await DBMigration_5.Migrate_5_0_5(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }

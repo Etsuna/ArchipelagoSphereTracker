@@ -193,6 +193,85 @@ public static class RecapListCommands
     }
 
     // ==========================
+    // 🎯 GET ALIASES FOR USER (READ)
+    // ==========================
+    public static async Task<List<string>> GetAliasesForUserAsync(
+        string guildId,
+        string channelId,
+        string userId
+        )
+    {
+        var aliases = new List<string>();
+
+        try
+        {
+            await using var connection = await Db.OpenReadAsync();
+            using var command = new SQLiteCommand(@"
+                SELECT Alias
+                FROM RecapListTable
+                WHERE GuildId = @GuildId
+                  AND ChannelId = @ChannelId
+                  AND UserId = @UserId
+                ORDER BY Alias;", connection);
+
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@UserId", userId);
+
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var alias = reader["Alias"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(alias))
+                    aliases.Add(alias);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while retrieving aliases for user: {ex.Message}");
+        }
+
+        return aliases;
+    }
+
+    // ==========================
+    // 🎯 GET PORTAL USERS (READ)
+    // ==========================
+    public static async Task<List<(string GuildId, string ChannelId, string UserId)>> GetPortalUsersAsync()
+    {
+        var users = new List<(string GuildId, string ChannelId, string UserId)>();
+
+        try
+        {
+            await using var connection = await Db.OpenReadAsync();
+            using var command = new SQLiteCommand(@"
+                SELECT DISTINCT GuildId, ChannelId, UserId
+                FROM RecapListTable;", connection);
+
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var guildId = reader["GuildId"]?.ToString();
+                var channelId = reader["ChannelId"]?.ToString();
+                var userId = reader["UserId"]?.ToString();
+
+                if (!string.IsNullOrWhiteSpace(guildId) &&
+                    !string.IsNullOrWhiteSpace(channelId) &&
+                    !string.IsNullOrWhiteSpace(userId))
+                {
+                    users.Add((guildId, channelId, userId));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while retrieving portal users: {ex.Message}");
+        }
+
+        return users;
+    }
+
+    // ==========================
     // 🎯 DELETE RecapList FOR UserId (WRITE)
     // ==========================
     public static async Task DeleteAliasAndItemsForUserIdAsync(

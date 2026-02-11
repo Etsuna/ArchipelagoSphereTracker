@@ -1,6 +1,5 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using Discord;
-using System.Threading.Channels;
 
 public static class SlashCommandDefinitions
 {
@@ -150,6 +149,19 @@ public static class SlashCommandDefinitions
                 .WithDescription(Resource.SCDeleteExcludedItemDesc)
                 .AddOption(AliasOption("added-alias"))
                 .AddOption(ItemsOption("delete-items")),
+
+            new SlashCommandBuilder()
+                .WithName("ast-user-portal")
+                .WithDescription(Resource.SCPortalLinkDescription),
+
+            new SlashCommandBuilder()
+                .WithName("ast-room-portal")
+                .WithDescription("Afficher la page web des commandes du thread"),
+
+            new SlashCommandBuilder()
+                .WithName("ast-portal")
+                .WithDescription(Resource.SCPortalUrlDescription),
+
         };
 
         if (Declare.IsArchipelagoMode)

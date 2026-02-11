@@ -152,7 +152,7 @@ public static class BotCommands
                 }
                 else
                 {
-                    message = await HandleChannelCommand(command, guildUser, alias, channelId, guildId);
+                    message = await HandleGuildCommand(command, guildUser, alias, channelId, guildId);
                     if (!string.IsNullOrWhiteSpace(message))
                         await command.FollowupAsync(message);
                     else
@@ -193,6 +193,8 @@ public static class BotCommands
             "status-games-list" => await HelperClass.StatusGameList(channelId, guildId),
             "info" => await HelperClass.Info(channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, channelId, guildId),
+            "ast-user-portal" => await WebPortalLinkAsync(channelId, guildId, command.User.Id.ToString()),
+            "ast-room-portal" => await WebPortalThreadCommandsLinkAsync(channelId, guildId),
             "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, channelId, guildId),
             "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, alias, channelId, guildId),
             "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
@@ -202,11 +204,12 @@ public static class BotCommands
         };
     }
 
-    private static async Task<string> HandleChannelCommand(SocketSlashCommand command, IGuildUser? user, string? alias, string channelId, string guildId)
+    private static async Task<string> HandleGuildCommand(SocketSlashCommand command, IGuildUser? user, string? alias, string channelId, string guildId)
     {
         return command.CommandName switch
         {
             "add-url" => await UrlClass.AddUrl(command, user, channelId, guildId, (ITextChannel)command.Channel),
+            "ast-portal" => await WebPortalCommandsLinkAsync(guildId, channelId),
             "list-yamls" => YamlClass.ListYamls(channelId),
             "backup-yamls" => await YamlClass.BackupYamls(command, channelId),
             "delete-yaml" => YamlClass.DeleteYaml(command, channelId),
@@ -224,6 +227,45 @@ public static class BotCommands
             _ => Resource.BotCommandThread
         };
     }
+    private static async Task<string> WebPortalLinkAsync(string channelId, string guildId, string userId)
+    {
+        if (!Declare.EnableWebPortal)
+        {
+            return Resource.WebPortalDisabled;
+        }
+
+        var portalUrl = await WebPortalPages.EnsureUserPageAsync(guildId, channelId, userId);
+        return string.IsNullOrWhiteSpace(portalUrl)
+            ? Resource.WebPortalDisabled
+            : string.Format(Resource.WebPortalLink, portalUrl);
+    }
+
+    private static async Task<string> WebPortalThreadCommandsLinkAsync(string channelId, string guildId)
+    {
+        if (!Declare.EnableWebPortal)
+        {
+            return Resource.WebPortalDisabled;
+        }
+
+        var portalUrl = await WebPortalPages.EnsureThreadCommandsPageAsync(guildId, channelId);
+        return string.IsNullOrWhiteSpace(portalUrl)
+            ? Resource.WebPortalDisabled
+            : string.Format(Resource.WebPortalLink, portalUrl);
+    }
+
+    private static async Task<string> WebPortalCommandsLinkAsync(string guildId, string channelId)
+    {
+        if (!Declare.EnableWebPortal)
+        {
+            return Resource.WebPortalDisabled;
+        }
+
+        var portalUrl = await WebPortalPages.EnsureCommandsPageAsync(guildId, channelId);
+        return string.IsNullOrWhiteSpace(portalUrl)
+            ? Resource.WebPortalDisabled
+            : string.Format(Resource.WebPortalCommandsLink, portalUrl);
+    }
+
 
     private static async Task SendPaginatedMessageAsync(SocketSlashCommand command, string message, int maxLength)
     {
@@ -319,4 +361,3 @@ public static class BotCommands
 
     #endregion
 }
-

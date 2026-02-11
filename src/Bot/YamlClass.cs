@@ -70,6 +70,31 @@ public class YamlClass : Declare
         return message;
     }
 
+    public static async Task<string> SendYamlFromStreamAsync(string channelId, string fileName, Stream content)
+    {
+        if (string.IsNullOrWhiteSpace(fileName) || !fileName.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
+        {
+            return Resource.YamlWrongFile;
+        }
+
+        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+        Directory.CreateDirectory(playersFolderChannel);
+
+        string filePath = Path.Combine(playersFolderChannel, Path.GetFileName(fileName));
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
+        await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
+        {
+            await content.CopyToAsync(fs);
+        }
+
+        return string.Format(Resource.YamlFileSent, Path.GetFileName(fileName));
+    }
+
     public static string CleanYamls(string channelId)
     {
         string message;
@@ -97,6 +122,40 @@ public class YamlClass : Declare
     public static string DeleteYaml(SocketSlashCommand command, string channelId)
     {
         var fileSelected = command.Data.Options.FirstOrDefault()?.Value as string;
+        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+        var message = string.Empty;
+
+        if (!string.IsNullOrEmpty(fileSelected))
+        {
+            var deletedfilePath = Path.Combine(playersFolderChannel, fileSelected);
+
+            if (File.Exists(deletedfilePath))
+            {
+                try
+                {
+                    File.Delete(deletedfilePath);
+                    message += string.Format(Resource.YamlFileDeleted, fileSelected);
+                }
+                catch (Exception ex)
+                {
+                    message += string.Format(Resource.YamlFileDeletedError, fileSelected, ex.Message);
+                }
+            }
+            else
+            {
+                message += string.Format(Resource.YamlDeleteFileNotExists, fileSelected);
+            }
+        }
+        else
+        {
+            message += Resource.NoFileSelected;
+        }
+
+        return message;
+    }
+
+    public static string DeleteYamlByName(string channelId, string? fileSelected)
+    {
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
         var message = string.Empty;
 
@@ -170,16 +229,68 @@ public class YamlClass : Declare
         return message;
     }
 
-    public static string ListYamls(string channelId)
+    public static async Task<string> BackupYamlsToFileAsync(string channelId, string zipPath)
     {
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+        var message = string.Empty;
+        if (Directory.Exists(playersFolderChannel))
+        {
+            var zipDirectory = Path.GetDirectoryName(zipPath);
+            if (!string.IsNullOrEmpty(zipDirectory))
+            {
+                Directory.CreateDirectory(zipDirectory);
+            }
 
-        if (!Directory.Exists(playersFolderChannel))
-            return Resource.YamlNoYaml;
+            if (File.Exists(zipPath))
+            {
+                File.Delete(zipPath);
+            }
 
-        var yamls = Directory.EnumerateFiles(playersFolderChannel, "*.yaml")
-                             .OrderBy(Path.GetFileName)
-                             .ToList();
+            using (var zipArchive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            {
+                var files = Directory.GetFiles(playersFolderChannel, "*.yaml");
+                foreach (var file in files)
+                {
+                    var fileName = Path.GetFileName(file);
+                    zipArchive.CreateEntryFromFile(file, fileName);
+                }
+            }
+        }
+        else
+        {
+            message += Resource.YamlNoYaml;
+        }
+
+        return message;
+    }
+
+    public static string DownloadTemplateToFile(string templateName, string destinationPath)
+    {
+        if (string.IsNullOrEmpty(templateName))
+        {
+            return Resource.NoFileSelected;
+        }
+
+        string templatePath = Path.Combine(BasePath, "extern", "Archipelago", "Players", "Templates", templateName);
+
+        if (File.Exists(templatePath))
+        {
+            var directory = Path.GetDirectoryName(destinationPath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.Copy(templatePath, destinationPath, overwrite: true);
+            return string.Empty;
+        }
+
+        return Resource.YamlFileNotExists;
+    }
+
+    public static string ListYamls(string channelId)
+    {
+        var yamls = GetYamlFileNames(channelId).ToList();
 
         if (!yamls.Any())
             return Resource.YamlNoYaml;
@@ -188,9 +299,23 @@ public class YamlClass : Declare
         sb.AppendLine();
         foreach (var yml in yamls)
         {
-            sb.AppendLine(Path.GetFileName(yml));
+            sb.AppendLine(yml);
         }
 
         return sb.ToString();
+    }
+
+    public static IReadOnlyList<string> GetYamlFileNames(string channelId)
+    {
+        var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
+
+        if (!Directory.Exists(playersFolderChannel))
+            return Array.Empty<string>();
+
+        return Directory.EnumerateFiles(playersFolderChannel, "*.yaml")
+            .Select(Path.GetFileName)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ToList()!;
     }
 }

@@ -712,7 +712,7 @@
     <value>Status de tous les jeux :</value>
   </data>
   <data name="UrlCheckMaxTread" xml:space="preserve">
-    <value>Vous ne pouvez pas avoir plus de 2 threads. Supprimez-en un avant d’ajouter une nouvelle room url , s’il vous plaît.</value>
+    <value>Vous ne pouvez pas avoir plus de {0} threads. Supprimez-en un avant d’ajouter une nouvelle room url , s’il vous plaît.</value>
   </data>
   <data name="BRPlayerFolderMoved" xml:space="preserve">
     <value>Déplacement du dossier des joueurs terminé.</value>
@@ -917,5 +917,401 @@
   </data>
   <data name="ProgramBigAsyncMode" xml:space="preserve">
     <value>Executez le programme en mode BigAsync. (USER_ID_FOR_BIG_ASYNC est nécessaire dans le fichier .env.)</value>
+  </data>
+  <data name="WebPortalLink" xml:space="preserve">
+    <value>🌌 Portail : {0}</value>
+  </data>
+  <data name="SCPortalLinkDescription" xml:space="preserve">
+    <value>Obtenir le lien du portail web.</value>
+  </data>
+  <data name="WebPortalDisabled" xml:space="preserve">
+    <value>Le portail web est désactivé.</value>
+  </data>
+  <data name="SCPortalUrlDescription" xml:space="preserve">
+    <value>Obtenez la page des commandes du portail Web.</value>
+  </data>
+  <data name="WebPortalCommandsLink" xml:space="preserve">
+    <value>🌌 Commandes du portail : {0}</value>
+  </data>
+  <data name="WebAccess" xml:space="preserve">
+    <value>Accès</value>
+  </data>
+  <data name="WebAddExistingAliasInThread" xml:space="preserve">
+    <value>Ajouter un alias existant dans ce thread :</value>
+  </data>
+  <data name="WebAddSelectedAlias" xml:space="preserve">
+    <value>Ajouter l'alias sélectionné</value>
+  </data>
+  <data name="WebAddingAlias" xml:space="preserve">
+    <value>Ajout de l'alias...</value>
+  </data>
+  <data name="WebAliasAddedPrefix" xml:space="preserve">
+    <value>Alias ajouté :</value>
+  </data>
+  <data name="WebAliasDeletedPrefix" xml:space="preserve">
+    <value>Alias supprimé :</value>
+  </data>
+  <data name="WebAliasNotFound" xml:space="preserve">
+    <value>Alias introuvable.</value>
+  </data>
+  <data name="WebAutoAddMembersPublic" xml:space="preserve">
+    <value>Auto-ajouter les membres (public)</value>
+  </data>
+  <data name="WebAvailableLinksForGuild" xml:space="preserve">
+    <value>Liens disponibles pour ce Guild ID avec les noms de thread.</value>
+  </data>
+  <data name="WebCheckFrequency" xml:space="preserve">
+    <value>Fréquence de vérification</value>
+  </data>
+  <data name="WebCleanAllYamls" xml:space="preserve">
+    <value>Nettoyer tous les YAML</value>
+  </data>
+  <data name="WebCommandError" xml:space="preserve">
+    <value>Erreur lors de la commande.</value>
+  </data>
+  <data name="WebCommandExecuted" xml:space="preserve">
+    <value>Commande exécutée.</value>
+  </data>
+  <data name="WebCreateThread" xml:space="preserve">
+    <value>Créer le thread</value>
+  </data>
+  <data name="WebCreateThreadViaAddUrl" xml:space="preserve">
+    <value>Créer un thread via /add-url</value>
+  </data>
+  <data name="WebCurrentRecap" xml:space="preserve">
+    <value>Recap en cours</value>
+  </data>
+  <data name="WebDeleteAliasFromYourList" xml:space="preserve">
+    <value>Supprimer un alias de votre liste :</value>
+  </data>
+  <data name="WebDeleteRecap" xml:space="preserve">
+    <value>Supprimer le recap</value>
+  </data>
+  <data name="WebDeleteSelectedAlias" xml:space="preserve">
+    <value>Supprimer l'alias sélectionné</value>
+  </data>
+  <data name="WebDeleteThreadUrl" xml:space="preserve">
+    <value>Supprimer l'URL du thread</value>
+  </data>
+  <data name="WebDeleteYaml" xml:space="preserve">
+    <value>Supprimer le YAML</value>
+  </data>
+  <data name="WebDeletingAlias" xml:space="preserve">
+    <value>Suppression de l'alias...</value>
+  </data>
+  <data name="WebDeletingRecap" xml:space="preserve">
+    <value>Suppression du recap...</value>
+  </data>
+  <data name="WebDisabled" xml:space="preserve">
+    <value>Désactivé</value>
+  </data>
+  <data name="WebDiscordCommands" xml:space="preserve">
+    <value>Commandes Discord</value>
+  </data>
+  <data name="WebDownloadFile" xml:space="preserve">
+    <value>Télécharger le fichier</value>
+  </data>
+  <data name="WebDownloadTemplate" xml:space="preserve">
+    <value>Télécharger le template</value>
+  </data>
+  <data name="WebDownloadYaml" xml:space="preserve">
+    <value>Télécharger le YAML</value>
+  </data>
+  <data name="WebEnabled" xml:space="preserve">
+    <value>Activé</value>
+  </data>
+  <data name="WebErrorLoadingAliases" xml:space="preserve">
+    <value>Erreur lors du chargement des alias.</value>
+  </data>
+  <data name="WebErrorLoadingYamls" xml:space="preserve">
+    <value>Erreur de chargement des YAML</value>
+  </data>
+  <data name="WebEvery12Hours" xml:space="preserve">
+    <value>Toutes les 12 heures</value>
+  </data>
+  <data name="WebEvery12h" xml:space="preserve">
+    <value>Toutes les 12h</value>
+  </data>
+  <data name="WebEvery15Minutes" xml:space="preserve">
+    <value>Toutes les 15 minutes</value>
+  </data>
+  <data name="WebEvery18Hours" xml:space="preserve">
+    <value>Toutes les 18 heures</value>
+  </data>
+  <data name="WebEvery18h" xml:space="preserve">
+    <value>Toutes les 18h</value>
+  </data>
+  <data name="WebEvery1Hour" xml:space="preserve">
+    <value>Toutes les 1 heure</value>
+  </data>
+  <data name="WebEvery1h" xml:space="preserve">
+    <value>Toutes les 1h</value>
+  </data>
+  <data name="WebEvery30Minutes" xml:space="preserve">
+    <value>Toutes les 30 minutes</value>
+  </data>
+  <data name="WebEvery5Minutes" xml:space="preserve">
+    <value>Toutes les 5 minutes</value>
+  </data>
+  <data name="WebEvery6Hours" xml:space="preserve">
+    <value>Toutes les 6 heures</value>
+  </data>
+  <data name="WebEvery6h" xml:space="preserve">
+    <value>Toutes les 6h</value>
+  </data>
+  <data name="WebEveryDay" xml:space="preserve">
+    <value>Tous les jours</value>
+  </data>
+  <data name="WebFrequency" xml:space="preserve">
+    <value>Fréquence</value>
+  </data>
+  <data name="WebGameLabelPrefix" xml:space="preserve">
+    <value>Jeu : </value>
+  </data>
+  <data name="WebGameUnknown" xml:space="preserve">
+    <value>Jeu : inconnu</value>
+  </data>
+  <data name="WebGenerate" xml:space="preserve">
+    <value>Générer</value>
+  </data>
+  <data name="WebGenerateWithZip" xml:space="preserve">
+    <value>Générer avec ZIP</value>
+  </data>
+  <data name="WebGeneration" xml:space="preserve">
+    <value>Génération</value>
+  </data>
+  <data name="WebGuildIdMissingInUrl" xml:space="preserve">
+    <value>Guild ID introuvable dans l’URL.</value>
+  </data>
+  <data name="WebInfoUnavailableMissingIds" xml:space="preserve">
+    <value>Infos indisponibles : guildId/channelId introuvables.</value>
+  </data>
+  <data name="WebInvalidUrlMissingIds" xml:space="preserve">
+    <value>URL invalide : guildId/channelId introuvables.</value>
+  </data>
+  <data name="WebInvalidUrlOpenViaPortal" xml:space="preserve">
+    <value>URL invalide : guildId/channelId introuvables. Ouvre la page via /portal/{guildId}/{channelId}/commands.html</value>
+  </data>
+  <data name="WebLastUpdate" xml:space="preserve">
+    <value>Dernière mise à jour</value>
+  </data>
+  <data name="WebListYamls" xml:space="preserve">
+    <value>Lister les YAML</value>
+  </data>
+  <data name="WebLoadingAliases" xml:space="preserve">
+    <value>Chargement des alias…</value>
+  </data>
+  <data name="WebLoadingAstRoomPortals" xml:space="preserve">
+    <value>Chargement des AST Room Portals...</value>
+  </data>
+  <data name="WebLoadingInfo" xml:space="preserve">
+    <value>Chargement des infos…</value>
+  </data>
+  <data name="WebLoadingThreadAliases" xml:space="preserve">
+    <value>Chargement des alias du thread...</value>
+  </data>
+  <data name="WebLoadingYamls" xml:space="preserve">
+    <value>Chargement des YAML...</value>
+  </data>
+  <data name="WebLoadingYourAliases" xml:space="preserve">
+    <value>Chargement de vos alias...</value>
+  </data>
+  <data name="WebNo" xml:space="preserve">
+    <value>Non</value>
+  </data>
+  <data name="WebNoActiveHint" xml:space="preserve">
+    <value>Aucun hint actif.</value>
+  </data>
+  <data name="WebNoActiveRecapForUser" xml:space="preserve">
+    <value>Aucun recap actif pour cet utilisateur.</value>
+  </data>
+  <data name="WebNoAliasForThread" xml:space="preserve">
+    <value>Aucun alias trouvé pour ce thread.</value>
+  </data>
+  <data name="WebNoAliasInThread" xml:space="preserve">
+    <value>Aucun alias disponible dans ce thread</value>
+  </data>
+  <data name="WebNoAstRoomPortalForGuild" xml:space="preserve">
+    <value>Aucun AST Room Portal disponible pour ce Guild ID.</value>
+  </data>
+  <data name="WebNoHintAsFinder" xml:space="preserve">
+    <value>Aucun hint en tant que Finder.</value>
+  </data>
+  <data name="WebNoHintAsReceiver" xml:space="preserve">
+    <value>Aucun hint en tant que Receiver.</value>
+  </data>
+  <data name="WebNoInfoAvailable" xml:space="preserve">
+    <value>Aucune info disponible.</value>
+  </data>
+  <data name="WebNoPatchLinkForAlias" xml:space="preserve">
+    <value>Aucun lien de patch disponible pour cet alias.</value>
+  </data>
+  <data name="WebNoPendingItem" xml:space="preserve">
+    <value>Aucun item en attente.</value>
+  </data>
+  <data name="WebNoReceivedItems" xml:space="preserve">
+    <value>Aucun item reçu.</value>
+  </data>
+  <data name="WebNoReceivedItemsYet" xml:space="preserve">
+    <value>Aucun item reçu pour le moment.</value>
+  </data>
+  <data name="WebNoRegisteredAlias" xml:space="preserve">
+    <value>Vous n'avez aucun alias enregistré</value>
+  </data>
+  <data name="WebNoTemplateAvailable" xml:space="preserve">
+    <value>Aucun template disponible</value>
+  </data>
+  <data name="WebNoYamlAvailable" xml:space="preserve">
+    <value>Aucun YAML disponible</value>
+  </data>
+  <data name="WebNoYamlSelected" xml:space="preserve">
+    <value>Aucun YAML sélectionné.</value>
+  </data>
+  <data name="WebOpen" xml:space="preserve">
+    <value>Ouvrir</value>
+  </data>
+  <data name="WebPersonalPortal" xml:space="preserve">
+    <value>Portail personnel</value>
+  </data>
+  <data name="WebPortalUnavailable" xml:space="preserve">
+    <value>Portail indisponible.</value>
+  </data>
+  <data name="WebPrivate" xml:space="preserve">
+    <value>Privé</value>
+  </data>
+  <data name="WebProcessing" xml:space="preserve">
+    <value>Traitement en cours...</value>
+  </data>
+  <data name="WebProvideUserIdForPrivateThread" xml:space="preserve">
+    <value>Renseignez un user ID si vous ciblez un thread privé.</value>
+  </data>
+  <data name="WebQuickActions" xml:space="preserve">
+    <value>Actions rapides</value>
+  </data>
+  <data name="WebRecapDeletedFor" xml:space="preserve">
+    <value>Recap supprimé pour</value>
+  </data>
+  <data name="WebReceivedItems" xml:space="preserve">
+    <value>Items reçus</value>
+  </data>
+  <data name="WebRefreshData" xml:space="preserve">
+    <value>Rafraîchir les données</value>
+  </data>
+  <data name="WebSelectAlias" xml:space="preserve">
+    <value>Sélectionnez un alias</value>
+  </data>
+  <data name="WebSelectAliasForPatch" xml:space="preserve">
+    <value>Sélectionnez un alias pour voir le patch.</value>
+  </data>
+  <data name="WebSelectAliasToAdd" xml:space="preserve">
+    <value>Sélectionnez un alias à ajouter.</value>
+  </data>
+  <data name="WebSelectAliasToDelete" xml:space="preserve">
+    <value>Sélectionnez un alias à supprimer.</value>
+  </data>
+  <data name="WebSelectYaml" xml:space="preserve">
+    <value>Sélectionner un YAML</value>
+  </data>
+  <data name="WebSendApworld" xml:space="preserve">
+    <value>Envoyer l'APWorld</value>
+  </data>
+  <data name="WebSendYaml" xml:space="preserve">
+    <value>Envoyer le YAML</value>
+  </data>
+  <data name="WebShowGameStatus" xml:space="preserve">
+    <value>Afficher le statut des jeux</value>
+  </data>
+  <data name="WebShowInfo" xml:space="preserve">
+    <value>Afficher les infos</value>
+  </data>
+  <data name="WebSilentMode" xml:space="preserve">
+    <value>Mode silencieux</value>
+  </data>
+  <data name="WebSyncingDatabase" xml:space="preserve">
+    <value>Synchronisation avec la base de données...</value>
+  </data>
+  <data name="WebTestGeneration" xml:space="preserve">
+    <value>Test génération</value>
+  </data>
+  <data name="WebThreadCommandsSubtitle" xml:space="preserve">
+    <value>Commandes du thread</value>
+  </data>
+  <data name="WebThreadName" xml:space="preserve">
+    <value>Nom du thread</value>
+  </data>
+  <data name="WebThreadType" xml:space="preserve">
+    <value>Type de thread</value>
+  </data>
+  <data name="WebUnableToAddAlias" xml:space="preserve">
+    <value>Impossible d'ajouter cet alias.</value>
+  </data>
+  <data name="WebUnableToDeleteAlias" xml:space="preserve">
+    <value>Impossible de supprimer cet alias.</value>
+  </data>
+  <data name="WebUnableToDeleteRecap" xml:space="preserve">
+    <value>Impossible de supprimer le recap.</value>
+  </data>
+  <data name="WebUnableToLoadAliases" xml:space="preserve">
+    <value>Impossible de charger les alias.</value>
+  </data>
+  <data name="WebUnableToLoadAstRoomPortals" xml:space="preserve">
+    <value>Impossible de charger les AST Room Portals.</value>
+  </data>
+  <data name="WebUnableToLoadInfo" xml:space="preserve">
+    <value>Impossible de charger les infos.</value>
+  </data>
+  <data name="WebUnableToLoadThreadAliases" xml:space="preserve">
+    <value>Impossible de charger les alias du thread</value>
+  </data>
+  <data name="WebUnableToLoadYourAliases" xml:space="preserve">
+    <value>Impossible de charger vos alias</value>
+  </data>
+  <data name="WebUnableToReachServer" xml:space="preserve">
+    <value>Impossible de joindre le serveur.</value>
+  </data>
+  <data name="WebUpdateFrequency" xml:space="preserve">
+    <value>Mettre à jour la fréquence</value>
+  </data>
+  <data name="WebUpdateSilentMode" xml:space="preserve">
+    <value>Mettre à jour le mode silencieux</value>
+  </data>
+  <data name="WebUsefulInfo" xml:space="preserve">
+    <value>Infos utiles</value>
+  </data>
+  <data name="WebUserIdOptionalPrivateThreads" xml:space="preserve">
+    <value>User ID (optionnel, utile pour threads privés)</value>
+  </data>
+  <data name="WebYamlFileToDelete" xml:space="preserve">
+    <value>Fichier YAML à supprimer</value>
+  </data>
+  <data name="WebYamlFileToDownload" xml:space="preserve">
+    <value>Fichier YAML à télécharger</value>
+  </data>
+  <data name="WebYes" xml:space="preserve">
+    <value>Oui</value>
+  </data>
+  <data name="WebYourAliases" xml:space="preserve">
+    <value>Vos alias</value>
+  </data>
+  <data name="WebNoAliasAvailable" xml:space="preserve">
+    <value>Aucun alias disponible</value>
+  </data>
+  <data name="WebAliasesUnavailable" xml:space="preserve">
+    <value>Alias indisponibles</value>
+  </data>
+  <data name="WebAPWorldList" xml:space="preserve">
+    <value>Lister les APWorld</value>
+  </data>
+  <data name="WebActiveHints" xml:space="preserve">
+    <value>Hints actifs</value>
+  </data>
+  <data name="WebUploaderUnYAML" xml:space="preserve">
+    <value>Uploader un YAML</value>
+  </data>
+  <data name="ASTUserCommand" xml:space="preserve">
+    <value>Utilisez /ast-user-portal pour gérer vos alias et vos recaps.</value>
+  </data>
+  <data name="ASTRoomCommand" xml:space="preserve">
+    <value>Utilisez /ast-room-portal pour gérer votre room.</value>
   </data>
 </root>

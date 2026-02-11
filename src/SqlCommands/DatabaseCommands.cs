@@ -320,6 +320,14 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"
+                    DELETE FROM PortalAccessTable
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });
 
             Console.WriteLine(Resource.DeleteChannelDataAsyncDeleteSuccessful);
@@ -434,6 +442,11 @@ public static class DatabaseCommands
 
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM ExcludedItemTable WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM PortalAccessTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });

@@ -11,16 +11,21 @@ public class Declare
     public static string ReleaseVersion = Version;
 #endif
     public static string BotVersion = GetLocalSemVer();
-    public static string BddVersion = "5.0.4";
+    public static string BddVersion = "5.0.5";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool ExportMetrics = (Environment.GetEnvironmentVariable("EXPORT_METRICS") ?? "false").Trim().ToLower() == "true";
     public static readonly string MetricsPort = Environment.GetEnvironmentVariable("METRICS_PORT") ?? string.Empty;
     public static readonly string UserIdForBigAsync = Environment.GetEnvironmentVariable("USER_ID_FOR_BIG_ASYNC") ?? string.Empty;
+    public static readonly bool EnableWebPortal = (Environment.GetEnvironmentVariable("ENABLE_WEB_PORTAL") ?? "true").Trim().ToLower() == "true";
+    public static readonly string WebPortalPort = Environment.GetEnvironmentVariable("WEB_PORT") ?? "5199";
+    public static readonly string WebPortalBaseUrl = Environment.GetEnvironmentVariable("WEB_BASE_URL") ?? string.Empty;
+
 
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();
     public static List<string> AddedChannelId = new List<string>();
     public static readonly int MaxPlayer = 100;
+    public static readonly int MaxThreadByGuild = 3;
     public static bool IsArchipelagoMode { get; set; } = false;
     public static bool IsBigAsync { get; set; } = false;
     public static bool UpdateBdd { get; set; } = false;
@@ -45,6 +50,7 @@ public class Declare
     public static string TempExtractPath = Path.Combine(BasePath, "tempExtract");
     public static string BddPath = Path.Combine(BasePath, "AST.db");
     public static string ExternalFolder = Path.Combine(BasePath, "extern");
+    public static string WebPortalPath = Path.Combine(ExternalFolder, "portal");
 
     public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
     public static string ExtractPath = Path.Combine(ExternalFolder, "Archipelago");

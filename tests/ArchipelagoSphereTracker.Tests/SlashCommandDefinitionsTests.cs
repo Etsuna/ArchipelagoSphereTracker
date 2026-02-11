@@ -46,16 +46,16 @@ public class SlashCommandDefinitionsTests
         Assert.All(commands, command => Assert.False(string.IsNullOrWhiteSpace(command.Description)));
 
         AssertCommandOption(commands, "add-alias", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "add-alias", Resource.SCAddAliasSkipMention, ApplicationCommandOptionType.String, required: true, autocomplete: false);
+        AssertCommandOption(commands, "add-alias", "Resource.SCAddAliasSkipMention", ApplicationCommandOptionType.String, required: true, autocomplete: false);
         AssertCommandOption(commands, "delete-alias", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "update-frequency-check", Resource.CheckFrequency, ApplicationCommandOptionType.String, required: true, autocomplete: false);
+        AssertCommandOption(commands, "update-frequency-check", "Resource.CheckFrequency", ApplicationCommandOptionType.String, required: true, autocomplete: false);
         AssertCommandOption(commands, "add-url", "url", ApplicationCommandOptionType.String, required: true, autocomplete: false);
-        AssertCommandOption(commands, "add-url", Resource.SCThreadName, ApplicationCommandOptionType.String, required: true, autocomplete: false);
-        AssertCommandOption(commands, "add-url", Resource.SCThreadType, ApplicationCommandOptionType.String, required: true, autocomplete: false);
+        AssertCommandOption(commands, "add-url", "Resource.SCThreadName", ApplicationCommandOptionType.String, required: true, autocomplete: false);
+        AssertCommandOption(commands, "add-url", "Resource.SCThreadType", ApplicationCommandOptionType.String, required: true, autocomplete: false);
         AssertCommandOption(commands, "add-url", "auto-add-members", ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
-        AssertCommandOption(commands, "add-url", Resource.SCSilentOption, ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
-        AssertCommandOption(commands, "add-url", Resource.CheckFrequency, ApplicationCommandOptionType.String, required: true, autocomplete: false);
-        AssertCommandOption(commands, "update-silent-option", Resource.SCSilentOption, ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
+        AssertCommandOption(commands, "add-url", "Resource.SCSilentOption", ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
+        AssertCommandOption(commands, "add-url", "Resource.CheckFrequency", ApplicationCommandOptionType.String, required: true, autocomplete: false);
+        AssertCommandOption(commands, "update-silent-option", "Resource.SCSilentOption", ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
         AssertCommandOption(commands, "get-patch", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "recap", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "recap-and-clean", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
