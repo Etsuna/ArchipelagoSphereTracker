@@ -268,6 +268,7 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
     public static async Task Migrate_5_0_5(CancellationToken ct = default)
     {
         Console.WriteLine("Migrating to DB version 5.0.5: Dropping ApWorldItemTable and ApWorldListTable as they are no longer used.");
+        Console.WriteLine("Create PortalAccessTable for ast-user-portal unique Token");
 
         var guildList = await GetAllGuildChannelMappingsAsync();
         await Task.Delay(1000, ct);
@@ -307,32 +308,6 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
             transaction.Commit();
         }
 
-        using (var pragmaOn = conn.CreateCommand())
-        {
-            pragmaOn.CommandText = "PRAGMA foreign_keys = ON;";
-            pragmaOn.ExecuteNonQuery();
-        }
-
-        await PostMigrationMaintenanceAsync();
-    }
-
-    public static async Task Migrate_5_0_6(CancellationToken ct = default)
-    {
-        Console.WriteLine("Migrating to DB version 5.0.6: Adding PortalAccessTable for web portal access tokens.");
-
-        await using var conn = await Db.OpenWriteAsync();
-
-        using (var pragma = conn.CreateCommand())
-        {
-            pragma.CommandText = @"
-                PRAGMA journal_mode=WAL;
-                PRAGMA synchronous=NORMAL;
-                PRAGMA foreign_keys=ON;
-                PRAGMA temp_store=MEMORY;
-            ";
-            pragma.ExecuteNonQuery();
-        }
-
         using (var transaction = conn.BeginTransaction())
         using (var cmd = conn.CreateCommand())
         {
@@ -360,5 +335,4 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
 
         await PostMigrationMaintenanceAsync();
     }
-
 }
