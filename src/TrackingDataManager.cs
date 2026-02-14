@@ -336,12 +336,12 @@ public static class TrackingDataManager
 
     internal static readonly HttpClient Http = HttpClientFactory.CreateJsonClient();
 
-    public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, bool sendAsTextFile)
-        => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None, sendAsTextFile);
+    public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, bool isAddUrl)
+        => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None, isAddUrl);
 
     private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(1);
 
-    public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan, bool sendAsTextFile = false)
+    public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan, bool isAddUrl = false)
     {
         var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
 
@@ -385,12 +385,12 @@ public static class TrackingDataManager
         if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0) return;
 
         if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
-        if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
-        if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent, ctChan, sendAsTextFile).ConfigureAwait(false);
+        if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan, isAddUrl).ConfigureAwait(false);
+        if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent, ctChan, isAddUrl).ConfigureAwait(false);
 
         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guild, channel);
 
-        if (!sendAsTextFile)
+        if (!isAddUrl)
         {
             if (statuses.Count != 0 && statuses.All(x => x.Checks == x.Total))
             {
@@ -458,9 +458,8 @@ public static class TrackingDataManager
         return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
     }
 
-    private static async Task ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent, CancellationToken ctChan)
+    private static async Task ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent, CancellationToken ctChan, bool isAddUrl)
     {
-        var channelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
         var existingKeys = new HashSet<string>(await DisplayItemCommands.GetExistingKeysAsync(guild, channel));
         var newItems = new List<DisplayedItem>();
 
@@ -477,7 +476,7 @@ public static class TrackingDataManager
             await RecapListCommands.AddOrEditRecapListItemsForAllAsync(guild, channel, newItems);
             await ChannelsAndUrlsCommands.UpdateLastItemCheckAsync(guild, channel);
 
-            if (channelExists)
+            if (!isAddUrl)
             {
                 ulong guildIdLong = ulong.Parse(guild);
 
@@ -522,7 +521,7 @@ public static class TrackingDataManager
         }
     }
 
-    private static async Task ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent, CancellationToken ctChan = default, bool sendAsTextFile = false)
+    private static async Task ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent, CancellationToken ctChan = default, bool isAddUrl = false)
     {
         var existingList = await HintStatusCommands.GetHintStatus(guild, channel);
         var existingByKey = existingList.ToDictionary(MakeKey);
@@ -561,9 +560,9 @@ public static class TrackingDataManager
                 var eligible = hintsToAdd.Where(h => h.Finder != h.Receiver).ToList();
                 if (eligible.Count > 0)
                 {
-                    var lines = await BuildUnifiedLinesAsync(eligible, sendAsTextFile, guild, channel);
+                    var lines = await BuildUnifiedLinesAsync(eligible, isAddUrl, guild, channel);
 
-                    if (sendAsTextFile)
+                    if (isAddUrl)
                     {
                         var content = string.Join("\n", lines).Replace("**", "");
                         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -612,9 +611,9 @@ public static class TrackingDataManager
                 var eligible = hintsToUpdate.Where(h => h.Finder != h.Receiver).ToList();
                 if (eligible.Count > 0)
                 {
-                    var lines = await BuildUnifiedLinesUpdatedAsync(eligible, sendAsTextFile, guild, channel);
+                    var lines = await BuildUnifiedLinesUpdatedAsync(eligible, isAddUrl, guild, channel);
 
-                    if (sendAsTextFile)
+                    if (isAddUrl)
                     {
                         var content = string.Join("\n", lines);
                         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -800,7 +799,7 @@ public static class TrackingDataManager
 
     private static async Task<List<string>> BuildUnifiedLinesAsync(
         IEnumerable<HintStatus> hints,
-        bool sendAsTextFile,
+        bool isAddUrl,
         string guild,
         string channel)
     {
@@ -808,7 +807,7 @@ public static class TrackingDataManager
 
         foreach (var group in hints.GroupBy(h => h.Receiver))
         {
-            if (sendAsTextFile)
+            if (isAddUrl)
             {
                 lines.Add($"{Resource.HintNew}: {group.Key}:");
             }
@@ -821,7 +820,7 @@ public static class TrackingDataManager
 
             foreach (var h in group)
             {
-                if (sendAsTextFile)
+                if (isAddUrl)
                 {
                     lines.Add(string.Format(Resource.HintItemNew, h.Item, h.Location, h.Finder));
                 }
@@ -841,7 +840,7 @@ public static class TrackingDataManager
 
     private static async Task<List<string>> BuildUnifiedLinesUpdatedAsync(
         IEnumerable<HintStatus> hints,
-        bool sendAsTextFile,
+        bool isAddUrl,
         string guild,
         string channel)
     {
@@ -849,7 +848,7 @@ public static class TrackingDataManager
 
         foreach (var group in hints.GroupBy(h => h.Receiver))
         {
-            if (sendAsTextFile)
+            if (isAddUrl)
             {
                 lines.Add($"{Resource.HintUpdated}: {group.Key}:");
             }
@@ -862,7 +861,7 @@ public static class TrackingDataManager
 
             foreach (var h in group)
             {
-                if (sendAsTextFile)
+                if (isAddUrl)
                 {
                     lines.Add(string.Format(Resource.HintItemUpdated, h.Item, h.Location, h.Finder));
                 }
