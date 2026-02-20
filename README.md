@@ -1,5 +1,6 @@
 # ArchipelagoSphereTracker
-
+<details>
+<summary>🇫🇷 Français</summary>
 Un bot Discord pour **suivre des rooms Archipelago**, centraliser les infos de progression des joueurs, et automatiser la gestion des salons/threads.
 
 - Dépôt : https://github.com/Etsuna/ArchipelagoSphereTracker
@@ -415,11 +416,11 @@ Oui. Le mode Archipelago est surtout utile pour la génération/gestion de fichi
 
 Ce projet est distribué sous licence MIT. Voir le fichier [LICENSE](LICENSE).
 
----
----
+</details>
 
-# English Version
-
+<details open>
+<summary>🇬🇧 English</summary>
+  
 ArchipelagoSphereTracker is a Discord bot to **track Archipelago rooms**, centralize player progression data, and automate thread/channel operations.
 
 - Repository: https://github.com/Etsuna/ArchipelagoSphereTracker
@@ -834,3 +835,5 @@ Yes. Archipelago mode is mostly needed for server-side generation/file managemen
 ## License
 
 This project is distributed under the MIT License. See [LICENSE](LICENSE).
+
+</details>
