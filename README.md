@@ -5,7 +5,7 @@ Un bot Discord pour **suivre des rooms Archipelago**, centraliser les infos de p
 
 - Dépôt : https://github.com/Etsuna/ArchipelagoSphereTracker
 - Wiki : https://github.com/Etsuna/ArchipelagoSphereTracker/wiki
-- Randomizer supporté : https://github.com/ArchipelagoMW/Archipelago
+- Randomizer supporté : https://github.com/ArchipelagoMW/Archipelago et Apworld
 - Bot public (mode Normal) : https://discord.com/oauth2/authorize?client_id=1408901673522430047
 
 ---
@@ -425,7 +425,7 @@ ArchipelagoSphereTracker is a Discord bot to **track Archipelago rooms**, centra
 
 - Repository: https://github.com/Etsuna/ArchipelagoSphereTracker
 - Wiki: https://github.com/Etsuna/ArchipelagoSphereTracker/wiki
-- Supported randomizer: https://github.com/ArchipelagoMW/Archipelago
+- Supported randomizer: https://github.com/ArchipelagoMW/Archipelago and Apworld
 - Public bot (Normal mode): https://discord.com/oauth2/authorize?client_id=1408901673522430047
 
 ---
