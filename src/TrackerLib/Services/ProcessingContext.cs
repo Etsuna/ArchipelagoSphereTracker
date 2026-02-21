@@ -11,6 +11,17 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
 
         public List<(string Alias, string Game)> SlotIndex { get; } = new();
 
+        private readonly Dictionary<int, int> _playerLocationsTotalBySlot = new();
+
+        public void SetPlayerLocationsTotal(int slot, int total)
+        {
+            if (slot > 0)
+                _playerLocationsTotalBySlot[slot] = total;
+        }
+
+        public bool TryGetPlayerLocationsTotal(int slot, out int total)
+            => _playerLocationsTotalBySlot.TryGetValue(slot, out total);
+
         private readonly Dictionary<string, string> _gameToDataset =
             new(StringComparer.OrdinalIgnoreCase);
 
@@ -123,6 +134,34 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     ctx.SlotIndex.Capacity = maxSlot;
                     for (int i = 1; i <= maxSlot; i++) ctx.SlotIndex.Add(($"Player{i}", ""));
                     foreach (var row in rows) ctx.SlotIndex[row.Slot - 1] = (row.Alias, row.Game);
+                }
+            }
+
+
+            {
+                const string sql = @"
+                    SELECT Name, IFNULL(Total, '0') AS Total
+                    FROM GameStatusTable
+                    WHERE GuildId=@G AND ChannelId=@C;";
+                await using var cmd = new SQLiteCommand(sql, cn);
+                cmd.Parameters.AddWithValue("@G", guildId);
+                cmd.Parameters.AddWithValue("@C", channelId);
+
+                await using var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                while (await r.ReadAsync().ConfigureAwait(false))
+                {
+                    var alias = r["Name"]?.ToString() ?? string.Empty;
+                    if (!int.TryParse(r["Total"]?.ToString(), out var total))
+                        continue;
+
+                    for (int i = 0; i < ctx.SlotIndex.Count; i++)
+                    {
+                        if (!string.Equals(ctx.SlotIndex[i].Alias, alias, StringComparison.Ordinal))
+                            continue;
+
+                        ctx.SetPlayerLocationsTotal(i + 1, total);
+                        break;
+                    }
                 }
             }
 

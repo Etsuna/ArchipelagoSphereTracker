@@ -351,15 +351,19 @@ public static class TrackingDataManager
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
         var urlStatic = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{tracker}";
 
-        string? json = null, jsonStatic = null;
+        string? json = null;
+        string? jsonStatic = null;
 
         try
         {
             json = await HttpThrottle.GetStringThrottledAsync(
                 Http, url, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
 
-            jsonStatic = await HttpThrottle.GetStringThrottledAsync(
-                Http, urlStatic, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
+            if (isAddUrl)
+            {
+                jsonStatic = await HttpThrottle.GetStringThrottledAsync(
+                    Http, urlStatic, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
+            }
         }
         catch (OperationCanceledException ex)
         {
@@ -376,12 +380,34 @@ public static class TrackingDataManager
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(json) || string.IsNullOrWhiteSpace(jsonStatic))
+        if (string.IsNullOrWhiteSpace(json))
             return;
+
+        if (isAddUrl && string.IsNullOrWhiteSpace(jsonStatic))
+            return;
+
+        IReadOnlyDictionary<int, int> totalsBySlot;
+        if (isAddUrl)
+        {
+            totalsBySlot = TrackerStreamParser.ParsePlayerLocationTotals(jsonStatic!);
+            foreach (var kvp in totalsBySlot)
+                ctx.SetPlayerLocationsTotal(kvp.Key, kvp.Value);
+        }
+        else
+        {
+            var map = new Dictionary<int, int>();
+            for (int slot = 1; slot <= ctx.SlotIndex.Count; slot++)
+            {
+                if (ctx.TryGetPlayerLocationsTotal(slot, out var total))
+                    map[slot] = total;
+            }
+
+            totalsBySlot = map;
+        }
 
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
-        var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, jsonStatic);
+        var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, totalsBySlot);
         if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0) return;
 
         if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);

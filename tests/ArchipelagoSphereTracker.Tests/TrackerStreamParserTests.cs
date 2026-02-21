@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using Xunit;
 
@@ -76,7 +77,8 @@ public class TrackerStreamParserTests
                          "\"player_locations_total\":[{\"player\":1,\"total_locations\":10},{\"player\":2,\"total_locations\":8}]" +
                          "}";
 
-        var status = TrackerStreamParser.ParseGameStatus(ctx, json, jsonStatic);
+        var totalsBySlot = TrackerStreamParser.ParsePlayerLocationTotals(jsonStatic);
+        var status = TrackerStreamParser.ParseGameStatus(ctx, json, totalsBySlot);
 
         Assert.Equal(2, status.Count);
         Assert.Equal("Alice", status[0].Name);
@@ -88,5 +90,22 @@ public class TrackerStreamParserTests
         Assert.Equal("1", status[1].Checks);
         Assert.Equal("8", status[1].Total);
         Assert.Equal(string.Empty, status[1].LastActivity);
+    }
+
+    [Fact]
+    public void ParseGameStatus_UsesZeroWhenTotalMissing()
+    {
+        var ctx = new ProcessingContext();
+        ctx.SlotIndex.Add(("Alice", "GameA"));
+
+        var json = "{" +
+                   "\"player_checks_done\":[{\"player\":1,\"locations\":[1,2]}]" +
+                   "}";
+
+        var status = TrackerStreamParser.ParseGameStatus(ctx, json, new Dictionary<int, int>());
+
+        Assert.Single(status);
+        Assert.Equal("2", status[0].Checks);
+        Assert.Equal("0", status[0].Total);
     }
 }
