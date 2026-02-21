@@ -250,6 +250,16 @@ class Program
 
     private static async Task OnGuildJoined(SocketGuild guild)
     {
+        if (Declare.IsBigAsync && !string.IsNullOrWhiteSpace(Declare.AllowDiscordGuildId))
+        {
+            if (!ulong.TryParse(Declare.AllowDiscordGuildId, out var allowedGuildId) || guild.Id != allowedGuildId)
+            {
+                Console.WriteLine($"BigAsync: unauthorized guild joined ({guild.Id}). Leaving guild.");
+                await guild.LeaveAsync();
+                return;
+            }
+        }
+
         await BotCommands.RegisterCommandsAsync();
     }
 

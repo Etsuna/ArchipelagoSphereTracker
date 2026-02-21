@@ -17,6 +17,7 @@ public class Declare
     public static readonly bool ExportMetrics = (Environment.GetEnvironmentVariable("EXPORT_METRICS") ?? "false").Trim().ToLower() == "true";
     public static readonly string MetricsPort = Environment.GetEnvironmentVariable("METRICS_PORT") ?? string.Empty;
     public static readonly string UserIdForBigAsync = Environment.GetEnvironmentVariable("USER_ID_FOR_BIG_ASYNC") ?? string.Empty;
+    public static readonly string AllowDiscordGuildId = Environment.GetEnvironmentVariable("ALLOW_DISCORD") ?? string.Empty;
     public static readonly bool EnableWebPortal = (Environment.GetEnvironmentVariable("ENABLE_WEB_PORTAL") ?? "true").Trim().ToLower() == "true";
     public static readonly string WebPortalPort = Environment.GetEnvironmentVariable("WEB_PORT") ?? "5199";
     public static readonly string WebPortalBaseUrl = Environment.GetEnvironmentVariable("WEB_BASE_URL") ?? string.Empty;
