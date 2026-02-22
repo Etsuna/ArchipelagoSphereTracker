@@ -9,8 +9,10 @@ using System.Text.RegularExpressions;
 public static class BotCommands
 {
     private static readonly SemaphoreSlim RegisterCommandsLock = new(1, 1);
-    private static readonly TimeSpan RegisterCommandsDelay = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan RegisterCommandsCooldown = TimeSpan.FromSeconds(10);
+    private const int RegisterCommandsMaxConcurrency = 4;
+    private const int RegisterCommandsMaxRetries = 3;
+    private static readonly TimeSpan RegisterCommandsRetryDelay = TimeSpan.FromSeconds(2);
     private static DateTimeOffset _lastRegisterCommandsAt = DateTimeOffset.MinValue;
     private static bool _handlersRegistered;
 
@@ -43,12 +45,13 @@ public static class BotCommands
                 .Select(cmd => cmd.Build() as ApplicationCommandProperties)
                 .ToArray();
 
-            foreach (var guild in Declare.Client.Guilds)
-            {
-                Console.WriteLine("Registering commands for guild: " + guild.Name);
-                await Declare.Client.Rest.BulkOverwriteGuildCommands(builtCommands, guild.Id);
-                await Task.Delay(RegisterCommandsDelay);
-            }
+            await Parallel.ForEachAsync(
+                Declare.Client.Guilds,
+                new ParallelOptions { MaxDegreeOfParallelism = RegisterCommandsMaxConcurrency },
+                async (guild, _) =>
+                {
+                    await RegisterGuildCommandsWithRetryAsync(guild, builtCommands);
+                });
 
             if (!_handlersRegistered)
             {
@@ -61,6 +64,28 @@ public static class BotCommands
         finally
         {
             RegisterCommandsLock.Release();
+        }
+    }
+    
+    private static async Task RegisterGuildCommandsWithRetryAsync(SocketGuild guild, ApplicationCommandProperties[] builtCommands)
+    {
+        for (var attempt = 1; attempt <= RegisterCommandsMaxRetries; attempt++)
+        {
+            try
+            {
+                Console.WriteLine($"Registering commands for guild: {guild.Name} ({guild.Id}) [attempt {attempt}/{RegisterCommandsMaxRetries}]");
+                await Declare.Client.Rest.BulkOverwriteGuildCommands(builtCommands, guild.Id);
+                return;
+            }
+            catch (Exception ex) when (attempt < RegisterCommandsMaxRetries)
+            {
+                Console.WriteLine($"Failed to register commands for guild {guild.Name} ({guild.Id}) on attempt {attempt}: {ex.Message}");
+                await Task.Delay(TimeSpan.FromMilliseconds(RegisterCommandsRetryDelay.TotalMilliseconds * attempt));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to register commands for guild {guild.Name} ({guild.Id}) after {RegisterCommandsMaxRetries} attempts: {ex.Message}");
+            }
         }
     }
 
