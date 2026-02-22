@@ -192,6 +192,7 @@ public static class WebPortalServer
 
             var form = await request.ReadFormAsync();
             var alias = form["alias"].FirstOrDefault();
+            var skipMention = form["skipMention"].FirstOrDefault() ?? "0";
             if (string.IsNullOrWhiteSpace(alias))
                 return Results.BadRequest(new { message = "alias is required" });
 
@@ -199,7 +200,7 @@ public static class WebPortalServer
             if (owners.Contains(userId))
                 return Results.Conflict(new { message = "Alias already registered for this user." });
 
-            await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, "0");
+            await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, skipMention);
 
             var recapExists = await RecapListCommands.CheckIfExists(guildId, channelId, userId, alias);
             if (!recapExists)

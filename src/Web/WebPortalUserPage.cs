@@ -331,6 +331,16 @@ public static class WebPortalUserPage
         <div class=""action-group"">
           <label for=""add-alias-select"">{T("WebAddExistingAliasInThread")}</label>
           <select id=""add-alias-select""></select>
+          <label for=""add-alias-skip-mention-select"">{T("SCAddAliasSkipMention")}</label>
+          <select id=""add-alias-skip-mention-select"">
+            <option value=""0"">{T("None")}</option>
+            <option value=""1"">{T("Filler")}</option>
+            <option value=""16"">{T("Trap")}</option>
+            <option value=""17"">{T("Filler")} + {T("Trap")}</option>
+            <option value=""21"">{T("Filler")} + {T("Trap")} + {T("Useful")}</option>
+            <option value=""27"">{T("Filler")} + {T("Trap")} + {T("Useful")} + {T("Required")}</option>
+            <option value=""31"">{T("Filler")} + {T("Trap")} + {T("Useful")} + {T("Required")} + {T("Progression")}</option>
+        </select>
           <button class=""button"" id=""add-alias-button"">{T("WebAddSelectedAlias")}</button>
         </div>
         <div class=""action-group"">
@@ -369,6 +379,7 @@ public static class WebPortalUserPage
     const itemsRoot = document.getElementById('items-root');
     const hintsRoot = document.getElementById('hints-root');
     const addAliasSelect = document.getElementById('add-alias-select');
+    const addAliasSkipMentionSelect = document.getElementById('add-alias-skip-mention-select');
     const deleteAliasSelect = document.getElementById('delete-alias-select');
     const addAliasButton = document.getElementById('add-alias-button');
     const deleteAliasButton = document.getElementById('delete-alias-button');
@@ -678,6 +689,7 @@ public static class WebPortalUserPage
 
     const addAliasFromPortal = async () => {{
       const alias = addAliasSelect.value;
+      const skipMention = addAliasSkipMentionSelect?.value || '0';      
       if (!alias) {{
         setStatus({Js("WebSelectAliasToAdd")});
         return;
@@ -686,6 +698,7 @@ public static class WebPortalUserPage
       setStatus({Js("WebAddingAlias")});
       const formData = new FormData();
       formData.append('alias', alias);
+      formData.append('skipMention', skipMention);
 
       const res = await fetch(apiBase + '/alias/add', {{ method: 'POST', body: formData }});
       if (res.ok) {{
