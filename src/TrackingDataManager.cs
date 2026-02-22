@@ -46,6 +46,7 @@ public static class TrackingDataManager
             try
             {
                 await ChannelConfigCache.LoadAllAsync();
+                var nextCacheReloadAt = DateTimeOffset.UtcNow.AddHours(1);
 
                 var backoffSeconds = 2;
 
@@ -53,6 +54,12 @@ public static class TrackingDataManager
                 {
                     try
                     {
+                        if (DateTimeOffset.UtcNow >= nextCacheReloadAt)
+                        {
+                            await ChannelConfigCache.LoadAllAsync();
+                            nextCacheReloadAt = DateTimeOffset.UtcNow.AddHours(1);
+                        }
+
                         if (Declare.Client.ConnectionState != ConnectionState.Connected)
                         {
                             await Task.Delay(5000, token);
