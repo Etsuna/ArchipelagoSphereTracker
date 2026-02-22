@@ -351,15 +351,19 @@ public static class TrackingDataManager
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
         var urlStatic = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{tracker}";
 
-        string? json = null, jsonStatic = null;
+        string? json = null;
+        string? jsonStatic = null;
 
         try
         {
             json = await HttpThrottle.GetStringThrottledAsync(
                 Http, url, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
 
-            jsonStatic = await HttpThrottle.GetStringThrottledAsync(
-                Http, urlStatic, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
+            if (isAddUrl)
+            {
+                jsonStatic = await HttpThrottle.GetStringThrottledAsync(
+                    Http, urlStatic, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
+            }
         }
         catch (OperationCanceledException ex)
         {
@@ -376,16 +380,38 @@ public static class TrackingDataManager
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(json) || string.IsNullOrWhiteSpace(jsonStatic))
+        if (string.IsNullOrWhiteSpace(json))
             return;
+
+        if (isAddUrl && string.IsNullOrWhiteSpace(jsonStatic))
+            return;
+
+        IReadOnlyDictionary<int, int> totalsBySlot;
+        if (isAddUrl)
+        {
+            totalsBySlot = TrackerStreamParser.ParsePlayerLocationTotals(jsonStatic!);
+            foreach (var kvp in totalsBySlot)
+                ctx.SetPlayerLocationsTotal(kvp.Key, kvp.Value);
+        }
+        else
+        {
+            var map = new Dictionary<int, int>();
+            for (int slot = 1; slot <= ctx.SlotIndex.Count; slot++)
+            {
+                if (ctx.TryGetPlayerLocationsTotal(slot, out var total))
+                    map[slot] = total;
+            }
+
+            totalsBySlot = map;
+        }
 
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
-        var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, jsonStatic);
+        var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, totalsBySlot);
         if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0) return;
 
         if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
-        if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan, isAddUrl).ConfigureAwait(false);
+        if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
         if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent, ctChan, isAddUrl).ConfigureAwait(false);
 
         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guild, channel);
@@ -458,8 +484,9 @@ public static class TrackingDataManager
         return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
     }
 
-    private static async Task ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent, CancellationToken ctChan, bool isAddUrl)
+    private static async Task ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent, CancellationToken ctChan)
     {
+        var channelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
         var existingKeys = new HashSet<string>(await DisplayItemCommands.GetExistingKeysAsync(guild, channel));
         var newItems = new List<DisplayedItem>();
 
@@ -476,7 +503,7 @@ public static class TrackingDataManager
             await RecapListCommands.AddOrEditRecapListItemsForAllAsync(guild, channel, newItems);
             await ChannelsAndUrlsCommands.UpdateLastItemCheckAsync(guild, channel);
 
-            if (!isAddUrl)
+            if (channelExists)
             {
                 ulong guildIdLong = ulong.Parse(guild);
 

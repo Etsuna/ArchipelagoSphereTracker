@@ -166,18 +166,42 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             return list;
         }
 
-        public static List<GameStatus> ParseGameStatus(ProcessingContext ctx, string json, string jsonStatic)
+        public static List<GameStatus> ParseGameStatus(ProcessingContext ctx, string json, IReadOnlyDictionary<int, int> totalsBySlot)
         {
             var list = new List<GameStatus>(64);
 
             var activityBySlot = ParseActivityTimersMap(json);
             var foundBySlot = ParseChecksDoneCountsMap(json);
 
+            for (int slot = 1; slot <= ctx.SlotIndex.Count; slot++)
+            {
+                var alias = ctx.SlotAlias(slot) ?? string.Empty;
+                var game = ctx.SlotGame(slot) ?? string.Empty;
+                var last = activityBySlot.TryGetValue(slot, out var t) ? t : null;
+                var found = foundBySlot.TryGetValue(slot, out var c) ? c : 0;
+                var total = totalsBySlot.TryGetValue(slot, out var configuredTotal) ? configuredTotal : 0;
+
+                list.Add(new GameStatus
+                {
+                    Name = alias,
+                    Game = game,
+                    Checks = found.ToString(CultureInfo.InvariantCulture),
+                    Total = total.ToString(CultureInfo.InvariantCulture),
+                    LastActivity = last ?? string.Empty
+                });
+            }
+
+            return list;
+        }
+
+        public static Dictionary<int, int> ParsePlayerLocationTotals(string jsonStatic)
+        {
+            var totalsBySlot = new Dictionary<int, int>();
             var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(jsonStatic),
                 new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
 
             if (!MoveToProperty(ref reader, "player_locations_total", JsonTokenType.StartArray))
-                return list;
+                return totalsBySlot;
 
             while (reader.Read())
             {
@@ -190,32 +214,19 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                 while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
                     if (reader.TokenType != JsonTokenType.PropertyName) { SkipValue(ref reader); continue; }
-                    var prop = reader.GetString(); reader.Read();
+                    var prop = reader.GetString();
+                    reader.Read();
 
                     if (prop == "player") slot = ReadInt(ref reader);
                     else if (prop == "total_locations") total = ReadInt(ref reader);
                     else SkipValue(ref reader);
                 }
 
-                if (slot >= 0)
-                {
-                    var alias = ctx.SlotAlias(slot) ?? string.Empty;
-                    var game = ctx.SlotGame(slot) ?? string.Empty;
-                    var last = activityBySlot.TryGetValue(slot, out var t) ? t : null;
-                    var found = foundBySlot.TryGetValue(slot, out var c) ? c : 0;
-
-                    list.Add(new GameStatus
-                    {
-                        Name = alias,
-                        Game = game,
-                        Checks = found.ToString(CultureInfo.InvariantCulture),
-                        Total = total.ToString(CultureInfo.InvariantCulture),
-                        LastActivity = last ?? string.Empty
-                    });
-                }
+                if (slot > 0)
+                    totalsBySlot[slot] = total;
             }
 
-            return list;
+            return totalsBySlot;
         }
 
         private static Dictionary<int, int> ParseChecksDoneCountsMap(string json)
