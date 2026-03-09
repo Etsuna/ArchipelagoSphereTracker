@@ -61,6 +61,9 @@ public static class WebPortalServer
             RequestPath = "/portal"
         });
 
+        app.MapGet("/", () => Results.Redirect("/portal/"));
+        app.MapGet("/portal", () => Results.Redirect("/portal/"));
+
         // Servir le fichier commands.html (stocké à la racine) sous /portal/{guildId}/{channelId}/commands.html
         app.MapGet("/portal/{guildId}/{channelId}/commands.html", (string guildId, string channelId) =>
         {
