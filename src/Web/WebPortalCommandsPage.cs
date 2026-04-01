@@ -415,6 +415,11 @@ public static class WebPortalCommandsPage
 
   <script>
   const params = new URLSearchParams(window.location.search);
+  if (window.__astPortalCommandsInitialized) {{
+    console.debug('AST portal commands page already initialized; skipping duplicate init.');
+  }} else {{
+    window.__astPortalCommandsInitialized = true;
+
 
   // Attend /portal/{{guildId}}/{{channelId}}/commands.html (ids numériques)
   const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/commands\.html$/);
@@ -661,8 +666,9 @@ public static class WebPortalCommandsPage
     }});
   }});
 
-  loadRoomLinks();
-  loadYamlOptions();
+    loadRoomLinks();
+    loadYamlOptions();
+  }}
 </script>
 </body>
 </html>";

@@ -38,6 +38,7 @@ public static class WebPortalServer
         CultureInfo.DefaultThreadCurrentUICulture = culture;
 
         Directory.CreateDirectory(Declare.WebPortalPath);
+        EnsureRobotsTxtFile();
 
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
@@ -60,6 +61,16 @@ public static class WebPortalServer
             FileProvider = portalFiles,
             RequestPath = "/portal"
         });
+
+        app.MapGet("/robots.txt", () =>
+        {
+            var robotsPath = EnsureRobotsTxtFile();
+            return Results.File(robotsPath, "text/plain; charset=utf-8");
+        });
+
+
+        app.MapGet("/", () => Results.Redirect("/portal/"));
+        app.MapGet("/portal", () => Results.Redirect("/portal/"));
 
         // Servir le fichier commands.html (stocké à la racine) sous /portal/{guildId}/{channelId}/commands.html
         app.MapGet("/portal/{guildId}/{channelId}/commands.html", (string guildId, string channelId) =>
@@ -192,6 +203,7 @@ public static class WebPortalServer
 
             var form = await request.ReadFormAsync();
             var alias = form["alias"].FirstOrDefault();
+            var skipMention = form["skipMention"].FirstOrDefault() ?? "0";
             if (string.IsNullOrWhiteSpace(alias))
                 return Results.BadRequest(new { message = "alias is required" });
 
@@ -199,7 +211,7 @@ public static class WebPortalServer
             if (owners.Contains(userId))
                 return Results.Conflict(new { message = "Alias already registered for this user." });
 
-            await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, "0");
+            await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, skipMention);
 
             var recapExists = await RecapListCommands.CheckIfExists(guildId, channelId, userId, alias);
             if (!recapExists)
@@ -806,6 +818,17 @@ public static class WebPortalServer
                 Console.WriteLine($"[Portal] Failed to delete expired download '{filePath}': {ex.Message}");
             }
         }
+    }
+
+    private static string EnsureRobotsTxtFile()
+    {
+        var robotsPath = Path.Combine(Declare.WebPortalPath, "robots.txt");
+        const string robotsContent = "User-agent: *\nDisallow: /\n";
+
+        if (!File.Exists(robotsPath) || !string.Equals(File.ReadAllText(robotsPath), robotsContent, StringComparison.Ordinal))
+            File.WriteAllText(robotsPath, robotsContent);
+
+        return robotsPath;
     }
 
     // ----------------------------
