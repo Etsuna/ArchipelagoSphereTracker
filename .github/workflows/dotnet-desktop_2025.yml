@@ -52,9 +52,6 @@ jobs:
         {
           echo 'PROJECTS<<EOF'
           echo "ast:ArchipelagoSphereTracker.csproj"
-          if [ "${{ matrix.os }}" = "windows-2025" ]; then
-            echo "gui:Gui/AST-GUI.csproj"
-          fi
           echo 'EOF'
         } >> "$GITHUB_ENV"
 

@@ -6,12 +6,15 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PublishTrimmed>false</PublishTrimmed>
-		<Configurations>Debug;Release;Testing;ArchipelagoMode;RC;NormalMode;UpdateBdd;bigasync</Configurations>
+		<Configurations>Debug;Release;Testing;ArchipelagoMode;RC;NormalMode;UpdateBdd;bigasync;gui</Configurations>
 		<Version Condition="'$(Version)'==''">0.0.0</Version>
 		<AssemblyVersion>$(Version)</AssemblyVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="11.3.7" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.7" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.7" />
 		<PackageReference Include="Discord.Net" Version="3.18.0" />
 		<PackageReference Include="Discord.Net.Commands" Version="3.18.0" />
 		<PackageReference Include="DotNetEnv" Version="3.1.1" />
