@@ -84,6 +84,7 @@ Au lancement, AST attend un argument :
 --ArchipelagoMode
 --UpdateBDD
 --BigAsync
+--gui
 ```
 
 ### Description des modes
@@ -93,6 +94,7 @@ Au lancement, AST attend un argument :
 - `--ArchipelagoMode` : active les fonctionnalités de génération/fichiers Archipelago.
 - `--UpdateBDD` : exécute la logique de migration BDD puis quitte.
 - `--BigAsync` : active un mode asynchrone renforcé (usage avancé).
+- `--gui` : lance l’interface desktop native d’administration (édition `.env`, test Discord, start/stop bot, logs live).
 
 ---
 
@@ -131,6 +133,9 @@ Ajoutez un fichier `.env` dans le même dossier que l’exécutable.
 
 - Windows : `ArchipelagoSphereTracker.exe --NormalMode` (ou `--ArchipelagoMode`)
 - Linux : `./ArchipelagoSphereTracker --NormalMode` (ou `--ArchipelagoMode`)
+- GUI Desktop (admin) :
+  - Windows : `ArchipelagoSphereTracker.exe --gui`
+  - Linux : `./ArchipelagoSphereTracker --gui`
 
 ### 5) (Archipelago Mode uniquement)
 
@@ -350,8 +355,7 @@ src/
   Install/            # installation/backup Archipelago
 tests/
   ArchipelagoSphereTracker.Tests/
-Gui/
-  # projet GUI annexe
+  Gui/                # GUI desktop native Avalonia (--gui)
 apworld/
   # assets/templates apworld
 Install/
@@ -375,6 +379,11 @@ Install/
 - Vérifier `DISCORD_TOKEN` dans `.env`.
 - Vérifier l’argument de lancement (`--NormalMode` ou `--ArchipelagoMode`).
 - Vérifier que l’OS est Windows ou Linux.
+
+### Le GUI ne démarre pas sur Linux serveur
+
+- En environnement headless (sans session graphique), `--gui` ne peut pas s’ouvrir.
+- Dans ce cas, utilisez `--NormalMode` / `--ArchipelagoMode` côté serveur, ou lancez `--gui` depuis une machine desktop.
 
 ### Les commandes slash n’apparaissent pas
 
@@ -504,6 +513,7 @@ AST expects one startup argument:
 --ArchipelagoMode
 --UpdateBDD
 --BigAsync
+--gui
 ```
 
 ### Mode details
@@ -513,6 +523,7 @@ AST expects one startup argument:
 - `--ArchipelagoMode`: enables generation and Archipelago file management.
 - `--UpdateBDD`: run DB migration logic and exit.
 - `--BigAsync`: enables advanced async behavior.
+- `--gui`: starts the native desktop admin UI (edit `.env`, test Discord, start/stop bot, live logs).
 
 ---
 
@@ -551,6 +562,9 @@ Add a `.env` file in the same folder as the executable.
 
 - Windows: `ArchipelagoSphereTracker.exe --NormalMode` (or `--ArchipelagoMode`)
 - Linux: `./ArchipelagoSphereTracker --NormalMode` (or `--ArchipelagoMode`)
+- Desktop GUI (admin):
+  - Windows: `ArchipelagoSphereTracker.exe --gui`
+  - Linux: `./ArchipelagoSphereTracker --gui`
 
 ### 5) (Archipelago mode only)
 
@@ -770,8 +784,7 @@ src/
   Install/            # Archipelago setup/backup flows
 tests/
   ArchipelagoSphereTracker.Tests/
-Gui/
-  # auxiliary GUI project
+  Gui/                # native Avalonia desktop GUI (--gui)
 apworld/
   # apworld assets/templates
 Install/
@@ -795,6 +808,11 @@ Install/
 - Check `DISCORD_TOKEN` in `.env`.
 - Check startup argument (`--NormalMode` or `--ArchipelagoMode`).
 - Confirm runtime OS is Linux or Windows.
+
+### GUI does not start on Linux server
+
+- In headless environments (no desktop/X11/Wayland session), `--gui` cannot open.
+- Use `--NormalMode` / `--ArchipelagoMode` on servers, and run `--gui` from a desktop machine.
 
 ### Slash commands do not appear
 
