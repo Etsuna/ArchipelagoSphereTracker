@@ -3,7 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
-    <Configurations>Debug;Release;bigasync</Configurations>
+    <Configurations>Debug;Release;bigasync;gui</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

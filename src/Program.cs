@@ -14,19 +14,30 @@ class Program
     static async Task Main(string[] args)
     {
         Env.Load();
+if (args.Length == 0)
+        {
 #if ARCHIPELAGOMODE
-        args = ["--archipelagoMode"];
+            args = ["--archipelagoMode"];
 #elif RC
-        args = ["--archipelagoMode"];
+            args = ["--archipelagoMode"];
 #elif NORMALMODE
-        args = ["--normalmode"];
+            args = ["--normalmode"];
 #elif DEBUG
-        args = ["--normalmode"];
+            args = ["--normalmode"];
 #elif UPDATEBDD
-        args = ["--updatebdd"];
+            args = ["--updatebdd"];
 #elif BIGASYNC
-        args = ["--bigasync"];
+            args = ["--bigasync"];
+#elif GUI
+            args = ["--gui"];
 #endif
+        }
+
+        if (args.Length > 0 && args[0].Equals("--gui", StringComparison.OrdinalIgnoreCase))
+        {
+            DesktopGuiRunner.Run(args);
+            return;
+        }
 
         string currentVersion = File.Exists(Declare.VersionFile) ? await File.ReadAllTextAsync(Declare.VersionFile) : "";
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
@@ -84,6 +95,7 @@ class Program
             Console.WriteLine($"  --NormalMode        {Resource.ProgramNormalMode}");
             Console.WriteLine($"  --UpdateBDD         {Resource.ProgramUpdateBDD}");
             Console.WriteLine($"  --BigAsync          {Resource.ProgramBigAsyncMode}");
+            Console.WriteLine("  --gui               Launch the modern admin GUI");
             Console.WriteLine();
             Console.WriteLine(Resource.ProgramHelp);
         }
