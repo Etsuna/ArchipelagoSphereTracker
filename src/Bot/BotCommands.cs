@@ -215,6 +215,8 @@ public static class BotCommands
             "list-items" => await HelperClass.ListItems(command, user?.Id.ToString() ?? "", alias, channelId, guildId),
             "hint-from-finder" => await HintClass.HintForFinder(realAlias, channelId, guildId),
             "hint-for-receiver" => await HintClass.HintForReceiver(realAlias, channelId, guildId),
+            "analyze-spoiler-log" => await SpoilerAnalysisClass.AnalyzeSpoilerLog(command, channelId, guildId, alias),
+            "send-spoiler-log" => await SpoilerLogClass.SendSpoilerLog(command, channelId),
             "status-games-list" => await HelperClass.StatusGameList(channelId, guildId),
             "info" => await HelperClass.Info(channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, channelId, guildId),

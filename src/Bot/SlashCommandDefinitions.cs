@@ -127,6 +127,32 @@ public static class SlashCommandDefinitions
                 .AddOption(AliasOption("alias")),
 
             new SlashCommandBuilder()
+                .WithName("analyze-spoiler-log")
+                .WithDescription("Analyse les blocages potentiels par sphère depuis le spoiler log")
+                .AddOption(AliasOption("alias"))
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("sphere")
+                    .WithDescription("Sphère max à analyser (optionnel)")
+                    .WithType(ApplicationCommandOptionType.Integer)
+                    .WithRequired(false))
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("missing-mode")
+                    .WithDescription("full = tout afficher, first = afficher uniquement la plus petite sphère manquante")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(false)
+                    .AddChoice("lowest-sphere-only", "first")
+                    .AddChoice("full", "full")),
+
+            new SlashCommandBuilder()
+                .WithName("send-spoiler-log")
+                .WithDescription("Upload le spoiler log pour l'analyse")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("file")
+                    .WithDescription("Fichier spoiler log (.txt/.json)")
+                    .WithType(ApplicationCommandOptionType.Attachment)
+                    .WithRequired(true)),
+
+            new SlashCommandBuilder()
                 .WithName("apworlds-info")
                 .WithDescription(Resource.SCApworldInfoDescription),
 
