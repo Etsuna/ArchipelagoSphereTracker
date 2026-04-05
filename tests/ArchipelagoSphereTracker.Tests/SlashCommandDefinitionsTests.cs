@@ -34,7 +34,12 @@ public class SlashCommandDefinitionsTests
             "hint-from-finder",
             "hint-for-receiver",
             "list-items",
+            "analyze-spoiler-log",
+            "send-spoiler-log",
             "apworlds-info",
+            "ast-user-portal",
+            "ast-room-portal",
+            "ast-portal",
             "discord",
             "excluded-item",
             "excluded-item-list",
@@ -46,16 +51,9 @@ public class SlashCommandDefinitionsTests
         Assert.All(commands, command => Assert.False(string.IsNullOrWhiteSpace(command.Description)));
 
         AssertCommandOption(commands, "add-alias", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "add-alias", "Resource.SCAddAliasSkipMention", ApplicationCommandOptionType.String, required: true, autocomplete: false);
         AssertCommandOption(commands, "delete-alias", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "update-frequency-check", "Resource.CheckFrequency", ApplicationCommandOptionType.String, required: true, autocomplete: false);
         AssertCommandOption(commands, "add-url", "url", ApplicationCommandOptionType.String, required: true, autocomplete: false);
-        AssertCommandOption(commands, "add-url", "Resource.SCThreadName", ApplicationCommandOptionType.String, required: true, autocomplete: false);
-        AssertCommandOption(commands, "add-url", "Resource.SCThreadType", ApplicationCommandOptionType.String, required: true, autocomplete: false);
         AssertCommandOption(commands, "add-url", "auto-add-members", ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
-        AssertCommandOption(commands, "add-url", "Resource.SCSilentOption", ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
-        AssertCommandOption(commands, "add-url", "Resource.CheckFrequency", ApplicationCommandOptionType.String, required: true, autocomplete: false);
-        AssertCommandOption(commands, "update-silent-option", "Resource.SCSilentOption", ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
         AssertCommandOption(commands, "get-patch", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "recap", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "recap-and-clean", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
@@ -63,6 +61,10 @@ public class SlashCommandDefinitionsTests
         AssertCommandOption(commands, "hint-from-finder", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "hint-for-receiver", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "list-items", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
+        AssertCommandOption(commands, "analyze-spoiler-log", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
+        AssertCommandOption(commands, "analyze-spoiler-log", "sphere", ApplicationCommandOptionType.Integer, required: false, autocomplete: false);
+        AssertCommandOption(commands, "analyze-spoiler-log", "missing-mode", ApplicationCommandOptionType.String, required: false, autocomplete: false);
+        AssertCommandOption(commands, "send-spoiler-log", "file", ApplicationCommandOptionType.Attachment, required: true, autocomplete: false);
         AssertCommandOption(commands, "excluded-item", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "excluded-item", "items", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "delete-excluded-item", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
