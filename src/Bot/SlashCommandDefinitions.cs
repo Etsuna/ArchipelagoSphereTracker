@@ -243,6 +243,11 @@ public static class SlashCommandDefinitions
                         .WithName("file")
                         .WithDescription(Resource.SCGenerateWithZipChooseDescription)
                         .WithType(ApplicationCommandOptionType.Attachment)
+                        .WithRequired(true))
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("skip-prog-balancing")
+                        .WithDescription("skip-prog-balancing")
+                        .WithType(ApplicationCommandOptionType.Boolean)
                         .WithRequired(true)),
 
                 new SlashCommandBuilder()
@@ -254,7 +259,15 @@ public static class SlashCommandDefinitions
                         .WithType(ApplicationCommandOptionType.Attachment)
                         .WithRequired(true)),
 
-                new SlashCommandBuilder().WithName("generate").WithDescription(Resource.SCGenerateDescription),
+                new SlashCommandBuilder()
+                    .WithName("generate")
+                    .WithDescription(Resource.SCGenerateDescription)
+                    .AddOption(new SlashCommandOptionBuilder()
+                            .WithName("skip-prog-balancing")
+                            .WithDescription("skip-prog-balancing")
+                            .WithType(ApplicationCommandOptionType.Boolean)
+                            .WithRequired(true)),
+
                 new SlashCommandBuilder().WithName("test-generate").WithDescription(Resource.SCTestGenerateDescription)
             });
         }

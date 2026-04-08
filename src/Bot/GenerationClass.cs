@@ -186,6 +186,8 @@ public class GenerationClass : Declare
     public static async Task<string> GenerateWithZip(SocketSlashCommand command, string channelId)
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
+        bool skipProgBalancing = command.Data.Options.FirstOrDefault(o => o.Name == "skip-prog-balancing")?.Value as bool? ?? false;
+        
         if (attachment == null || !attachment.Filename.EndsWith(".zip"))
             return Resource.GenerationWrongZipFormat;
 
@@ -228,6 +230,10 @@ public class GenerationClass : Declare
 
         var launcherPath = GetLauncherPath();
         var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
+        if (skipProgBalancing)
+        {
+            arguments += " --skip_prog_balancing";
+        }
         var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
         var message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
@@ -322,6 +328,8 @@ public class GenerationClass : Declare
         var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
         var outputFolder = Path.Combine(OutputPath, channelId);
 
+        bool skipProgBalancing = command.Data.Options.FirstOrDefault(o => o.Name == "skip-prog-balancing")?.Value as bool? ?? false;
+
         try
         {
             if (Directory.Exists(outputFolder))
@@ -341,6 +349,11 @@ public class GenerationClass : Declare
                 return string.Format(Resource.CALauncherNotFound, launcherPath);
 
             var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
+            if(skipProgBalancing)
+            {
+                arguments += " --skip_prog_balancing";
+            }
+
             var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
             var message = await RunGenerationProcessAsync(startInfo, command, outputFolder, playersFolder);
