@@ -115,4 +115,49 @@ public class SpoilerAnalysisClassTests
 
         Assert.Equal(shouldBeMissing, report.Contains("Zeldas Letter From Skip Option"));
     }
+
+    [Fact]
+    public void BuildReport_SelectedAlias_ShowsOnlyPlayersItBlocksOnTheirCurrentSphere()
+    {
+        var checks = new List<SpoilerAnalysisClass.Check>
+        {
+            new(2, "my-needed-check", "Other", "My Item", "Selected"),
+            new(3, "too-late-for-player-a", "Selected", "Later Item", "PlayerA"),
+            new(1, "player-a-current-check", "Other", "Current Item", "PlayerA"),
+            new(4, "player-b-current-check", "Selected", "Blocking Item", "PlayerB")
+        };
+
+        var report = SpoilerAnalysisClass.BuildReport(
+            checks,
+            new HashSet<string>(StringComparer.Ordinal),
+            "Selected",
+            sphereLimit: null,
+            showAllMissing: false,
+            hideItems: true);
+
+        Assert.Contains("my-needed-check", report);
+        Assert.Contains("Selected bloque actuellement d'autres joueurs : 1", report);
+        Assert.Contains("player-b-current-check", report);
+        Assert.DoesNotContain("too-late-for-player-a", report);
+    }
+
+    [Fact]
+    public void BuildReport_SelectedAliasCanBlockOthersWithoutBeingBlocked()
+    {
+        var checks = new List<SpoilerAnalysisClass.Check>
+        {
+            new(1, "outbound-check", "Selected", "Their Item", "PlayerA")
+        };
+
+        var report = SpoilerAnalysisClass.BuildReport(
+            checks,
+            new HashSet<string>(StringComparer.Ordinal),
+            "Selected",
+            sphereLimit: null,
+            showAllMissing: false,
+            hideItems: true);
+
+        Assert.Contains("Aucune check ne bloque actuellement Selected.", report);
+        Assert.Contains("outbound-check", report);
+    }
 }
