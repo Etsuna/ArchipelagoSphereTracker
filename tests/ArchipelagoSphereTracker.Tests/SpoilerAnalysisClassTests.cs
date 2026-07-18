@@ -1,36 +1,62 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Xunit;
 
 public class SpoilerAnalysisClassTests
 {
-    private static readonly string SpoilerPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "SpoilerTest", "AP_39818916018271536012_Spoiler.txt"));
-
     [Fact]
-    public void ParseSpoiler_ExtractsPlaythroughChecksAndPaths()
+    public void ParsePlaythrough_ExtractsChecks()
     {
-        var (checks, paths) = SpoilerAnalysisClass.ParseSpoiler(SpoilerPath);
+        var spoilerPath = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(spoilerPath, """
+                Playthrough:
+                1: {
+                  A Location (Finder): An Item (Receiver)
+                }
+                Paths:
+                """);
 
-        Assert.NotEmpty(checks);
-        Assert.NotEmpty(paths);
+            var checks = SpoilerAnalysisClass.ParsePlaythrough(spoilerPath);
 
-        Assert.Contains(checks, c => c.Receiver == "SurdjakShop");
-        Assert.Contains(paths.Keys, key => key.Finder == "aNonofai");
+            Assert.Single(checks);
+            Assert.Equal(
+                new SpoilerAnalysisClass.Check(1, "A Location", "Finder", "An Item", "Receiver"),
+                checks[0]);
+        }
+        finally
+        {
+            File.Delete(spoilerPath);
+        }
     }
 
     [Fact]
-    public void BuildReport_WithNoFoundItems_ForSurdjakShop_ReturnsMissingItems()
+    public void BuildReport_AutoCompletedLocation_IsNotReportedMissing()
     {
-        var (checks, paths) = SpoilerAnalysisClass.ParseSpoiler(SpoilerPath);
-        var found = new HashSet<(string Finder, string Receiver, string Item, string Location)>();
+        var checks = new List<SpoilerAnalysisClass.Check>
+        {
+            new(1, "Chamber of Sages", "EtsunaZeldaOOT", "Time Travel", "EtsunaZeldaOOT"),
+            new(2, "Real Check", "EtsunaZeldaOOT", "Progression Item", "EtsunaZeldaOOT")
+        };
+        var autoCompleted = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "LOCATION||ETSUNAZELDAOOT||CHAMBER OF SAGES"
+        };
 
-        var report = SpoilerAnalysisClass.BuildReport(checks, paths, found, "SurdjakShop", sphereLimit: null, showAllMissing: true);
+        var report = SpoilerAnalysisClass.BuildReport(
+            checks,
+            new HashSet<string>(StringComparer.Ordinal),
+            "EtsunaZeldaOOT",
+            sphereLimit: null,
+            showAllMissing: true,
+            hideItems: true,
+            autoCompleted);
 
-        Assert.Contains("Items manquants du Playthrough", report);
-        Assert.DoesNotContain("Aucun item manquant", report);
-        Assert.Contains("SurdjakShop", report);
+        Assert.DoesNotContain("Chamber of Sages", report);
+        Assert.Contains("Real Check", report);
+        Assert.Contains("Sphère actuellement bloquante : 2", report);
     }
 
     [Fact]
@@ -39,23 +65,19 @@ public class SpoilerAnalysisClassTests
         var checks = new List<SpoilerAnalysisClass.Check>
         {
             new(1, "loc-1", "finder-1", "item-1", "SurdjakShop"),
-            new(2, "loc-2", "finder-2", "item-2", "SurdjakShop"),
-            new(2, "loc-3", "finder-3", "item-3", "SurdjakShop")
+            new(2, "loc-2", "finder-2", "item-2", "SurdjakShop")
         };
 
-        var paths = new Dictionary<(string Location, string Finder), List<string>>
-        {
-            [("loc-1", "finder-1")] = new List<string> { "Menu -> loc-1" },
-            [("loc-2", "finder-2")] = new List<string> { "Menu -> loc-2" },
-            [("loc-3", "finder-3")] = new List<string> { "Menu -> loc-3" }
-        };
+        var report = SpoilerAnalysisClass.BuildReport(
+            checks,
+            new HashSet<string>(StringComparer.Ordinal),
+            "SurdjakShop",
+            sphereLimit: null,
+            showAllMissing: false,
+            hideItems: true);
 
-        var found = new HashSet<(string Finder, string Receiver, string Item, string Location)>();
-
-        var report = SpoilerAnalysisClass.BuildReport(checks, paths, found, "SurdjakShop", sphereLimit: null, showAllMissing: false);
-
-        Assert.Contains("sphère la plus basse (1)", report);
-        Assert.Contains("- s1:", report);
-        Assert.DoesNotContain("- s2:", report);
+        Assert.Contains("Sphère actuellement bloquante : 1", report);
+        Assert.Contains("[S1]", report);
+        Assert.DoesNotContain("[S2]", report);
     }
 }

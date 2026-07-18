@@ -49,6 +49,7 @@ public static class SpoilerAnalysisClass
 
         var checks = ParsePlaythrough(spoilerPath);
         var found = await LoadFoundItemsAsync(guildId, channelId);
+        var autoCompleted = await LoadAutoCompletedChecksAsync(guildId, channelId);
 
         return BuildReport(
             checks,
@@ -56,7 +57,8 @@ public static class SpoilerAnalysisClass
             receiver,
             sphereLimit,
             showAllMissing,
-            hideItems);
+            hideItems,
+            autoCompleted);
     }
 
     public static List<Check> ParsePlaythrough(string spoilerPath)
@@ -149,13 +151,65 @@ public static class SpoilerAnalysisClass
         return found;
     }
 
+    private static async Task<HashSet<string>> LoadAutoCompletedChecksAsync(string guildId, string channelId)
+    {
+        var autoCompleted = new HashSet<string>(StringComparer.Ordinal);
+
+        await using var connection = await Db.OpenReadAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT a.Alias AS PlayerAlias, l.Name AS EntryName, 'location' AS EntryType
+            FROM AliasChoicesTable a
+            JOIN DatapackageGameMap gm
+              ON gm.GuildId = a.GuildId
+             AND gm.ChannelId = a.ChannelId
+             AND gm.GameName = a.Game
+            JOIN DatapackageLocations l
+              ON l.GuildId = gm.GuildId
+             AND l.ChannelId = gm.ChannelId
+             AND l.DatasetKey = gm.DatasetKey
+            WHERE a.GuildId = @GuildId
+              AND a.ChannelId = @ChannelId
+              AND l.Id < 0
+
+            UNION ALL
+
+            SELECT a.Alias AS PlayerAlias, i.Name AS EntryName, 'item' AS EntryType
+            FROM AliasChoicesTable a
+            JOIN DatapackageGameMap gm
+              ON gm.GuildId = a.GuildId
+             AND gm.ChannelId = a.ChannelId
+             AND gm.GameName = a.Game
+            JOIN DatapackageItems i
+              ON i.GuildId = gm.GuildId
+             AND i.ChannelId = gm.ChannelId
+             AND i.DatasetKey = gm.DatasetKey
+            WHERE a.GuildId = @GuildId
+              AND a.ChannelId = @ChannelId
+              AND i.Id < 0;";
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            autoCompleted.Add(AutoCompletedKey(
+                reader["EntryType"]?.ToString() ?? string.Empty,
+                reader["PlayerAlias"]?.ToString() ?? string.Empty,
+                reader["EntryName"]?.ToString() ?? string.Empty));
+        }
+
+        return autoCompleted;
+    }
+
     public static string BuildReport(
         List<Check> checks,
         HashSet<string> found,
         string? onlyReceiver,
         int? sphereLimit,
         bool showAllMissing,
-        bool hideItems)
+        bool hideItems,
+        HashSet<string>? autoCompleted = null)
     {
         var scopedChecks = checks
             .Where(c => !sphereLimit.HasValue || c.Sphere <= sphereLimit.Value)
@@ -171,7 +225,8 @@ public static class SpoilerAnalysisClass
         }
 
         var missingChecks = scopedChecks
-            .Where(c => !found.Contains(FoundKey(c)))
+            .Where(c => !found.Contains(FoundKey(c))
+                && !IsAutoCompleted(c, autoCompleted))
             .ToList();
 
         if (!string.IsNullOrWhiteSpace(onlyReceiver))
@@ -267,6 +322,19 @@ public static class SpoilerAnalysisClass
             Normalize(receiver).ToUpperInvariant(),
             Normalize(item).ToUpperInvariant(),
             Normalize(location).ToUpperInvariant()
+        });
+
+    private static bool IsAutoCompleted(Check check, HashSet<string>? autoCompleted)
+        => autoCompleted != null
+           && (autoCompleted.Contains(AutoCompletedKey("location", check.Finder, check.Location))
+               || autoCompleted.Contains(AutoCompletedKey("item", check.Receiver, check.Item)));
+
+    private static string AutoCompletedKey(string entryType, string playerAlias, string entryName)
+        => string.Join("||", new[]
+        {
+            Normalize(entryType).ToUpperInvariant(),
+            Normalize(playerAlias).ToUpperInvariant(),
+            Normalize(entryName).ToUpperInvariant()
         });
 
     private static string Normalize(string value)
