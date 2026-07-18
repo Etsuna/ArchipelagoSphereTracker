@@ -158,7 +158,8 @@ public static class SpoilerAnalysisClass
         await using var connection = await Db.OpenReadAsync();
         using var command = connection.CreateCommand();
         command.CommandText = @"
-            SELECT a.Alias AS PlayerAlias, l.Name AS EntryName, 'location' AS EntryType
+            SELECT a.Alias AS PlayerAlias, l.Name AS EntryName,
+                   CASE WHEN l.Id < 0 THEN 'location' ELSE 'known-location' END AS EntryType
             FROM AliasChoicesTable a
             JOIN DatapackageGameMap gm
               ON gm.GuildId = a.GuildId
@@ -170,11 +171,29 @@ public static class SpoilerAnalysisClass
              AND l.DatasetKey = gm.DatasetKey
             WHERE a.GuildId = @GuildId
               AND a.ChannelId = @ChannelId
-              AND l.Id < 0
 
             UNION ALL
 
-            SELECT a.Alias AS PlayerAlias, i.Name AS EntryName, 'item' AS EntryType
+            SELECT a.Alias AS PlayerAlias, '' AS EntryName, 'location-catalog' AS EntryType
+            FROM AliasChoicesTable a
+            JOIN DatapackageGameMap gm
+              ON gm.GuildId = a.GuildId
+             AND gm.ChannelId = a.ChannelId
+             AND gm.GameName = a.Game
+            WHERE a.GuildId = @GuildId
+              AND a.ChannelId = @ChannelId
+              AND EXISTS (
+                  SELECT 1
+                  FROM DatapackageLocations l
+                  WHERE l.GuildId = gm.GuildId
+                    AND l.ChannelId = gm.ChannelId
+                    AND l.DatasetKey = gm.DatasetKey
+              )
+
+            UNION ALL
+
+            SELECT a.Alias AS PlayerAlias, i.Name AS EntryName,
+                   CASE WHEN i.Id < 0 THEN 'item' ELSE 'known-item' END AS EntryType
             FROM AliasChoicesTable a
             JOIN DatapackageGameMap gm
               ON gm.GuildId = a.GuildId
@@ -186,7 +205,24 @@ public static class SpoilerAnalysisClass
              AND i.DatasetKey = gm.DatasetKey
             WHERE a.GuildId = @GuildId
               AND a.ChannelId = @ChannelId
-              AND i.Id < 0;";
+            
+            UNION ALL
+
+            SELECT a.Alias AS PlayerAlias, '' AS EntryName, 'item-catalog' AS EntryType
+            FROM AliasChoicesTable a
+            JOIN DatapackageGameMap gm
+              ON gm.GuildId = a.GuildId
+             AND gm.ChannelId = a.ChannelId
+             AND gm.GameName = a.Game
+            WHERE a.GuildId = @GuildId
+              AND a.ChannelId = @ChannelId
+              AND EXISTS (
+                  SELECT 1
+                  FROM DatapackageItems i
+                  WHERE i.GuildId = gm.GuildId
+                    AND i.ChannelId = gm.ChannelId
+                    AND i.DatasetKey = gm.DatasetKey
+              );";
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
 
@@ -327,7 +363,11 @@ public static class SpoilerAnalysisClass
     private static bool IsAutoCompleted(Check check, HashSet<string>? autoCompleted)
         => autoCompleted != null
            && (autoCompleted.Contains(AutoCompletedKey("location", check.Finder, check.Location))
-               || autoCompleted.Contains(AutoCompletedKey("item", check.Receiver, check.Item)));
+               || (autoCompleted.Contains(AutoCompletedKey("location-catalog", check.Finder, string.Empty))
+                   && !autoCompleted.Contains(AutoCompletedKey("known-location", check.Finder, check.Location)))
+               || autoCompleted.Contains(AutoCompletedKey("item", check.Receiver, check.Item))
+               || (autoCompleted.Contains(AutoCompletedKey("item-catalog", check.Receiver, string.Empty))
+                   && !autoCompleted.Contains(AutoCompletedKey("known-item", check.Receiver, check.Item))));
 
     private static string AutoCompletedKey(string entryType, string playerAlias, string entryName)
         => string.Join("||", new[]
