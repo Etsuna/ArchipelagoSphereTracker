@@ -160,4 +160,30 @@ public class SpoilerAnalysisClassTests
         Assert.Contains("Aucune check ne bloque actuellement Selected.", report);
         Assert.Contains("outbound-check", report);
     }
+
+    [Fact]
+    public void BuildReport_ManualValidation_IgnoresOnlyLocalChecksThroughValidatedSphere()
+    {
+        var checks = new List<SpoilerAnalysisClass.Check>
+        {
+            new(3, "local-s3", "Selected", "Local Item", "Selected"),
+            new(3, "external-s3", "Other", "External Item", "Selected"),
+            new(4, "local-s4", "Selected", "Later Local Item", "Selected")
+        };
+
+        var report = SpoilerAnalysisClass.BuildReport(
+            checks,
+            new HashSet<string>(StringComparer.Ordinal),
+            "Selected",
+            sphereLimit: null,
+            showAllMissing: true,
+            hideItems: true,
+            autoCompleted: null,
+            manuallyValidatedSphere: 3);
+
+        Assert.Contains("jusqu’à S3", report);
+        Assert.DoesNotContain("local-s3", report);
+        Assert.Contains("external-s3", report);
+        Assert.Contains("local-s4", report);
+    }
 }

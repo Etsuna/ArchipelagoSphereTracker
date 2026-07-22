@@ -1,4 +1,5 @@
 using Discord.WebSocket;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -42,12 +43,42 @@ public static class SpoilerAnalysisClass
             command.Data.Options.FirstOrDefault(o => o.Name == "hide-items")?.Value as bool?
             ?? true;
 
+        int? sphereToValidate = null;
+        var validateRaw = command.Data.Options.FirstOrDefault(o => o.Name == "validate-sphere")?.Value;
+        if (validateRaw != null && int.TryParse(validateRaw.ToString(), out var parsedValidationSphere))
+        {
+            sphereToValidate = parsedValidationSphere;
+        }
+
+        var resetValidation =
+            command.Data.Options.FirstOrDefault(o => o.Name == "reset-validation")?.Value as bool?
+            ?? false;
+
         if (string.IsNullOrWhiteSpace(spoilerPath) || !File.Exists(spoilerPath))
         {
             return "Aucun spoiler log trouvé pour ce thread. Utilise `/send-spoiler-log file:<spoiler.txt>` puis relance l'analyse.";
         }
 
         var checks = ParsePlaythrough(spoilerPath);
+        var spoilerFingerprint = ComputeSpoilerFingerprint(spoilerPath);
+
+        if (!string.IsNullOrWhiteSpace(receiver))
+        {
+            if (resetValidation)
+            {
+                await ResetValidatedSphereAsync(guildId, channelId, spoilerFingerprint, receiver);
+            }
+
+            if (sphereToValidate.HasValue)
+            {
+                await SaveValidatedSphereAsync(
+                    guildId, channelId, spoilerFingerprint, receiver, sphereToValidate.Value);
+            }
+        }
+
+        var manuallyValidatedSphere = string.IsNullOrWhiteSpace(receiver)
+            ? null
+            : await LoadValidatedSphereAsync(guildId, channelId, spoilerFingerprint, receiver);
         var found = await LoadFoundItemsAsync(guildId, channelId);
         var autoCompleted = await LoadAutoCompletedChecksAsync(guildId, channelId);
 
@@ -58,7 +89,8 @@ public static class SpoilerAnalysisClass
             sphereLimit,
             showAllMissing,
             hideItems,
-            autoCompleted);
+            autoCompleted,
+            manuallyValidatedSphere);
     }
 
     public static List<Check> ParsePlaythrough(string spoilerPath)
@@ -245,7 +277,8 @@ public static class SpoilerAnalysisClass
         int? sphereLimit,
         bool showAllMissing,
         bool hideItems,
-        HashSet<string>? autoCompleted = null)
+        HashSet<string>? autoCompleted = null,
+        int? manuallyValidatedSphere = null)
     {
         var scopedChecks = checks
             .Where(c => !sphereLimit.HasValue || c.Sphere <= sphereLimit.Value)
@@ -262,7 +295,8 @@ public static class SpoilerAnalysisClass
 
         var allMissingChecks = scopedChecks
             .Where(c => !found.Contains(FoundKey(c))
-                && !IsAutoCompleted(c, autoCompleted))
+                && !IsAutoCompleted(c, autoCompleted)
+                && !IsManuallyValidated(c, onlyReceiver, manuallyValidatedSphere))
             .ToList();
 
         var missingChecks = allMissingChecks;
@@ -292,6 +326,12 @@ public static class SpoilerAnalysisClass
 
         if (missingChecks.Count == 0 && blockingOthersNow.Count == 0)
         {
+            if (manuallyValidatedSphere.HasValue && !string.IsNullOrWhiteSpace(onlyReceiver))
+            {
+                return $"Sphères locales validées manuellement pour {onlyReceiver} : jusqu’à S{manuallyValidatedSphere}\n\n"
+                    + "Aucun item manquant dans le Playthrough avec les paramètres actuels.";
+            }
+
             return "Aucun item manquant dans le Playthrough avec les paramètres actuels.";
         }
 
@@ -319,6 +359,12 @@ public static class SpoilerAnalysisClass
             : actionableNow.Count;
 
         var sb = new StringBuilder();
+
+        if (manuallyValidatedSphere.HasValue && !string.IsNullOrWhiteSpace(onlyReceiver))
+        {
+            sb.AppendLine($"Sphères locales validées manuellement pour {onlyReceiver} : jusqu’à S{manuallyValidatedSphere}");
+            sb.AppendLine();
+        }
 
         if (earliestIncompleteSphere.HasValue)
         {
@@ -409,6 +455,72 @@ public static class SpoilerAnalysisClass
                || autoCompleted.Contains(AutoCompletedKey("item", check.Receiver, check.Item))
                || (autoCompleted.Contains(AutoCompletedKey("item-catalog", check.Receiver, string.Empty))
                    && !autoCompleted.Contains(AutoCompletedKey("known-item", check.Receiver, check.Item))));
+
+    private static bool IsManuallyValidated(Check check, string? alias, int? validatedSphere)
+        => validatedSphere.HasValue
+           && !string.IsNullOrWhiteSpace(alias)
+           && check.Sphere <= validatedSphere.Value
+           && string.Equals(check.Finder, alias, StringComparison.OrdinalIgnoreCase)
+           && string.Equals(check.Receiver, alias, StringComparison.OrdinalIgnoreCase);
+
+    private static string ComputeSpoilerFingerprint(string spoilerPath)
+    {
+        using var stream = File.OpenRead(spoilerPath);
+        return Convert.ToHexString(SHA256.HashData(stream));
+    }
+
+    private static async Task<int?> LoadValidatedSphereAsync(
+        string guildId, string channelId, string fingerprint, string alias)
+    {
+        await using var connection = await Db.OpenReadAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT ValidatedSphere
+            FROM SpoilerSphereValidationTable
+            WHERE GuildId=@GuildId AND ChannelId=@ChannelId
+              AND SpoilerFingerprint=@Fingerprint AND Alias=@Alias;";
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        command.Parameters.AddWithValue("@Fingerprint", fingerprint);
+        command.Parameters.AddWithValue("@Alias", alias);
+        var value = await command.ExecuteScalarAsync();
+        return value == null || value == DBNull.Value ? null : Convert.ToInt32(value);
+    }
+
+    private static async Task SaveValidatedSphereAsync(
+        string guildId, string channelId, string fingerprint, string alias, int sphere)
+    {
+        await using var connection = await Db.OpenWriteAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            INSERT INTO SpoilerSphereValidationTable
+                (GuildId, ChannelId, SpoilerFingerprint, Alias, ValidatedSphere)
+            VALUES (@GuildId, @ChannelId, @Fingerprint, @Alias, @Sphere)
+            ON CONFLICT(GuildId, ChannelId, SpoilerFingerprint, Alias)
+            DO UPDATE SET ValidatedSphere = MAX(ValidatedSphere, excluded.ValidatedSphere);";
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        command.Parameters.AddWithValue("@Fingerprint", fingerprint);
+        command.Parameters.AddWithValue("@Alias", alias);
+        command.Parameters.AddWithValue("@Sphere", sphere);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task ResetValidatedSphereAsync(
+        string guildId, string channelId, string fingerprint, string alias)
+    {
+        await using var connection = await Db.OpenWriteAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            DELETE FROM SpoilerSphereValidationTable
+            WHERE GuildId=@GuildId AND ChannelId=@ChannelId
+              AND SpoilerFingerprint=@Fingerprint AND Alias=@Alias;";
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        command.Parameters.AddWithValue("@Fingerprint", fingerprint);
+        command.Parameters.AddWithValue("@Alias", alias);
+        await command.ExecuteNonQueryAsync();
+    }
 
     private static string AutoCompletedKey(string entryType, string playerAlias, string entryName)
         => string.Join("||", new[]

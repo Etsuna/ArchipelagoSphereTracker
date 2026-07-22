@@ -307,6 +307,14 @@ public static class DatabaseCommands
 
                 command.Parameters.Clear();
                 command.CommandText = @"
+                    DELETE FROM SpoilerSphereValidationTable
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"
                     DELETE FROM LastItemsCheckTable
                     WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
@@ -432,6 +440,11 @@ public static class DatabaseCommands
 
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM UpdateAlertsTable WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM SpoilerSphereValidationTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 

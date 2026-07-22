@@ -222,6 +222,15 @@ CREATE TABLE IF NOT EXISTS UpdateAlertsTable (
     PRIMARY KEY(GuildId, ChannelId)
 );
 
+CREATE TABLE IF NOT EXISTS SpoilerSphereValidationTable (
+    GuildId           TEXT NOT NULL,
+    ChannelId         TEXT NOT NULL,
+    SpoilerFingerprint TEXT NOT NULL,
+    Alias             TEXT NOT NULL,
+    ValidatedSphere   INTEGER NOT NULL,
+    PRIMARY KEY (GuildId, ChannelId, SpoilerFingerprint, Alias)
+);
+
 -- ==========================
 -- 🎯 LastItemsCheckTable
 -- ==========================

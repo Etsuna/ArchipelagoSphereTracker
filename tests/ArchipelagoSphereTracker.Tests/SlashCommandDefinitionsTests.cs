@@ -64,6 +64,8 @@ public class SlashCommandDefinitionsTests
         AssertCommandOption(commands, "analyze-spoiler-log", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "analyze-spoiler-log", "sphere", ApplicationCommandOptionType.Integer, required: false, autocomplete: false);
         AssertCommandOption(commands, "analyze-spoiler-log", "missing-mode", ApplicationCommandOptionType.String, required: false, autocomplete: false);
+        AssertCommandOption(commands, "analyze-spoiler-log", "validate-sphere", ApplicationCommandOptionType.Integer, required: false, autocomplete: false);
+        AssertCommandOption(commands, "analyze-spoiler-log", "reset-validation", ApplicationCommandOptionType.Boolean, required: false, autocomplete: false);
         AssertCommandOption(commands, "send-spoiler-log", "file", ApplicationCommandOptionType.Attachment, required: true, autocomplete: false);
         AssertCommandOption(commands, "excluded-item", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "excluded-item", "items", ApplicationCommandOptionType.String, required: true, autocomplete: true);

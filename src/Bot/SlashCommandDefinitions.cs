@@ -146,6 +146,17 @@ public static class SlashCommandDefinitions
                     .WithName("hide-items")
                     .WithDescription("Masquer le nom des items dans le rapport")
                     .WithType(ApplicationCommandOptionType.Boolean)
+                    .WithRequired(false))
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("validate-sphere")
+                    .WithDescription("Valide les checks locales ambiguës jusqu’à cette sphère")
+                    .WithType(ApplicationCommandOptionType.Integer)
+                    .WithMinValue(0)
+                    .WithRequired(false))
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("reset-validation")
+                    .WithDescription("Efface la validation manuelle des sphères pour cet alias")
+                    .WithType(ApplicationCommandOptionType.Boolean)
                     .WithRequired(false)),
 
             new SlashCommandBuilder()
