@@ -3,6 +3,7 @@
 <summary>🇫🇷 Français</summary>
 Un bot Discord pour **suivre des rooms Archipelago**, centraliser les infos de progression des joueurs, et automatiser la gestion des salons/threads.
 
+- Site web : https://www.etsuna.ovh/
 - Dépôt : https://github.com/Etsuna/ArchipelagoSphereTracker
 - Wiki : https://github.com/Etsuna/ArchipelagoSphereTracker/wiki
 - Randomizer supporté : https://github.com/ArchipelagoMW/Archipelago et Apworld
@@ -432,6 +433,7 @@ Ce projet est distribué sous licence MIT. Voir le fichier [LICENSE](LICENSE).
   
 ArchipelagoSphereTracker is a Discord bot to **track Archipelago rooms**, centralize player progression data, and automate thread/channel operations.
 
+- Website: https://www.etsuna.ovh/
 - Repository: https://github.com/Etsuna/ArchipelagoSphereTracker
 - Wiki: https://github.com/Etsuna/ArchipelagoSphereTracker/wiki
 - Supported randomizer: https://github.com/ArchipelagoMW/Archipelago and Apworld
