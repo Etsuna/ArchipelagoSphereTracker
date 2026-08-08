@@ -1,19 +1,49 @@
-# AST Companion
+# AST Companion — Aster
 
-AST Companion is a small desktop mascot for ArchipelagoSphereTracker users who want personal item notifications without keeping Discord open.
+AST Companion is the personal desktop companion for ArchipelagoSphereTracker. Its mascot, **Aster**, watches the authenticated AST user portal and reacts to the player's received items and hints without requiring Discord to stay open.
 
-## MVP behaviour
+## Aster experience
 
-- connects with the existing AST user portal URL (`/portal/{guildId}/{channelId}/{token}/`)
-- calls the existing authenticated summary endpoint
-- watches received items every few seconds
-- announces newly detected items
-- reacts differently to traps
-- keeps a small local history
-- can stay always on top
-- stores only the portal URL and local UI preferences on the player's machine
+- transparent borderless desktop-pet window
+- draggable and position is remembered locally
+- optional always-on-top mode
+- animated idle floating and magical turquoise orb
+- distinct reactions for progression, useful items, normal deliveries, traps and hints
+- sleeps when AST is unavailable and wakes up after reconnecting
+- queues reactions so bursts of items are shown one by one
+- local history of recent items and hints
+- settings panel hidden during normal play
 
-The companion does **not** connect to Discord and does **not** connect directly to Archipelago.
+Aster is rendered natively with Avalonia vector drawing. No external mascot runtime or large sprite dependency is required.
+
+## Connection model
+
+The user pastes their existing authenticated AST portal URL:
+
+```text
+https://ast-bot.com/portal/{guildId}/{channelId}/{token}/
+```
+
+The companion extracts the base URL, guild, channel and token, then reads:
+
+```text
+/api/portal/{guildId}/{channelId}/{token}/summary
+```
+
+Only the portal URL and UI preferences are persisted on the player's machine. AST Companion does **not** connect to Discord and does **not** connect directly to the Archipelago room.
+
+## States
+
+| AST event | Aster state |
+| --- | --- |
+| Connected / idle | Floating idle |
+| Normal item | Delivering item |
+| Progression / required | Progression celebration |
+| Useful item | Useful item reaction |
+| Trap | Trap reaction |
+| New hint | Reading hint |
+| AST unreachable | Sleeping / offline |
+| Connection restored | Wake / reconnect |
 
 ## Run from source
 
@@ -35,28 +65,21 @@ Linux x64:
 dotnet publish companion/AST.Companion/AST.Companion.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
-## Pairing
+The Companion GitHub Actions workflow also builds and publishes downloadable CI artifacts for Windows and Linux.
 
-For this first version the user pastes their existing AST portal URL, for example:
+## Design language
 
-```text
-https://ast.example/portal/123456789/987654321/random-token/
-```
+Aster is an original fantasy forest messenger designed for AST:
 
-The client extracts the AST base URL, guild ID, channel ID and token, then reads:
+- moss-green hood: `#6B7F4A`
+- sage accents: `#8BA26B`
+- cream fabric: `#F3EAD2`
+- leather satchel: `#8B5E34`
+- turquoise magic: `#4FD6C6`
+- soft gold: `#E7C36A`
 
-```text
-/api/portal/{guildId}/{channelId}/{token}/summary
-```
+See `companion/ASTER_DESIGN.md` for the canonical character rules.
 
-A later version can replace the long portal URL with a short pairing code while keeping the same client model.
+## Later improvements
 
-## Next steps
-
-- short-lived pairing codes and revocable companion tokens
-- push events with Server-Sent Events or WebSocket instead of polling
-- proper mascot sprite/animation assets
-- native desktop notifications and optional sounds
-- hints and check-count views
-- autostart and tray controls
-- signed installers/releases
+The current portal URL is deliberately reused to keep the server-side migration small. Natural follow-ups are short pairing codes/revocable companion tokens, push events (SSE/WebSocket), optional sounds, autostart/tray controls, and signed release installers.
