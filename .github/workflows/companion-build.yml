@@ -1,0 +1,24 @@
+name: AST Companion build
+
+on:
+  push:
+    paths:
+      - 'companion/**'
+      - '.github/workflows/companion-build.yml'
+  pull_request:
+    paths:
+      - 'companion/**'
+      - '.github/workflows/companion-build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore companion/AST.Companion/AST.Companion.csproj
+      - name: Build
+        run: dotnet build companion/AST.Companion/AST.Companion.csproj -c Release --no-restore
