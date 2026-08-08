@@ -8,7 +8,6 @@ namespace AST.Companion;
 
 public sealed class AsterControl : Control
 {
-    private const int FrameCount = 6;
     private const int StateColumns = 4;
     private const int StateRows = 2;
 
@@ -23,14 +22,6 @@ public sealed class AsterControl : Control
         [AsterState.Trap] = 5,
         [AsterState.Offline] = 6,
         [AsterState.Reconnect] = 7
-    };
-
-    private readonly Dictionary<AsterState, Bitmap?> _animations = new()
-    {
-        [AsterState.Idle] = LoadSafe("anim_idle.png"),
-        [AsterState.DeliveringItem] = LoadSafe("anim_delivery.png"),
-        [AsterState.Trap] = LoadSafe("anim_trap.png"),
-        [AsterState.Offline] = LoadSafe("anim_sleep.png")
     };
 
     private static readonly IBrush Magic = new SolidColorBrush(Color.Parse("#4FD6C6"));
@@ -67,75 +58,89 @@ public sealed class AsterControl : Control
     {
         base.Render(context);
 
-        var statePhase = Math.Max(0, Phase - _stateStartedAt);
-        var shake = State == AsterState.Trap ? Math.Sin(statePhase * 18) * Math.Max(0, 5 - statePhase) : 0;
-        var scale = State is AsterState.Progression or AsterState.Reconnect
-            ? 1 + Math.Max(0, Math.Sin(statePhase * 5)) * 0.045
-            : 1.0;
+        if (_stateAtlas is null || !_stateCells.TryGetValue(State, out var cell))
+        {
+            DrawFallback(context, Bounds.Width / 2, Bounds.Height / 2);
+            return;
+        }
 
-        if (_animations.TryGetValue(State, out var strip) && strip is not null)
+        var elapsed = Math.Max(0, Phase - _stateStartedAt);
+        var cellWidth = _stateAtlas.PixelSize.Width / StateColumns;
+        var cellHeight = _stateAtlas.PixelSize.Height / StateRows;
+        var col = cell % StateColumns;
+        var row = cell / StateColumns;
+        var source = new Rect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
+
+        var bob = 0.0;
+        var shiftX = 0.0;
+        var scale = 1.0;
+
+        switch (State)
         {
-            DrawAnimatedStrip(context, strip, statePhase, shake, scale);
+            case AsterState.Idle:
+                bob = Math.Sin(Phase * 1.65) * 4.0;
+                scale = 1.0 + Math.Sin(Phase * 1.65 + 0.5) * 0.006;
+                break;
+
+            case AsterState.DeliveringItem:
+                bob = Math.Sin(elapsed * 3.2) * 2.0;
+                shiftX = Math.Sin(Math.Min(elapsed, 1.4) * Math.PI / 1.4) * 5.0;
+                scale = 1.0 + Math.Sin(Math.Min(elapsed, 1.2) * Math.PI / 1.2) * 0.025;
+                break;
+
+            case AsterState.Useful:
+                bob = Math.Sin(Phase * 2.2) * 3.0;
+                scale = 1.0 + Math.Max(0, Math.Sin(elapsed * 4.5)) * 0.018;
+                break;
+
+            case AsterState.Progression:
+                bob = -Math.Abs(Math.Sin(elapsed * 4.2)) * 8.0;
+                scale = 1.0 + Math.Max(0, Math.Sin(elapsed * 4.2)) * 0.045;
+                break;
+
+            case AsterState.Hint:
+                bob = Math.Sin(Phase * 1.3) * 2.0;
+                shiftX = Math.Sin(Phase * 0.8) * 1.5;
+                break;
+
+            case AsterState.Trap:
+                shiftX = Math.Sin(elapsed * 22.0) * Math.Max(0, 7.0 - elapsed * 2.5);
+                bob = -Math.Abs(Math.Sin(elapsed * 8.0)) * Math.Max(0, 7.0 - elapsed * 2.0);
+                break;
+
+            case AsterState.Offline:
+                scale = 1.0 + Math.Sin(Phase * 1.1) * 0.012;
+                bob = Math.Sin(Phase * 1.1) * 1.0;
+                break;
+
+            case AsterState.Reconnect:
+                bob = -Math.Abs(Math.Sin(elapsed * 3.6)) * 6.0;
+                scale = 1.0 + Math.Max(0, Math.Sin(elapsed * 3.6)) * 0.04;
+                break;
         }
-        else if (_stateAtlas is not null && _stateCells.TryGetValue(State, out var cell))
-        {
-            var cellWidth = _stateAtlas.PixelSize.Width / StateColumns;
-            var cellHeight = _stateAtlas.PixelSize.Height / StateRows;
-            var col = cell % StateColumns;
-            var row = cell / StateColumns;
-            var source = new Rect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
-            var bob = State is AsterState.Progression or AsterState.Useful or AsterState.Hint or AsterState.Reconnect
-                ? Math.Sin(Phase * 1.8) * 3
-                : 0;
-            DrawBitmap(context, _stateAtlas, source, shake, bob, scale);
-        }
-        else
-        {
-            DrawFallback(context, Bounds.Width / 2 + shake, Bounds.Height / 2);
-        }
+
+        DrawBitmap(context, _stateAtlas, source, shiftX, bob, scale);
 
         if (State is AsterState.Progression or AsterState.Reconnect)
         {
-            DrawSparkle(context, 25, 42, Gold);
-            DrawSparkle(context, Bounds.Width - 28, 58, Magic);
+            var pulse = 0.55 + Math.Abs(Math.Sin(Phase * 3.0)) * 0.45;
+            DrawSparkle(context, 24, 44, Gold, pulse);
+            DrawSparkle(context, Bounds.Width - 28, 62, Magic, 1.0 - pulse * 0.35);
         }
         else if (State is AsterState.Hint or AsterState.Useful)
         {
-            DrawSparkle(context, Bounds.Width - 28, 54, Magic);
+            DrawSparkle(context, Bounds.Width - 27, 55, Magic, 0.65 + Math.Abs(Math.Sin(Phase * 2.4)) * 0.35);
         }
     }
 
-    private void DrawAnimatedStrip(DrawingContext context, Bitmap strip, double statePhase, double shake, double scale)
-    {
-        var frameWidth = strip.PixelSize.Width / FrameCount;
-        var frameHeight = strip.PixelSize.Height;
-        var fps = State switch
-        {
-            AsterState.Idle => 5.0,
-            AsterState.Offline => 4.0,
-            AsterState.DeliveringItem => 7.0,
-            AsterState.Trap => 9.0,
-            _ => 6.0
-        };
-
-        int frame;
-        if (State is AsterState.DeliveringItem or AsterState.Trap)
-            frame = Math.Min(FrameCount - 1, (int)(statePhase * fps));
-        else
-            frame = (int)(Phase * fps) % FrameCount;
-
-        var source = new Rect(frame * frameWidth, 0, frameWidth, frameHeight);
-        DrawBitmap(context, strip, source, shake, 0, scale);
-    }
-
-    private void DrawBitmap(DrawingContext context, Bitmap bitmap, Rect source, double shake, double bob, double scale)
+    private void DrawBitmap(DrawingContext context, Bitmap bitmap, Rect source, double shiftX, double bob, double scale)
     {
         var availableWidth = Bounds.Width - 6;
         var availableHeight = Bounds.Height - 6;
         var ratio = source.Width / source.Height;
         var height = Math.Min(availableHeight, availableWidth / ratio) * scale;
         var width = height * ratio;
-        var x = (Bounds.Width - width) / 2 + shake;
+        var x = (Bounds.Width - width) / 2 + shiftX;
         var y = Bounds.Height - height + bob;
         context.DrawImage(bitmap, source, new Rect(x, y, width, height));
     }
@@ -170,8 +175,9 @@ public sealed class AsterControl : Control
         context.DrawEllipse(Magic, new Pen(Gold, 2), new Rect(x + 43, y - 35, 24, 24));
     }
 
-    private static void DrawSparkle(DrawingContext context, double x, double y, IBrush brush)
+    private static void DrawSparkle(DrawingContext context, double x, double y, IBrush brush, double opacity)
     {
+        using var _ = context.PushOpacity(Math.Clamp(opacity, 0.2, 1.0));
         var pen = new Pen(brush, 3);
         context.DrawLine(pen, new Point(x - 7, y), new Point(x + 7, y));
         context.DrawLine(pen, new Point(x, y - 7), new Point(x, y + 7));
