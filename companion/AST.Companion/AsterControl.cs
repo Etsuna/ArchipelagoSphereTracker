@@ -9,17 +9,20 @@ namespace AST.Companion;
 public sealed class AsterControl : Control
 {
     private const int FrameCount = 6;
+    private const int StateColumns = 4;
+    private const int StateRows = 2;
 
-    private readonly Dictionary<AsterState, Bitmap?> _states = new()
+    private readonly Bitmap? _stateAtlas = LoadSafe("states.png");
+    private readonly Dictionary<AsterState, int> _stateCells = new()
     {
-        [AsterState.Idle] = LoadSafe("state_idle.png"),
-        [AsterState.DeliveringItem] = LoadSafe("state_delivery.png"),
-        [AsterState.Progression] = LoadSafe("state_progression.png"),
-        [AsterState.Useful] = LoadSafe("state_useful.png"),
-        [AsterState.Trap] = LoadSafe("state_trap.png"),
-        [AsterState.Hint] = LoadSafe("state_hint.png"),
-        [AsterState.Offline] = LoadSafe("state_sleep.png"),
-        [AsterState.Reconnect] = LoadSafe("state_reconnect.png")
+        [AsterState.Idle] = 0,
+        [AsterState.DeliveringItem] = 1,
+        [AsterState.Useful] = 2,
+        [AsterState.Progression] = 3,
+        [AsterState.Hint] = 4,
+        [AsterState.Trap] = 5,
+        [AsterState.Offline] = 6,
+        [AsterState.Reconnect] = 7
     };
 
     private readonly Dictionary<AsterState, Bitmap?> _animations = new()
@@ -74,12 +77,17 @@ public sealed class AsterControl : Control
         {
             DrawAnimatedStrip(context, strip, statePhase, shake, scale);
         }
-        else if (_states.TryGetValue(State, out var bitmap) && bitmap is not null)
+        else if (_stateAtlas is not null && _stateCells.TryGetValue(State, out var cell))
         {
+            var cellWidth = _stateAtlas.PixelSize.Width / StateColumns;
+            var cellHeight = _stateAtlas.PixelSize.Height / StateRows;
+            var col = cell % StateColumns;
+            var row = cell / StateColumns;
+            var source = new Rect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
             var bob = State is AsterState.Progression or AsterState.Useful or AsterState.Hint or AsterState.Reconnect
                 ? Math.Sin(Phase * 1.8) * 3
                 : 0;
-            DrawBitmap(context, bitmap, new Rect(0, 0, bitmap.PixelSize.Width, bitmap.PixelSize.Height), shake, bob, scale);
+            DrawBitmap(context, _stateAtlas, source, shake, bob, scale);
         }
         else
         {
@@ -99,7 +107,6 @@ public sealed class AsterControl : Control
 
     private void DrawAnimatedStrip(DrawingContext context, Bitmap strip, double statePhase, double shake, double scale)
     {
-        // Animation sheets contain six evenly sized horizontal cells.
         var frameWidth = strip.PixelSize.Width / FrameCount;
         var frameHeight = strip.PixelSize.Height;
         var fps = State switch
@@ -113,14 +120,9 @@ public sealed class AsterControl : Control
 
         int frame;
         if (State is AsterState.DeliveringItem or AsterState.Trap)
-        {
-            // Play reaction once, then hold its last production frame.
             frame = Math.Min(FrameCount - 1, (int)(statePhase * fps));
-        }
         else
-        {
             frame = (int)(Phase * fps) % FrameCount;
-        }
 
         var source = new Rect(frame * frameWidth, 0, frameWidth, frameHeight);
         DrawBitmap(context, strip, source, shake, 0, scale);
@@ -135,8 +137,7 @@ public sealed class AsterControl : Control
         var width = height * ratio;
         var x = (Bounds.Width - width) / 2 + shake;
         var y = Bounds.Height - height + bob;
-        var destination = new Rect(x, y, width, height);
-        context.DrawImage(bitmap, source, destination);
+        context.DrawImage(bitmap, source, new Rect(x, y, width, height));
     }
 
     private static Bitmap? LoadSafe(string fileName)
