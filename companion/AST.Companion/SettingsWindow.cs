@@ -103,8 +103,9 @@ public sealed class SettingsWindow : Window
             await _main.SetAlwaysOnTopAsync(_alwaysOnTop.IsChecked == true);
         };
 
-        var actions = new WrapPanel
+        var actions = new StackPanel
         {
+            Orientation = Orientation.Horizontal,
             Spacing = 8,
             Children = { connect, reconnect, showAster }
         };
