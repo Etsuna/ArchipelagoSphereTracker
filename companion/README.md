@@ -4,17 +4,19 @@ AST Companion is the personal desktop companion for ArchipelagoSphereTracker. It
 
 ## Aster experience
 
-- transparent borderless desktop-pet window
+- Aster uses artwork derived directly from the approved concept sheets rather than a simplified vector substitute
+- compact transparent borderless desktop-pet window
 - draggable and position is remembered locally
+- no normal taskbar entry during play
+- native system-tray menu for show/hide, settings/history, always-on-top, reconnect and quit
+- closing the pet or settings hides it instead of terminating the background companion
+- explicit **Quit AST Companion** command stops the application cleanly
 - optional always-on-top mode
-- animated idle floating and magical turquoise orb
+- gentle idle motion plus state accents
 - distinct reactions for progression, useful items, normal deliveries, traps and hints
-- sleeps when AST is unavailable and wakes up after reconnecting
+- sleeps visually when AST is unavailable and reacts when the connection returns
 - queues reactions so bursts of items are shown one by one
-- local history of recent items and hints
-- settings panel hidden during normal play
-
-Aster is rendered natively with Avalonia vector drawing. No external mascot runtime or large sprite dependency is required.
+- local history of recent items and hints in a separate settings window
 
 ## Connection model
 
@@ -31,6 +33,18 @@ The companion extracts the base URL, guild, channel and token, then reads:
 ```
 
 Only the portal URL and UI preferences are persisted on the player's machine. AST Companion does **not** connect to Discord and does **not** connect directly to the Archipelago room.
+
+## Tray controls
+
+The tray icon is the permanent control surface for the Companion:
+
+- **Afficher / Masquer Aster**
+- **Paramètres et historique**
+- **Toujours au-dessus : basculer**
+- **Reconnecter AST**
+- **Quitter AST Companion**
+
+Double-clicking Aster also opens the settings window.
 
 ## States
 
@@ -65,7 +79,7 @@ Linux x64:
 dotnet publish companion/AST.Companion/AST.Companion.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
-The Companion GitHub Actions workflow also builds and publishes downloadable CI artifacts for Windows and Linux.
+The Companion GitHub Actions workflow builds and publishes downloadable CI artifacts for Windows and Linux.
 
 ## Design language
 
@@ -82,4 +96,4 @@ See `companion/ASTER_DESIGN.md` for the canonical character rules.
 
 ## Later improvements
 
-The current portal URL is deliberately reused to keep the server-side migration small. Natural follow-ups are short pairing codes/revocable companion tokens, push events (SSE/WebSocket), optional sounds, autostart/tray controls, and signed release installers.
+The current portal URL is deliberately reused to keep the server-side migration small. Natural follow-ups are short pairing codes/revocable companion tokens, push events (SSE/WebSocket), optional sounds, autostart and signed release installers.
