@@ -57,21 +57,21 @@ public sealed class AsterControl : Control
         var width = height * ratio;
         var x = (Bounds.Width - width) / 2 + shake;
         var y = (Bounds.Height - height) / 2 + bob;
-
-        if (State == AsterState.Offline)
-            context.PushOpacity(0.70);
-
-        context.DrawImage(
-            bitmap,
-            new Rect(0, 0, bitmap.PixelSize.Width, bitmap.PixelSize.Height),
-            new Rect(x, y, width, height));
+        var source = new Rect(0, 0, bitmap.PixelSize.Width, bitmap.PixelSize.Height);
+        var destination = new Rect(x, y, width, height);
 
         if (State == AsterState.Offline)
         {
-            context.PopOpacity();
+            using (context.PushOpacity(0.70))
+                context.DrawImage(bitmap, source, destination);
             DrawZzz(context, Bounds.Width - 48, 34);
         }
-        else if (State == AsterState.Trap)
+        else
+        {
+            context.DrawImage(bitmap, source, destination);
+        }
+
+        if (State == AsterState.Trap)
         {
             DrawExclamation(context, Bounds.Width - 47, 35);
         }
