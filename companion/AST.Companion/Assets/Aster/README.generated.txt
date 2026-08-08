@@ -1,1 +1,0 @@
-Aster production assets are generated from the approved concept sheets and embedded as Avalonia resources. Runtime uses state sprites, animation strips, orb moods and a tray icon. Do not replace with cropped placeholder art.
