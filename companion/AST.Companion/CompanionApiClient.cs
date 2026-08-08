@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace AST.Companion;
@@ -50,36 +49,82 @@ public sealed class CompanionApiClient
             updatedAt = parsedUpdatedAt;
         }
 
+        var items = ParseItems(root);
+        var hints = ParseHints(root);
+        return new CompanionSnapshot(updatedAt, items, hints);
+    }
+
+    private static List<CompanionItem> ParseItems(JsonElement root)
+    {
         var items = new List<CompanionItem>();
-        if (TryGetProperty(root, "receivedItems", out var receivedItems) && receivedItems.ValueKind == JsonValueKind.Array)
+        if (!TryGetProperty(root, "receivedItems", out var receivedItems) || receivedItems.ValueKind != JsonValueKind.Array)
+            return items;
+
+        foreach (var aliasElement in receivedItems.EnumerateArray())
         {
-            foreach (var aliasElement in receivedItems.EnumerateArray())
+            var alias = GetString(aliasElement, "alias");
+            if (!TryGetProperty(aliasElement, "groups", out var groups) || groups.ValueKind != JsonValueKind.Array)
+                continue;
+
+            foreach (var group in groups.EnumerateArray())
             {
-                var alias = GetString(aliasElement, "alias");
-                if (!TryGetProperty(aliasElement, "groups", out var groups) || groups.ValueKind != JsonValueKind.Array)
+                var flag = GetString(group, "flagKey");
+                if (!TryGetProperty(group, "items", out var groupItems) || groupItems.ValueKind != JsonValueKind.Array)
                     continue;
 
-                foreach (var group in groups.EnumerateArray())
+                foreach (var item in groupItems.EnumerateArray())
                 {
-                    var flag = GetString(group, "flagKey");
-                    if (!TryGetProperty(group, "items", out var groupItems) || groupItems.ValueKind != JsonValueKind.Array)
-                        continue;
-
-                    foreach (var item in groupItems.EnumerateArray())
-                    {
-                        items.Add(new CompanionItem(
-                            alias,
-                            GetString(item, "finder"),
-                            GetString(item, "item"),
-                            GetString(item, "location"),
-                            GetString(item, "game"),
-                            flag));
-                    }
+                    items.Add(new CompanionItem(
+                        alias,
+                        GetString(item, "finder"),
+                        GetString(item, "item"),
+                        GetString(item, "location"),
+                        GetString(item, "game"),
+                        flag));
                 }
             }
         }
 
-        return new CompanionSnapshot(updatedAt, items);
+        return items;
+    }
+
+    private static List<CompanionHint> ParseHints(JsonElement root)
+    {
+        var hints = new List<CompanionHint>();
+        if (!TryGetProperty(root, "hints", out var hintsRoot) || hintsRoot.ValueKind != JsonValueKind.Array)
+            return hints;
+
+        foreach (var aliasElement in hintsRoot.EnumerateArray())
+        {
+            var alias = GetString(aliasElement, "alias");
+            ParseHintDirection(aliasElement, alias, "asReceiver", "receiver", hints);
+            ParseHintDirection(aliasElement, alias, "asFinder", "finder", hints);
+        }
+
+        return hints;
+    }
+
+    private static void ParseHintDirection(
+        JsonElement aliasElement,
+        string alias,
+        string property,
+        string direction,
+        List<CompanionHint> result)
+    {
+        if (!TryGetProperty(aliasElement, property, out var values) || values.ValueKind != JsonValueKind.Array)
+            return;
+
+        foreach (var hint in values.EnumerateArray())
+        {
+            result.Add(new CompanionHint(
+                alias,
+                GetString(hint, "finder"),
+                GetString(hint, "receiver"),
+                GetString(hint, "item"),
+                GetString(hint, "location"),
+                GetString(hint, "game"),
+                direction));
+        }
     }
 
     private static string GetString(JsonElement element, string propertyName)

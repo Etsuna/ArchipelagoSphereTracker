@@ -22,3 +22,30 @@ jobs:
         run: dotnet restore companion/AST.Companion/AST.Companion.csproj
       - name: Build
         run: dotnet build companion/AST.Companion/AST.Companion.csproj -c Release --no-restore
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [win-x64, linux-x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Publish ${{ matrix.runtime }}
+        run: >-
+          dotnet publish companion/AST.Companion/AST.Companion.csproj
+          -c Release
+          -r ${{ matrix.runtime }}
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:DebugType=None
+          -p:DebugSymbols=false
+          -o artifacts/${{ matrix.runtime }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AST-Companion-${{ matrix.runtime }}
+          path: artifacts/${{ matrix.runtime }}/
+          if-no-files-found: error

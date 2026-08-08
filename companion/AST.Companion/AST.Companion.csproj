@@ -11,4 +11,9 @@
     <PackageReference Include="Avalonia.Desktop" Version="11.3.7" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.7" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/Aster/*.png" />
+    <AvaloniaResource Include="Assets/Aster/aster_tray.ico" />
+  </ItemGroup>
 </Project>

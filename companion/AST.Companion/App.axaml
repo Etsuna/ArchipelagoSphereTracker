@@ -1,8 +1,27 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="AST.Companion.App"
-             RequestedThemeVariant="Dark">
+             RequestedThemeVariant="Light">
   <Application.Styles>
     <FluentTheme />
   </Application.Styles>
+
+  <TrayIcon.Icons>
+    <TrayIcons>
+      <TrayIcon Icon="/Assets/Aster/aster_tray.ico"
+                ToolTipText="AST Companion — Aster"
+                Command="{Binding ToggleAsterCommand}">
+        <TrayIcon.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="Afficher / Masquer Aster" Command="{Binding ToggleAsterCommand}" />
+            <NativeMenuItem Header="Paramètres et historique" Command="{Binding SettingsCommand}" />
+            <NativeMenuItem Header="Toujours au-dessus : basculer" Command="{Binding ToggleTopmostCommand}" />
+            <NativeMenuItem Header="Reconnecter AST" Command="{Binding ReconnectCommand}" />
+            <NativeMenuItemSeparator />
+            <NativeMenuItem Header="Quitter AST Companion" Command="{Binding QuitCommand}" />
+          </NativeMenu>
+        </TrayIcon.Menu>
+      </TrayIcon>
+    </TrayIcons>
+  </TrayIcon.Icons>
 </Application>
