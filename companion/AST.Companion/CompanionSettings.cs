@@ -7,6 +7,9 @@ public sealed class CompanionSettings
     public string PortalUrl { get; set; } = string.Empty;
     public bool AlwaysOnTop { get; set; } = true;
     public int PollSeconds { get; set; } = 5;
+    public int? WindowX { get; set; }
+    public int? WindowY { get; set; }
+    public bool ShowHistory { get; set; }
 
     private static string SettingsPath
     {
