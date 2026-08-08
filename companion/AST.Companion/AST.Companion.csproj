@@ -14,5 +14,6 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets/Aster/*.png" />
+    <AvaloniaResource Include="Assets/Aster/aster_tray.ico" />
   </ItemGroup>
 </Project>
