@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -11,65 +12,125 @@ public sealed class MainWindow : Window
 {
     private readonly CompanionApiClient _api = new();
     private readonly ObservableCollection<string> _history = new();
-    private readonly TextBox _portalUrl = new() { Watermark = "https://ast.example/portal/guild/channel/token/" };
-    private readonly TextBlock _status = new() { Text = "Non configuré" };
-    private readonly TextBlock _speech = new()
+    private readonly Queue<AsterNotification> _reactionQueue = new();
+    private readonly AsterControl _aster = new();
+    private readonly TextBlock _bubbleTitle = new()
     {
-        Text = "Donne-moi ton lien portail AST et je surveillerai tes objets.",
-        TextWrapping = TextWrapping.Wrap,
-        HorizontalAlignment = HorizontalAlignment.Center,
-        TextAlignment = TextAlignment.Center,
-        MaxWidth = 300
+        Text = "Aster est prêt",
+        FontSize = 20,
+        FontWeight = FontWeight.Bold,
+        Foreground = new SolidColorBrush(Color.Parse("#33402F")),
+        TextWrapping = TextWrapping.Wrap
     };
-    private readonly TextBlock _mascot = new()
+    private readonly TextBlock _bubbleSubtitle = new()
     {
-        Text = "(◕‿◕)",
-        FontSize = 46,
-        HorizontalAlignment = HorizontalAlignment.Center
+        Text = "Colle ton lien portail AST pour commencer.",
+        FontSize = 14,
+        Foreground = new SolidColorBrush(Color.Parse("#5B644F")),
+        TextWrapping = TextWrapping.Wrap
     };
-    private readonly Button _connectButton = new() { Content = "Connecter" };
+    private readonly TextBlock _bubbleDetail = new()
+    {
+        Text = "",
+        FontSize = 12,
+        Opacity = 0.72,
+        TextWrapping = TextWrapping.Wrap
+    };
+    private readonly TextBlock _statusDot = new()
+    {
+        Text = "●",
+        Foreground = new SolidColorBrush(Color.Parse("#8C9781")),
+        FontSize = 14,
+        VerticalAlignment = VerticalAlignment.Center
+    };
+    private readonly TextBlock _statusText = new()
+    {
+        Text = "Non configuré",
+        FontSize = 12,
+        Opacity = 0.72,
+        VerticalAlignment = VerticalAlignment.Center
+    };
+    private readonly TextBox _portalUrl = new()
+    {
+        Watermark = "https://ast-bot.com/portal/guild/channel/token/",
+        MinWidth = 320
+    };
     private readonly CheckBox _alwaysOnTop = new() { Content = "Toujours au-dessus", IsChecked = true };
-    private readonly ListBox _historyList;
+    private readonly Button _connectButton = new() { Content = "Connecter" };
+    private readonly Button _historyButton = new() { Content = "Historique" };
+    private readonly Button _settingsButton = new() { Content = "⚙" };
+    private readonly Button _closeButton = new() { Content = "×" };
+    private readonly Border _historyPanel;
+    private readonly Border _settingsPanel;
+    private readonly Border _bubble;
     private readonly DispatcherTimer _pollTimer;
+    private readonly DispatcherTimer _animationTimer;
 
     private CompanionSettings _settings = new();
     private CompanionConnection? _connection;
     private Dictionary<string, int>? _knownItemCounts;
+    private HashSet<string>? _knownHintIds;
     private CancellationTokenSource? _pollCts;
     private bool _polling;
+    private bool _processingReactions;
+    private bool _wasConnected;
+    private double _animationPhase;
 
     public MainWindow()
     {
-        Title = "AST Companion";
-        Width = 380;
-        Height = 610;
-        MinWidth = 340;
-        MinHeight = 500;
+        Title = "AST Companion — Aster";
+        Width = 540;
+        Height = 360;
+        MinWidth = 480;
+        MinHeight = 300;
+        CanResize = false;
+        Background = Brushes.Transparent;
+        SystemDecorations = SystemDecorations.None;
+        TransparencyLevelHint = new[] { WindowTransparencyLevel.Transparent };
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        ShowInTaskbar = true;
+        Topmost = true;
 
-        _historyList = new ListBox
-        {
-            ItemsSource = _history,
-            Height = 210
-        };
+        _bubble = CreateBubble();
+        _historyPanel = CreateHistoryPanel();
+        _settingsPanel = CreateSettingsPanel();
+        Content = BuildLayout();
 
+        _historyButton.Click += (_, _) => ToggleHistory();
+        _settingsButton.Click += (_, _) => ToggleSettings();
+        _closeButton.Click += (_, _) => Close();
         _connectButton.Click += async (_, _) => await SaveAndConnectAsync();
-        _alwaysOnTop.IsCheckedChanged += (_, _) =>
+        _alwaysOnTop.IsCheckedChanged += async (_, _) =>
         {
             Topmost = _alwaysOnTop.IsChecked == true;
             _settings.AlwaysOnTop = Topmost;
-            _ = _settings.SaveAsync();
+            await _settings.SaveAsync();
         };
 
-        Content = BuildLayout();
+        PointerPressed += OnPointerPressed;
+        PositionChanged += async (_, _) =>
+        {
+            _settings.WindowX = Position.X;
+            _settings.WindowY = Position.Y;
+            await _settings.SaveAsync();
+        };
 
         _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _pollTimer.Tick += async (_, _) => await PollAsync();
+
+        _animationTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
+        _animationTimer.Tick += (_, _) =>
+        {
+            _animationPhase += 0.08;
+            _aster.Phase = _animationPhase;
+            _aster.InvalidateVisual();
+        };
 
         Opened += async (_, _) => await InitializeAsync();
         Closed += (_, _) =>
         {
             _pollTimer.Stop();
+            _animationTimer.Stop();
             _pollCts?.Cancel();
             _pollCts?.Dispose();
         };
@@ -77,55 +138,148 @@ public sealed class MainWindow : Window
 
     private Control BuildLayout()
     {
-        var root = new StackPanel
+        var root = new Grid
         {
-            Margin = new Thickness(18),
-            Spacing = 12
+            RowDefinitions = new RowDefinitions("Auto,*"),
+            Margin = new Thickness(8)
         };
 
-        var mascotCard = new Border
+        var toolbar = new StackPanel
         {
-            Padding = new Thickness(16),
-            CornerRadius = new CornerRadius(16),
-            Background = new SolidColorBrush(Color.FromArgb(28, 255, 255, 255)),
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 6,
+            Children = { _historyButton, _settingsButton, _closeButton }
+        };
+        Grid.SetRow(toolbar, 0);
+
+        var stage = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("220,*"),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var asterHost = new Grid
+        {
+            Width = 220,
+            Height = 250,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        asterHost.Children.Add(_aster);
+        Grid.SetColumn(asterHost, 0);
+
+        var right = new StackPanel
+        {
+            Spacing = 10,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 6, 10, 0),
+            Children = { _bubble, _historyPanel, _settingsPanel }
+        };
+        Grid.SetColumn(right, 1);
+
+        stage.Children.Add(asterHost);
+        stage.Children.Add(right);
+        Grid.SetRow(stage, 1);
+
+        root.Children.Add(toolbar);
+        root.Children.Add(stage);
+        return root;
+    }
+
+    private Border CreateBubble()
+    {
+        var statusRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Children = { _statusDot, _statusText }
+        };
+
+        return new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#F7F0DE")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#C9B889")),
+            BorderThickness = new Thickness(2),
+            CornerRadius = new CornerRadius(18),
+            Padding = new Thickness(18, 14),
+            BoxShadow = new BoxShadows(new BoxShadow
+            {
+                Color = Color.FromArgb(80, 30, 35, 25),
+                Blur = 18,
+                OffsetX = 0,
+                OffsetY = 6
+            }),
+            Child = new StackPanel
+            {
+                Spacing = 5,
+                Children = { _bubbleTitle, _bubbleSubtitle, _bubbleDetail, statusRow }
+            }
+        };
+    }
+
+    private Border CreateHistoryPanel()
+    {
+        var list = new ListBox
+        {
+            ItemsSource = _history,
+            Height = 150
+        };
+
+        return new Border
+        {
+            IsVisible = false,
+            Background = new SolidColorBrush(Color.Parse("#F7F0DE")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#C9B889")),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(14),
+            Padding = new Thickness(12),
             Child = new StackPanel
             {
                 Spacing = 8,
                 Children =
                 {
-                    _mascot,
-                    _speech
+                    new TextBlock { Text = "Derniers événements", FontWeight = FontWeight.Bold },
+                    list
                 }
             }
         };
+    }
 
-        var settingsRow = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
-            ColumnSpacing = 8
-        };
+    private Border CreateSettingsPanel()
+    {
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 8 };
         Grid.SetColumn(_portalUrl, 0);
         Grid.SetColumn(_connectButton, 1);
-        settingsRow.Children.Add(_portalUrl);
-        settingsRow.Children.Add(_connectButton);
+        row.Children.Add(_portalUrl);
+        row.Children.Add(_connectButton);
 
-        root.Children.Add(mascotCard);
-        root.Children.Add(new TextBlock { Text = "Lien portail AST", FontWeight = FontWeight.SemiBold });
-        root.Children.Add(settingsRow);
-        root.Children.Add(_alwaysOnTop);
-        root.Children.Add(_status);
-        root.Children.Add(new Separator());
-        root.Children.Add(new TextBlock { Text = "Objets détectés", FontWeight = FontWeight.SemiBold });
-        root.Children.Add(_historyList);
-        root.Children.Add(new TextBlock
+        return new Border
         {
-            Text = "MVP : le companion lit uniquement ton résumé utilisateur AST. Aucun accès Discord n'est nécessaire sur ce PC.",
-            Opacity = 0.65,
-            TextWrapping = TextWrapping.Wrap,
-            FontSize = 12
-        });
-
-        return new ScrollViewer { Content = root };
+            IsVisible = true,
+            Background = new SolidColorBrush(Color.Parse("#F7F0DE")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#C9B889")),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(14),
+            Padding = new Thickness(12),
+            Child = new StackPanel
+            {
+                Spacing = 8,
+                Children =
+                {
+                    new TextBlock { Text = "Connexion AST", FontWeight = FontWeight.Bold },
+                    row,
+                    _alwaysOnTop,
+                    new TextBlock
+                    {
+                        Text = "Utilise le lien de ton portail utilisateur AST. Le token reste enregistré uniquement sur ce PC.",
+                        TextWrapping = TextWrapping.Wrap,
+                        FontSize = 11,
+                        Opacity = 0.65
+                    }
+                }
+            }
+        };
     }
 
     private async Task InitializeAsync()
@@ -134,12 +288,18 @@ public sealed class MainWindow : Window
         _portalUrl.Text = _settings.PortalUrl;
         _alwaysOnTop.IsChecked = _settings.AlwaysOnTop;
         Topmost = _settings.AlwaysOnTop;
+        _historyPanel.IsVisible = _settings.ShowHistory;
 
-        var seconds = Math.Clamp(_settings.PollSeconds, 2, 60);
-        _pollTimer.Interval = TimeSpan.FromSeconds(seconds);
+        if (_settings.WindowX is int x && _settings.WindowY is int y)
+            Position = new PixelPoint(x, y);
+
+        _pollTimer.Interval = TimeSpan.FromSeconds(Math.Clamp(_settings.PollSeconds, 2, 60));
+        _animationTimer.Start();
 
         if (!string.IsNullOrWhiteSpace(_settings.PortalUrl))
             await ConnectAsync(_settings.PortalUrl, announceSuccess: false);
+        else
+            SetState(AsterState.Idle, "Salut, moi c'est Aster !", "Donne-moi ton lien portail AST et je surveillerai tes objets.", "Je resterai discrètement à côté de ton jeu.");
     }
 
     private async Task SaveAndConnectAsync()
@@ -157,22 +317,27 @@ public sealed class MainWindow : Window
         {
             _connection = null;
             _pollTimer.Stop();
-            SetDisconnected("Lien portail invalide.");
+            SetOffline("Lien portail invalide.");
+            _settingsPanel.IsVisible = true;
             return;
         }
 
         _connection = connection;
         _knownItemCounts = null;
+        _knownHintIds = null;
         _history.Clear();
-        _status.Text = "Connexion à AST…";
-        _mascot.Text = "(•‿•)";
+        _statusText.Text = "Connexion à AST…";
+        _statusDot.Foreground = new SolidColorBrush(Color.Parse("#E7C36A"));
+        _aster.State = AsterState.Idle;
+        _aster.InvalidateVisual();
 
         var success = await PollAsync();
         if (!success)
             return;
 
+        _settingsPanel.IsVisible = false;
         if (announceSuccess)
-            _speech.Text = "Connecté ! Je te préviens dès qu'un nouvel objet arrive.";
+            EnqueueReaction(new AsterNotification(AsterState.Reconnect, "Connecté !", "Aster surveille maintenant tes objets.", "Tu peux déplacer Aster où tu veux sur ton écran.", TimeSpan.FromSeconds(4)));
 
         _pollTimer.Start();
     }
@@ -191,26 +356,49 @@ public sealed class MainWindow : Window
         {
             var snapshot = await _api.GetSnapshotAsync(_connection, _pollCts.Token);
             var currentCounts = BuildCounts(snapshot.Items);
+            var currentHints = snapshot.Hints.Select(x => x.Identity).ToHashSet(StringComparer.Ordinal);
 
             if (_knownItemCounts is null)
             {
                 _knownItemCounts = currentCounts;
-                LoadInitialHistory(snapshot.Items);
-                _status.Text = $"Connecté • {snapshot.Items.Count} objet(s) suivi(s)";
-                _mascot.Text = "(◕‿◕)";
+                _knownHintIds = currentHints;
+                LoadInitialHistory(snapshot.Items, snapshot.Hints);
+                SetConnectedStatus(snapshot.Items.Count);
+                _wasConnected = true;
                 return true;
             }
 
             var newItems = FindNewItems(snapshot.Items, _knownItemCounts);
+            var newHints = snapshot.Hints
+                .Where(x => _knownHintIds is not null && !_knownHintIds.Contains(x.Identity))
+                .ToList();
+
             _knownItemCounts = currentCounts;
-            _status.Text = $"Connecté • mise à jour {DateTime.Now:HH:mm:ss}";
-            _mascot.Text = "(◕‿◕)";
+            _knownHintIds = currentHints;
+            SetConnectedStatus(snapshot.Items.Count);
+
+            if (!_wasConnected)
+            {
+                _wasConnected = true;
+                EnqueueReaction(new AsterNotification(AsterState.Reconnect, "De retour !", "La connexion avec AST est rétablie.", "Aster reprend sa surveillance.", TimeSpan.FromSeconds(4)));
+            }
 
             foreach (var item in newItems)
-                AddToHistory(item);
+            {
+                AddItemToHistory(item);
+                EnqueueReaction(BuildItemNotification(item));
+            }
 
-            if (newItems.Count > 0)
-                Announce(newItems);
+            foreach (var hint in newHints)
+            {
+                AddHintToHistory(hint);
+                EnqueueReaction(new AsterNotification(
+                    AsterState.Hint,
+                    "Nouvel indice !",
+                    hint.Item,
+                    BuildHintDetail(hint),
+                    TimeSpan.FromSeconds(6)));
+            }
 
             return true;
         }
@@ -220,7 +408,8 @@ public sealed class MainWindow : Window
         }
         catch (Exception ex)
         {
-            SetDisconnected($"AST indisponible : {ex.Message}");
+            _wasConnected = false;
+            SetOffline($"AST indisponible : {ex.Message}");
             return false;
         }
         finally
@@ -229,51 +418,143 @@ public sealed class MainWindow : Window
         }
     }
 
-    private void Announce(IReadOnlyList<CompanionItem> newItems)
+    private AsterNotification BuildItemNotification(CompanionItem item)
     {
-        var last = newItems[^1];
-        _mascot.Text = last.Flag == "4" ? "(⊙﹏⊙)" : "(★‿★)";
+        var state = AsterReactions.FromItem(item);
+        var finder = string.IsNullOrWhiteSpace(item.Finder) ? "un autre joueur" : item.Finder;
+        var detailParts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(item.Game)) detailParts.Add(item.Game);
+        if (!string.IsNullOrWhiteSpace(item.Location)) detailParts.Add(item.Location);
+        if (!string.IsNullOrWhiteSpace(item.Alias)) detailParts.Add($"pour {item.Alias}");
 
-        if (newItems.Count == 1)
+        var subtitle = state == AsterState.Trap
+            ? $"{item.Item} envoyé par {finder}… aïe."
+            : $"{item.Item} — de {finder}";
+
+        return new AsterNotification(
+            state,
+            AsterReactions.Label(state),
+            subtitle,
+            string.Join(" • ", detailParts),
+            state == AsterState.Trap ? TimeSpan.FromSeconds(7) : TimeSpan.FromSeconds(6));
+    }
+
+    private void EnqueueReaction(AsterNotification notification)
+    {
+        _reactionQueue.Enqueue(notification);
+        if (!_processingReactions)
+            _ = ProcessReactionQueueAsync();
+    }
+
+    private async Task ProcessReactionQueueAsync()
+    {
+        if (_processingReactions)
+            return;
+
+        _processingReactions = true;
+        try
         {
-            var source = string.IsNullOrWhiteSpace(last.Finder) ? "quelqu'un" : last.Finder;
-            _speech.Text = last.Flag == "4"
-                ? $"Oh non… {last.Item} envoyé par {source} !"
-                : $"Tu as reçu {last.Item} de {source} !";
+            while (_reactionQueue.Count > 0)
+            {
+                var reaction = _reactionQueue.Dequeue();
+                SetState(reaction.State, reaction.Title, reaction.Subtitle, reaction.Detail);
+                await Task.Delay(reaction.Duration);
+            }
+
+            if (_wasConnected)
+                SetState(AsterState.Idle, "Tout va bien", "Aster veille sur tes prochains objets.", "Clique sur Historique pour revoir les derniers événements.");
         }
-        else
+        finally
         {
-            _speech.Text = $"Tu viens de recevoir {newItems.Count} objets ! Le dernier est {last.Item}.";
+            _processingReactions = false;
         }
     }
 
-    private void SetDisconnected(string message)
+    private void SetState(AsterState state, string title, string subtitle, string detail)
     {
-        _status.Text = message;
-        _mascot.Text = "(-_-) zZ";
-        _speech.Text = "Je n'arrive pas à joindre AST pour le moment.";
+        _aster.State = state;
+        _aster.InvalidateVisual();
+        _bubbleTitle.Text = title;
+        _bubbleSubtitle.Text = subtitle;
+        _bubbleDetail.Text = detail;
     }
 
-    private void LoadInitialHistory(IReadOnlyList<CompanionItem> items)
+    private void SetConnectedStatus(int itemCount)
     {
-        foreach (var item in items.TakeLast(20).Reverse())
-            AddToHistory(item);
+        _statusDot.Foreground = new SolidColorBrush(Color.Parse("#64A867"));
+        _statusText.Text = $"Connecté • {itemCount} objet(s) • {DateTime.Now:HH:mm:ss}";
+        if (!_processingReactions)
+            SetState(AsterState.Idle, "Tout va bien", "Aster veille sur tes prochains objets.", "Clique sur Historique pour revoir les derniers événements.");
     }
 
-    private void AddToHistory(CompanionItem item)
+    private void SetOffline(string message)
+    {
+        _statusDot.Foreground = new SolidColorBrush(Color.Parse("#8C9781"));
+        _statusText.Text = message;
+        if (!_processingReactions)
+            SetState(AsterState.Offline, "Petite pause…", "Je n'arrive pas à joindre AST pour le moment.", "Je réessaierai automatiquement.");
+    }
+
+    private void ToggleHistory()
+    {
+        _historyPanel.IsVisible = !_historyPanel.IsVisible;
+        _settingsPanel.IsVisible = false;
+        _settings.ShowHistory = _historyPanel.IsVisible;
+        _ = _settings.SaveAsync();
+    }
+
+    private void ToggleSettings()
+    {
+        _settingsPanel.IsVisible = !_settingsPanel.IsVisible;
+        _historyPanel.IsVisible = false;
+    }
+
+    private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginMoveDrag(e);
+    }
+
+    private void LoadInitialHistory(IReadOnlyList<CompanionItem> items, IReadOnlyList<CompanionHint> hints)
+    {
+        foreach (var item in items.TakeLast(15).Reverse())
+            AddItemToHistory(item);
+
+        foreach (var hint in hints.TakeLast(5).Reverse())
+            AddHintToHistory(hint);
+    }
+
+    private void AddItemToHistory(CompanionItem item)
     {
         var location = string.IsNullOrWhiteSpace(item.Location) ? string.Empty : $" • {item.Location}";
         var finder = string.IsNullOrWhiteSpace(item.Finder) ? string.Empty : $" ← {item.Finder}";
         var alias = string.IsNullOrWhiteSpace(item.Alias) ? string.Empty : $"[{item.Alias}] ";
-        _history.Insert(0, $"{alias}{item.Item}{finder}{location}");
+        _history.Insert(0, $"🎁 {alias}{item.Item}{finder}{location}");
+        TrimHistory();
+    }
 
-        while (_history.Count > 30)
+    private void AddHintToHistory(CompanionHint hint)
+    {
+        _history.Insert(0, $"💡 [{hint.Alias}] {hint.Item} • {hint.Location} • {hint.Game}");
+        TrimHistory();
+    }
+
+    private void TrimHistory()
+    {
+        while (_history.Count > 40)
             _history.RemoveAt(_history.Count - 1);
     }
 
+    private static string BuildHintDetail(CompanionHint hint)
+    {
+        var who = hint.Direction == "receiver"
+            ? $"trouvé par {hint.Finder}"
+            : $"pour {hint.Receiver}";
+        return string.Join(" • ", new[] { who, hint.Location, hint.Game }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
+
     private static Dictionary<string, int> BuildCounts(IEnumerable<CompanionItem> items)
-        => items
-            .GroupBy(x => x.Identity, StringComparer.Ordinal)
+        => items.GroupBy(x => x.Identity, StringComparer.Ordinal)
             .ToDictionary(x => x.Key, x => x.Count(), StringComparer.Ordinal);
 
     private static List<CompanionItem> FindNewItems(
