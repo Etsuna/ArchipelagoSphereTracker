@@ -79,14 +79,13 @@ public class UrlClass
             return message;
         }
 
-        Console.WriteLine($"Try to add URL Channel: {newUrl} in Guild: {guildId}, Channel: {channelId}");
+        var validatedUrl = await ArchipelagoUrlSecurity.ValidateRoomUrlAsync(newUrl);
+        if (validatedUrl == null)
+            return Resource.URLNotValid;
 
-        var uri = new Uri(newUrl);
-        baseUrl = $"{uri.Scheme}://{uri.Authority}";
-        var segments = uri.AbsolutePath.Trim('/').Split('/');
-        room = segments.Length > 1 ? segments[^1] : "";
-
-        bool IsValidUrl(string url) => url.Contains(baseUrl + "/room");
+        baseUrl = validatedUrl.BaseUrl;
+        room = validatedUrl.RoomId;
+        Console.WriteLine($"Try to add an Archipelago room from host {validatedUrl.Host} in Guild: {guildId}, Channel: {channelId}");
 
         var roomInfo = await RoomInfo(baseUrl, room);
         if (roomInfo == null)
@@ -96,7 +95,7 @@ public class UrlClass
             return message;
         }
 
-        var existingChannelForRoom =  await ChannelsAndUrlsCommands.GetChannelIdForRoomAsync(guildId, baseUrl, room);
+        var existingChannelForRoom = await ChannelsAndUrlsCommands.GetChannelIdForRoomAsync(guildId, baseUrl, room);
 
         if (!string.IsNullOrEmpty(existingChannelForRoom) && existingChannelForRoom != channelId)
         {
@@ -120,8 +119,8 @@ public class UrlClass
                 return (false, string.Format(Resource.UrlCheckMaxTread, Declare.MaxThreadByGuild.ToString()));
 
             var playersCount = roomInfo.Players.Count;
-            
-            if(playersCount <= 1)
+
+            if (playersCount <= 1)
             {
                 return (false, Resource.CheckPlayerMin);
             }
@@ -139,118 +138,111 @@ public class UrlClass
 
         if (await CanAddUrlAsync(guildId, channelId))
         {
-            if (!IsValidUrl(newUrl))
+            var (isValid, errorMessage) = await IsAllUrlIsValidAsync();
+            if (!isValid)
             {
-                message = Resource.URLNotValid;
+                message = errorMessage;
             }
             else
             {
-                var (isValid, errorMessage) = await IsAllUrlIsValidAsync();
-                if (!isValid)
+                ThreadType type = threadType switch
                 {
-                    message = errorMessage;
+                    "Private" => ThreadType.PrivateThread,
+                    "Public" => ThreadType.PublicThread,
+                    _ => ThreadType.PrivateThread
+                };
+
+                var thread = await channel.CreateThreadAsync(
+                    threadTitle,
+                    autoArchiveDuration: ThreadArchiveDuration.OneWeek,
+                    type: type
+                );
+
+                await thread.SendMessageAsync(string.Format(Resource.UrlThredCreated, thread.Name));
+                channelId = thread.Id.ToString();
+
+                if (type == ThreadType.PrivateThread)
+                {
+                    if (guildUser != null)
+                        await thread.AddUserAsync(guildUser);
+                    else
+                        message = Resource.UrlPrivateThreadUserNotFound;
                 }
                 else
                 {
-                    ThreadType type = threadType switch
+                    if (autoAddMembers)
                     {
-                        "Private" => ThreadType.PrivateThread,
-                        "Public" => ThreadType.PublicThread,
-                        _ => ThreadType.PrivateThread
-                    };
-
-                    var thread = await channel.CreateThreadAsync(
-                        threadTitle,
-                        autoArchiveDuration: ThreadArchiveDuration.OneWeek,
-                        type: type
-                    );
-
-                    await thread.SendMessageAsync(string.Format(Resource.UrlThredCreated, thread.Name));
-                    channelId = thread.Id.ToString();
-
-                    if (type == ThreadType.PrivateThread)
+                        await foreach (var memberBatch in channel.GetUsersAsync())
+                        {
+                            foreach (var member in memberBatch)
+                                await thread.AddUserAsync(member);
+                        }
+                    }
+                    else
                     {
                         if (guildUser != null)
                             await thread.AddUserAsync(guildUser);
                         else
                             message = Resource.UrlPrivateThreadUserNotFound;
                     }
-                    else
-                    {
-                        if(autoAddMembers)
-                        {
-                            await foreach (var memberBatch in channel.GetUsersAsync())
-                            {
-                                foreach (var member in memberBatch)
-                                    await thread.AddUserAsync(member);
-                            }
-                        }
-                        else
-                        {
-                            if (guildUser != null)
-                                await thread.AddUserAsync(guildUser);
-                            else
-                                message = Resource.UrlPrivateThreadUserNotFound;
-                        }
-                    }
-
-                    var patchLinkList = new List<Patch>();
-                    var aliasList = new List<(int slot, string alias, string game)>();
-                    var aliasSlot = 1;
-
-                    foreach (var player in roomInfo.Players)
-                    {
-                        aliasList.Add((aliasSlot, player.Name, player.Game));
-                        aliasSlot++;
-                    }
-
-                    foreach (var download in roomInfo.Downloads)
-                    {
-                        aliasList.Where(x => x.slot == download.Slot).ToList().ForEach(slot =>
-                        {
-                            var patchLink = new Patch
-                            {
-                                GameAlias = slot.alias,
-                                GameName = slot.game,
-                                PatchLink = baseUrl + download.Download,
-                            };
-                            patchLinkList.Add(patchLink);
-                            Console.WriteLine(string.Format(Resource.UrlGamePatch, patchLink.GameAlias, patchLink.PatchLink));
-                        });
-                    }
-
-                    if (!string.IsNullOrEmpty(tracker))
-                    {
-                        Declare.AddedChannelId.Add(channelId);
-                        try
-                        {
-                            await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr, port);
-                            var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
-                            var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
-                            await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
-                            await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
-                            await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
-                            await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
-                            var info = await HelperClass.Info(channelId, guildId);
-                            await BotCommands.SendMessageAsync(info, channelId);
-                            using MemoryStream playersStream = await SendPlayersInfoAsync(channelId, thread, aliasList, roomInfo, room);
-                            await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
-                            await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent, true);
-                            await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
-
-                            await BotCommands.SendMessageAsync(Resource.Discord, channelId);
-                            await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
-                            await BotCommands.SendMessageAsync(Resource.ASTRoomCommand, channelId);
-                            await BotCommands.SendMessageAsync(Resource.ASTUserCommand, channelId);
-                        }
-                        finally
-                        {
-                            Declare.AddedChannelId.Remove(channelId);
-                            Console.WriteLine($"Finished adding URL Channel: {newUrl} in Guild: {guildId}, Channel: {channelId}");
-                        }
-                    }
-                    message = string.Format(Resource.URLSet, newUrl);
                 }
+
+                var patchLinkList = new List<Patch>();
+                var aliasList = new List<(int slot, string alias, string game)>();
+                var aliasSlot = 1;
+
+                foreach (var player in roomInfo.Players)
+                {
+                    aliasList.Add((aliasSlot, player.Name, player.Game));
+                    aliasSlot++;
+                }
+
+                foreach (var download in roomInfo.Downloads)
+                {
+                    aliasList.Where(x => x.slot == download.Slot).ToList().ForEach(slot =>
+                    {
+                        var patchLink = new Patch
+                        {
+                            GameAlias = slot.alias,
+                            GameName = slot.game,
+                            PatchLink = baseUrl + download.Download,
+                        };
+                        patchLinkList.Add(patchLink);
+                        Console.WriteLine($"Patch registered for alias '{patchLink.GameAlias}' ({patchLink.GameName}).");
+                    });
+                }
+
+                if (!string.IsNullOrEmpty(tracker))
+                {
+                    Declare.AddedChannelId.Add(channelId);
+                    try
+                    {
+                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr, port);
+                        var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
+                        var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
+                        await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
+                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
+                        await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
+                        await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
+                        var info = await HelperClass.Info(channelId, guildId);
+                        await BotCommands.SendMessageAsync(info, channelId);
+                        using MemoryStream playersStream = await SendPlayersInfoAsync(channelId, thread, aliasList, roomInfo, room);
+                        await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
+                        await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent, true);
+                        await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
+
+                        await BotCommands.SendMessageAsync(Resource.Discord, channelId);
+                        await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
+                        await BotCommands.SendMessageAsync(Resource.ASTRoomCommand, channelId);
+                        await BotCommands.SendMessageAsync(Resource.ASTUserCommand, channelId);
+                    }
+                    finally
+                    {
+                        Declare.AddedChannelId.Remove(channelId);
+                        Console.WriteLine($"Finished adding an Archipelago room from host {validatedUrl.Host} in Guild: {guildId}, Channel: {channelId}");
+                    }
+                }
+                message = string.Format(Resource.URLSet, newUrl);
             }
         }
         else
@@ -292,7 +284,7 @@ public class UrlClass
         var message = string.Empty;
         if (Declare.IsBigAsync)
         {
-            if(Declare.UserIdForBigAsync == guildUser?.Id.ToString())
+            if (Declare.UserIdForBigAsync == guildUser?.Id.ToString())
             {
                 message = await DeleteChannelAndUrl(channelId, guildId);
                 return message;
@@ -369,15 +361,15 @@ public class UrlClass
         catch (OperationCanceledException ex)
         {
             if (!ct.IsCancellationRequested)
-                Console.WriteLine($"[TDM] Timeout en récupérant {url} : {ex}");
+                Console.WriteLine($"[TDM] Timeout while contacting {url.Host}: {ex.GetType().Name}");
             else
-                Console.WriteLine($"[TDM] Annulé par le caller pour {url} : {ex}");
+                Console.WriteLine($"[TDM] Request to {url.Host} canceled by caller: {ex.GetType().Name}");
 
             return null;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[TDM] Erreur HTTP en récupérant {url} : {ex}");
+            Console.WriteLine($"[TDM] HTTP error while contacting {url.Host}: {ex.GetType().Name}: {ex.Message}");
             return null;
         }
 

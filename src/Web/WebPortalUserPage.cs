@@ -425,8 +425,8 @@ public static class WebPortalUserPage
     const idx = path.indexOf('/portal/');
     const basePath = idx >= 0 ? path.substring(0, idx) : '';
     const apiBase = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/' + ctx.channelId + '/' + ctx.token;
-    const infoApi = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/' + ctx.channelId + '/info';
-    const roomLinksApi = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/room-links';
+    const infoApi = apiBase + '/info';
+    const roomLinksApi = apiBase + '/room-links';
 
     const escapeHtml = (value) => {{
       const div = document.createElement('div');

@@ -42,11 +42,39 @@ public static class WebPortalServer
 
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Limits.MaxRequestBodySize = Declare.WebPortalMaxUploadBytes;
+        });
 
         var app = builder.Build();
         _app = app;
 
         app.UseRequestLocalization(CreateLocalizationOptions(culture));
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            context.Response.Headers["X-Frame-Options"] = "DENY";
+            context.Response.Headers["Referrer-Policy"] = "no-referrer";
+            context.Response.Headers["Content-Security-Policy"] =
+                "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; " +
+                "img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'";
+
+            if (context.Request.Path.StartsWithSegments("/portal") ||
+                context.Request.Path.StartsWithSegments("/api/portal"))
+            {
+                context.Response.Headers.CacheControl = "no-store";
+            }
+
+            if (context.Request.Path.StartsWithSegments("/portal") &&
+                context.Request.Path.Value?.Contains("/downloads/", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                return;
+            }
+
+            await next();
+        });
 
         var portalFiles = new PhysicalFileProvider(Declare.WebPortalPath);
 
@@ -72,9 +100,21 @@ public static class WebPortalServer
         app.MapGet("/", () => Results.Redirect("/portal/"));
         app.MapGet("/portal", () => Results.Redirect("/portal/"));
 
-        // Servir le fichier commands.html (stocké à la racine) sous /portal/{guildId}/{channelId}/commands.html
-        app.MapGet("/portal/{guildId}/{channelId}/commands.html", (string guildId, string channelId) =>
+        app.MapGet("/portal/{guildId}/{channelId}/commands.html", () =>
+            Results.NotFound(new { message = "This portal URL is no longer valid. Request a new link from Discord." }));
+
+        app.MapGet("/portal/{guildId}/{channelId}/thread-commands.html", () =>
+            Results.NotFound(new { message = "This portal URL is no longer valid. Request a new link from Discord." }));
+
+        app.MapGet("/portal/{guildId}/{channelId}/{token}/commands.html", async (
+            string guildId,
+            string channelId,
+            string token) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
             var commandsPath = Path.Combine(Declare.WebPortalPath, "commands.html");
             if (!File.Exists(commandsPath))
                 return Results.NotFound(new { message = "commands.html not found" });
@@ -82,8 +122,15 @@ public static class WebPortalServer
             return Results.File(commandsPath, "text/html; charset=utf-8");
         });
 
-        app.MapGet("/portal/{guildId}/{channelId}/thread-commands.html", (string guildId, string channelId) =>
+        app.MapGet("/portal/{guildId}/{channelId}/{token}/thread-commands.html", async (
+            string guildId,
+            string channelId,
+            string token) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.RoomManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
             var threadCommandsPath = Path.Combine(Declare.WebPortalPath, "thread-commands.html");
             if (!File.Exists(threadCommandsPath))
                 return Results.NotFound(new { message = "thread-commands.html not found" });
@@ -93,9 +140,10 @@ public static class WebPortalServer
 
         app.MapGet("/api/portal/{guildId}/{channelId}/{token}/summary", async (string guildId, string channelId, string token) =>
         {
-            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
-            if (string.IsNullOrWhiteSpace(userId))
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
                 return Results.NotFound(new { message = "Invalid token." });
+            var userId = actor.UserId;
 
             var aliases = await RecapListCommands.GetAliasesForUserAsync(guildId, channelId, userId);
             var recapMap = await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId);
@@ -141,9 +189,10 @@ public static class WebPortalServer
             string token,
             HttpRequest request) =>
         {
-            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
-            if (string.IsNullOrWhiteSpace(userId))
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
                 return Results.NotFound(new { message = "Invalid token." });
+            var userId = actor.UserId;
 
             var form = await request.ReadFormAsync();
             var alias = form["alias"].FirstOrDefault();
@@ -156,8 +205,8 @@ public static class WebPortalServer
 
         app.MapGet("/api/portal/{guildId}/{channelId}/{token}/aliases", async (string guildId, string channelId, string token) =>
         {
-            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
-            if (string.IsNullOrWhiteSpace(userId))
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
                 return Results.NotFound(new { message = "Invalid token." });
 
             var aliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId);
@@ -177,9 +226,10 @@ public static class WebPortalServer
 
         app.MapGet("/api/portal/{guildId}/{channelId}/{token}/aliases/user", async (string guildId, string channelId, string token) =>
         {
-            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
-            if (string.IsNullOrWhiteSpace(userId))
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
                 return Results.NotFound(new { message = "Invalid token." });
+            var userId = actor.UserId;
 
             var aliases = await RecapListCommands.GetAliasesForUserAsync(guildId, channelId, userId);
             var uniqueAliases = aliases
@@ -197,9 +247,10 @@ public static class WebPortalServer
             string token,
             HttpRequest request) =>
         {
-            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
-            if (string.IsNullOrWhiteSpace(userId))
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
                 return Results.NotFound(new { message = "Invalid token." });
+            var userId = actor.UserId;
 
             var form = await request.ReadFormAsync();
             var alias = form["alias"].FirstOrDefault();
@@ -208,7 +259,7 @@ public static class WebPortalServer
                 return Results.BadRequest(new { message = "alias is required" });
 
             var owners = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
-            if (owners.Contains(userId))
+            if (owners.Count > 0)
                 return Results.Conflict(new { message = "Alias already registered for this user." });
 
             await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, skipMention);
@@ -230,9 +281,10 @@ public static class WebPortalServer
             string token,
             HttpRequest request) =>
         {
-            var userId = await PortalAccessCommands.GetUserIdByTokenAsync(guildId, channelId, token);
-            if (string.IsNullOrWhiteSpace(userId))
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
                 return Results.NotFound(new { message = "Invalid token." });
+            var userId = actor.UserId;
 
             var form = await request.ReadFormAsync();
             var alias = form["alias"].FirstOrDefault();
@@ -243,7 +295,7 @@ public static class WebPortalServer
             if (!owners.Contains(userId))
                 return Results.NotFound(new { message = "Alias not found for this user." });
 
-            await ReceiverAliasesCommands.DeleteReceiverAlias(guildId, channelId, alias);
+            await ReceiverAliasesCommands.DeleteReceiverAliasForUser(guildId, channelId, alias, userId);
             await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, userId, alias);
 
             return Results.Ok(new { message = "ok" });
@@ -269,8 +321,15 @@ public static class WebPortalServer
             return Results.File(templatePath, "application/x-yaml", safeTemplateName);
         });
 
-        app.MapGet("/api/portal/{guildId}/{channelId}/commands/yamls", (string guildId, string channelId) =>
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/commands/yamls", async (
+            string guildId,
+            string channelId,
+            string token) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
             if (!Declare.IsArchipelagoMode)
                 return Results.BadRequest(new { message = "Archipelago mode is disabled." });
 
@@ -278,8 +337,16 @@ public static class WebPortalServer
             return Results.Ok(new { files = yamls });
         });
 
-        app.MapGet("/extern/Archipelago/Players/{channelId}/yaml/{yamlName}", (string channelId, string yamlName) =>
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/commands/yamls/{yamlName}", async (
+            string guildId,
+            string channelId,
+            string token,
+            string yamlName) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
             if (!Declare.IsArchipelagoMode)
                 return Results.BadRequest(new { message = "Archipelago mode is disabled." });
 
@@ -298,8 +365,15 @@ public static class WebPortalServer
             return Results.File(yamlPath, "application/x-yaml", safeYamlName);
         });
 
-        app.MapGet("/api/portal/{guildId}/{channelId}/thread-commands/patches", async (string guildId, string channelId) =>
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/thread-commands/patches", async (
+            string guildId,
+            string channelId,
+            string token) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.RoomManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
             if (!Declare.EnableWebPortal)
                 return Results.BadRequest(new { message = "Web portal is disabled." });
 
@@ -319,8 +393,15 @@ public static class WebPortalServer
             return Results.Ok(new { aliases });
         });
 
-        app.MapGet("/api/portal/{guildId}/{channelId}/info", async (string guildId, string channelId) =>
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/info", async (
+            string guildId,
+            string channelId,
+            string token) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
             if (!Declare.EnableWebPortal)
                 return Results.BadRequest(new { message = "Web portal is disabled." });
 
@@ -331,8 +412,15 @@ public static class WebPortalServer
             return Results.Ok(new { message });
         });
 
-        app.MapGet("/api/portal/{guildId}/room-links", async (string guildId) =>
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/room-links", async (
+            string guildId,
+            string channelId,
+            string token) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
             if (!Declare.EnableWebPortal)
                 return Results.BadRequest(new { message = "Web portal is disabled." });
 
@@ -350,18 +438,29 @@ public static class WebPortalServer
             if (ulong.TryParse(guildId, out var guildIdValue))
                 guild = Declare.Client.GetGuild(guildIdValue);
 
-            var links = distinctChannels
-                .Select(channel => new PortalThreadLink(
-                    channel,
-                    ResolveThreadName(guild, channel),
-                    $"/portal/{guildId}/{channel}/thread-commands.html"))
-                .ToList();
+            var links = new List<PortalThreadLink>();
+            foreach (var roomChannelId in distinctChannels)
+            {
+                var roomToken = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, roomChannelId, actor.UserId);
+                links.Add(new PortalThreadLink(
+                    roomChannelId,
+                    ResolveThreadName(guild, roomChannelId),
+                    $"/portal/{guildId}/{roomChannelId}/{roomToken}/"));
+            }
 
             return Results.Ok(new { links });
         });
 
-        app.MapPost("/api/portal/{guildId}/{channelId}/thread-commands/execute", async (string guildId, string channelId, HttpRequest request) =>
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/thread-commands/execute", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.RoomManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
             if (!Declare.EnableWebPortal)
                 return Results.BadRequest(new { message = "Web portal is disabled." });
 
@@ -409,8 +508,40 @@ public static class WebPortalServer
             return Results.Ok(new { message });
         });
 
-        app.MapPost("/api/portal/{guildId}/{channelId}/commands/execute", async (string guildId, string channelId, HttpRequest request) =>
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/downloads/{fileName}", async (
+            string guildId,
+            string channelId,
+            string token,
+            string fileName) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
+            var safeFileName = Path.GetFileName(fileName);
+            if (!IsExactSafeFileName(fileName, safeFileName) ||
+                !safeFileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.BadRequest(new { message = "Invalid download name." });
+            }
+
+            var filePath = Path.Combine(Declare.WebPortalDownloadPath, guildId, channelId, actor.UserId, safeFileName);
+            if (!File.Exists(filePath))
+                return Results.NotFound(new { message = "Download not found or expired." });
+
+            return Results.File(filePath, "application/zip", safeFileName);
+        });
+
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/commands/execute", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
             if (!Declare.EnableWebPortal)
                 return Results.BadRequest(new { message = "Web portal is disabled." });
 
@@ -420,7 +551,13 @@ public static class WebPortalServer
             if (string.IsNullOrWhiteSpace(command) || string.IsNullOrWhiteSpace(channelId))
                 return Results.BadRequest(new { message = "command and channelId are required." });
 
-            var downloadRoot = Path.Combine(Declare.WebPortalPath, guildId, "downloads");
+            if ((command is "list-apworld" or "backup-apworld" or "send-apworld") &&
+                !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, actor.Authorization))
+            {
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+            }
+
+            var downloadRoot = Path.Combine(Declare.WebPortalDownloadPath, guildId, channelId, actor.UserId);
             if (Declare.IsArchipelagoMode)
             {
                 Directory.CreateDirectory(downloadRoot);
@@ -440,18 +577,12 @@ public static class WebPortalServer
                         var autoAddMembers = form["autoAddMembers"].FirstOrDefault() == "true";
                         var silent = form["silent"].FirstOrDefault() == "true";
                         var checkFrequency = form["checkFrequency"].FirstOrDefault() ?? "5m";
-                        var userIdStr = form["userId"].FirstOrDefault();
-
                         if (!ulong.TryParse(channelId, out var channelIdValue))
                             return Results.BadRequest(new { message = "Invalid channelId." });
 
                         var channel = Declare.Client.GetChannel(channelIdValue) as ITextChannel;
                         if (channel == null)
                             return Results.BadRequest(new { message = "Channel not found." });
-
-                        IGuildUser? requestUser = null;
-                        if (!string.IsNullOrWhiteSpace(userIdStr) && ulong.TryParse(userIdStr, out var userIdValue))
-                            requestUser = await channel.Guild.GetUserAsync(userIdValue);
 
                         var options = new UrlClass.UrlAddOptions(
                             url,
@@ -460,7 +591,7 @@ public static class WebPortalServer
                             autoAddMembers,
                             silent,
                             checkFrequency,
-                            requestUser);
+                            actor.User);
 
                         message = await UrlClass.AddUrlFromWebAsync(options, channelId, guildId, channel);
                         break;
@@ -476,7 +607,7 @@ public static class WebPortalServer
                         var zipPath = Path.Combine(downloadRoot, fileName);
                         message = await YamlClass.BackupYamlsToFileAsync(channelId, zipPath);
                         if (string.IsNullOrWhiteSpace(message))
-                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
+                            downloadUrl = ProtectedDownloadUrl(prefix, guildId, channelId, token, fileName);
                         break;
                     }
 
@@ -491,7 +622,8 @@ public static class WebPortalServer
                     {
                         var fileName = form["fileName"].FirstOrDefault() ?? string.Empty;
                         var safeFileName = Path.GetFileName(fileName);
-                        if (string.IsNullOrWhiteSpace(safeFileName) || !safeFileName.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
+                        if (!IsExactSafeFileName(fileName, safeFileName) ||
+                            !safeFileName.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
                         {
                             message = Resource.NoFileSelected;
                             break;
@@ -505,7 +637,7 @@ public static class WebPortalServer
                         }
 
                         message = string.Empty;
-                        downloadUrl = $"extern/Archipelago/Players/{Uri.EscapeDataString(channelId)}/yaml/{Uri.EscapeDataString(safeFileName)}";
+                        downloadUrl = $"{prefix}/api/portal/{guildId}/{channelId}/{token}/commands/yamls/{Uri.EscapeDataString(safeFileName)}";
                         break;
                     }
 
@@ -518,6 +650,8 @@ public static class WebPortalServer
                         var file = form.Files.FirstOrDefault();
                         if (file == null)
                             return Results.BadRequest(new { message = "yaml file is required." });
+                        if (!IsAllowedUpload(file, ".yaml"))
+                            return Results.BadRequest(new { message = "Invalid or oversized YAML file." });
 
                         await using var stream = file.OpenReadStream();
                         message = await YamlClass.SendYamlFromStreamAsync(channelId, file.FileName, stream);
@@ -560,7 +694,7 @@ public static class WebPortalServer
                         var zipPath = Path.Combine(downloadRoot, fileName);
                         message = await ApworldClass.BackupApworldToFileAsync(zipPath);
                         if (string.IsNullOrWhiteSpace(message))
-                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
+                            downloadUrl = ProtectedDownloadUrl(prefix, guildId, channelId, token, fileName);
                         break;
                     }
 
@@ -569,6 +703,8 @@ public static class WebPortalServer
                         var file = form.Files.FirstOrDefault();
                         if (file == null)
                             return Results.BadRequest(new { message = "apworld file is required." });
+                        if (!IsAllowedUpload(file, ".apworld"))
+                            return Results.BadRequest(new { message = "Invalid or oversized APWorld file." });
 
                         await using var stream = file.OpenReadStream();
                         message = await ApworldClass.SendApworldFromStreamAsync(file.FileName, stream);
@@ -584,7 +720,7 @@ public static class WebPortalServer
                             var fileName = $"{Path.GetFileNameWithoutExtension(result.ZipPath)}_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}.zip";
                             var destinationPath = Path.Combine(downloadRoot, fileName);
                             File.Copy(result.ZipPath, destinationPath, overwrite: true);
-                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
+                            downloadUrl = ProtectedDownloadUrl(prefix, guildId, channelId, token, fileName);
                         }
                         break;
                     }
@@ -598,6 +734,8 @@ public static class WebPortalServer
                         var file = form.Files.FirstOrDefault();
                         if (file == null)
                             return Results.BadRequest(new { message = "zip file is required." });
+                        if (!IsAllowedUpload(file, ".zip"))
+                            return Results.BadRequest(new { message = "Invalid or oversized ZIP file." });
 
                         await using var stream = file.OpenReadStream();
                         var result = await GenerationClass.GenerateWithZipFromStreamAsync(channelId, file.FileName, stream);
@@ -608,7 +746,7 @@ public static class WebPortalServer
                             var fileName = $"{Path.GetFileNameWithoutExtension(result.ZipPath)}_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}.zip";
                             var destinationPath = Path.Combine(downloadRoot, fileName);
                             File.Copy(result.ZipPath, destinationPath, overwrite: true);
-                            downloadUrl = $"{prefix}/portal/{guildId}/downloads/{WebUtility.UrlEncode(fileName)}";
+                            downloadUrl = ProtectedDownloadUrl(prefix, guildId, channelId, token, fileName);
                         }
                         break;
                     }
@@ -668,6 +806,44 @@ public static class WebPortalServer
     private record PortalHintItem(string Finder, string Receiver, string Item, string Location, string Game);
     private record PortalPatchAlias(string Alias, string GameName, string Patch);
     private record PortalThreadLink(string ChannelId, string ThreadName, string Url);
+
+    private static async Task<AstPortalActor?> AuthorizePortalAsync(
+        string guildId,
+        string channelId,
+        string token,
+        AstAuthorizationLevel required)
+    {
+        var actor = await AstAuthorizationService.ResolvePortalActorAsync(guildId, channelId, token);
+        return actor != null && AstAuthorizationService.IsAllowed(required, actor.Authorization)
+            ? actor
+            : null;
+    }
+
+    private static bool IsAllowedUpload(IFormFile file, string requiredExtension)
+    {
+        var safeFileName = Path.GetFileName(file.FileName);
+        return file.Length > 0 &&
+               file.Length <= Declare.WebPortalMaxUploadBytes &&
+               IsExactSafeFileName(file.FileName, safeFileName) &&
+               safeFileName.EndsWith(requiredExtension, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsExactSafeFileName(string submittedName, string safeFileName)
+    {
+        return !string.IsNullOrWhiteSpace(safeFileName) &&
+               string.Equals(submittedName, safeFileName, StringComparison.Ordinal) &&
+               safeFileName.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+    }
+
+    private static string ProtectedDownloadUrl(
+        string prefix,
+        string guildId,
+        string channelId,
+        string token,
+        string fileName)
+    {
+        return $"{prefix}/api/portal/{guildId}/{channelId}/{token}/downloads/{WebUtility.UrlEncode(fileName)}";
+    }
 
     private static string ResolveThreadName(SocketGuild? guild, string channelId)
     {
@@ -788,14 +964,7 @@ public static class WebPortalServer
 
     private static void CleanupExpiredDownloadsForAllGuilds()
     {
-        if (!Directory.Exists(Declare.WebPortalPath))
-            return;
-
-        foreach (var guildDirectory in Directory.EnumerateDirectories(Declare.WebPortalPath))
-        {
-            var downloadRoot = Path.Combine(guildDirectory, "downloads");
-            CleanupExpiredDownloads(downloadRoot);
-        }
+        CleanupExpiredDownloads(Declare.WebPortalDownloadPath);
     }
 
     private static void CleanupExpiredDownloads(string downloadRoot)
@@ -805,7 +974,7 @@ public static class WebPortalServer
 
         var expirationThreshold = DateTime.UtcNow - DownloadRetention;
 
-        foreach (var filePath in Directory.EnumerateFiles(downloadRoot))
+        foreach (var filePath in Directory.EnumerateFiles(downloadRoot, "*", SearchOption.AllDirectories))
         {
             try
             {

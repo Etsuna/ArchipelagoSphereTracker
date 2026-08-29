@@ -286,10 +286,11 @@ public static class WebPortalThreadCommandsPage
 
 <script>
   const params = new URLSearchParams(window.location.search);
-  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/thread-commands\.html$/);
+  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/([a-f0-9]+)\/thread-commands\.html$/i);
 
   const guildId = params.get('guildId') || (m ? m[1] : '');
   const channelId = params.get('channelId') || (m ? m[2] : '');
+  const token = m ? m[3] : '';
 
   document.getElementById('channel-meta').textContent = channelId ? ('Channel ID: ' + channelId) : 'Channel ID: —';
 
@@ -297,9 +298,10 @@ public static class WebPortalThreadCommandsPage
   const idx = path.indexOf('/portal/');
   const basePath = idx >= 0 ? path.substring(0, idx) : '';
 
-  const apiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/execute';
-  const patchAliasesApi = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/patches';
-  const infoApi = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/info';
+  const securedApiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/' + token;
+  const apiBase = securedApiBase + '/thread-commands/execute';
+  const patchAliasesApi = securedApiBase + '/thread-commands/patches';
+  const infoApi = securedApiBase + '/info';
 
   const parsePayload = async (response) => {{
     const raw = await response.text();

@@ -9,7 +9,10 @@ public class ApworldClass : Declare
     public static async Task<string> SendApworld(SocketSlashCommand command)
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
-        if (attachment == null || !attachment.Filename.EndsWith(".apworld"))
+        if (attachment == null ||
+            attachment.Size <= 0 ||
+            attachment.Size > Declare.WebPortalMaxUploadBytes ||
+            !FileUploadSecurity.TryGetSafeFileName(attachment.Filename, ".apworld", out var safeFileName))
         {
             return Resource.ApworldWrongFile;
         }
@@ -18,26 +21,24 @@ public class ApworldClass : Declare
 
         Directory.CreateDirectory(customWorldPath);
 
-        var filePath = Path.Combine(customWorldPath, attachment.Filename);
+        var filePath = Path.Combine(customWorldPath, safeFileName);
 
-        if (File.Exists(filePath))
+        using (var response = await HttpClient.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead))
         {
-            File.Delete(filePath);
-        }
-
-        using (var response = await HttpClient.GetAsync(attachment.Url))
-        using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
-        {
-            await response.Content.CopyToAsync(fs);
+            response.EnsureSuccessStatusCode();
+            await FileUploadSecurity.CopyToFileWithLimitAsync(
+                await response.Content.ReadAsStreamAsync(),
+                filePath,
+                Declare.WebPortalMaxUploadBytes);
         }
         CustomApworldClass.GenerateYamls();
-        var message = string.Format(Resource.ApworldFileSent, attachment.Filename);
+        var message = string.Format(Resource.ApworldFileSent, safeFileName);
         return message;
     }
 
     public static async Task<string> SendApworldFromStreamAsync(string fileName, Stream content)
     {
-        if (string.IsNullOrWhiteSpace(fileName) || !fileName.EndsWith(".apworld", StringComparison.OrdinalIgnoreCase))
+        if (!FileUploadSecurity.TryGetSafeFileName(fileName, ".apworld", out var safeFileName))
         {
             return Resource.ApworldWrongFile;
         }
@@ -45,20 +46,11 @@ public class ApworldClass : Declare
         var customWorldPath = Path.Combine(BasePath, "extern", "Archipelago", "custom_worlds");
         Directory.CreateDirectory(customWorldPath);
 
-        var filePath = Path.Combine(customWorldPath, Path.GetFileName(fileName));
-
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
-
-        await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
-        {
-            await content.CopyToAsync(fs);
-        }
+        var filePath = Path.Combine(customWorldPath, safeFileName);
+        await FileUploadSecurity.CopyToFileWithLimitAsync(content, filePath, Declare.WebPortalMaxUploadBytes);
 
         CustomApworldClass.GenerateYamls();
-        var message = string.Format(Resource.ApworldFileSent, Path.GetFileName(fileName));
+        var message = string.Format(Resource.ApworldFileSent, safeFileName);
         return message;
     }
 

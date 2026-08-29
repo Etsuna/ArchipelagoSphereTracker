@@ -122,6 +122,24 @@ public static class ReceiverAliasesCommands
         });
     }
 
+    public static async Task DeleteReceiverAliasForUser(string guildId, string channelId, string receiver, string userId)
+    {
+        await Db.WriteAsync(async conn =>
+        {
+            using var command = new SQLiteCommand(@"
+                DELETE FROM ReceiverAliasesTable
+                WHERE GuildId = @GuildId
+                  AND ChannelId = @ChannelId
+                  AND Receiver = @Receiver
+                  AND UserId = @UserId;", conn);
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@Receiver", receiver);
+            command.Parameters.AddWithValue("@UserId", userId);
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+        });
+    }
+
     // ==========================
     // 🎯 INSERT RECEIVER ALIAS  (WRITE)
     // ==========================   

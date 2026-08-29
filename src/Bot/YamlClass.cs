@@ -11,16 +11,16 @@ public class YamlClass : Declare
         var yamlFile = command.Data.Options.FirstOrDefault()?.Value as string;
         var message = string.Empty;
 
-        if (string.IsNullOrEmpty(yamlFile))
+        if (!FileUploadSecurity.TryGetSafeFileName(yamlFile, ".yaml", out var safeFileName))
         {
             return Resource.NoFileSelected;
         }
 
-        string templatePath = Path.Combine(BasePath, "extern", "Archipelago", "Players", "Templates", yamlFile);
+        string templatePath = Path.Combine(BasePath, "extern", "Archipelago", "Players", "Templates", safeFileName);
 
         if (File.Exists(templatePath))
         {
-            await command.FollowupWithFileAsync(templatePath, yamlFile);
+            await command.FollowupWithFileAsync(templatePath, safeFileName);
         }
         else
         {
@@ -34,7 +34,10 @@ public class YamlClass : Declare
     {
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         var message = string.Empty;
-        if (attachment == null || !attachment.Filename.EndsWith(".yaml"))
+        if (attachment == null ||
+            attachment.Size <= 0 ||
+            attachment.Size > Declare.WebPortalMaxUploadBytes ||
+            !FileUploadSecurity.TryGetSafeFileName(attachment.Filename, ".yaml", out var safeFileName))
         {
             return Resource.YamlWrongFile;
         }
@@ -46,21 +49,16 @@ public class YamlClass : Declare
             Directory.CreateDirectory(playersFolderChannel);
         }
 
-        string filePath = Path.Combine(playersFolderChannel, attachment.Filename);
+        string filePath = Path.Combine(playersFolderChannel, safeFileName);
 
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
-
-        using (var response = await HttpClient.GetAsync(attachment.Url))
+        using (var response = await HttpClient.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead))
             if (response.IsSuccessStatusCode)
             {
-                await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
-                {
-                    await response.Content.CopyToAsync(fs);
-                }
-                message = string.Format(Resource.YamlFileSent, attachment.Filename);
+                await FileUploadSecurity.CopyToFileWithLimitAsync(
+                    await response.Content.ReadAsStreamAsync(),
+                    filePath,
+                    Declare.WebPortalMaxUploadBytes);
+                message = string.Format(Resource.YamlFileSent, safeFileName);
             }
             else
             {
@@ -72,7 +70,7 @@ public class YamlClass : Declare
 
     public static async Task<string> SendYamlFromStreamAsync(string channelId, string fileName, Stream content)
     {
-        if (string.IsNullOrWhiteSpace(fileName) || !fileName.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase))
+        if (!FileUploadSecurity.TryGetSafeFileName(fileName, ".yaml", out var safeFileName))
         {
             return Resource.YamlWrongFile;
         }
@@ -80,19 +78,10 @@ public class YamlClass : Declare
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
         Directory.CreateDirectory(playersFolderChannel);
 
-        string filePath = Path.Combine(playersFolderChannel, Path.GetFileName(fileName));
+        string filePath = Path.Combine(playersFolderChannel, safeFileName);
+        await FileUploadSecurity.CopyToFileWithLimitAsync(content, filePath, Declare.WebPortalMaxUploadBytes);
 
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
-
-        await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
-        {
-            await content.CopyToAsync(fs);
-        }
-
-        return string.Format(Resource.YamlFileSent, Path.GetFileName(fileName));
+        return string.Format(Resource.YamlFileSent, safeFileName);
     }
 
     public static string CleanYamls(string channelId)
@@ -125,25 +114,25 @@ public class YamlClass : Declare
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
         var message = string.Empty;
 
-        if (!string.IsNullOrEmpty(fileSelected))
+        if (FileUploadSecurity.TryGetSafeFileName(fileSelected, ".yaml", out var safeFileName))
         {
-            var deletedfilePath = Path.Combine(playersFolderChannel, fileSelected);
+            var deletedfilePath = Path.Combine(playersFolderChannel, safeFileName);
 
             if (File.Exists(deletedfilePath))
             {
                 try
                 {
                     File.Delete(deletedfilePath);
-                    message += string.Format(Resource.YamlFileDeleted, fileSelected);
+                    message += string.Format(Resource.YamlFileDeleted, safeFileName);
                 }
                 catch (Exception ex)
                 {
-                    message += string.Format(Resource.YamlFileDeletedError, fileSelected, ex.Message);
+                    message += string.Format(Resource.YamlFileDeletedError, safeFileName, ex.Message);
                 }
             }
             else
             {
-                message += string.Format(Resource.YamlDeleteFileNotExists, fileSelected);
+                message += string.Format(Resource.YamlDeleteFileNotExists, safeFileName);
             }
         }
         else
@@ -159,25 +148,25 @@ public class YamlClass : Declare
         var playersFolderChannel = Path.Combine(BasePath, "extern", "Archipelago", "Players", channelId, "yaml");
         var message = string.Empty;
 
-        if (!string.IsNullOrEmpty(fileSelected))
+        if (FileUploadSecurity.TryGetSafeFileName(fileSelected, ".yaml", out var safeFileName))
         {
-            var deletedfilePath = Path.Combine(playersFolderChannel, fileSelected);
+            var deletedfilePath = Path.Combine(playersFolderChannel, safeFileName);
 
             if (File.Exists(deletedfilePath))
             {
                 try
                 {
                     File.Delete(deletedfilePath);
-                    message += string.Format(Resource.YamlFileDeleted, fileSelected);
+                    message += string.Format(Resource.YamlFileDeleted, safeFileName);
                 }
                 catch (Exception ex)
                 {
-                    message += string.Format(Resource.YamlFileDeletedError, fileSelected, ex.Message);
+                    message += string.Format(Resource.YamlFileDeletedError, safeFileName, ex.Message);
                 }
             }
             else
             {
-                message += string.Format(Resource.YamlDeleteFileNotExists, fileSelected);
+                message += string.Format(Resource.YamlDeleteFileNotExists, safeFileName);
             }
         }
         else
@@ -266,12 +255,12 @@ public class YamlClass : Declare
 
     public static string DownloadTemplateToFile(string templateName, string destinationPath)
     {
-        if (string.IsNullOrEmpty(templateName))
+        if (!FileUploadSecurity.TryGetSafeFileName(templateName, ".yaml", out var safeFileName))
         {
             return Resource.NoFileSelected;
         }
 
-        string templatePath = Path.Combine(BasePath, "extern", "Archipelago", "Players", "Templates", templateName);
+        string templatePath = Path.Combine(BasePath, "extern", "Archipelago", "Players", "Templates", safeFileName);
 
         if (File.Exists(templatePath))
         {

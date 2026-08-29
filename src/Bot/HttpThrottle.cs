@@ -86,7 +86,7 @@ internal static class HttpThrottle
 
                     if (!res.IsSuccessStatusCode)
                     {
-                        log?.Invoke($"[HTTP] {(int)res.StatusCode} {res.ReasonPhrase} for {url}");
+                        log?.Invoke($"[HTTP] {(int)res.StatusCode} {res.ReasonPhrase} from {uri.Host}");
                         gate.NextAllowedUtc = DateTimeOffset.UtcNow + minSpacingPerHost;
                         return null;
                     }

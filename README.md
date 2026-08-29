@@ -165,6 +165,15 @@ WEB_PORT=5199
 # Optionnel (URL publique pour liens de portail, reverse proxy conseillé)
 WEB_BASE_URL=https://your-domain.example
 
+# Recommandé : utilisateur Discord propriétaire de l'instance AST
+AST_OWNER_USER_ID=123456789012345678
+
+# Optionnel (défaut : 67108864, soit 64 Mio)
+WEB_MAX_UPLOAD_BYTES=67108864
+
+# Optionnel : hôtes privés explicitement approuvés pour Archipelago
+ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
+
 # Optionnel (défaut: false)
 EXPORT_METRICS=false
 
@@ -182,6 +191,9 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `ENABLE_WEB_PORTAL=false` désactive totalement le serveur web interne.
 - `WEB_PORT` est le port d’écoute HTTP du portail (`0.0.0.0:<port>`).
 - `WEB_BASE_URL` est utile si AST est exposé derrière un domaine/proxy.
+- `AST_OWNER_USER_ID` réserve les opérations globales APWorld à cet utilisateur. Sans valeur, le propriétaire de chaque serveur Discord est utilisé comme solution de repli.
+- `WEB_MAX_UPLOAD_BYTES` limite la taille des fichiers Web et Discord acceptés.
+- `ARCHIPELAGO_ALLOWED_HOSTS` est une liste séparée par des virgules. Elle constitue une dérogation explicite au blocage SSRF des adresses privées/locales.
 - `EXPORT_METRICS=true` active les exports Prometheus.
 
 ---
@@ -598,6 +610,15 @@ WEB_PORT=5199
 # Optional (public URL for portal links, reverse proxy recommended)
 WEB_BASE_URL=https://your-domain.example
 
+# Recommended: Discord user who owns this AST instance
+AST_OWNER_USER_ID=123456789012345678
+
+# Optional (default: 67108864, i.e. 64 MiB)
+WEB_MAX_UPLOAD_BYTES=67108864
+
+# Optional: explicitly trusted private Archipelago hosts
+ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
+
 # Optional (default: false)
 EXPORT_METRICS=false
 
@@ -615,6 +636,9 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `ENABLE_WEB_PORTAL=false` disables the web server entirely.
 - `WEB_PORT` defines the portal HTTP bind port (`0.0.0.0:<port>`).
 - `WEB_BASE_URL` is useful behind a domain/reverse proxy.
+- `AST_OWNER_USER_ID` reserves global APWorld operations for that user. If unset, each Discord guild owner is used as the fallback.
+- `WEB_MAX_UPLOAD_BYTES` limits accepted Web and Discord file sizes.
+- `ARCHIPELAGO_ALLOWED_HOSTS` is a comma-separated list and explicitly bypasses private/local-address SSRF blocking for those hosts.
 - `EXPORT_METRICS=true` enables Prometheus exports.
 
 ---

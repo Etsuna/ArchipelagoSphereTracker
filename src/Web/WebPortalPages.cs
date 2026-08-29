@@ -25,24 +25,28 @@ public static class WebPortalPages
         return GetUserPortalUrl(guildId, channelId, token);
     }
 
-    public static async Task<string?> EnsureThreadCommandsPageAsync(string guildId, string channelId)
+    public static async Task<string?> EnsureThreadCommandsPageAsync(string guildId, string channelId, string userId)
     {
         if (!Declare.EnableWebPortal)
             return null;
 
         await EnsureSharedCommandsPagesAsync();
 
-        return GetThreadCommandsPortalUrl(guildId, channelId);
+        var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
+
+        return GetThreadCommandsPortalUrl(guildId, channelId, token);
     }
 
-    public static async Task<string?> EnsureCommandsPageAsync(string guildId, string channelId)
+    public static async Task<string?> EnsureCommandsPageAsync(string guildId, string channelId, string userId)
     {
         if (!Declare.EnableWebPortal)
             return null;
 
         await EnsureSharedCommandsPagesAsync();
 
-        return GetCommandsPortalUrl(guildId, channelId);
+        var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
+
+        return GetCommandsPortalUrl(guildId, channelId, token);
     }
 
     public static async Task EnsureSharedCommandsPagesAsync()
@@ -110,16 +114,16 @@ public static class WebPortalPages
         return $"http://localhost:{Declare.WebPortalPort}".TrimEnd('/');
     }
 
-    private static string GetCommandsPortalUrl(string guildId, string channelId)
+    private static string GetCommandsPortalUrl(string guildId, string channelId, string token)
     {
         var baseUrl = GetPortalBaseUrl();
-        return $"{baseUrl}/portal/{guildId}/{channelId}/commands.html";
+        return $"{baseUrl}/portal/{guildId}/{channelId}/{token}/commands.html";
     }
 
-    private static string GetThreadCommandsPortalUrl(string guildId, string channelId)
+    private static string GetThreadCommandsPortalUrl(string guildId, string channelId, string token)
     {
         var baseUrl = GetPortalBaseUrl();
-        return $"{baseUrl}/portal/{guildId}/{channelId}/thread-commands.html";
+        return $"{baseUrl}/portal/{guildId}/{channelId}/{token}/thread-commands.html";
     }
 
     private static string GetUserFolder(string guildId, string channelId, string token)
