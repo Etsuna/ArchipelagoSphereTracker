@@ -339,10 +339,12 @@ Binaire final attendu :
 Depuis la racine :
 
 ```bash
-dotnet test
+dotnet test ArchipelagoSphereTracker.sln
 ```
 
-Le projet inclut des tests unitaires sur parsing/convertisseurs/services DB et commandes.
+La solution racine exécute les tests unitaires sur le parsing WebHost, les convertisseurs,
+les services DB, les commandes et les fixtures anonymisées. Les workflows Windows et Linux
+exécutent cette suite avant toute publication.
 
 ---
 
@@ -770,10 +772,11 @@ Expected output binaries:
 From repository root:
 
 ```bash
-dotnet test
+dotnet test ArchipelagoSphereTracker.sln
 ```
 
-The repository includes unit tests for parsers, converters, DB services, and command definitions.
+The root solution runs unit tests for WebHost parsing, converters, DB services, command
+definitions, and anonymized fixtures. Windows and Linux workflows run this suite before publishing.
 
 ---
 

@@ -1314,4 +1314,28 @@
   <data name="ASTRoomCommand" xml:space="preserve">
     <value>Utilisez /ast-room-portal pour gérer votre room.</value>
   </data>
+  <data name="WebCompanionDescription" xml:space="preserve">
+    <value>Envoyez directement ce portail à AST Companion après avoir enregistré au moins un alias.</value>
+  </data>
+  <data name="WebOpenCompanion" xml:space="preserve">
+    <value>Ouvrir dans AST Companion</value>
+  </data>
+  <data name="WebCopyCompanionLink" xml:space="preserve">
+    <value>Copier le lien du portail</value>
+  </data>
+  <data name="WebCompanionNeedsAlias" xml:space="preserve">
+    <value>Enregistrez au moins un alias pour activer AST Companion.</value>
+  </data>
+  <data name="WebCompanionReady" xml:space="preserve">
+    <value>AST Companion peut maintenant surveiller vos alias sélectionnés.</value>
+  </data>
+  <data name="WebCompanionOpening" xml:space="preserve">
+    <value>Ouverture d'AST Companion...</value>
+  </data>
+  <data name="WebCompanionLinkCopied" xml:space="preserve">
+    <value>Lien du portail copié.</value>
+  </data>
+  <data name="WebCompanionCopyFailed" xml:space="preserve">
+    <value>Impossible de copier le lien du portail.</value>
+  </data>
 </root>

@@ -149,7 +149,9 @@ public class DatabaseCommandTests
         using var scope = new TestDatabaseScope();
         var guildId = "guild-6";
 
-        for (var i = 0; i < 10; i++)
+        Assert.True(Declare.MaxThreadByGuild > 0);
+
+        for (var i = 0; i < Declare.MaxThreadByGuild - 1; i++)
         {
             await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(
                 guildId,
@@ -166,9 +168,9 @@ public class DatabaseCommandTests
 
         await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(
             guildId,
-            "channel-10",
+            $"channel-{Declare.MaxThreadByGuild - 1}",
             "https://example.com/room/zeta",
-            "room-10",
+            $"room-{Declare.MaxThreadByGuild - 1}",
             "tracker",
             silent: false,
             checkFrequency: "5m",

@@ -68,19 +68,16 @@ public static class WebPortalPages
 
         var users = await RecapListCommands.GetPortalUsersAsync();
         foreach (var (guildId, channelId, userId) in users)
-            await EnsureUserPageIfMissingAsync(guildId, channelId, userId);
+            await RefreshUserPageAsync(guildId, channelId, userId);
     }
 
-    private static async Task EnsureUserPageIfMissingAsync(string guildId, string channelId, string userId)
+    private static async Task RefreshUserPageAsync(string guildId, string channelId, string userId)
     {
         var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
         var userFolder = GetUserFolder(guildId, channelId, token);
         Directory.CreateDirectory(userFolder);
 
         var htmlPath = Path.Combine(userFolder, "index.html");
-        if (File.Exists(htmlPath))
-            return;
-
         var html = WebPortalUserPage.Build(guildId, channelId, token);
         await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
     }

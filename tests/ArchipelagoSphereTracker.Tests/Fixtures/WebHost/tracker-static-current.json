@@ -1,0 +1,10 @@
+{
+  "player_locations_total": [
+    { "player": 1, "total_locations": 10 },
+    { "player": 2, "total_locations": 8 }
+  ],
+  "datapackage": {
+    "GameA": { "checksum": "checksum-a", "version": 1 },
+    "GameB": { "checksum": "checksum-b", "version": 1 }
+  }
+}

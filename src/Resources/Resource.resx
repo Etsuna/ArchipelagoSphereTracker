@@ -1713,4 +1713,28 @@
     <value>Use /ast-room-portal to manage your room.</value>
     <comment>Use /ast-room-portal to manage your room.</comment>
   </data>
+  <data name="WebCompanionDescription" xml:space="preserve">
+    <value>Send this portal directly to AST Companion after registering at least one alias.</value>
+  </data>
+  <data name="WebOpenCompanion" xml:space="preserve">
+    <value>Open in AST Companion</value>
+  </data>
+  <data name="WebCopyCompanionLink" xml:space="preserve">
+    <value>Copy portal link</value>
+  </data>
+  <data name="WebCompanionNeedsAlias" xml:space="preserve">
+    <value>Register at least one alias to enable AST Companion.</value>
+  </data>
+  <data name="WebCompanionReady" xml:space="preserve">
+    <value>AST Companion can now monitor your selected aliases.</value>
+  </data>
+  <data name="WebCompanionOpening" xml:space="preserve">
+    <value>Opening AST Companion...</value>
+  </data>
+  <data name="WebCompanionLinkCopied" xml:space="preserve">
+    <value>Portal link copied.</value>
+  </data>
+  <data name="WebCompanionCopyFailed" xml:space="preserve">
+    <value>Unable to copy the portal link.</value>
+  </data>
 </root>

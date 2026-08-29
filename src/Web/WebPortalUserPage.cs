@@ -202,6 +202,13 @@ public static class WebPortalUserPage
 
     .button:hover {{ transform: translateY(-1px); box-shadow: var(--glow); }}
 
+    .button:disabled {{
+      cursor: not-allowed;
+      opacity: 0.45;
+      transform: none;
+      box-shadow: none;
+    }}
+
     .button.danger {{
       background: rgba(255, 107, 122, 0.15);
       border-color: rgba(255, 107, 122, 0.5);
@@ -223,6 +230,23 @@ public static class WebPortalUserPage
     .action-group label {{
       font-size: 13px;
       color: var(--muted);
+    }}
+
+    .companion-group {{
+      grid-column: 1 / -1;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }}
+
+    .companion-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }}
+
+    .companion-help {{
+      color: var(--muted);
+      font-size: 12px;
     }}
 
     .action-group select {{
@@ -348,6 +372,14 @@ public static class WebPortalUserPage
           <select id=""delete-alias-select""></select>
           <button class=""button danger"" id=""delete-alias-button"">{T("WebDeleteSelectedAlias")}</button>
         </div>
+        <div class=""action-group companion-group"">
+          <label>{T("WebCompanionDescription")}</label>
+          <div class=""companion-actions"">
+            <button class=""button"" id=""open-companion-button"" disabled>{T("WebOpenCompanion")}</button>
+            <button class=""button"" id=""copy-companion-link-button"">{T("WebCopyCompanionLink")}</button>
+          </div>
+          <span class=""companion-help"" id=""companion-help"">{T("WebCompanionNeedsAlias")}</span>
+        </div>
       </div>
     </details>
 
@@ -383,13 +415,18 @@ public static class WebPortalUserPage
     const deleteAliasSelect = document.getElementById('delete-alias-select');
     const addAliasButton = document.getElementById('add-alias-button');
     const deleteAliasButton = document.getElementById('delete-alias-button');
+    const openCompanionButton = document.getElementById('open-companion-button');
+    const copyCompanionLinkButton = document.getElementById('copy-companion-link-button');
+    const companionHelp = document.getElementById('companion-help');
     const heroInfo = document.getElementById('hero-info');
+    let companionPortalName = '';
 
     const path = window.location.pathname; // ex: /AST/portal/g/c/token/
     const idx = path.indexOf('/portal/');
     const basePath = idx >= 0 ? path.substring(0, idx) : '';
     const apiBase = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/' + ctx.channelId + '/' + ctx.token;
     const infoApi = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/' + ctx.channelId + '/info';
+    const roomLinksApi = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/room-links';
 
     const escapeHtml = (value) => {{
       const div = document.createElement('div');
@@ -399,6 +436,16 @@ public static class WebPortalUserPage
 
     const setStatus = (message) => {{
       status.textContent = message;
+    }};
+
+    const currentPortalUrl = () => window.location.href.split('#')[0];
+
+    const setCompanionAvailability = (aliases) => {{
+      const available = Array.isArray(aliases) && aliases.length > 0;
+      openCompanionButton.disabled = !available;
+      companionHelp.textContent = available
+        ? {Js("WebCompanionReady")}
+        : {Js("WebCompanionNeedsAlias")};
     }};
 
     const linkifyText = (message) => {{
@@ -677,13 +724,47 @@ public static class WebPortalUserPage
 
         if (userRes.ok) {{
           const payload = await userRes.json();
-          fillSelect(deleteAliasSelect, payload.aliases || [], {Js("WebNoRegisteredAlias")}, {Js("WebSelectAlias")});
+          const userAliases = payload.aliases || [];
+          fillSelect(deleteAliasSelect, userAliases, {Js("WebNoRegisteredAlias")}, {Js("WebSelectAlias")});
+          setCompanionAvailability(userAliases);
         }} else {{
           fillSelect(deleteAliasSelect, [], {Js("WebUnableToLoadYourAliases")}, {Js("WebSelectAlias")});
+          setCompanionAvailability([]);
         }}
       }} catch (e) {{
         fillSelect(addAliasSelect, [], {Js("WebUnableToLoadThreadAliases")}, {Js("WebSelectAlias")});
         fillSelect(deleteAliasSelect, [], {Js("WebUnableToLoadYourAliases")}, {Js("WebSelectAlias")});
+        setCompanionAvailability([]);
+      }}
+    }};
+
+    const loadPortalThreadName = async () => {{
+      try {{
+        const response = await fetch(roomLinksApi);
+        if (!response.ok) return;
+        const payload = await response.json();
+        const link = (payload.links || []).find(item => String(item.channelId) === String(ctx.channelId));
+        companionPortalName = link && link.threadName ? link.threadName : '';
+      }} catch {{
+        companionPortalName = '';
+      }}
+    }};
+
+    const openInCompanion = async () => {{
+      if (openCompanionButton.disabled) return;
+      if (!companionPortalName) await loadPortalThreadName();
+      const namePart = companionPortalName ? '&name=' + encodeURIComponent(companionPortalName) : '';
+      const deepLink = 'ast-companion://connect?portal=' + encodeURIComponent(currentPortalUrl()) + namePart;
+      setStatus({Js("WebCompanionOpening")});
+      window.location.href = deepLink;
+    }};
+
+    const copyCompanionLink = async () => {{
+      try {{
+        await navigator.clipboard.writeText(currentPortalUrl());
+        setStatus({Js("WebCompanionLinkCopied")});
+      }} catch {{
+        setStatus({Js("WebCompanionCopyFailed")});
       }}
     }};
 
@@ -753,7 +834,10 @@ public static class WebPortalUserPage
     document.getElementById('refresh').addEventListener('click', loadData);
     addAliasButton.addEventListener('click', addAliasFromPortal);
     deleteAliasButton.addEventListener('click', deleteAliasFromPortal);
+    openCompanionButton.addEventListener('click', openInCompanion);
+    copyCompanionLinkButton.addEventListener('click', copyCompanionLink);
     loadHeroInfo();
+    loadPortalThreadName();
     loadData();
   </script>
 </body>
