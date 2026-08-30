@@ -62,6 +62,31 @@ public class TrackerStreamParserTests
     }
 
     [Fact]
+    public void ParseHints_PreservesCurrentWebHostItemFlagsAndStatus()
+    {
+        var ctx = new ProcessingContext();
+        ctx.SlotIndex.Add(("Alice", "GameA"));
+        ctx.SlotIndex.Add(("Bob", "GameB"));
+
+        const string json = """
+            {
+              "hints": [
+                { "player": 1, "hints": [[2, 1, 300, 400, false, "Entrance", 4, 20]] }
+              ]
+            }
+            """;
+
+        var hint = Assert.Single(TrackerStreamParser.ParseHints(ctx, json));
+
+        Assert.Equal(1, hint.FinderSlot);
+        Assert.Equal(2, hint.ReceiverSlot);
+        Assert.Equal(400, hint.ItemId);
+        Assert.Equal(300, hint.LocationId);
+        Assert.Equal(4, hint.ItemFlags);
+        Assert.Equal(20, hint.Status);
+    }
+
+    [Fact]
     public void ParseGameStatus_CombinesStaticAndRuntimeData()
     {
         var ctx = new ProcessingContext();

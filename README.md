@@ -177,6 +177,9 @@ PORTAL_TOKEN_LIFETIME_DAYS=30
 # Optionnel (défaut : 90 jours, intervalle accepté : 1–3650)
 AUDIT_RETENTION_DAYS=90
 
+# Modèle V2 expérimental (non branché sur les notifications en production)
+ENABLE_TRACKING_V2=false
+
 # Optionnel : hôtes privés explicitement approuvés pour Archipelago
 ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
 
@@ -201,6 +204,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_MAX_UPLOAD_BYTES` limite la taille des fichiers Web et Discord acceptés.
 - `PORTAL_TOKEN_LIFETIME_DAYS` fixe l'expiration des nouveaux liens du portail.
 - `AUDIT_RETENTION_DAYS` fixe la rétention du journal des actions sensibles.
+- `ENABLE_TRACKING_V2` réserve l'activation future du pipeline normalisé. Dans cette version, le module reste en observation isolée et ne publie aucune notification.
 - `ARCHIPELAGO_ALLOWED_HOSTS` est une liste séparée par des virgules. Elle constitue une dérogation explicite au blocage SSRF des adresses privées/locales.
 - `EXPORT_METRICS=true` active les exports Prometheus.
 
@@ -630,6 +634,9 @@ PORTAL_TOKEN_LIFETIME_DAYS=30
 # Optional (default: 90 days, accepted range: 1–3650)
 AUDIT_RETENTION_DAYS=90
 
+# Experimental V2 model (not wired to production notifications)
+ENABLE_TRACKING_V2=false
+
 # Optional: explicitly trusted private Archipelago hosts
 ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
 
@@ -654,6 +661,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_MAX_UPLOAD_BYTES` limits accepted Web and Discord file sizes.
 - `PORTAL_TOKEN_LIFETIME_DAYS` controls expiry for newly issued portal links.
 - `AUDIT_RETENTION_DAYS` controls retention of sensitive-action audit records.
+- `ENABLE_TRACKING_V2` reserves future activation of the normalized pipeline. In this release the module remains isolated and publishes no notification.
 - `ARCHIPELAGO_ALLOWED_HOSTS` is a comma-separated list and explicitly bypasses private/local-address SSRF blocking for those hosts.
 - `EXPORT_METRICS=true` enables Prometheus exports.
 

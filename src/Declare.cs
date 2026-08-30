@@ -27,6 +27,7 @@ public class Declare
     public static readonly long WebPortalMaxUploadBytes = ParsePositiveLongEnvironmentVariable("WEB_MAX_UPLOAD_BYTES", 64L * 1024 * 1024);
     public static readonly int PortalTokenLifetimeDays = ParseBoundedIntEnvironmentVariable("PORTAL_TOKEN_LIFETIME_DAYS", 30, 1, 365);
     public static readonly int AuditRetentionDays = ParseBoundedIntEnvironmentVariable("AUDIT_RETENTION_DAYS", 90, 1, 3650);
+    public static readonly bool EnableTrackingV2 = (Environment.GetEnvironmentVariable("ENABLE_TRACKING_V2") ?? "false").Trim().ToLower() == "true";
 
 
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();

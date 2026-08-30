@@ -1,5 +1,13 @@
 {
   "unknown_root_collection": [3, 2, 1],
+  "player_status": [
+    { "status": 30, "player": 2 },
+    { "status": 20, "player": 1 }
+  ],
+  "aliases": [
+    { "alias": "Bobby", "player": 2 },
+    { "alias": null, "player": 1 }
+  ],
   "player_checks_done": [
     { "locations": [21], "player": 2 },
     { "locations": [13, 12, 11], "player": 1 }

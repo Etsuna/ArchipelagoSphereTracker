@@ -8,6 +8,10 @@
 
 public class DisplayedItem
 {
+    public int FinderSlot { get; set; }
+    public int ReceiverSlot { get; set; }
+    public long ItemId { get; set; }
+    public long LocationId { get; set; }
     public string GuildId { get; set; } = string.Empty;
     public string ChannelId { get; set; } = string.Empty;
     public string Finder { get; set; } = string.Empty;
@@ -20,6 +24,7 @@ public class DisplayedItem
 
 public class GameStatus
 {
+    public int Slot { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Game { get; set; } = string.Empty;
     public string Checks { get; set; } = string.Empty;
@@ -29,6 +34,10 @@ public class GameStatus
 
 public class HintStatus
 {
+    public int FinderSlot { get; set; }
+    public int ReceiverSlot { get; set; }
+    public long ItemId { get; set; }
+    public long LocationId { get; set; }
     public string Finder { get; set; } = string.Empty;
     public string Receiver { get; set; } = string.Empty;
     public string Item { get; set; } = string.Empty;
@@ -36,6 +45,8 @@ public class HintStatus
     public string Game { get; set; } = string.Empty;
     public string Entrance { get; set; } = string.Empty;
     public string Flag { get; set; } = string.Empty;
+    public int ItemFlags { get; set; }
+    public int Status { get; set; }
 }
 
 public class ReceiverUserInfo

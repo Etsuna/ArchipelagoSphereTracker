@@ -26,5 +26,13 @@
     { "player": 1, "locations": [11, 12, 13] },
     { "player": 2, "locations": [21] }
   ],
+  "aliases": [
+    { "player": 1, "alias": null },
+    { "player": 2, "alias": "Bobby" }
+  ],
+  "player_status": [
+    { "player": 1, "status": 20 },
+    { "player": 2, "status": 30 }
+  ],
   "unknown_root_collection": [1, 2, 3]
 }
