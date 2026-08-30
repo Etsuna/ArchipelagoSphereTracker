@@ -7,6 +7,52 @@ using static TrackingDataManager;
 
 public static class DBMigration
 {
+    public static async Task<string> CreatePreMigrationBackupAsync(
+        string currentVersion,
+        string? backupDirectory = null,
+        CancellationToken ct = default)
+    {
+        backupDirectory ??= Declare.DatabaseBackupPath;
+        Directory.CreateDirectory(backupDirectory);
+
+        var safeVersion = string.Concat(currentVersion.Select(character =>
+            char.IsLetterOrDigit(character) || character is '.' or '-' ? character : '_'));
+        if (string.IsNullOrWhiteSpace(safeVersion))
+            safeVersion = "unknown";
+
+        var backupPath = Path.Combine(
+            backupDirectory,
+            $"AST-pre-{safeVersion}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmssfff}.db");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var source = await Db.OpenWriteAsync();
+            using (var checkpoint = source.CreateCommand())
+            {
+                checkpoint.CommandText = "PRAGMA wal_checkpoint(FULL);";
+                await checkpoint.ExecuteNonQueryAsync(ct);
+            }
+
+            SQLiteConnection.CreateFile(backupPath);
+            await using var destination = new SQLiteConnection($"Data Source={backupPath};Version=3;");
+            await destination.OpenAsync(ct);
+            source.BackupDatabase(destination, "main", "main", -1, null, 0);
+        }
+        catch
+        {
+            if (File.Exists(backupPath))
+                File.Delete(backupPath);
+            throw;
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+
+        return backupPath;
+    }
+
     public static async Task Migrate_4_to_5Async(CancellationToken ct = default)
     {
         Console.WriteLine("Migrating to DB version 5.0.0: Updating ChannelsAndUrlsTable schema and migrating existing entries.");

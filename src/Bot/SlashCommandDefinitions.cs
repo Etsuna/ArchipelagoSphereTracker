@@ -194,15 +194,18 @@ public static class SlashCommandDefinitions
 
             new SlashCommandBuilder()
                 .WithName("ast-user-portal")
-                .WithDescription(Resource.SCPortalLinkDescription),
+                .WithDescription(Resource.SCPortalLinkDescription)
+                .AddOption(PortalRevokeOption()),
 
             new SlashCommandBuilder()
                 .WithName("ast-room-portal")
-                .WithDescription("Afficher la page web des commandes du thread"),
+                .WithDescription("Afficher la page web des commandes du thread")
+                .AddOption(PortalRevokeOption()),
 
             new SlashCommandBuilder()
                 .WithName("ast-portal")
-                .WithDescription(Resource.SCPortalUrlDescription),
+                .WithDescription(Resource.SCPortalUrlDescription)
+                .AddOption(PortalRevokeOption()),
 
         };
 
@@ -314,6 +317,15 @@ public static class SlashCommandDefinitions
             .WithType(ApplicationCommandOptionType.String)
             .WithRequired(true)
             .WithAutocomplete(true);
+    }
+
+    private static SlashCommandOptionBuilder PortalRevokeOption()
+    {
+        return new SlashCommandOptionBuilder()
+            .WithName("revoke")
+            .WithDescription("Revoke the current portal link instead of issuing a new one")
+            .WithType(ApplicationCommandOptionType.Boolean)
+            .WithRequired(false);
     }
 
     #endregion

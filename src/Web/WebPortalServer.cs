@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -41,6 +41,7 @@ public static class WebPortalServer
         EnsureRobotsTxtFile();
 
         var builder = WebApplication.CreateBuilder();
+        builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
         builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
         builder.WebHost.ConfigureKestrel(options =>
         {
@@ -73,21 +74,21 @@ public static class WebPortalServer
                 return;
             }
 
+            if (TryParsePersonalPortalPath(context.Request.Path, out var guildId, out var channelId, out var token))
+            {
+                var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+                if (actor == null)
+                {
+                    context.Response.StatusCode = StatusCodes.Status404NotFound;
+                    return;
+                }
+
+                context.Response.ContentType = "text/html; charset=utf-8";
+                await context.Response.WriteAsync(WebPortalUserPage.Build(guildId, channelId, token));
+                return;
+            }
+
             await next();
-        });
-
-        var portalFiles = new PhysicalFileProvider(Declare.WebPortalPath);
-
-        app.UseDefaultFiles(new DefaultFilesOptions
-        {
-            FileProvider = portalFiles,
-            RequestPath = "/portal"
-        });
-
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = portalFiles,
-            RequestPath = "/portal"
         });
 
         app.MapGet("/robots.txt", () =>
@@ -262,6 +263,12 @@ public static class WebPortalServer
             if (owners.Count > 0)
                 return Results.Conflict(new { message = "Alias already registered for this user." });
 
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditAction.AliasAdd);
             await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, skipMention);
 
             var recapExists = await RecapListCommands.CheckIfExists(guildId, channelId, userId, alias);
@@ -272,6 +279,7 @@ public static class WebPortalServer
             if (aliasItems != null)
                 await RecapListCommands.AddOrEditRecapListItemsAsync(guildId, channelId, alias, aliasItems);
 
+            audit.Succeed();
             return Results.Ok(new { message = "ok" });
         });
 
@@ -295,9 +303,16 @@ public static class WebPortalServer
             if (!owners.Contains(userId))
                 return Results.NotFound(new { message = "Alias not found for this user." });
 
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditAction.AliasDelete);
             await ReceiverAliasesCommands.DeleteReceiverAliasForUser(guildId, channelId, alias, userId);
             await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, userId, alias);
 
+            audit.Succeed();
             return Results.Ok(new { message = "ok" });
         });
 
@@ -377,6 +392,12 @@ public static class WebPortalServer
             if (!Declare.EnableWebPortal)
                 return Results.BadRequest(new { message = "Web portal is disabled." });
 
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditAction.PatchAccess);
             var patches = await ChannelsAndUrlsCommands.GetPatchesForChannelAsync(guildId, channelId);
 
             var aliases = patches
@@ -390,6 +411,7 @@ public static class WebPortalServer
                 .OrderBy(item => item.Alias, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
+            audit.Succeed();
             return Results.Ok(new { aliases });
         });
 
@@ -441,14 +463,41 @@ public static class WebPortalServer
             var links = new List<PortalThreadLink>();
             foreach (var roomChannelId in distinctChannels)
             {
-                var roomToken = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, roomChannelId, actor.UserId);
                 links.Add(new PortalThreadLink(
                     roomChannelId,
                     ResolveThreadName(guild, roomChannelId),
-                    $"/portal/{guildId}/{roomChannelId}/{roomToken}/"));
+                    $"/api/portal/{guildId}/{channelId}/{token}/open-room/{roomChannelId}"));
             }
 
             return Results.Ok(new { links });
+        });
+
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/open-room/{targetChannelId}", async (
+            string guildId,
+            string channelId,
+            string token,
+            string targetChannelId) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null || !ulong.TryParse(actor.UserId, out var userId))
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var targetAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(guildId, targetChannelId, userId);
+            if (targetAuthorization == null ||
+                !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, targetAuthorization))
+            {
+                return Results.NotFound(new { message = "Room not found or unavailable." });
+            }
+
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                targetChannelId,
+                SecurityAuditAction.PortalAccessIssue);
+            var targetToken = await PortalAccessCommands.IssuePortalTokenAsync(guildId, targetChannelId, actor.UserId);
+            audit.Succeed();
+            return Results.Redirect($"/portal/{guildId}/{targetChannelId}/{targetToken}/");
         });
 
         app.MapPost("/api/portal/{guildId}/{channelId}/{token}/thread-commands/execute", async (
@@ -470,6 +519,12 @@ public static class WebPortalServer
             if (string.IsNullOrWhiteSpace(command) || string.IsNullOrWhiteSpace(channelId))
                 return Results.BadRequest(new { message = "command and channelId are required." });
 
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditLog.ForCommand(command));
             string message;
 
             switch (command)
@@ -505,6 +560,7 @@ public static class WebPortalServer
                     return Results.BadRequest(new { message = "Unknown command." });
             }
 
+            audit.Succeed();
             return Results.Ok(new { message });
         });
 
@@ -532,6 +588,37 @@ public static class WebPortalServer
             return Results.File(filePath, "application/zip", safeFileName);
         });
 
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/audit", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
+            var requestedLimit = int.TryParse(request.Query["limit"].FirstOrDefault(), out var parsedLimit)
+                ? parsedLimit
+                : 100;
+            var entries = await SecurityAuditLog.GetRecentAsync(guildId, requestedLimit);
+            return Results.Ok(new
+            {
+                entries = entries.Select(entry => new
+                {
+                    entry.Id,
+                    entry.OccurredAtUtc,
+                    entry.CorrelationId,
+                    Source = entry.Source.ToString(),
+                    entry.ActorUserId,
+                    entry.GuildId,
+                    entry.ChannelId,
+                    Action = entry.Action.ToString(),
+                    Outcome = entry.Outcome.ToString()
+                })
+            });
+        });
+
         app.MapPost("/api/portal/{guildId}/{channelId}/{token}/commands/execute", async (
             string guildId,
             string channelId,
@@ -556,6 +643,13 @@ public static class WebPortalServer
             {
                 return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
             }
+
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditLog.ForCommand(command));
 
             var downloadRoot = Path.Combine(Declare.WebPortalDownloadPath, guildId, channelId, actor.UserId);
             if (Declare.IsArchipelagoMode)
@@ -759,6 +853,7 @@ public static class WebPortalServer
                     return Results.BadRequest(new { message = "Unknown command." });
             }
 
+            audit.Succeed();
             return Results.Ok(new { message, downloadUrl });
         });
 
@@ -817,6 +912,35 @@ public static class WebPortalServer
         return actor != null && AstAuthorizationService.IsAllowed(required, actor.Authorization)
             ? actor
             : null;
+    }
+
+    private static bool TryParsePersonalPortalPath(
+        PathString path,
+        out string guildId,
+        out string channelId,
+        out string token)
+    {
+        guildId = string.Empty;
+        channelId = string.Empty;
+        token = string.Empty;
+
+        var segments = (path.Value ?? string.Empty)
+            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (segments.Length is not (4 or 5) ||
+            !string.Equals(segments[0], "portal", StringComparison.OrdinalIgnoreCase) ||
+            (segments.Length == 5 && !string.Equals(segments[4], "index.html", StringComparison.OrdinalIgnoreCase)) ||
+            !ulong.TryParse(segments[1], out _) ||
+            !ulong.TryParse(segments[2], out _) ||
+            segments[3].Length is not (32 or 64) ||
+            segments[3].Any(character => !Uri.IsHexDigit(character)))
+        {
+            return false;
+        }
+
+        guildId = segments[1];
+        channelId = segments[2];
+        token = segments[3];
+        return true;
     }
 
     private static bool IsAllowedUpload(IFormFile file, string requiredExtension)

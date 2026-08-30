@@ -151,11 +151,16 @@ public static class BotCommands
 
         _ = Task.Run(async () =>
         {
+            var correlationId = Guid.NewGuid().ToString("N");
+            var revokePortal = command.Data.Options?.FirstOrDefault(option => option.Name == "revoke")?.Value as bool? ?? false;
+            var auditAction = revokePortal && (command.CommandName is "ast-user-portal" or "ast-room-portal" or "ast-portal")
+                ? SecurityAuditAction.PortalAccessRevoke
+                : SecurityAuditLog.ForCommand(command.CommandName);
+            var channelId = command.ChannelId?.ToString() ?? string.Empty;
+            var guildId = command.GuildId?.ToString() ?? string.Empty;
             try
             {
                 var guildUser = command.User as IGuildUser;
-                string channelId = command.ChannelId?.ToString() ?? string.Empty;
-                string guildId = command.GuildId?.ToString() ?? string.Empty;
 
                 if (string.IsNullOrWhiteSpace(guildId) || string.IsNullOrWhiteSpace(channelId))
                 {
@@ -175,8 +180,31 @@ public static class BotCommands
                 var requiredAuthorization = AstAuthorizationService.RequiredForDiscordCommand(command.CommandName, isThread);
                 if (authorization == null || !AstAuthorizationService.IsAllowed(requiredAuthorization, authorization))
                 {
+                    if (auditAction != null)
+                    {
+                        await SecurityAuditLog.WriteAsync(
+                            correlationId,
+                            SecurityAuditSource.Discord,
+                            command.User.Id.ToString(),
+                            guildId,
+                            channelId,
+                            auditAction.Value,
+                            SecurityAuditOutcome.Denied);
+                    }
                     await command.FollowupAsync(AstAuthorizationService.DeniedMessage, ephemeral: true);
                     return;
+                }
+
+                if (auditAction != null)
+                {
+                    await SecurityAuditLog.WriteAsync(
+                        correlationId,
+                        SecurityAuditSource.Discord,
+                        command.User.Id.ToString(),
+                        guildId,
+                        channelId,
+                        auditAction.Value,
+                        SecurityAuditOutcome.Started);
                 }
 
                 const int maxLength = 1999;
@@ -195,10 +223,45 @@ public static class BotCommands
                     else
                         await command.FollowupAsync(Resource.BotCommandDone);
                 }
+
+                if (auditAction != null)
+                {
+                    await SecurityAuditLog.WriteAsync(
+                        correlationId,
+                        SecurityAuditSource.Discord,
+                        command.User.Id.ToString(),
+                        guildId,
+                        channelId,
+                        auditAction.Value,
+                        SecurityAuditOutcome.Succeeded);
+                }
             }
             catch (Exception ex)
             {
-                await command.FollowupAsync($"❌ {ex.Message}", ephemeral: true,
+                if (auditAction != null && !string.IsNullOrWhiteSpace(guildId))
+                {
+                    try
+                    {
+                        await SecurityAuditLog.WriteAsync(
+                            correlationId,
+                            SecurityAuditSource.Discord,
+                            command.User.Id.ToString(),
+                            guildId,
+                            channelId,
+                            auditAction.Value,
+                            SecurityAuditOutcome.Failed);
+                    }
+                    catch (Exception auditException)
+                    {
+                        Console.WriteLine($"[Audit] Failed to record Discord action: {auditException.GetType().Name}");
+                    }
+                }
+
+                Console.WriteLine($"[Command:{correlationId}] {command.CommandName} failed: {ex.GetType().Name}");
+                var safeErrorMessage = Declare.Language == "fr"
+                    ? "❌ La commande a échoué. Réessayez ou contactez un administrateur AST."
+                    : "❌ The command failed. Please retry or contact an AST administrator.";
+                await command.FollowupAsync(safeErrorMessage, ephemeral: true,
                     options: new RequestOptions { Timeout = 10000 });
             }
         });
@@ -232,8 +295,8 @@ public static class BotCommands
             "status-games-list" => await HelperClass.StatusGameList(channelId, guildId),
             "info" => await HelperClass.Info(channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, user, channelId, guildId),
-            "ast-user-portal" => await WebPortalLinkAsync(channelId, guildId, command.User.Id.ToString()),
-            "ast-room-portal" => await WebPortalThreadCommandsLinkAsync(channelId, guildId, command.User.Id.ToString()),
+            "ast-user-portal" => await WebPortalLinkAsync(command, channelId, guildId, command.User.Id.ToString()),
+            "ast-room-portal" => await WebPortalThreadCommandsLinkAsync(command, channelId, guildId, command.User.Id.ToString()),
             "update-frequency-check" => await ChannelsAndUrlsCommands.UpdateFrequencyCheck(command, channelId, guildId),
             "excluded-item" => await ExcludedItemsCommands.AddExcludedItemAsync(command, alias, channelId, guildId),
             "excluded-item-list" => await ExcludedItemsCommands.GetExcludedItemsByAliasAsync(command, channelId, guildId),
@@ -248,7 +311,7 @@ public static class BotCommands
         return command.CommandName switch
         {
             "add-url" => await UrlClass.AddUrl(command, user, channelId, guildId, (ITextChannel)command.Channel),
-            "ast-portal" => await WebPortalCommandsLinkAsync(guildId, channelId, command.User.Id.ToString()),
+            "ast-portal" => await WebPortalCommandsLinkAsync(command, guildId, channelId, command.User.Id.ToString()),
             "list-yamls" => YamlClass.ListYamls(channelId),
             "backup-yamls" => await YamlClass.BackupYamls(command, channelId),
             "delete-yaml" => YamlClass.DeleteYaml(command, channelId),
@@ -266,12 +329,15 @@ public static class BotCommands
             _ => Resource.BotCommandThread
         };
     }
-    private static async Task<string> WebPortalLinkAsync(string channelId, string guildId, string userId)
+    private static async Task<string> WebPortalLinkAsync(SocketSlashCommand command, string channelId, string guildId, string userId)
     {
         if (!Declare.EnableWebPortal)
         {
             return Resource.WebPortalDisabled;
         }
+
+        if (IsPortalRevokeRequested(command))
+            return await RevokePortalAsync(guildId, channelId, userId);
 
         var portalUrl = await WebPortalPages.EnsureUserPageAsync(guildId, channelId, userId);
         return string.IsNullOrWhiteSpace(portalUrl)
@@ -279,12 +345,15 @@ public static class BotCommands
             : string.Format(Resource.WebPortalLink, portalUrl);
     }
 
-    private static async Task<string> WebPortalThreadCommandsLinkAsync(string channelId, string guildId, string userId)
+    private static async Task<string> WebPortalThreadCommandsLinkAsync(SocketSlashCommand command, string channelId, string guildId, string userId)
     {
         if (!Declare.EnableWebPortal)
         {
             return Resource.WebPortalDisabled;
         }
+
+        if (IsPortalRevokeRequested(command))
+            return await RevokePortalAsync(guildId, channelId, userId);
 
         var portalUrl = await WebPortalPages.EnsureThreadCommandsPageAsync(guildId, channelId, userId);
         return string.IsNullOrWhiteSpace(portalUrl)
@@ -292,17 +361,33 @@ public static class BotCommands
             : string.Format(Resource.WebPortalLink, portalUrl);
     }
 
-    private static async Task<string> WebPortalCommandsLinkAsync(string guildId, string channelId, string userId)
+    private static async Task<string> WebPortalCommandsLinkAsync(SocketSlashCommand command, string guildId, string channelId, string userId)
     {
         if (!Declare.EnableWebPortal)
         {
             return Resource.WebPortalDisabled;
         }
 
+        if (IsPortalRevokeRequested(command))
+            return await RevokePortalAsync(guildId, channelId, userId);
+
         var portalUrl = await WebPortalPages.EnsureCommandsPageAsync(guildId, channelId, userId);
         return string.IsNullOrWhiteSpace(portalUrl)
             ? Resource.WebPortalDisabled
             : string.Format(Resource.WebPortalCommandsLink, portalUrl);
+    }
+
+    private static bool IsPortalRevokeRequested(SocketSlashCommand command)
+    {
+        return command.Data.Options?.FirstOrDefault(option => option.Name == "revoke")?.Value as bool? ?? false;
+    }
+
+    private static async Task<string> RevokePortalAsync(string guildId, string channelId, string userId)
+    {
+        await PortalAccessCommands.RevokePortalTokenAsync(guildId, channelId, userId);
+        return Declare.Language == "fr"
+            ? "Le lien du portail a été révoqué. Les anciennes URL ne sont plus valides."
+            : "The portal link was revoked. Previous URLs are no longer valid.";
     }
 
 

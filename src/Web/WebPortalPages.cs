@@ -13,14 +13,7 @@ public static class WebPortalPages
         if (!Declare.EnableWebPortal)
             return null;
 
-        var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
-        var userFolder = GetUserFolder(guildId, channelId, token);
-
-        Directory.CreateDirectory(userFolder);
-
-        var htmlPath = Path.Combine(userFolder, "index.html");
-        var html = WebPortalUserPage.Build(guildId, channelId, token);
-        await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
+        var token = await PortalAccessCommands.IssuePortalTokenAsync(guildId, channelId, userId);
 
         return GetUserPortalUrl(guildId, channelId, token);
     }
@@ -32,7 +25,7 @@ public static class WebPortalPages
 
         await EnsureSharedCommandsPagesAsync();
 
-        var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
+        var token = await PortalAccessCommands.IssuePortalTokenAsync(guildId, channelId, userId);
 
         return GetThreadCommandsPortalUrl(guildId, channelId, token);
     }
@@ -44,7 +37,7 @@ public static class WebPortalPages
 
         await EnsureSharedCommandsPagesAsync();
 
-        var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
+        var token = await PortalAccessCommands.IssuePortalTokenAsync(guildId, channelId, userId);
 
         return GetCommandsPortalUrl(guildId, channelId, token);
     }
@@ -65,25 +58,58 @@ public static class WebPortalPages
         await File.WriteAllTextAsync(commandsPath, commandsHtml, Encoding.UTF8);
     }
 
-    public static async Task EnsureMissingUserPagesAsync()
+    public static Task EnsureMissingUserPagesAsync()
     {
-        if (!Declare.EnableWebPortal)
-            return;
-
-        var users = await RecapListCommands.GetPortalUsersAsync();
-        foreach (var (guildId, channelId, userId) in users)
-            await RefreshUserPageAsync(guildId, channelId, userId);
+        var deletedCount = DeleteLegacyUserPages(Declare.WebPortalPath);
+        if (deletedCount > 0)
+            Console.WriteLine($"[Portal] Removed {deletedCount} legacy generated user page directorie(s).");
+        return Task.CompletedTask;
     }
 
-    private static async Task RefreshUserPageAsync(string guildId, string channelId, string userId)
+    public static int DeleteLegacyUserPages(string portalRoot)
     {
-        var token = await PortalAccessCommands.EnsurePortalTokenAsync(guildId, channelId, userId);
-        var userFolder = GetUserFolder(guildId, channelId, token);
-        Directory.CreateDirectory(userFolder);
+        if (!Directory.Exists(portalRoot))
+            return 0;
 
-        var htmlPath = Path.Combine(userFolder, "index.html");
-        var html = WebPortalUserPage.Build(guildId, channelId, token);
-        await File.WriteAllTextAsync(htmlPath, html, Encoding.UTF8);
+        var fullRoot = Path.GetFullPath(portalRoot)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var expectedPrefix = fullRoot + Path.DirectorySeparatorChar;
+        var deletedCount = 0;
+
+        foreach (var guildFolder in Directory.EnumerateDirectories(fullRoot))
+        {
+            if (!ulong.TryParse(Path.GetFileName(guildFolder), out _))
+                continue;
+
+            foreach (var channelFolder in Directory.EnumerateDirectories(guildFolder))
+            {
+                if (!ulong.TryParse(Path.GetFileName(channelFolder), out _))
+                    continue;
+
+                foreach (var tokenFolder in Directory.EnumerateDirectories(channelFolder))
+                {
+                    var token = Path.GetFileName(tokenFolder);
+                    if (!IsLegacyPortalToken(token) ||
+                        !File.Exists(Path.Combine(tokenFolder, "index.html")) ||
+                        File.GetAttributes(tokenFolder).HasFlag(FileAttributes.ReparsePoint))
+                        continue;
+
+                    var fullTokenFolder = Path.GetFullPath(tokenFolder);
+                    if (!fullTokenFolder.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    Directory.Delete(fullTokenFolder, recursive: true);
+                    deletedCount++;
+                }
+            }
+        }
+
+        return deletedCount;
+    }
+
+    private static bool IsLegacyPortalToken(string value)
+    {
+        return value.Length is 32 or 64 && value.All(Uri.IsHexDigit);
     }
 
     public static void DeleteChannelPages(string guildId, string channelId)
@@ -126,8 +152,4 @@ public static class WebPortalPages
         return $"{baseUrl}/portal/{guildId}/{channelId}/{token}/thread-commands.html";
     }
 
-    private static string GetUserFolder(string guildId, string channelId, string token)
-    {
-        return Path.Combine(Declare.WebPortalPath, guildId, channelId, token);
-    }
 }

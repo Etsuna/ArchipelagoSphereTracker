@@ -20,8 +20,11 @@ Les commandes Discord et les requêtes Web utilisent la même matrice. Un token 
 - Les liens de téléchargement générés sont authentifiés et les archives sont conservées hors du dossier statique public pendant une heure.
 - Les réponses du portail utilisent `no-store`, `Referrer-Policy: no-referrer`, une CSP restrictive, `X-Frame-Options: DENY` et `nosniff`.
 - Les anciens chemins statiques `/portal/.../downloads/...` sont bloqués, y compris si des fichiers d'une version précédente sont encore présents sur disque.
+- SQLite ne conserve que le SHA-256 du token. Un nouveau lien remplace le précédent et expire après `PORTAL_TOKEN_LIFETIME_DAYS` jours.
+- `revoke:true` sur les commandes de portail invalide le lien actif sans en créer un nouveau.
+- Les pages personnelles sont rendues dynamiquement : un ancien fichier HTML présent sur disque ne contourne ni expiration ni révocation.
 
-Les URLs de portail doivent être traitées comme des mots de passe : ne pas les publier ni les enregistrer dans des captures ou des journaux. Une rotation/expiration explicite des tokens reste prévue dans une évolution ultérieure.
+Les URLs de portail doivent être traitées comme des mots de passe : ne pas les publier ni les enregistrer dans des captures ou des journaux. Demander un nouveau lien effectue une rotation et invalide immédiatement le précédent.
 
 ## Fichiers et code APWorld
 
@@ -38,3 +41,5 @@ Une instance Archipelago privée peut être autorisée explicitement avec `ARCHI
 ## Observabilité
 
 Les journaux HTTP n'affichent plus les identifiants de room, de tracker ni les URLs de patch. La métrique `ast_channel_info` n'exporte plus `base_url`, `room`, `tracker` et `port` comme labels.
+
+Les actions sensibles sont inscrites dans `SecurityAuditLogTable` avec date UTC, corrélation, source, auteur Discord, serveur, salon, action et résultat. Aucun argument de commande, token, URL, alias ou nom de fichier n'est enregistré. La rétention est contrôlée par `AUDIT_RETENTION_DAYS`; l'API `/api/portal/{guild}/{channel}/{token}/audit` est réservée aux gestionnaires du serveur.

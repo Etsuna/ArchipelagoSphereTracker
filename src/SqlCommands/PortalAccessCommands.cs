@@ -1,140 +1,109 @@
-﻿using System.Data.SQLite;
+using System.Data.SQLite;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 
 public static class PortalAccessCommands
 {
-    public static async Task<string> EnsurePortalTokenAsync(
+    public static async Task<string> IssuePortalTokenAsync(
         string guildId,
         string channelId,
-        string userId)
+        string userId,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await GetPortalTokenAsync(guildId, channelId, userId);
-        if (!string.IsNullOrWhiteSpace(existing))
+        var token = GenerateToken();
+        var now = DateTimeOffset.UtcNow;
+        var expiresAt = now.AddDays(Declare.PortalTokenLifetimeDays);
+
+        await Db.WriteAsync(async connection =>
         {
-            return existing;
-        }
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                INSERT INTO PortalAccessTable
+                    (GuildId, ChannelId, UserId, TokenHash, CreatedAtUtc, ExpiresAtUtc, RevokedAtUtc)
+                VALUES
+                    (@GuildId, @ChannelId, @UserId, @TokenHash, @CreatedAtUtc, @ExpiresAtUtc, NULL)
+                ON CONFLICT(GuildId, ChannelId, UserId) DO UPDATE SET
+                    TokenHash = excluded.TokenHash,
+                    CreatedAtUtc = excluded.CreatedAtUtc,
+                    ExpiresAtUtc = excluded.ExpiresAtUtc,
+                    RevokedAtUtc = NULL;";
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@UserId", userId);
+            command.Parameters.AddWithValue("@TokenHash", HashToken(token));
+            command.Parameters.AddWithValue("@CreatedAtUtc", FormatTimestamp(now));
+            command.Parameters.AddWithValue("@ExpiresAtUtc", FormatTimestamp(expiresAt));
+            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        });
 
-        await Db.WriteGate.WaitAsync();
-        try
+        return token;
+    }
+
+    public static async Task RevokePortalTokenAsync(
+        string guildId,
+        string channelId,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        await Db.WriteAsync(async connection =>
         {
-            await using var conn = await Db.OpenWriteAsync();
-            using (var begin = conn.CreateCommand())
-            {
-                begin.CommandText = "BEGIN IMMEDIATE;";
-                begin.ExecuteNonQuery();
-            }
-
-            try
-            {
-                var token = GenerateToken();
-
-                using (var insert = conn.CreateCommand())
-                {
-                    insert.CommandText = @"
-                        INSERT OR IGNORE INTO PortalAccessTable (GuildId, ChannelId, UserId, Token)
-                        VALUES (@GuildId, @ChannelId, @UserId, @Token);";
-                    insert.Parameters.AddWithValue("@GuildId", guildId);
-                    insert.Parameters.AddWithValue("@ChannelId", channelId);
-                    insert.Parameters.AddWithValue("@UserId", userId);
-                    insert.Parameters.AddWithValue("@Token", token);
-                    await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
-                }
-
-                var persisted = await GetPortalTokenAsync(conn, guildId, channelId, userId);
-                if (!string.IsNullOrWhiteSpace(persisted))
-                {
-                    using var commit = conn.CreateCommand();
-                    commit.CommandText = "COMMIT;";
-                    commit.ExecuteNonQuery();
-                    return persisted;
-                }
-
-                token = GenerateToken();
-                using (var fallback = conn.CreateCommand())
-                {
-                    fallback.CommandText = @"
-                        INSERT OR IGNORE INTO PortalAccessTable (GuildId, ChannelId, UserId, Token)
-                        VALUES (@GuildId, @ChannelId, @UserId, @Token);";
-                    fallback.Parameters.AddWithValue("@GuildId", guildId);
-                    fallback.Parameters.AddWithValue("@ChannelId", channelId);
-                    fallback.Parameters.AddWithValue("@UserId", userId);
-                    fallback.Parameters.AddWithValue("@Token", token);
-                    await fallback.ExecuteNonQueryAsync().ConfigureAwait(false);
-                }
-
-                var fallbackToken = await GetPortalTokenAsync(conn, guildId, channelId, userId);
-                using (var commit = conn.CreateCommand())
-                {
-                    commit.CommandText = "COMMIT;";
-                    commit.ExecuteNonQuery();
-                }
-
-                return fallbackToken ?? token;
-            }
-            catch
-            {
-                using var rb = conn.CreateCommand();
-                rb.CommandText = "ROLLBACK;";
-                rb.ExecuteNonQuery();
-                throw;
-            }
-        }
-        finally
-        {
-            Db.WriteGate.Release();
-        }
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                UPDATE PortalAccessTable
+                SET RevokedAtUtc = @RevokedAtUtc
+                WHERE GuildId = @GuildId
+                  AND ChannelId = @ChannelId
+                  AND UserId = @UserId
+                  AND RevokedAtUtc IS NULL;";
+            command.Parameters.AddWithValue("@RevokedAtUtc", FormatTimestamp(DateTimeOffset.UtcNow));
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@UserId", userId);
+            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        });
     }
 
     public static async Task<string?> GetUserIdByTokenAsync(
         string guildId,
         string channelId,
-        string token)
+        string token,
+        CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(token))
+            return null;
+
         await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand(@"
             SELECT UserId
             FROM PortalAccessTable
             WHERE GuildId = @GuildId
               AND ChannelId = @ChannelId
-              AND Token = @Token;", connection);
+              AND TokenHash = @TokenHash
+              AND RevokedAtUtc IS NULL
+              AND ExpiresAtUtc > @NowUtc;", connection);
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
-        command.Parameters.AddWithValue("@Token", token);
+        command.Parameters.AddWithValue("@TokenHash", HashToken(token));
+        command.Parameters.AddWithValue("@NowUtc", FormatTimestamp(DateTimeOffset.UtcNow));
 
-        var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+        var result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         return result?.ToString();
     }
 
-    private static async Task<string?> GetPortalTokenAsync(
-        string guildId,
-        string channelId,
-        string userId)
+    public static string HashToken(string token)
     {
-        await using var connection = await Db.OpenReadAsync();
-        return await GetPortalTokenAsync(connection, guildId, channelId, userId);
+        var digest = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(digest).ToLowerInvariant();
     }
 
-    private static async Task<string?> GetPortalTokenAsync(
-        SQLiteConnection connection,
-        string guildId,
-        string channelId,
-        string userId)
+    public static string FormatTimestamp(DateTimeOffset value)
     {
-        using var command = new SQLiteCommand(@"
-            SELECT Token
-            FROM PortalAccessTable
-            WHERE GuildId = @GuildId
-              AND ChannelId = @ChannelId
-              AND UserId = @UserId;", connection);
-        command.Parameters.AddWithValue("@GuildId", guildId);
-        command.Parameters.AddWithValue("@ChannelId", channelId);
-        command.Parameters.AddWithValue("@UserId", userId);
-
-        var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
-        return result?.ToString();
+        return value.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
     }
 
     private static string GenerateToken()
     {
-        return Guid.NewGuid().ToString("N");
+        return Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
     }
 }

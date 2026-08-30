@@ -73,9 +73,24 @@ CREATE TABLE IF NOT EXISTS PortalAccessTable (
     GuildId   TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
     UserId    TEXT NOT NULL,
-    Token     TEXT NOT NULL,
+    TokenHash TEXT NOT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    ExpiresAtUtc TEXT NOT NULL,
+    RevokedAtUtc TEXT,
     UNIQUE (GuildId, ChannelId, UserId),
-    UNIQUE (Token)
+    UNIQUE (TokenHash)
+);
+
+CREATE TABLE IF NOT EXISTS SecurityAuditLogTable (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    OccurredAtUtc TEXT NOT NULL,
+    CorrelationId TEXT NOT NULL,
+    Source TEXT NOT NULL,
+    ActorUserId TEXT NOT NULL,
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT,
+    Action TEXT NOT NULL,
+    Outcome TEXT NOT NULL
 );
 
 -- ==========================
@@ -299,6 +314,11 @@ CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcur
   ON ReceiverAliasesTable(GuildId, ChannelId, UserId, Receiver);
 CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcr
   ON ReceiverAliasesTable(GuildId, ChannelId, Receiver);
+
+CREATE INDEX IF NOT EXISTS idx_securityaudit_guild_time
+  ON SecurityAuditLogTable(GuildId, OccurredAtUtc DESC);
+CREATE INDEX IF NOT EXISTS idx_securityaudit_time
+  ON SecurityAuditLogTable(OccurredAtUtc);
 
 -- HintStatusTable: mêmes patterns que DisplayedItemTable
 CREATE INDEX IF NOT EXISTS idx_hintstatus_gcr_item

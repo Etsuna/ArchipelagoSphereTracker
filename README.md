@@ -171,6 +171,12 @@ AST_OWNER_USER_ID=123456789012345678
 # Optionnel (défaut : 67108864, soit 64 Mio)
 WEB_MAX_UPLOAD_BYTES=67108864
 
+# Optionnel (défaut : 30 jours, intervalle accepté : 1–365)
+PORTAL_TOKEN_LIFETIME_DAYS=30
+
+# Optionnel (défaut : 90 jours, intervalle accepté : 1–3650)
+AUDIT_RETENTION_DAYS=90
+
 # Optionnel : hôtes privés explicitement approuvés pour Archipelago
 ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
 
@@ -193,6 +199,8 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_BASE_URL` est utile si AST est exposé derrière un domaine/proxy.
 - `AST_OWNER_USER_ID` réserve les opérations globales APWorld à cet utilisateur. Sans valeur, le propriétaire de chaque serveur Discord est utilisé comme solution de repli.
 - `WEB_MAX_UPLOAD_BYTES` limite la taille des fichiers Web et Discord acceptés.
+- `PORTAL_TOKEN_LIFETIME_DAYS` fixe l'expiration des nouveaux liens du portail.
+- `AUDIT_RETENTION_DAYS` fixe la rétention du journal des actions sensibles.
 - `ARCHIPELAGO_ALLOWED_HOSTS` est une liste séparée par des virgules. Elle constitue une dérogation explicite au blocage SSRF des adresses privées/locales.
 - `EXPORT_METRICS=true` active les exports Prometheus.
 
@@ -616,6 +624,12 @@ AST_OWNER_USER_ID=123456789012345678
 # Optional (default: 67108864, i.e. 64 MiB)
 WEB_MAX_UPLOAD_BYTES=67108864
 
+# Optional (default: 30 days, accepted range: 1–365)
+PORTAL_TOKEN_LIFETIME_DAYS=30
+
+# Optional (default: 90 days, accepted range: 1–3650)
+AUDIT_RETENTION_DAYS=90
+
 # Optional: explicitly trusted private Archipelago hosts
 ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
 
@@ -638,6 +652,8 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_BASE_URL` is useful behind a domain/reverse proxy.
 - `AST_OWNER_USER_ID` reserves global APWorld operations for that user. If unset, each Discord guild owner is used as the fallback.
 - `WEB_MAX_UPLOAD_BYTES` limits accepted Web and Discord file sizes.
+- `PORTAL_TOKEN_LIFETIME_DAYS` controls expiry for newly issued portal links.
+- `AUDIT_RETENTION_DAYS` controls retention of sensitive-action audit records.
 - `ARCHIPELAGO_ALLOWED_HOSTS` is a comma-separated list and explicitly bypasses private/local-address SSRF blocking for those hosts.
 - `EXPORT_METRICS=true` enables Prometheus exports.
 

@@ -335,4 +335,137 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
 
         await PostMigrationMaintenanceAsync();
     }
+
+    public static async Task Migrate_5_0_6(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.6: hashed portal tokens, expiry and security audit log.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+
+            var portalTableExists = false;
+            var portalColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var tableCheck = conn.CreateCommand())
+            {
+                tableCheck.CommandText = "SELECT 1 FROM sqlite_master WHERE type='table' AND name='PortalAccessTable';";
+                portalTableExists = await tableCheck.ExecuteScalarAsync(ct) != null;
+            }
+
+            if (portalTableExists)
+            {
+                using var columnCheck = conn.CreateCommand();
+                columnCheck.CommandText = "PRAGMA table_info(PortalAccessTable);";
+                using var reader = await columnCheck.ExecuteReaderAsync(ct);
+                while (await reader.ReadAsync(ct))
+                    portalColumns.Add(reader["name"]?.ToString() ?? string.Empty);
+            }
+
+            var legacyRows = new List<(long Id, string GuildId, string ChannelId, string UserId, string Token)>();
+            if (portalColumns.Contains("Token") && !portalColumns.Contains("TokenHash"))
+            {
+                using var readLegacy = conn.CreateCommand();
+                readLegacy.CommandText = "SELECT Id, GuildId, ChannelId, UserId, Token FROM PortalAccessTable;";
+                using var reader = await readLegacy.ExecuteReaderAsync(ct);
+                while (await reader.ReadAsync(ct))
+                {
+                    legacyRows.Add((
+                        Convert.ToInt64(reader["Id"]),
+                        reader["GuildId"]?.ToString() ?? string.Empty,
+                        reader["ChannelId"]?.ToString() ?? string.Empty,
+                        reader["UserId"]?.ToString() ?? string.Empty,
+                        reader["Token"]?.ToString() ?? string.Empty));
+                }
+            }
+
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                if (!portalColumns.Contains("TokenHash"))
+                {
+                    using (var rebuild = conn.CreateCommand())
+                    {
+                        rebuild.Transaction = transaction;
+                        rebuild.CommandText = @"
+                            DROP TABLE IF EXISTS PortalAccessTable_5_0_6;
+                            CREATE TABLE PortalAccessTable_5_0_6 (
+                                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                GuildId TEXT NOT NULL,
+                                ChannelId TEXT NOT NULL,
+                                UserId TEXT NOT NULL,
+                                TokenHash TEXT NOT NULL,
+                                CreatedAtUtc TEXT NOT NULL,
+                                ExpiresAtUtc TEXT NOT NULL,
+                                RevokedAtUtc TEXT,
+                                UNIQUE (GuildId, ChannelId, UserId),
+                                UNIQUE (TokenHash)
+                            );";
+                        await rebuild.ExecuteNonQueryAsync(ct);
+                    }
+
+                    var createdAt = DateTimeOffset.UtcNow;
+                    var expiresAt = createdAt.AddDays(Declare.PortalTokenLifetimeDays);
+                    foreach (var row in legacyRows.Where(row => !string.IsNullOrWhiteSpace(row.Token)))
+                    {
+                        using var insert = conn.CreateCommand();
+                        insert.Transaction = transaction;
+                        insert.CommandText = @"
+                            INSERT INTO PortalAccessTable_5_0_6
+                                (Id, GuildId, ChannelId, UserId, TokenHash, CreatedAtUtc, ExpiresAtUtc, RevokedAtUtc)
+                            VALUES
+                                (@Id, @GuildId, @ChannelId, @UserId, @TokenHash, @CreatedAtUtc, @ExpiresAtUtc, NULL);";
+                        insert.Parameters.AddWithValue("@Id", row.Id);
+                        insert.Parameters.AddWithValue("@GuildId", row.GuildId);
+                        insert.Parameters.AddWithValue("@ChannelId", row.ChannelId);
+                        insert.Parameters.AddWithValue("@UserId", row.UserId);
+                        insert.Parameters.AddWithValue("@TokenHash", PortalAccessCommands.HashToken(row.Token));
+                        insert.Parameters.AddWithValue("@CreatedAtUtc", PortalAccessCommands.FormatTimestamp(createdAt));
+                        insert.Parameters.AddWithValue("@ExpiresAtUtc", PortalAccessCommands.FormatTimestamp(expiresAt));
+                        await insert.ExecuteNonQueryAsync(ct);
+                    }
+
+                    using var replace = conn.CreateCommand();
+                    replace.Transaction = transaction;
+                    replace.CommandText = @"
+                        DROP TABLE IF EXISTS PortalAccessTable;
+                        ALTER TABLE PortalAccessTable_5_0_6 RENAME TO PortalAccessTable;";
+                    await replace.ExecuteNonQueryAsync(ct);
+                }
+
+                using (var auditSchema = conn.CreateCommand())
+                {
+                    auditSchema.Transaction = transaction;
+                    auditSchema.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS SecurityAuditLogTable (
+                            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            OccurredAtUtc TEXT NOT NULL,
+                            CorrelationId TEXT NOT NULL,
+                            Source TEXT NOT NULL,
+                            ActorUserId TEXT NOT NULL,
+                            GuildId TEXT NOT NULL,
+                            ChannelId TEXT,
+                            Action TEXT NOT NULL,
+                            Outcome TEXT NOT NULL
+                        );
+                        CREATE INDEX IF NOT EXISTS idx_securityaudit_guild_time
+                            ON SecurityAuditLogTable(GuildId, OccurredAtUtc DESC);
+                        CREATE INDEX IF NOT EXISTS idx_securityaudit_time
+                            ON SecurityAuditLogTable(OccurredAtUtc);";
+                    await auditSchema.ExecuteNonQueryAsync(ct);
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
 }
