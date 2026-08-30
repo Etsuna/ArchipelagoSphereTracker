@@ -151,6 +151,20 @@ CREATE TABLE IF NOT EXISTS EventDeliveries (
     FOREIGN KEY (EventId) REFERENCES TrackingEvents(Id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS RoomPollState (
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    NextPollAtUtc TEXT NOT NULL,
+    LastAttemptAtUtc TEXT,
+    LastSuccessAtUtc TEXT,
+    ConsecutiveFailures INTEGER NOT NULL DEFAULT 0,
+    LastFailureKind TEXT NOT NULL DEFAULT 'None',
+    BreakerOpenUntilUtc TEXT,
+    LastLatencyMilliseconds REAL NOT NULL DEFAULT 0,
+    UpdatedAtUtc TEXT NOT NULL,
+    PRIMARY KEY (GuildId, ChannelId)
+);
+
 -- ==========================
 -- 🎯 ReceiverAliasesTable
 -- ==========================
@@ -397,6 +411,8 @@ CREATE INDEX IF NOT EXISTS idx_trackingevents_room_time
   ON TrackingEvents(GuildId, ChannelId, Id DESC);
 CREATE INDEX IF NOT EXISTS idx_eventdeliveries_due
   ON EventDeliveries(Status, NextAttemptAtUtc, LeaseUntilUtc, Id);
+CREATE INDEX IF NOT EXISTS idx_roompollstate_due
+  ON RoomPollState(NextPollAtUtc, GuildId, ChannelId);
 
 -- HintStatusTable: mêmes patterns que DisplayedItemTable
 CREATE INDEX IF NOT EXISTS idx_hintstatus_gcr_item

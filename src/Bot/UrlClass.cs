@@ -1,5 +1,6 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
+using ArchipelagoSphereTracker.Tracking.Scheduling;
 using Discord;
 using Discord.WebSocket;
 using System.Text;
@@ -332,10 +333,6 @@ public class UrlClass
         return message;
     }
 
-    private static readonly HttpClient Http = HttpClientFactory.CreateJsonClient();
-
-    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(1);
-
     public static async Task<RoomStatus?> RoomInfo(string baseUrl, string roomId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(roomId))
@@ -346,39 +343,19 @@ public class UrlClass
 
         var url = new Uri(baseUri, $"api/room_status/{roomId.Trim()}");
 
-        string? json;
-        try
+        var result = await TrackingDataManager.WebHostClient.FetchJsonAsync(
+            url,
+            WebHostEndpointKind.RoomStatus,
+            ct).ConfigureAwait(false);
+        if (!result.Success)
         {
-            json = await HttpThrottle.GetStringThrottledAsync(
-                Http,
-                url.ToString(),
-                minSpacingPerHost: MinSpacingPerHost,
-                ct: ct,
-                maxAttempts: 3,
-                log: Console.WriteLine
-            ).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException ex)
-        {
-            if (!ct.IsCancellationRequested)
-                Console.WriteLine($"[TDM] Timeout while contacting {url.Host}: {ex.GetType().Name}");
-            else
-                Console.WriteLine($"[TDM] Request to {url.Host} canceled by caller: {ex.GetType().Name}");
-
+            Console.WriteLine($"[TDM] Room status failed for {url.Host} ({result.PollResult.FailureKind}).");
             return null;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[TDM] HTTP error while contacting {url.Host}: {ex.GetType().Name}: {ex.Message}");
-            return null;
-        }
-
-        if (string.IsNullOrWhiteSpace(json))
-            return null;
 
         try
         {
-            return JsonSerializer.Deserialize<RoomStatus>(json);
+            return JsonSerializer.Deserialize<RoomStatus>(result.Json!);
         }
         catch
         {

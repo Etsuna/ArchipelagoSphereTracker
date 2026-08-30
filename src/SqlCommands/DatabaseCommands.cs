@@ -192,6 +192,15 @@ public static class DatabaseCommands
                 command.Parameters.Clear();
 
                 command.CommandText = @"
+                    DELETE FROM RoomPollState
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+
+                command.CommandText = @"
                     DELETE FROM ChannelsAndUrlsTable
                     WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
@@ -365,6 +374,11 @@ public static class DatabaseCommands
                         SELECT Id FROM ChannelsAndUrlsTable
                         WHERE GuildId = @GuildId
                     );";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM RoomPollState WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 

@@ -11,7 +11,7 @@ public class Declare
     public static string ReleaseVersion = Version;
 #endif
     public static string BotVersion = GetLocalSemVer();
-    public static string BddVersion = "5.0.7";
+    public static string BddVersion = "5.0.8";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool ExportMetrics = (Environment.GetEnvironmentVariable("EXPORT_METRICS") ?? "false").Trim().ToLower() == "true";
@@ -28,6 +28,9 @@ public class Declare
     public static readonly int PortalTokenLifetimeDays = ParseBoundedIntEnvironmentVariable("PORTAL_TOKEN_LIFETIME_DAYS", 30, 1, 365);
     public static readonly int AuditRetentionDays = ParseBoundedIntEnvironmentVariable("AUDIT_RETENTION_DAYS", 90, 1, 3650);
     public static readonly bool EnableTrackingV2 = (Environment.GetEnvironmentVariable("ENABLE_TRACKING_V2") ?? "false").Trim().ToLower() == "true";
+    public static readonly bool UseLegacyTrackingScheduler = (Environment.GetEnvironmentVariable("USE_LEGACY_TRACKING_SCHEDULER") ?? "false").Trim().ToLower() == "true";
+    public static readonly int TrackingGlobalConcurrency = ParseBoundedIntEnvironmentVariable("TRACKING_GLOBAL_CONCURRENCY", 10, 1, 100);
+    public static readonly int TrackingOriginConcurrency = ParseBoundedIntEnvironmentVariable("TRACKING_ORIGIN_CONCURRENCY", 2, 1, 20);
 
 
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();

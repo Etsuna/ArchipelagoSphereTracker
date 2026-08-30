@@ -614,4 +614,48 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
             Db.WriteGate.Release();
         }
     }
+
+    public static async Task Migrate_5_0_8(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.8: durable central scheduler state.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                using var command = conn.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = @"
+                    CREATE TABLE IF NOT EXISTS RoomPollState (
+                        GuildId TEXT NOT NULL,
+                        ChannelId TEXT NOT NULL,
+                        NextPollAtUtc TEXT NOT NULL,
+                        LastAttemptAtUtc TEXT,
+                        LastSuccessAtUtc TEXT,
+                        ConsecutiveFailures INTEGER NOT NULL DEFAULT 0,
+                        LastFailureKind TEXT NOT NULL DEFAULT 'None',
+                        BreakerOpenUntilUtc TEXT,
+                        LastLatencyMilliseconds REAL NOT NULL DEFAULT 0,
+                        UpdatedAtUtc TEXT NOT NULL,
+                        PRIMARY KEY (GuildId, ChannelId)
+                    );
+                    CREATE INDEX IF NOT EXISTS idx_roompollstate_due
+                        ON RoomPollState(NextPollAtUtc, GuildId, ChannelId);";
+                await command.ExecuteNonQueryAsync(ct);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
 }

@@ -25,7 +25,7 @@ Une exception à n'importe quelle étape annule toute la transaction. Le premier
 
 Le contrat `ITrackingEventPublisher` impose l'usage de `EventKey` comme clé d'idempotence. La sémantique de l'outbox est donc at-least-once au niveau transport et exactement une publication logique si l'éditeur respecte ce contrat. C'est indispensable pour la frontière « publication externe réussie, accusé SQLite interrompu ».
 
-Cette PR ne branche volontairement aucun éditeur Discord V2. Avec `ENABLE_TRACKING_V2=true`, le scheduler historique effectue seulement le dual-write et remplit l'outbox ; les notifications Discord continuent de provenir exclusivement du pipeline V1.
+Cette PR ne branche volontairement aucun éditeur Discord V2. Avec `ENABLE_TRACKING_V2=true`, le scheduler actif effectue seulement le dual-write et remplit l'outbox ; les notifications Discord continuent de provenir exclusivement du pipeline V1.
 
 ## Exploitation et rollback
 

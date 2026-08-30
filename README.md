@@ -180,6 +180,13 @@ AUDIT_RETENTION_DAYS=90
 # Modèle V2 expérimental (non branché sur les notifications en production)
 ENABLE_TRACKING_V2=false
 
+# Rollback temporaire vers l'ancien scan minute
+USE_LEGACY_TRACKING_SCHEDULER=false
+
+# Budgets du scheduler/client WebHost central
+TRACKING_GLOBAL_CONCURRENCY=10
+TRACKING_ORIGIN_CONCURRENCY=2
+
 # Optionnel : hôtes privés explicitement approuvés pour Archipelago
 ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
 
@@ -205,6 +212,8 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `PORTAL_TOKEN_LIFETIME_DAYS` fixe l'expiration des nouveaux liens du portail.
 - `AUDIT_RETENTION_DAYS` fixe la rétention du journal des actions sensibles.
 - `ENABLE_TRACKING_V2=true` active le dual-write expérimental des snapshots, événements et livraisons V2. Aucun worker Discord V2 n'est démarré dans cette version : les notifications historiques restent seules publiées.
+- `USE_LEGACY_TRACKING_SCHEDULER=true` réactive temporairement l'ancien scan minute ; le scheduler central est utilisé par défaut.
+- `TRACKING_GLOBAL_CONCURRENCY` et `TRACKING_ORIGIN_CONCURRENCY` bornent respectivement les requêtes WebHost simultanées du processus et d'une même origine.
 - `ARCHIPELAGO_ALLOWED_HOSTS` est une liste séparée par des virgules. Elle constitue une dérogation explicite au blocage SSRF des adresses privées/locales.
 - `EXPORT_METRICS=true` active les exports Prometheus.
 
@@ -637,6 +646,13 @@ AUDIT_RETENTION_DAYS=90
 # Experimental V2 model (not wired to production notifications)
 ENABLE_TRACKING_V2=false
 
+# Temporary rollback to the legacy minute scan
+USE_LEGACY_TRACKING_SCHEDULER=false
+
+# Central scheduler/WebHost client budgets
+TRACKING_GLOBAL_CONCURRENCY=10
+TRACKING_ORIGIN_CONCURRENCY=2
+
 # Optional: explicitly trusted private Archipelago hosts
 ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
 
@@ -662,6 +678,8 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `PORTAL_TOKEN_LIFETIME_DAYS` controls expiry for newly issued portal links.
 - `AUDIT_RETENTION_DAYS` controls retention of sensitive-action audit records.
 - `ENABLE_TRACKING_V2=true` enables experimental dual-write of V2 snapshots, events, and deliveries. No V2 Discord worker is started in this release, so only legacy notifications are published.
+- `USE_LEGACY_TRACKING_SCHEDULER=true` temporarily restores the old minute scan; the central scheduler is the default.
+- `TRACKING_GLOBAL_CONCURRENCY` and `TRACKING_ORIGIN_CONCURRENCY` cap concurrent WebHost requests process-wide and per origin.
 - `ARCHIPELAGO_ALLOWED_HOSTS` is a comma-separated list and explicitly bypasses private/local-address SSRF blocking for those hosts.
 - `EXPORT_METRICS=true` enables Prometheus exports.
 

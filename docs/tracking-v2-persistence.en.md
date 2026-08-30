@@ -25,7 +25,7 @@ An exception at any point rolls the whole transaction back. A room's first snaps
 
 The `ITrackingEventPublisher` contract requires `EventKey` to be used as the idempotency key. Outbox transport semantics are therefore at-least-once, with exactly one logical publication when the publisher honors that contract. This covers the boundary where external publication succeeds but the SQLite acknowledgement is interrupted.
 
-This PR deliberately wires no V2 Discord publisher. With `ENABLE_TRACKING_V2=true`, the legacy scheduler only dual-writes and fills the outbox; Discord notifications continue to come exclusively from V1.
+This PR deliberately wires no V2 Discord publisher. With `ENABLE_TRACKING_V2=true`, the active scheduler only dual-writes and fills the outbox; Discord notifications continue to come exclusively from V1.
 
 ## Operations and rollback
 

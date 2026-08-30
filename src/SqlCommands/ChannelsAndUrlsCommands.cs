@@ -638,6 +638,8 @@ public static class ChannelsAndUrlsCommands
                 ChannelConfigCache.Upsert(guildId, channelId, cfg with { CheckFrequency = parsed });
             }
 
+            await TrackingDataManager.PromoteRoomAsync(guildId, channelId).ConfigureAwait(false);
+
             message = string.Format(Resource.CheckFrequencyUpdated, newFrequency);
         }
         catch (Exception ex)
