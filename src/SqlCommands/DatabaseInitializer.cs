@@ -94,6 +94,64 @@ CREATE TABLE IF NOT EXISTS SecurityAuditLogTable (
 );
 
 -- ==========================
+-- Tracking V2 event ledger/outbox
+-- ==========================
+CREATE TABLE IF NOT EXISTS TrackedRooms (
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NOT NULL,
+    LastSuccessfulSyncUtc TEXT,
+    CurrentSnapshotHash TEXT,
+    IsBaselineInitialized INTEGER NOT NULL DEFAULT 0 CHECK (IsBaselineInitialized IN (0, 1)),
+    PRIMARY KEY (GuildId, ChannelId)
+);
+
+CREATE TABLE IF NOT EXISTS RoomSnapshots (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    ContentHash TEXT NOT NULL,
+    CapturedAtUtc TEXT NOT NULL,
+    LastSuccessfulSyncUtc TEXT,
+    CompleteSections INTEGER NOT NULL,
+    TrackingState TEXT NOT NULL CHECK (TrackingState IN ('Healthy', 'Error')),
+    PayloadJson TEXT NOT NULL,
+    FOREIGN KEY (GuildId, ChannelId)
+        REFERENCES TrackedRooms(GuildId, ChannelId) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS TrackingEvents (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    EventKey TEXT NOT NULL UNIQUE,
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    EventType TEXT NOT NULL,
+    OccurredAtUtc TEXT NOT NULL,
+    PayloadJson TEXT NOT NULL,
+    SnapshotId INTEGER NOT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    FOREIGN KEY (SnapshotId) REFERENCES RoomSnapshots(Id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS EventDeliveries (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    EventId INTEGER NOT NULL,
+    DestinationType TEXT NOT NULL,
+    DestinationId TEXT NOT NULL,
+    Status TEXT NOT NULL CHECK (Status IN ('Pending', 'Delivering', 'Delivered', 'Failed')),
+    AttemptCount INTEGER NOT NULL DEFAULT 0,
+    NextAttemptAtUtc TEXT NOT NULL,
+    LeaseUntilUtc TEXT,
+    LastAttemptAtUtc TEXT,
+    DeliveredAtUtc TEXT,
+    LastErrorCode TEXT,
+    ExternalReceiptId TEXT,
+    UNIQUE (EventId, DestinationType, DestinationId),
+    FOREIGN KEY (EventId) REFERENCES TrackingEvents(Id) ON DELETE CASCADE
+);
+
+-- ==========================
 -- 🎯 ReceiverAliasesTable
 -- ==========================
 CREATE TABLE IF NOT EXISTS ReceiverAliasesTable (
@@ -283,6 +341,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_url_patch
   ON UrlAndChannelPatchTable(ChannelsAndUrlsTableId, Alias);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
   ON DisplayedItemTable(GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_channels_guild_channel
+  ON ChannelsAndUrlsTable(GuildId, ChannelId);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_hintstatus_unique
+  ON HintStatusTable(
+      GuildId,
+      ChannelId,
+      IFNULL(Finder, ''),
+      IFNULL(Receiver, ''),
+      IFNULL(Item, ''),
+      IFNULL(Location, ''),
+      IFNULL(Game, ''),
+      IFNULL(Entrance, '')
+  );
 CREATE UNIQUE INDEX IF NOT EXISTS IX_LastItemsCheck_Guild_Channel
 ON LastItemsCheckTable (GuildId, ChannelId);
 
@@ -319,6 +390,13 @@ CREATE INDEX IF NOT EXISTS idx_securityaudit_guild_time
   ON SecurityAuditLogTable(GuildId, OccurredAtUtc DESC);
 CREATE INDEX IF NOT EXISTS idx_securityaudit_time
   ON SecurityAuditLogTable(OccurredAtUtc);
+
+CREATE INDEX IF NOT EXISTS idx_roomsnapshots_room_time
+  ON RoomSnapshots(GuildId, ChannelId, Id DESC);
+CREATE INDEX IF NOT EXISTS idx_trackingevents_room_time
+  ON TrackingEvents(GuildId, ChannelId, Id DESC);
+CREATE INDEX IF NOT EXISTS idx_eventdeliveries_due
+  ON EventDeliveries(Status, NextAttemptAtUtc, LeaseUntilUtc, Id);
 
 -- HintStatusTable: mêmes patterns que DisplayedItemTable
 CREATE INDEX IF NOT EXISTS idx_hintstatus_gcr_item

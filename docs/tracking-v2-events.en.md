@@ -4,7 +4,7 @@
 
 The legacy pipeline mixes WebHost parsing, comparison, SQLite, Discord rendering, and delivery. Its identities often rely on display names, so an alias or translation can accidentally change the identity of an item or hint.
 
-This PR introduces a pure core without changing production notifications. `ENABLE_TRACKING_V2` remains disabled by default and no legacy scheduler call is redirected to V2.
+This PR introduced a pure core without changing production notifications. PR 4 can now feed it through dual-write when `ENABLE_TRACKING_V2=true`, still without V2 Discord publication.
 
 ## Architecture
 
@@ -60,6 +60,6 @@ Tests cover JSON ordering, unknown or `null` fields, missing aliases, raw IDs, d
 ## Risks and rollback
 
 - The current WebHost representation is effectively single-team; the model preserves AST's slot IDs, and an explicit team ID will be needed if WebHost generalizes multiple teams.
-- The adapter is transitional. The next PR will persist snapshots and events without duplicating this logic.
-- This PR adds no SQLite schema.
-- Rollback: keep `ENABLE_TRACKING_V2=false`, then remove the `Normalization` folder, the raw fields added to legacy models, and the related tests. The historical pipeline remains intact.
+- The adapter remains transitional; V2 persistence now consumes it without duplicating diff logic.
+- The SQLite schema and outbox are documented in `tracking-v2-persistence.en.md`.
+- Functional rollback: keep `ENABLE_TRACKING_V2=false`. The historical pipeline and its tables remain intact.

@@ -21,10 +21,18 @@ public static class ChannelsAndUrlsCommands
             {
                 using var command = conn.CreateCommand();
                 command.CommandText = @"
-                        INSERT OR REPLACE INTO ChannelsAndUrlsTable
+                        INSERT INTO ChannelsAndUrlsTable
                             (GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, Silent, Port)
                         VALUES
-                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent, @Port);";
+                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent, @Port)
+                        ON CONFLICT(GuildId, ChannelId) DO UPDATE SET
+                            BaseUrl = excluded.BaseUrl,
+                            Room = excluded.Room,
+                            Tracker = excluded.Tracker,
+                            CheckFrequency = excluded.CheckFrequency,
+                            LastCheck = NULL,
+                            Silent = excluded.Silent,
+                            Port = excluded.Port;";
 
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);

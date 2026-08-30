@@ -468,4 +468,150 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
             Db.WriteGate.Release();
         }
     }
+
+    public static async Task Migrate_5_0_7(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.7: Tracking V2 ledger/outbox and deterministic V1 uniqueness.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                using var command = conn.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = @"
+                    -- Preserve patch rows while keeping the most recent URL row per guild/channel.
+                    INSERT OR IGNORE INTO UrlAndChannelPatchTable
+                        (ChannelsAndUrlsTableId, Alias, GameName, Patch)
+                    SELECT keeper.Id, patch.Alias, patch.GameName, patch.Patch
+                    FROM ChannelsAndUrlsTable duplicate
+                    JOIN ChannelsAndUrlsTable keeper
+                      ON keeper.GuildId = duplicate.GuildId
+                     AND keeper.ChannelId = duplicate.ChannelId
+                     AND keeper.Id = (
+                         SELECT MAX(candidate.Id)
+                         FROM ChannelsAndUrlsTable candidate
+                         WHERE candidate.GuildId = duplicate.GuildId
+                           AND candidate.ChannelId = duplicate.ChannelId
+                     )
+                    JOIN UrlAndChannelPatchTable patch
+                      ON patch.ChannelsAndUrlsTableId = duplicate.Id
+                    WHERE duplicate.Id <> keeper.Id;
+
+                    DELETE FROM ChannelsAndUrlsTable
+                    WHERE Id NOT IN (
+                        SELECT MAX(Id)
+                        FROM ChannelsAndUrlsTable
+                        GROUP BY GuildId, ChannelId
+                    );
+
+                    DELETE FROM HintStatusTable
+                    WHERE Id NOT IN (
+                        SELECT MAX(Id)
+                        FROM HintStatusTable
+                        GROUP BY
+                            GuildId,
+                            ChannelId,
+                            IFNULL(Finder, ''),
+                            IFNULL(Receiver, ''),
+                            IFNULL(Item, ''),
+                            IFNULL(Location, ''),
+                            IFNULL(Game, ''),
+                            IFNULL(Entrance, '')
+                    );
+
+                    CREATE UNIQUE INDEX IF NOT EXISTS uq_channels_guild_channel
+                        ON ChannelsAndUrlsTable(GuildId, ChannelId);
+                    CREATE UNIQUE INDEX IF NOT EXISTS uq_hintstatus_unique
+                        ON HintStatusTable(
+                            GuildId,
+                            ChannelId,
+                            IFNULL(Finder, ''),
+                            IFNULL(Receiver, ''),
+                            IFNULL(Item, ''),
+                            IFNULL(Location, ''),
+                            IFNULL(Game, ''),
+                            IFNULL(Entrance, '')
+                        );
+
+                    CREATE TABLE IF NOT EXISTS TrackedRooms (
+                        GuildId TEXT NOT NULL,
+                        ChannelId TEXT NOT NULL,
+                        CreatedAtUtc TEXT NOT NULL,
+                        UpdatedAtUtc TEXT NOT NULL,
+                        LastSuccessfulSyncUtc TEXT,
+                        CurrentSnapshotHash TEXT,
+                        IsBaselineInitialized INTEGER NOT NULL DEFAULT 0
+                            CHECK (IsBaselineInitialized IN (0, 1)),
+                        PRIMARY KEY (GuildId, ChannelId)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS RoomSnapshots (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        GuildId TEXT NOT NULL,
+                        ChannelId TEXT NOT NULL,
+                        ContentHash TEXT NOT NULL,
+                        CapturedAtUtc TEXT NOT NULL,
+                        LastSuccessfulSyncUtc TEXT,
+                        CompleteSections INTEGER NOT NULL,
+                        TrackingState TEXT NOT NULL CHECK (TrackingState IN ('Healthy', 'Error')),
+                        PayloadJson TEXT NOT NULL,
+                        FOREIGN KEY (GuildId, ChannelId)
+                            REFERENCES TrackedRooms(GuildId, ChannelId) ON DELETE CASCADE
+                    );
+
+                    CREATE TABLE IF NOT EXISTS TrackingEvents (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        EventKey TEXT NOT NULL UNIQUE,
+                        GuildId TEXT NOT NULL,
+                        ChannelId TEXT NOT NULL,
+                        EventType TEXT NOT NULL,
+                        OccurredAtUtc TEXT NOT NULL,
+                        PayloadJson TEXT NOT NULL,
+                        SnapshotId INTEGER NOT NULL,
+                        CreatedAtUtc TEXT NOT NULL,
+                        FOREIGN KEY (SnapshotId) REFERENCES RoomSnapshots(Id) ON DELETE CASCADE
+                    );
+
+                    CREATE TABLE IF NOT EXISTS EventDeliveries (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        EventId INTEGER NOT NULL,
+                        DestinationType TEXT NOT NULL,
+                        DestinationId TEXT NOT NULL,
+                        Status TEXT NOT NULL
+                            CHECK (Status IN ('Pending', 'Delivering', 'Delivered', 'Failed')),
+                        AttemptCount INTEGER NOT NULL DEFAULT 0,
+                        NextAttemptAtUtc TEXT NOT NULL,
+                        LeaseUntilUtc TEXT,
+                        LastAttemptAtUtc TEXT,
+                        DeliveredAtUtc TEXT,
+                        LastErrorCode TEXT,
+                        ExternalReceiptId TEXT,
+                        UNIQUE (EventId, DestinationType, DestinationId),
+                        FOREIGN KEY (EventId) REFERENCES TrackingEvents(Id) ON DELETE CASCADE
+                    );
+
+                    CREATE INDEX IF NOT EXISTS idx_roomsnapshots_room_time
+                        ON RoomSnapshots(GuildId, ChannelId, Id DESC);
+                    CREATE INDEX IF NOT EXISTS idx_trackingevents_room_time
+                        ON TrackingEvents(GuildId, ChannelId, Id DESC);
+                    CREATE INDEX IF NOT EXISTS idx_eventdeliveries_due
+                        ON EventDeliveries(Status, NextAttemptAtUtc, LeaseUntilUtc, Id);";
+                await command.ExecuteNonQueryAsync(ct);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
 }

@@ -204,7 +204,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_MAX_UPLOAD_BYTES` limite la taille des fichiers Web et Discord acceptés.
 - `PORTAL_TOKEN_LIFETIME_DAYS` fixe l'expiration des nouveaux liens du portail.
 - `AUDIT_RETENTION_DAYS` fixe la rétention du journal des actions sensibles.
-- `ENABLE_TRACKING_V2` réserve l'activation future du pipeline normalisé. Dans cette version, le module reste en observation isolée et ne publie aucune notification.
+- `ENABLE_TRACKING_V2=true` active le dual-write expérimental des snapshots, événements et livraisons V2. Aucun worker Discord V2 n'est démarré dans cette version : les notifications historiques restent seules publiées.
 - `ARCHIPELAGO_ALLOWED_HOSTS` est une liste séparée par des virgules. Elle constitue une dérogation explicite au blocage SSRF des adresses privées/locales.
 - `EXPORT_METRICS=true` active les exports Prometheus.
 
@@ -661,7 +661,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_MAX_UPLOAD_BYTES` limits accepted Web and Discord file sizes.
 - `PORTAL_TOKEN_LIFETIME_DAYS` controls expiry for newly issued portal links.
 - `AUDIT_RETENTION_DAYS` controls retention of sensitive-action audit records.
-- `ENABLE_TRACKING_V2` reserves future activation of the normalized pipeline. In this release the module remains isolated and publishes no notification.
+- `ENABLE_TRACKING_V2=true` enables experimental dual-write of V2 snapshots, events, and deliveries. No V2 Discord worker is started in this release, so only legacy notifications are published.
 - `ARCHIPELAGO_ALLOWED_HOSTS` is a comma-separated list and explicitly bypasses private/local-address SSRF blocking for those hosts.
 - `EXPORT_METRICS=true` enables Prometheus exports.
 

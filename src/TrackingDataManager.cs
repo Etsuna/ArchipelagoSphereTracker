@@ -1,5 +1,7 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
+using ArchipelagoSphereTracker.Tracking.Persistence;
+using ArchipelagoSphereTracker.Tracking.V2;
 using Discord;
 using Discord.WebSocket;
 using Sprache;
@@ -412,6 +414,9 @@ public static class TrackingDataManager
             totalsBySlot = map;
         }
 
+        if (Declare.EnableTrackingV2)
+            await TryPersistTrackingV2Async(ctx, json, totalsBySlot, channel, ctChan).ConfigureAwait(false);
+
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
         var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, totalsBySlot);
@@ -442,6 +447,37 @@ public static class TrackingDataManager
                 WebPortalPages.DeleteChannelPages(guild, channel);
                 ChannelConfigCache.Remove(guild, channel);
             }
+        }
+    }
+
+    private static async Task TryPersistTrackingV2Async(
+        ProcessingContext context,
+        string runtimeJson,
+        IReadOnlyDictionary<int, int> totalsBySlot,
+        string destinationChannelId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var snapshot = LegacySnapshotAdapter.FromWebHostResponse(
+                context,
+                runtimeJson,
+                totalsBySlot,
+                DateTimeOffset.UtcNow);
+            var store = new TrackingV2Store();
+            await store.ApplySnapshotAsync(
+                snapshot,
+                [TrackingDestination.DiscordChannel(destinationChannelId)],
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            // Tracking V2 is a shadow write: a failure must not alter the legacy pipeline.
+            Console.WriteLine($"[TDM][V2] Shadow persistence failed ({exception.GetType().Name}).");
         }
     }
 

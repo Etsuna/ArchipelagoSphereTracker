@@ -4,7 +4,7 @@
 
 Le pipeline historique mélange parsing WebHost, comparaison, SQLite, rendu Discord et livraison. Ses identités reposent souvent sur des noms affichés, donc un alias ou une traduction peut modifier artificiellement l'identité d'un item ou d'un hint.
 
-Cette PR introduit un noyau pur sans modifier les notifications de production. `ENABLE_TRACKING_V2` reste désactivé par défaut et aucun appel du scheduler historique n'est redirigé vers V2.
+Cette PR a introduit un noyau pur sans modifier les notifications de production. La PR 4 peut désormais l'alimenter en dual-write lorsque `ENABLE_TRACKING_V2=true`, toujours sans publication Discord V2.
 
 ## Architecture
 
@@ -60,6 +60,6 @@ Les tests couvrent l'ordre JSON, les champs inconnus ou `null`, les alias manqua
 ## Risques et rollback
 
 - L'API WebHost expose actuellement une structure essentiellement mono-équipe ; le modèle conserve les IDs de slot utilisés par AST et l'ajout explicite du team ID restera nécessaire si le WebHost généralise plusieurs équipes.
-- L'adaptateur est transitoire : la PR suivante persistera les snapshots et événements mais ne devra pas dupliquer leur logique.
-- Aucun schéma SQLite n'est ajouté dans cette PR.
-- Rollback : laisser `ENABLE_TRACKING_V2=false`, puis retirer le dossier `Normalization`, les champs bruts ajoutés aux modèles et les tests associés. Le pipeline historique reste intact.
+- L'adaptateur reste transitoire ; la persistance V2 l'utilise désormais sans dupliquer la logique de diff.
+- Le schéma SQLite et l'outbox sont décrits dans `tracking-v2-persistence.fr.md`.
+- Rollback fonctionnel : laisser `ENABLE_TRACKING_V2=false`. Le pipeline historique et ses tables restent intacts.
