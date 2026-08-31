@@ -17,7 +17,8 @@ public enum AstUiScreen
     Generation,
     Apworld,
     Slots,
-    Advanced
+    Advanced,
+    Exclusions
 }
 
 public sealed record AstUiSession(
@@ -30,7 +31,8 @@ public sealed record AstUiSession(
     DateTimeOffset ExpiresAtUtc,
     string AliasMentionFlag = "0",
     string? PendingAction = null,
-    string? PendingAlias = null);
+    string? PendingAlias = null,
+    string? PendingItem = null);
 
 public sealed class AstUiSessionStore
 {
@@ -158,7 +160,7 @@ public sealed class AstUiSessionStore
 
     public bool TrySetPending(
         string id, ulong ownerUserId, ulong guildId, ulong sourceChannelId,
-        string? action, string? alias, out AstUiSession session)
+        string? action, string? alias, out AstUiSession session, string? item = null)
     {
         session = default!;
         while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
@@ -167,6 +169,7 @@ public sealed class AstUiSessionStore
             {
                 PendingAction = action,
                 PendingAlias = alias,
+                PendingItem = item,
                 ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
             };
             if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
@@ -355,6 +358,26 @@ public static class AstCommandCenter
                 return;
             }
 
+            if (action is "confirm-exclusion-delete" or "cancel-exclusion")
+            {
+                if (session.RoomChannelId is not { } exclusionRoom)
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                var result = string.Empty;
+                if (action == "confirm-exclusion-delete" && session.PendingAlias != null && session.PendingItem != null)
+                {
+                    result = await ExcludedItemsCommands.DeleteExcludedItemForUserAsync(
+                        guildId.ToString(CultureInfo.InvariantCulture), exclusionRoom.ToString(CultureInfo.InvariantCulture),
+                        component.User.Id.ToString(CultureInfo.InvariantCulture), session.PendingAlias, session.PendingItem).ConfigureAwait(false);
+                }
+                Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                var exclusions = await RenderExclusionsAsync(session).ConfigureAwait(false);
+                await component.ModifyOriginalResponseAsync(p => { p.Content = string.IsNullOrWhiteSpace(result) ? null : result; p.Embed = exclusions.Embed; p.Components = exclusions.Components; }).ConfigureAwait(false);
+                return;
+            }
+
             if (TryScreen(action, out var screen))
             {
                 if (!CanOpen(screen, authorization, session.RoomChannelId != null) ||
@@ -395,7 +418,7 @@ public static class AstCommandCenter
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select"))
+            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
             component.Data.Values.FirstOrDefault() is not { } selected ||
@@ -406,6 +429,32 @@ public static class AstCommandCenter
         }
 
         await component.DeferAsync(ephemeral: true);
+        if (action is "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete")
+        {
+            if (session.RoomChannelId is not { } exclusionRoom)
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+            var guildText = guildId.ToString(CultureInfo.InvariantCulture);
+            var roomText = exclusionRoom.ToString(CultureInfo.InvariantCulture);
+            var userText = component.User.Id.ToString(CultureInfo.InvariantCulture);
+            string? result = null;
+            if (action == "exclude-add-alias")
+                Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "exclude-add", selected, out session);
+            else if (action == "exclude-delete-alias")
+                Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "exclude-delete", selected, out session);
+            else if (action == "exclude-item-add" && session.PendingAlias != null)
+            {
+                result = await ExcludedItemsCommands.AddExcludedItemForUserAsync(guildText, roomText, userText, session.PendingAlias, selected).ConfigureAwait(false);
+                Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+            }
+            else if (action == "exclude-item-delete" && session.PendingAlias != null)
+                Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "exclude-delete-confirm", session.PendingAlias, out session, selected);
+            var exclusions = await RenderExclusionsAsync(session).ConfigureAwait(false);
+            await component.ModifyOriginalResponseAsync(p => { p.Content = result; p.Embed = exclusions.Embed; p.Components = exclusions.Components; }).ConfigureAwait(false);
+            return;
+        }
         if (action is "clean-select" or "recap-clean-select")
         {
             var pending = action == "clean-select" ? "clean" : "recap-clean";
@@ -562,6 +611,7 @@ public static class AstCommandCenter
             AstUiScreen.Apworld => RenderApworld(session),
             AstUiScreen.Slots => await RenderSlotsAsync(session).ConfigureAwait(false),
             AstUiScreen.Advanced => await RenderAdvancedAsync(session).ConfigureAwait(false),
+            AstUiScreen.Exclusions => await RenderExclusionsAsync(session).ConfigureAwait(false),
             _ => await RenderHomeAsync(session, authorization, roomName).ConfigureAwait(false)
         };
     }
@@ -633,6 +683,7 @@ public static class AstCommandCenter
              ("Hints", "personal-hints"),
              (IsFrench ? "Mon récap" : "My recap", "personal-recap"),
              (IsFrench ? "Mon patch" : "My patch", "personal-patch"),
+             (IsFrench ? "Mes exclusions" : "My exclusions", "personal-exclusions"),
              (IsFrench ? "Avancé" : "Advanced", "personal-advanced")]);
 
     private static async Task<AstUiView> RenderRoomAsync(AstUiSession session, string? roomName)
@@ -818,6 +869,46 @@ public static class AstCommandCenter
             IsFrench ? "Toutes les suppressions demandent une confirmation." : "Every deletion requires confirmation.").Build(), components.Build());
     }
 
+    private static async Task<AstUiView> RenderExclusionsAsync(AstUiSession session)
+    {
+        var guildId = session.GuildId.ToString(CultureInfo.InvariantCulture);
+        var channelId = session.RoomChannelId!.Value.ToString(CultureInfo.InvariantCulture);
+        var userId = session.OwnerUserId.ToString(CultureInfo.InvariantCulture);
+        var aliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId).ConfigureAwait(false)).Keys
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase).Take(25).ToArray();
+        var components = new ComponentBuilder();
+        if (session.PendingAction == "exclude-delete-confirm" && session.PendingAlias != null && session.PendingItem != null)
+        {
+            components.WithButton(IsFrench ? "Confirmer le retrait" : "Confirm removal", Id(session, "confirm-exclusion-delete"), ButtonStyle.Danger)
+                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-exclusion"), ButtonStyle.Secondary);
+            return new AstUiView(null, BaseEmbed("⚠️ Confirmation", IsFrench
+                ? $"Retirer **{Safe(session.PendingItem)}** des exclusions de **{Safe(session.PendingAlias)}** ?"
+                : $"Remove **{Safe(session.PendingItem)}** from **{Safe(session.PendingAlias)}** exclusions?").Build(), components.Build());
+        }
+        components.WithButton(IsFrench ? "Retour" : "Back", Id(session, "personal"), ButtonStyle.Primary, row: 0)
+            .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-exclusion"), ButtonStyle.Secondary, row: 0);
+        if (session.PendingAlias != null && session.PendingAction is "exclude-add" or "exclude-delete")
+        {
+            var items = session.PendingAction == "exclude-add"
+                ? await ExcludedItemsCommands.GetItemNamesForAliasAsync(guildId, channelId, session.PendingAlias).ConfigureAwait(false)
+                : await ExcludedItemsCommands.GetExcludedItemsForUserByAliasAsync(guildId, channelId, userId, session.PendingAlias).ConfigureAwait(false);
+            var menu = new SelectMenuBuilder()
+                .WithCustomId(Id(session, session.PendingAction == "exclude-add" ? "exclude-item-add" : "exclude-item-delete"))
+                .WithPlaceholder(IsFrench ? "Choisir un objet…" : "Choose an item…");
+            foreach (var item in items.Distinct(StringComparer.OrdinalIgnoreCase).Take(25)) menu.AddOption(Safe(item)[..Math.Min(Safe(item).Length, 100)], item);
+            if (items.Count > 0) components.WithSelectMenu(menu, row: 1);
+        }
+        else if (aliases.Length > 0)
+        {
+            var add = new SelectMenuBuilder().WithCustomId(Id(session, "exclude-add-alias")).WithPlaceholder(IsFrench ? "Ajouter une exclusion au slot…" : "Add an exclusion for slot…");
+            var delete = new SelectMenuBuilder().WithCustomId(Id(session, "exclude-delete-alias")).WithPlaceholder(IsFrench ? "Retirer une exclusion du slot…" : "Remove an exclusion from slot…");
+            foreach (var alias in aliases) { add.AddOption(Safe(alias), alias); delete.AddOption(Safe(alias), alias); }
+            components.WithSelectMenu(add, row: 1).WithSelectMenu(delete, row: 2);
+        }
+        return new AstUiView(null, BaseEmbed(IsFrench ? "🚫 Mes exclusions" : "🚫 My exclusions",
+            IsFrench ? "Ajoutez ou retirez les exclusions de vos propres slots." : "Add or remove exclusions for your own slots.").Build(), components.Build());
+    }
+
     private static AstUiView Screen(
         AstUiSession session,
         string title,
@@ -997,6 +1088,7 @@ public static class AstCommandCenter
             "admin-apworld" => AstUiScreen.Apworld,
             "personal-slots" => AstUiScreen.Slots,
             "personal-advanced" => AstUiScreen.Advanced,
+            "personal-exclusions" => AstUiScreen.Exclusions,
             _ => (AstUiScreen)(-1)
         };
         return (int)screen >= 0;
@@ -1013,6 +1105,7 @@ public static class AstCommandCenter
             AstUiScreen.Apworld => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization),
             AstUiScreen.Slots => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Advanced => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
+            AstUiScreen.Exclusions => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             _ => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization)
         };
 

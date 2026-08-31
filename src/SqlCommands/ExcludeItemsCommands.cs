@@ -4,6 +4,39 @@ using System.Data.SQLite;
 
 public static class ExcludedItemsCommands
 {
+    public static async Task<string> AddExcludedItemForUserAsync(
+        string guildId, string channelId, string userId, string alias, string item)
+    {
+        await Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"INSERT OR IGNORE INTO ExcludedItemTable (GuildId, ChannelId, UserId, Alias, Item)
+                                    VALUES (@GuildId, @ChannelId, @UserId, @Alias, @Item);";
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@UserId", userId);
+            command.Parameters.AddWithValue("@Alias", alias);
+            command.Parameters.AddWithValue("@Item", item);
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+        });
+        return string.Format(Resource.ExcludeItemAdded, item, userId);
+    }
+
+    public static async Task<string> DeleteExcludedItemForUserAsync(
+        string guildId, string channelId, string userId, string alias, string item)
+    {
+        var rows = 0;
+        await Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"DELETE FROM ExcludedItemTable WHERE GuildId=@GuildId AND ChannelId=@ChannelId AND UserId=@UserId AND Alias=@Alias AND Item=@Item;";
+            command.Parameters.AddWithValue("@GuildId", guildId); command.Parameters.AddWithValue("@ChannelId", channelId);
+            command.Parameters.AddWithValue("@UserId", userId); command.Parameters.AddWithValue("@Alias", alias); command.Parameters.AddWithValue("@Item", item);
+            rows = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+        });
+        return rows > 0 ? string.Format(Resource.ExcludeItemDeleted, item, alias) : string.Format(Resource.ExcludeItemNotFound, item, alias);
+    }
+
     public static async Task<List<string>> GetItemNamesForAliasAsync(string guildId, string channelId, string alias)
     {
         var results = new List<string>();

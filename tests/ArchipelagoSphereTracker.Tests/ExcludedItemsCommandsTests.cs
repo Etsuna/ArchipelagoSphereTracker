@@ -21,4 +21,17 @@ public sealed class ExcludedItemsCommandsTests
 
         Assert.Equal(["Private One"], items);
     }
+
+    [Fact]
+    public async Task Native_add_and_delete_only_change_the_acting_users_exclusion()
+    {
+        using var scope = new TestDatabaseScope();
+        await ExcludedItemsCommands.AddExcludedItemForUserAsync("g", "c", "user-1", "Slot", "Item");
+        await ExcludedItemsCommands.AddExcludedItemForUserAsync("g", "c", "user-2", "Slot", "Item");
+
+        await ExcludedItemsCommands.DeleteExcludedItemForUserAsync("g", "c", "user-1", "Slot", "Item");
+
+        Assert.Empty(await ExcludedItemsCommands.GetExcludedItemsForUserByAliasAsync("g", "c", "user-1", "Slot"));
+        Assert.Equal(["Item"], await ExcludedItemsCommands.GetExcludedItemsForUserByAliasAsync("g", "c", "user-2", "Slot"));
+    }
 }
