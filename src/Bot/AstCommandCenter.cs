@@ -716,6 +716,7 @@ public static class AstCommandCenter
              (IsFrench ? "Mon récap" : "My recap", "personal-recap"),
              (IsFrench ? "Mon patch" : "My patch", "personal-patch"),
              (IsFrench ? "Mes exclusions" : "My exclusions", "personal-exclusions"),
+             (IsFrench ? "Mon portail" : "My portal", "personal-portal"),
              (IsFrench ? "Avancé" : "Advanced", "personal-advanced")]);
 
     private static async Task<AstUiView> RenderRoomAsync(AstUiSession session, string? roomName)
@@ -1009,6 +1010,9 @@ public static class AstCommandCenter
             "personal-items" or "personal-recap" => await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-hints" => await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-patch" => await BuildPersonalPatchesAsync(guildId, channelId, session.OwnerUserId, authorization).ConfigureAwait(false),
+            "personal-portal" => await BuildPortalResponseAsync(
+                () => WebPortalPages.EnsureUserPageAsync(guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)),
+                IsFrench ? "Mon portail privé" : "My private portal").ConfigureAwait(false),
             "room-portal" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await BuildPortalResponseAsync(() => WebPortalPages.EnsureThreadCommandsPageAsync(guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)), IsFrench ? "Portail privé de la room" : "Private room portal").ConfigureAwait(false),
             "yaml-list" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization) => YamlClass.ListYamls(session.SourceChannelId.ToString(CultureInfo.InvariantCulture)),
