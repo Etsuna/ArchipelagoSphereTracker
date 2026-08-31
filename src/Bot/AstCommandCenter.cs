@@ -16,7 +16,8 @@ public enum AstUiScreen
     Yaml,
     Generation,
     Apworld,
-    Slots
+    Slots,
+    Advanced
 }
 
 public sealed record AstUiSession(
@@ -27,7 +28,9 @@ public sealed record AstUiSession(
     ulong? RoomChannelId,
     AstUiScreen Screen,
     DateTimeOffset ExpiresAtUtc,
-    string AliasMentionFlag = "0");
+    string AliasMentionFlag = "0",
+    string? PendingAction = null,
+    string? PendingAlias = null);
 
 public sealed class AstUiSessionStore
 {
@@ -148,6 +151,24 @@ public sealed class AstUiSessionStore
         while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
         {
             var updated = current with { AliasMentionFlag = flag, ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime) };
+            if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
+        }
+        return false;
+    }
+
+    public bool TrySetPending(
+        string id, ulong ownerUserId, ulong guildId, ulong sourceChannelId,
+        string? action, string? alias, out AstUiSession session)
+    {
+        session = default!;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with
+            {
+                PendingAction = action,
+                PendingAlias = alias,
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
             if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
         }
         return false;
@@ -290,6 +311,50 @@ public static class AstCommandCenter
                 return;
             }
 
+            if (action is "clean-all-request" or "confirm-clean" or "cancel-pending")
+            {
+                if (session.RoomChannelId is not { } cleanupRoom ||
+                    !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization))
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                if (action == "clean-all-request")
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "clean-all", null, out session);
+                else if (action == "cancel-pending")
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                else
+                {
+                    var guildText = guildId.ToString(CultureInfo.InvariantCulture);
+                    var roomText = cleanupRoom.ToString(CultureInfo.InvariantCulture);
+                    var userText = component.User.Id.ToString(CultureInfo.InvariantCulture);
+                    string result;
+                    if (session.PendingAction == "clean-all")
+                    {
+                        await RecapListCommands.DeleteAliasAndItemsForUserIdAsync(guildText, roomText, userText).ConfigureAwait(false);
+                        result = IsFrench ? "Tous vos récaps ont été vidés." : "All your recaps were cleared.";
+                    }
+                    else if (session.PendingAlias != null && session.PendingAction is "clean" or "recap-clean")
+                    {
+                        var recap = session.PendingAction == "recap-clean"
+                            ? await BuildPersonalItemsAsync(guildText, roomText, component.User.Id).ConfigureAwait(false)
+                            : string.Empty;
+                        await RecapListCommands.DeleteRecapListAsync(guildText, roomText, userText, session.PendingAlias).ConfigureAwait(false);
+                        result = string.IsNullOrWhiteSpace(recap)
+                            ? (IsFrench ? $"Récap de **{Safe(session.PendingAlias)}** vidé." : $"Recap for **{Safe(session.PendingAlias)}** cleared.")
+                            : recap + (IsFrench ? "\n\nRécap vidé." : "\n\nRecap cleared.");
+                    }
+                    else result = IsFrench ? "Confirmation expirée." : "Confirmation expired.";
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                    var advanced = await RenderAdvancedAsync(session).ConfigureAwait(false);
+                    await component.ModifyOriginalResponseAsync(p => { p.Content = Clamp(result); p.Embed = advanced.Embed; p.Components = advanced.Components; }).ConfigureAwait(false);
+                    return;
+                }
+                var confirmation = await RenderAdvancedAsync(session).ConfigureAwait(false);
+                await SetViewAsync(component, confirmation).ConfigureAwait(false);
+                return;
+            }
+
             if (TryScreen(action, out var screen))
             {
                 if (!CanOpen(screen, authorization, session.RoomChannelId != null) ||
@@ -330,7 +395,7 @@ public static class AstCommandCenter
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter"))
+            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
             component.Data.Values.FirstOrDefault() is not { } selected ||
@@ -341,6 +406,18 @@ public static class AstCommandCenter
         }
 
         await component.DeferAsync(ephemeral: true);
+        if (action is "clean-select" or "recap-clean-select")
+        {
+            var pending = action == "clean-select" ? "clean" : "recap-clean";
+            if (!Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, pending, selected, out session))
+            {
+                await SetErrorAsync(component, IsFrench ? "Sélection expirée." : "Selection expired.").ConfigureAwait(false);
+                return;
+            }
+            var confirmation = await RenderAdvancedAsync(session).ConfigureAwait(false);
+            await SetViewAsync(component, confirmation).ConfigureAwait(false);
+            return;
+        }
         if (action is "alias-add" or "alias-delete" or "alias-filter")
         {
             if (session.RoomChannelId is not { } aliasRoomId)
@@ -484,6 +561,7 @@ public static class AstCommandCenter
             AstUiScreen.Generation => RenderGeneration(session),
             AstUiScreen.Apworld => RenderApworld(session),
             AstUiScreen.Slots => await RenderSlotsAsync(session).ConfigureAwait(false),
+            AstUiScreen.Advanced => await RenderAdvancedAsync(session).ConfigureAwait(false),
             _ => await RenderHomeAsync(session, authorization, roomName).ConfigureAwait(false)
         };
     }
@@ -711,6 +789,35 @@ public static class AstCommandCenter
         return new AstUiView(null, BaseEmbed(IsFrench ? "👤 Mes slots" : "👤 My slots", description).Build(), components.Build());
     }
 
+    private static async Task<AstUiView> RenderAdvancedAsync(AstUiSession session)
+    {
+        var guildId = session.GuildId.ToString(CultureInfo.InvariantCulture);
+        var channelId = session.RoomChannelId!.Value.ToString(CultureInfo.InvariantCulture);
+        var aliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
+            guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)).Keys
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase).Take(25).ToArray();
+        var components = new ComponentBuilder();
+        if (session.PendingAction != null)
+        {
+            var target = session.PendingAlias == null ? (IsFrench ? "tous vos récaps" : "all your recaps") : $"**{Safe(session.PendingAlias)}**";
+            components.WithButton(IsFrench ? "Confirmer" : "Confirm", Id(session, "confirm-clean"), ButtonStyle.Danger)
+                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-pending"), ButtonStyle.Secondary);
+            return new AstUiView(null, BaseEmbed(IsFrench ? "⚠️ Confirmation" : "⚠️ Confirmation",
+                IsFrench ? $"Confirmer le nettoyage de {target} ?" : $"Confirm clearing {target}?").Build(), components.Build());
+        }
+        components.WithButton(IsFrench ? "Tout vider" : "Clear all", Id(session, "clean-all-request"), ButtonStyle.Danger, row: 0)
+            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "personal"), ButtonStyle.Primary, row: 0);
+        if (aliases.Length > 0)
+        {
+            var clean = new SelectMenuBuilder().WithCustomId(Id(session, "clean-select")).WithPlaceholder(IsFrench ? "Vider un récap…" : "Clear one recap…");
+            var recapClean = new SelectMenuBuilder().WithCustomId(Id(session, "recap-clean-select")).WithPlaceholder(IsFrench ? "Afficher puis vider…" : "Show then clear…");
+            foreach (var alias in aliases) { clean.AddOption(Safe(alias), alias); recapClean.AddOption(Safe(alias), alias); }
+            components.WithSelectMenu(clean, row: 1).WithSelectMenu(recapClean, row: 2);
+        }
+        return new AstUiView(null, BaseEmbed(IsFrench ? "🧹 Récaps avancés" : "🧹 Advanced recaps",
+            IsFrench ? "Toutes les suppressions demandent une confirmation." : "Every deletion requires confirmation.").Build(), components.Build());
+    }
+
     private static AstUiView Screen(
         AstUiSession session,
         string title,
@@ -768,7 +875,6 @@ public static class AstCommandCenter
             "personal-items" or "personal-recap" => await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-hints" => await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-patch" => await BuildPersonalPatchesAsync(guildId, channelId, session.OwnerUserId, authorization).ConfigureAwait(false),
-            "personal-advanced" => await BuildPersonalAdvancedAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "room-portal" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await BuildPortalResponseAsync(() => WebPortalPages.EnsureThreadCommandsPageAsync(guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)), IsFrench ? "Portail privé de la room" : "Private room portal").ConfigureAwait(false),
             "yaml-list" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization) => YamlClass.ListYamls(session.SourceChannelId.ToString(CultureInfo.InvariantCulture)),
@@ -890,6 +996,7 @@ public static class AstCommandCenter
             "admin-generation" => AstUiScreen.Generation,
             "admin-apworld" => AstUiScreen.Apworld,
             "personal-slots" => AstUiScreen.Slots,
+            "personal-advanced" => AstUiScreen.Advanced,
             _ => (AstUiScreen)(-1)
         };
         return (int)screen >= 0;
@@ -905,6 +1012,7 @@ public static class AstCommandCenter
             AstUiScreen.Yaml or AstUiScreen.Generation => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization),
             AstUiScreen.Apworld => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization),
             AstUiScreen.Slots => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
+            AstUiScreen.Advanced => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             _ => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization)
         };
 
