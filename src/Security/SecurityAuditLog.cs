@@ -53,7 +53,7 @@ public static class SecurityAuditLog
     {
         return commandName switch
         {
-            "add-url" => SecurityAuditAction.RoomAdd,
+            "add-url" or "ast-setup" => SecurityAuditAction.RoomAdd,
             "delete-url" => SecurityAuditAction.RoomDelete,
             "update-frequency-check" or "update-silent-option" or "excluded-item" or "delete-excluded-item" or
                 "ast-sync-now" or "ast-pause" or "ast-resume" or "ast-polling"

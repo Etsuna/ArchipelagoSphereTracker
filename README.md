@@ -52,7 +52,8 @@ Le bot existe en **deux modes** :
 ### Communes (Normal + Archipelago)
 
 - Multi-serveurs Discord, multi-salons et multi-threads.
-- Gestion de rooms avec `/add-url` et `/delete-url`.
+- Assistant interactif `/ast-setup` pour choisir le canal, connecter la room, configurer le thread, les notifications et le polling, puis confirmer depuis un aperçu éphémère.
+- Gestion avancée de rooms avec `/add-url` et `/delete-url`.
 - Paramétrage de fréquence de polling (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
 - Polling adaptatif : après trois snapshots inchangés, l'intervalle ralentit progressivement jusqu'à une heure et revient immédiatement au minimum configuré dès qu'une activité est détectée.
 - Santé et contrôle du suivi avec `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause`, `/ast-resume` et `/ast-polling` (également disponibles dans le portail de room).
@@ -265,6 +266,7 @@ Permissions associées :
 ## Communes
 
 - Room tracking
+  - `/ast-setup`
   - `/add-url`
   - `/delete-url`
   - `/update-frequency-check`
@@ -534,7 +536,8 @@ AST supports **two modes**:
 ### Shared (Normal + Archipelago)
 
 - Multi-server, multi-channel, multi-thread support.
-- Room lifecycle management through `/add-url` and `/delete-url`.
+- Interactive `/ast-setup` assistant to select the channel, connect the room, configure its thread, notifications, and polling, then confirm from an ephemeral preview.
+- Advanced room lifecycle management through `/add-url` and `/delete-url`.
 - Configurable polling frequency (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
 - Adaptive polling: after three unchanged snapshots, the interval progressively slows down up to one hour and immediately returns to the configured minimum when activity resumes.
 - Tracking health and controls through `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause`, `/ast-resume`, and `/ast-polling` (also available in the room portal).
@@ -747,6 +750,7 @@ Permissions included:
 ### Shared
 
 - Room tracking
+  - `/ast-setup`
   - `/add-url`
   - `/delete-url`
   - `/update-frequency-check`

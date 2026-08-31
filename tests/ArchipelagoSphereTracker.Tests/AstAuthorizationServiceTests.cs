@@ -81,6 +81,12 @@ public class AstAuthorizationServiceTests
         Assert.Equal(SecurityAuditAction.RoomSettingsUpdate, SecurityAuditLog.ForCommand(command));
     }
 
+    [Fact]
+    public void SetupCommand_IsAuditedAsRoomAdd()
+    {
+        Assert.Equal(SecurityAuditAction.RoomAdd, SecurityAuditLog.ForCommand("ast-setup"));
+    }
+
     [Theory]
     [InlineData("ast-health")]
     [InlineData("ast-room-health")]

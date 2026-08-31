@@ -18,6 +18,8 @@ public class UrlClass
         string CheckFrequency,
         IGuildUser? RequestUser);
 
+    public sealed record UrlAddResult(bool Success, string Message, string? ThreadChannelId = null);
+
     public static async Task<string> AddUrl(SocketSlashCommand command, IGuildUser? guildUser, string channelId, string guildId, ITextChannel channel)
     {
         var newUrl = command.Data.Options.ElementAt(0)?.Value as string;
@@ -35,15 +37,22 @@ public class UrlClass
             checkFrequencyStr,
             guildUser);
 
-        return await AddUrlInternalAsync(options, channelId, guildId, channel);
+        return (await AddUrlInternalAsync(options, channelId, guildId, channel)).Message;
     }
 
     public static async Task<string> AddUrlFromWebAsync(UrlAddOptions options, string channelId, string guildId, ITextChannel channel)
     {
-        return await AddUrlInternalAsync(options, channelId, guildId, channel);
+        return (await AddUrlInternalAsync(options, channelId, guildId, channel)).Message;
     }
 
-    private static async Task<string> AddUrlInternalAsync(UrlAddOptions options, string channelId, string guildId, ITextChannel channel)
+    public static Task<UrlAddResult> AddUrlFromSetupAsync(
+        UrlAddOptions options,
+        string channelId,
+        string guildId,
+        ITextChannel channel)
+        => AddUrlInternalAsync(options, channelId, guildId, channel);
+
+    private static async Task<UrlAddResult> AddUrlInternalAsync(UrlAddOptions options, string channelId, string guildId, ITextChannel channel)
     {
         string baseUrl = string.Empty;
         string? tracker = string.Empty;
@@ -58,13 +67,15 @@ public class UrlClass
         var checkFrequencyStr = options.CheckFrequency;
         var guildUser = options.RequestUser;
         var message = string.Empty;
+        string? createdThreadChannelId = null;
+        var succeeded = false;
 
         if (Declare.IsBigAsync)
         {
             if (Declare.UserIdForBigAsync != guildUser?.Id.ToString())
             {
                 message = Resource.URLAddByAsyncNotAllowed;
-                return message;
+                return new UrlAddResult(false, message);
             }
 
             silent = true;
@@ -77,12 +88,12 @@ public class UrlClass
         if (string.IsNullOrWhiteSpace(newUrl))
         {
             message = Resource.URLEmpty;
-            return message;
+            return new UrlAddResult(false, message);
         }
 
         var validatedUrl = await ArchipelagoUrlSecurity.ValidateRoomUrlAsync(newUrl);
         if (validatedUrl == null)
-            return Resource.URLNotValid;
+            return new UrlAddResult(false, Resource.URLNotValid);
 
         baseUrl = validatedUrl.BaseUrl;
         room = validatedUrl.RoomId;
@@ -93,7 +104,7 @@ public class UrlClass
         {
             Console.WriteLine("Room Not Found");
             message = "Room Not Found";
-            return message;
+            return new UrlAddResult(false, message);
         }
 
         var existingChannelForRoom = await ChannelsAndUrlsCommands.GetChannelIdForRoomAsync(guildId, baseUrl, room);
@@ -102,7 +113,7 @@ public class UrlClass
         {
             Console.WriteLine("Room Already Exist In Other Thread");
             message = string.Format(Resource.RoomAlreadyExistInOtherThread, existingChannelForRoom);
-            return message;
+            return new UrlAddResult(false, message);
         }
 
         tracker = roomInfo.Tracker ?? tracker;
@@ -161,6 +172,7 @@ public class UrlClass
 
                 await thread.SendMessageAsync(string.Format(Resource.UrlThredCreated, thread.Name));
                 channelId = thread.Id.ToString();
+                createdThreadChannelId = channelId;
 
                 if (type == ThreadType.PrivateThread)
                 {
@@ -236,6 +248,7 @@ public class UrlClass
                         await BotCommands.SendMessageAsync(Resource.URLBotReady, channelId);
                         await BotCommands.SendMessageAsync(Resource.ASTRoomCommand, channelId);
                         await BotCommands.SendMessageAsync(Resource.ASTUserCommand, channelId);
+                        succeeded = true;
                     }
                     finally
                     {
@@ -243,7 +256,13 @@ public class UrlClass
                         Console.WriteLine($"Finished adding an Archipelago room from host {validatedUrl.Host} in Guild: {guildId}, Channel: {channelId}");
                     }
                 }
-                message = string.Format(Resource.URLSet, newUrl);
+                message = succeeded
+                    ? Declare.Language == "fr"
+                        ? "✅ Room Archipelago configurée et suivi démarré."
+                        : "✅ Archipelago room configured and tracking started."
+                    : Declare.Language == "fr"
+                        ? "Le tracker de cette room est indisponible."
+                        : "This room tracker is unavailable.";
             }
         }
         else
@@ -251,7 +270,7 @@ public class UrlClass
             message = Resource.URLAlreadySet;
         }
 
-        return message;
+        return new UrlAddResult(succeeded, message, createdThreadChannelId);
 
         static async Task<MemoryStream> SendPlayersInfoAsync(string channelId, IThreadChannel thread, List<(int slot, string alias, string game)> aliasList, RoomStatus roomInfo, string room)
         {

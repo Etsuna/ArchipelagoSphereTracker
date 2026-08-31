@@ -77,6 +77,12 @@ public static class SlashCommandDefinitions
                     .AddChoice($"{Resource.EveryDay}", "1d")),
 
             new SlashCommandBuilder()
+                .WithName("ast-setup")
+                .WithDescription(Declare.Language == "fr"
+                    ? "Configurer une room Archipelago avec un assistant interactif"
+                    : "Configure an Archipelago room with an interactive assistant"),
+
+            new SlashCommandBuilder()
                 .WithName("update-silent-option")
                 .WithDescription(Resource.SCUpdateSilentOptionDescription)
                 .AddOption(BooleanOption(Resource.SCSilentOption, Resource.SCSilentDescription)),
