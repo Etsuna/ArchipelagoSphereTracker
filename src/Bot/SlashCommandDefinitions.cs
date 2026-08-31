@@ -18,6 +18,13 @@ public static class SlashCommandDefinitions
                         ? "Importer un YAML, ZIP, APWorld ou spoiler log"
                         : "Import a YAML, ZIP, APWorld or spoiler log")
                     .WithType(ApplicationCommandOptionType.Attachment)
+                    .WithRequired(false))
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("skip-prog-balancing")
+                    .WithDescription(Declare.Language == "fr"
+                        ? "Ignorer l’équilibrage lors d’une génération"
+                        : "Skip progression balancing during generation")
+                    .WithType(ApplicationCommandOptionType.Boolean)
                     .WithRequired(false)),
 
             new SlashCommandBuilder().WithName("get-aliases").WithDescription(Resource.SCGetAliasesDescription),

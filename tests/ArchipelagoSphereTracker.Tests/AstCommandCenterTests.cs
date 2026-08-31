@@ -89,6 +89,17 @@ public sealed class AstCommandCenterTests
         Assert.Null(cleared.SpoilerSphereLimit);
     }
 
+    [Fact]
+    public void Generation_option_is_session_scoped()
+    {
+        var store = new AstUiSessionStore();
+        var session = store.Start(10, 20, 30, null);
+
+        Assert.True(store.TrySetGenerationSkipProgBalancing(session.Id, 10, 20, 30, true, out var updated));
+        Assert.True(updated.GenerationSkipProgBalancing);
+        Assert.False(store.TrySetGenerationSkipProgBalancing(session.Id, 11, 20, 30, false, out _));
+    }
+
     [Theory]
     [InlineData("astui:0123456789abcdef0123456789abcdef:personal", true, "personal")]
     [InlineData("astui:short:personal", false, "")]

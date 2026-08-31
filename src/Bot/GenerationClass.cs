@@ -385,7 +385,7 @@ public class GenerationClass : Declare
             return string.Format(Resource.GenerationError, ex.Message);
         }
     }
-    public static async Task<GenerationResult> GenerateAsyncForWeb(string channelId)
+    public static async Task<GenerationResult> GenerateAsyncForWeb(string channelId, bool skipProgBalancing = false)
     {
         var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
         var outputFolder = Path.Combine(OutputPath, channelId);
@@ -409,6 +409,10 @@ public class GenerationClass : Declare
                 return new GenerationResult(string.Format(Resource.CALauncherNotFound, launcherPath), null);
 
             var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
+            if (skipProgBalancing)
+            {
+                arguments += " --skip_prog_balancing";
+            }
             var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
             return await RunGenerationProcessForWebAsync(startInfo, outputFolder);

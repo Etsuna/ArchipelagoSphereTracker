@@ -37,7 +37,8 @@ public sealed record AstUiSession(
     string? SpoilerAlias = null,
     int? SpoilerSphereLimit = null,
     string SpoilerMissingMode = "first",
-    bool SpoilerHideItems = true);
+    bool SpoilerHideItems = true,
+    bool GenerationSkipProgBalancing = false);
 
 public sealed class AstUiSessionStore
 {
@@ -199,6 +200,22 @@ public sealed class AstUiSessionStore
                 SpoilerSphereLimit = setSphereLimit ? sphereLimit : current.SpoilerSphereLimit,
                 SpoilerMissingMode = missingMode ?? current.SpoilerMissingMode,
                 SpoilerHideItems = hideItems ?? current.SpoilerHideItems,
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
+            if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
+        }
+        return false;
+    }
+
+    public bool TrySetGenerationSkipProgBalancing(
+        string id, ulong ownerUserId, ulong guildId, ulong sourceChannelId, bool skip, out AstUiSession session)
+    {
+        session = default!;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with
+            {
+                GenerationSkipProgBalancing = skip,
                 ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
             };
             if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
@@ -559,6 +576,33 @@ public static class AstCommandCenter
                 return;
             }
 
+            if (action is "generation-run" or "generation-test")
+            {
+                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                var generationChannel = session.SourceChannelId.ToString(CultureInfo.InvariantCulture);
+                if (action == "generation-test")
+                {
+                    var result = await GenerationClass.TestGenerateAsyncForWeb(generationChannel).ConfigureAwait(false);
+                    await SetErrorAsync(component, Clamp(result)).ConfigureAwait(false);
+                    return;
+                }
+                var generation = await GenerationClass.GenerateAsyncForWeb(
+                    generationChannel, session.GenerationSkipProgBalancing).ConfigureAwait(false);
+                if (!string.IsNullOrWhiteSpace(generation.Message) || string.IsNullOrWhiteSpace(generation.ZipPath) || !File.Exists(generation.ZipPath))
+                {
+                    await SetErrorAsync(component, string.IsNullOrWhiteSpace(generation.Message) ? Unavailable() : Clamp(generation.Message)).ConfigureAwait(false);
+                    return;
+                }
+                await component.FollowupWithFileAsync(generation.ZipPath, Path.GetFileName(generation.ZipPath),
+                    text: IsFrench ? "Génération privée terminée." : "Private generation completed.", ephemeral: true).ConfigureAwait(false);
+                await SetErrorAsync(component, IsFrench ? "La génération a été envoyée ci-dessous." : "The generation was sent below.").ConfigureAwait(false);
+                return;
+            }
+
             if (TryScreen(action, out var screen))
             {
                 if (!CanOpen(screen, authorization, session.RoomChannelId != null) ||
@@ -599,7 +643,7 @@ public static class AstCommandCenter
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide" or "yaml-delete-select" or "yaml-template-download"))
+            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide" or "yaml-delete-select" or "yaml-template-download" or "generation-skip"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
             component.Data.Values.FirstOrDefault() is not { } selected ||
@@ -610,6 +654,22 @@ public static class AstCommandCenter
         }
 
         await component.DeferAsync(ephemeral: true);
+        if (action == "generation-skip")
+        {
+            var generationAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildId.ToString(CultureInfo.InvariantCulture), sourceChannelId.ToString(CultureInfo.InvariantCulture),
+                component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+            if (generationAuthorization == null ||
+                !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, generationAuthorization) ||
+                !bool.TryParse(selected, out var skip) ||
+                !Sessions.TrySetGenerationSkipProgBalancing(session.Id, component.User.Id, guildId, sourceChannelId, skip, out session))
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+            await SetViewAsync(component, RenderGeneration(session)).ConfigureAwait(false);
+            return;
+        }
         if (action is "yaml-delete-select" or "yaml-template-download")
         {
             var yamlAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
@@ -1199,8 +1259,23 @@ public static class AstCommandCenter
     }
 
     private static AstUiView RenderGeneration(AstUiSession session)
-        => Screen(session, IsFrench ? "Génération" : "Generation", IsFrench ? "Commandes de génération Discord." : "Discord generation actions.",
-            [(IsFrench ? "Portail" : "Portal", "admin-portal")]);
+    {
+        var skip = new SelectMenuBuilder().WithCustomId(Id(session, "generation-skip"))
+            .WithPlaceholder(IsFrench ? "Équilibrage de progression…" : "Progression balancing…")
+            .AddOption(IsFrench ? "Équilibrage normal" : "Normal balancing", "false", isDefault: !session.GenerationSkipProgBalancing)
+            .AddOption(IsFrench ? "Ignorer l’équilibrage" : "Skip balancing", "true", isDefault: session.GenerationSkipProgBalancing);
+        var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Générer" : "Generate", Id(session, "generation-run"), ButtonStyle.Success, row: 0)
+            .WithButton(IsFrench ? "Tester" : "Test", Id(session, "generation-test"), ButtonStyle.Primary, row: 0)
+            .WithButton(IsFrench ? "Portail" : "Portal", Id(session, "admin-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "admin"), ButtonStyle.Secondary, row: 0)
+            .WithSelectMenu(skip, row: 1)
+            .Build();
+        var description = IsFrench
+            ? "Générez depuis les YAML du salon ou testez-les sans produire de sortie. Un ZIP envoyé avec `/ast file:` déclenche aussi la génération native."
+            : "Generate from the channel YAML files or test them without output. A ZIP sent with `/ast file:` also starts native generation.";
+        return new AstUiView(null, BaseEmbed(IsFrench ? "Génération" : "Generation", description).Build(), components);
+    }
 
     private static AstUiView RenderApworld(AstUiSession session)
         => Screen(session, "APWorld", IsFrench ? "Gestion Discord native des APWorld." : "Native Discord APWorld management.",
