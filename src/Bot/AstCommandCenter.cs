@@ -10,7 +10,12 @@ public enum AstUiScreen
     Room,
     Manage,
     Administration,
-    Help
+    Help,
+    Polling,
+    ManageMore,
+    Yaml,
+    Generation,
+    Apworld
 }
 
 public sealed record AstUiSession(
@@ -254,10 +259,11 @@ public static class AstCommandCenter
 
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
-        if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) || action != "select-room")
+        if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
+            action is not ("select-room" or "poll-policy" or "notifications"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
-            component.Data.Values.FirstOrDefault() is not { } selected || !ulong.TryParse(selected, out var roomChannelId) ||
+            component.Data.Values.FirstOrDefault() is not { } selected ||
             !Sessions.TryGetAuthorized(sessionId, component.User.Id, guildId, sourceChannelId, out var session))
         {
             await component.RespondAsync(IsFrench ? "Cette interface a expiré. Relancez `/ast`." : "This interface expired. Run `/ast` again.", ephemeral: true);
@@ -265,6 +271,49 @@ public static class AstCommandCenter
         }
 
         await component.DeferAsync(ephemeral: true);
+        if (action is "poll-policy" or "notifications")
+        {
+            if (session.RoomChannelId is not { } selectedRoomId)
+            {
+                await SetErrorAsync(component, IsFrench ? "Aucune room sélectionnée." : "No room selected.").ConfigureAwait(false);
+                return;
+            }
+            var guildText = guildId.ToString(CultureInfo.InvariantCulture);
+            var roomText = selectedRoomId.ToString(CultureInfo.InvariantCulture);
+            var managerAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildText, roomText, component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+            if (managerAuthorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, managerAuthorization))
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+            string result;
+            if (action == "poll-policy")
+            {
+                var parts = selected.Split('|', 2);
+                result = parts.Length == 2
+                    ? await ChannelsAndUrlsCommands.UpdatePollingPolicyFromWeb(parts[0], parts[1], roomText, guildText).ConfigureAwait(false)
+                    : (IsFrench ? "Choix de polling invalide." : "Invalid polling choice.");
+            }
+            else
+            {
+                result = await ChannelsAndUrlsCommands.UpdateSilentOptionFromWeb(selected, roomText, guildText).ConfigureAwait(false);
+            }
+            var refreshed = await RenderAsync(session, managerAuthorization).ConfigureAwait(false);
+            await component.ModifyOriginalResponseAsync(properties =>
+            {
+                properties.Content = result;
+                properties.Embed = refreshed.Embed;
+                properties.Components = refreshed.Components;
+            }).ConfigureAwait(false);
+            return;
+        }
+
+        if (!ulong.TryParse(selected, out var roomChannelId))
+        {
+            await SetErrorAsync(component, IsFrench ? "Sélection invalide." : "Invalid selection.").ConfigureAwait(false);
+            return;
+        }
         var guildIdText = guildId.ToString(CultureInfo.InvariantCulture);
         var roomIdText = roomChannelId.ToString(CultureInfo.InvariantCulture);
         if (!await IsTrackedRoomAsync(guildId, roomChannelId).ConfigureAwait(false))
@@ -315,6 +364,11 @@ public static class AstCommandCenter
             AstUiScreen.Manage => RenderManage(session),
             AstUiScreen.Administration => RenderAdministration(session, authorization),
             AstUiScreen.Help => RenderHelp(session),
+            AstUiScreen.Polling => RenderPolling(session),
+            AstUiScreen.ManageMore => RenderManageMore(session),
+            AstUiScreen.Yaml => RenderYaml(session),
+            AstUiScreen.Generation => RenderGeneration(session),
+            AstUiScreen.Apworld => RenderApworld(session),
             _ => await RenderHomeAsync(session, authorization, roomName).ConfigureAwait(false)
         };
     }
@@ -443,6 +497,60 @@ public static class AstCommandCenter
                 : $"Use the buttons to navigate.\n\n{ArchipelagoSphereTracker.src.Resources.Resource.Discord}\n{string.Format(ArchipelagoSphereTracker.src.Resources.Resource.ApworldInfo, Declare.ApworldInfoSheet)}",
             []);
 
+    private static AstUiView RenderPolling(AstUiSession session)
+    {
+        var menu = new SelectMenuBuilder()
+            .WithCustomId(Id(session, "poll-policy"))
+            .WithPlaceholder(IsFrench ? "Choisir le mode et la fréquence…" : "Choose mode and interval…")
+            .AddOption(IsFrench ? "Automatique · 15 min max" : "Automatic · 15 min max", "automatic|15m")
+            .AddOption(IsFrench ? "Automatique · 30 min max" : "Automatic · 30 min max", "automatic|30m")
+            .AddOption(IsFrench ? "Automatique · 1 h max" : "Automatic · 1 h max", "automatic|1h")
+            .AddOption(IsFrench ? "Automatique · 6 h max" : "Automatic · 6 h max", "automatic|6h")
+            .AddOption(IsFrench ? "Fixe · 5 min" : "Fixed · 5 min", "fixed|5m")
+            .AddOption(IsFrench ? "Fixe · 15 min" : "Fixed · 15 min", "fixed|15m")
+            .AddOption(IsFrench ? "Fixe · 30 min" : "Fixed · 30 min", "fixed|30m")
+            .AddOption(IsFrench ? "Fixe · 1 h" : "Fixed · 1 h", "fixed|1h")
+            .AddOption(IsFrench ? "Fixe · 6 h" : "Fixed · 6 h", "fixed|6h")
+            .AddOption(IsFrench ? "Fixe · 12 h" : "Fixed · 12 h", "fixed|12h")
+            .AddOption(IsFrench ? "Fixe · 18 h" : "Fixed · 18 h", "fixed|18h")
+            .AddOption(IsFrench ? "Fixe · 1 jour" : "Fixed · 1 day", "fixed|1d");
+        var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "manage"), ButtonStyle.Primary, emote: new Emoji("↩️"), row: 0)
+            .WithSelectMenu(menu, row: 1)
+            .Build();
+        return new AstUiView(null, BaseEmbed("⚙️ Polling", IsFrench
+            ? "Ce réglage est appliqué directement par Discord."
+            : "This setting is applied directly from Discord.").Build(), components);
+    }
+
+    private static AstUiView RenderManageMore(AstUiSession session)
+    {
+        var notifications = new SelectMenuBuilder()
+            .WithCustomId(Id(session, "notifications"))
+            .WithPlaceholder(IsFrench ? "Mode de notification…" : "Notification mode…")
+            .AddOption(IsFrench ? "Notifications normales" : "Normal notifications", "false")
+            .AddOption(IsFrench ? "Mode silencieux" : "Silent mode", "true");
+        var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Portail de la room" : "Room portal", Id(session, "room-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "manage"), ButtonStyle.Primary, row: 0)
+            .WithSelectMenu(notifications, row: 1)
+            .Build();
+        return new AstUiView(null, BaseEmbed(IsFrench ? "⚙️ Réglages avancés" : "⚙️ Advanced settings",
+            IsFrench ? "Les réglages ci-dessous sont exécutés directement dans Discord." : "The settings below execute directly in Discord.").Build(), components);
+    }
+
+    private static AstUiView RenderYaml(AstUiSession session)
+        => Screen(session, "YAML", IsFrench ? "Gestion Discord native des fichiers YAML." : "Native Discord YAML management.",
+            [(IsFrench ? "Lister" : "List", "yaml-list"), (IsFrench ? "Portail" : "Portal", "admin-portal")]);
+
+    private static AstUiView RenderGeneration(AstUiSession session)
+        => Screen(session, IsFrench ? "Génération" : "Generation", IsFrench ? "Commandes de génération Discord." : "Discord generation actions.",
+            [(IsFrench ? "Portail" : "Portal", "admin-portal")]);
+
+    private static AstUiView RenderApworld(AstUiSession session)
+        => Screen(session, "APWorld", IsFrench ? "Gestion Discord native des APWorld." : "Native Discord APWorld management.",
+            [(IsFrench ? "Lister" : "List", "apworld-list"), (IsFrench ? "Portail" : "Portal", "admin-portal")]);
+
     private static AstUiView Screen(
         AstUiSession session,
         string title,
@@ -469,7 +577,7 @@ public static class AstCommandCenter
                 ? TrackingControlCommands.GetGuildHealth(guildId)
                 : AstAuthorizationService.DeniedMessage;
         }
-        if (action is "admin-portal" or "admin-yaml" or "admin-generation" or "admin-apworld")
+        if (action == "admin-portal")
         {
             if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
                 return AstAuthorizationService.DeniedMessage;
@@ -497,16 +605,15 @@ public static class AstCommandCenter
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-pause", guildId, channelId).ConfigureAwait(false),
             "resume" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-resume", guildId, channelId).ConfigureAwait(false),
-            "personal-slots" => await WithUserPortalAsync(await BuildPersonalSlotsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false), guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
-            "personal-items" or "personal-recap" => await WithUserPortalAsync(await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false), guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
-            "personal-hints" => await WithUserPortalAsync(await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false), guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-slots" => await BuildPersonalSlotsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-items" or "personal-recap" => await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-hints" => await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-patch" => await BuildPersonalPatchesAsync(guildId, channelId, session.OwnerUserId, authorization).ConfigureAwait(false),
             "personal-advanced" => await BuildPersonalAdvancedAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
-            "manage-polling" or "manage-more" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
-                => await BuildPortalResponseAsync(
-                    () => WebPortalPages.EnsureThreadCommandsPageAsync(
-                        guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)),
-                    IsFrench ? "Portail privé de gestion de la room" : "Private room-management portal").ConfigureAwait(false),
+            "room-portal" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
+                => await BuildPortalResponseAsync(() => WebPortalPages.EnsureThreadCommandsPageAsync(guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)), IsFrench ? "Portail privé de la room" : "Private room portal").ConfigureAwait(false),
+            "yaml-list" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization) => YamlClass.ListYamls(session.SourceChannelId.ToString(CultureInfo.InvariantCulture)),
+            "apworld-list" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization) => ApworldClass.ListApworld(),
             _ => AstAuthorizationService.DeniedMessage
         };
     }
@@ -573,7 +680,7 @@ public static class AstCommandCenter
             count += items.Count;
         }
         if (count == 0) output.AppendLine().Append(IsFrench ? "Aucune exclusion personnelle." : "No personal exclusion.");
-        return await WithUserPortalAsync(output.ToString(), guildId, channelId, userId).ConfigureAwait(false);
+        return Clamp(output.ToString());
     }
 
     private static async Task<string> BuildPersonalPatchesAsync(
@@ -598,20 +705,6 @@ public static class AstCommandCenter
         return Clamp(output.ToString());
     }
 
-    private static async Task<string> WithUserPortalAsync(
-        string content,
-        string guildId,
-        string channelId,
-        ulong userId)
-    {
-        if (!Declare.EnableWebPortal) return Clamp(content);
-        var url = await WebPortalPages.EnsureUserPageAsync(
-            guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
-        return string.IsNullOrWhiteSpace(url)
-            ? Clamp(content)
-            : Clamp(content + (IsFrench ? $"\n\nGérer ces données : {url}" : $"\n\nManage this data: {url}"));
-    }
-
     private static async Task<string> BuildPortalResponseAsync(Func<Task<string?>> factory, string label)
     {
         if (!Declare.EnableWebPortal)
@@ -632,6 +725,11 @@ public static class AstCommandCenter
             "manage" => AstUiScreen.Manage,
             "admin" => AstUiScreen.Administration,
             "help" => AstUiScreen.Help,
+            "manage-polling" => AstUiScreen.Polling,
+            "manage-more" => AstUiScreen.ManageMore,
+            "admin-yaml" => AstUiScreen.Yaml,
+            "admin-generation" => AstUiScreen.Generation,
+            "admin-apworld" => AstUiScreen.Apworld,
             _ => (AstUiScreen)(-1)
         };
         return (int)screen >= 0;
@@ -643,6 +741,9 @@ public static class AstCommandCenter
             AstUiScreen.Personal or AstUiScreen.Room => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Manage => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
             AstUiScreen.Administration => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization),
+            AstUiScreen.Polling or AstUiScreen.ManageMore => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
+            AstUiScreen.Yaml or AstUiScreen.Generation => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization),
+            AstUiScreen.Apworld => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization),
             _ => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization)
         };
 
