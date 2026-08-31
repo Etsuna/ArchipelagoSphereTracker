@@ -378,6 +378,38 @@ public static class AstCommandCenter
                 return;
             }
 
+            if (action is "delete-room-request" or "confirm-delete-room" or "cancel-delete-room")
+            {
+                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization) || session.RoomChannelId is not { } deleteRoom)
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                if (action == "delete-room-request")
+                {
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "delete-room", null, out session);
+                    await SetViewAsync(component, RenderManageMore(session)).ConfigureAwait(false);
+                    return;
+                }
+                if (action == "cancel-delete-room")
+                {
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                    await SetViewAsync(component, RenderManageMore(session)).ConfigureAwait(false);
+                    return;
+                }
+                var result = await UrlClass.DeleteUrl(
+                    component.User as IGuildUser,
+                    deleteRoom.ToString(CultureInfo.InvariantCulture),
+                    guildId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+                await component.ModifyOriginalResponseAsync(p =>
+                {
+                    p.Content = result;
+                    p.Embed = null;
+                    p.Components = new ComponentBuilder().Build();
+                }).ConfigureAwait(false);
+                return;
+            }
+
             if (TryScreen(action, out var screen))
             {
                 if (!CanOpen(screen, authorization, session.RoomChannelId != null) ||
@@ -769,6 +801,16 @@ public static class AstCommandCenter
 
     private static AstUiView RenderManageMore(AstUiSession session)
     {
+        if (session.PendingAction == "delete-room")
+        {
+            var confirmation = new ComponentBuilder()
+                .WithButton(IsFrench ? "Supprimer définitivement" : "Delete permanently", Id(session, "confirm-delete-room"), ButtonStyle.Danger)
+                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-delete-room"), ButtonStyle.Secondary)
+                .Build();
+            return new AstUiView(null, BaseEmbed("⚠️ " + (IsFrench ? "Supprimer la room" : "Delete room"),
+                IsFrench ? "Cette action supprime le suivi et les données locales de la room. Elle est irréversible."
+                    : "This removes room tracking and its local data. It cannot be undone.").Build(), confirmation);
+        }
         var notifications = new SelectMenuBuilder()
             .WithCustomId(Id(session, "notifications"))
             .WithPlaceholder(IsFrench ? "Mode de notification…" : "Notification mode…")
@@ -776,6 +818,7 @@ public static class AstCommandCenter
             .AddOption(IsFrench ? "Mode silencieux" : "Silent mode", "true");
         var components = new ComponentBuilder()
             .WithButton(IsFrench ? "Portail de la room" : "Room portal", Id(session, "room-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(IsFrench ? "Supprimer la room" : "Delete room", Id(session, "delete-room-request"), ButtonStyle.Danger, row: 0)
             .WithButton(IsFrench ? "Retour" : "Back", Id(session, "manage"), ButtonStyle.Primary, row: 0)
             .WithSelectMenu(notifications, row: 1)
             .Build();
