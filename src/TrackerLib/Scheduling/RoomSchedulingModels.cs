@@ -20,9 +20,10 @@ public sealed record RoomPollResult(
     PollFailureKind FailureKind = PollFailureKind.None,
     TimeSpan? RetryAfter = null,
     bool AffectsOriginBreaker = false,
-    bool RemoveRoom = false)
+    bool RemoveRoom = false,
+    string? ContentHash = null)
 {
-    public static RoomPollResult Ok() => new(true);
+    public static RoomPollResult Ok(string? contentHash = null) => new(true, ContentHash: contentHash);
     public static RoomPollResult Removed() => new(true, RemoveRoom: true);
 
     public static RoomPollResult Failed(
@@ -56,6 +57,42 @@ public sealed record RoomScheduleState(
     int ConsecutiveFailures,
     PollFailureKind LastFailureKind,
     DateTimeOffset? BreakerOpenUntilUtc,
+    double LastLatencyMilliseconds,
+    bool IsPaused = false,
+    DateTimeOffset? PausedAtUtc = null,
+    DateTimeOffset? LastForcedSyncAtUtc = null,
+    string? LastContentHash = null,
+    int UnchangedSuccessCount = 0,
+    double EffectiveIntervalSeconds = 0,
+    DateTimeOffset? LastChangeAtUtc = null);
+
+public enum TrackingControlOutcome
+{
+    Accepted,
+    NotFound,
+    AlreadyPaused,
+    AlreadyRunning,
+    Paused,
+    Busy,
+    RateLimited,
+    Unavailable
+}
+
+public sealed record RoomHealthSnapshot(
+    string GuildId,
+    string ChannelId,
+    bool IsPaused,
+    bool IsRunning,
+    DateTimeOffset NextPollAtUtc,
+    DateTimeOffset? LastAttemptAtUtc,
+    DateTimeOffset? LastSuccessAtUtc,
+    int ConsecutiveFailures,
+    PollFailureKind LastFailureKind,
+    DateTimeOffset? BreakerOpenUntilUtc,
+    TimeSpan ConfiguredInterval,
+    TimeSpan EffectiveInterval,
+    int UnchangedSuccessCount,
+    DateTimeOffset? LastChangeAtUtc,
     double LastLatencyMilliseconds);
 
 public sealed record ScheduledRoomRegistration(

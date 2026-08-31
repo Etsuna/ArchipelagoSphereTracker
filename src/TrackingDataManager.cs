@@ -114,6 +114,39 @@ public static class TrackingDataManager
                ?? Task.FromResult(false);
     }
 
+    public static Task<TrackingControlOutcome> PauseRoomAsync(
+        string guildId,
+        string channelId,
+        CancellationToken cancellationToken = default)
+        => GetCentralScheduler()?.PauseAsync(guildId, channelId, cancellationToken)
+           ?? Task.FromResult(TrackingControlOutcome.Unavailable);
+
+    public static Task<TrackingControlOutcome> ResumeRoomAsync(
+        string guildId,
+        string channelId,
+        CancellationToken cancellationToken = default)
+        => GetCentralScheduler()?.ResumeAsync(guildId, channelId, cancellationToken)
+           ?? Task.FromResult(TrackingControlOutcome.Unavailable);
+
+    public static Task<TrackingControlOutcome> ForceSyncRoomAsync(
+        string guildId,
+        string channelId,
+        CancellationToken cancellationToken = default)
+        => GetCentralScheduler()?.ForceSyncAsync(guildId, channelId, cancellationToken)
+           ?? Task.FromResult(TrackingControlOutcome.Unavailable);
+
+    public static RoomHealthSnapshot? GetRoomHealth(string guildId, string channelId)
+        => GetCentralScheduler()?.GetHealth(guildId, channelId);
+
+    public static IReadOnlyList<RoomHealthSnapshot>? GetGuildHealth(string guildId)
+        => GetCentralScheduler()?.GetGuildHealth(guildId);
+
+    private static CentralRoomScheduler? GetCentralScheduler()
+    {
+        lock (SchedulerLifecycleLock)
+            return Declare.UseLegacyTrackingScheduler ? null : _centralScheduler;
+    }
+
     private static void StartLegacyTracking()
     {
         const int MaxGuildsParallel = 10;
@@ -692,14 +725,28 @@ public static class TrackingDataManager
             totalsBySlot = map;
         }
 
-        if (Declare.EnableTrackingV2)
-            await TryPersistTrackingV2Async(ctx, json, totalsBySlot, channel, ctChan).ConfigureAwait(false);
+        NormalizedRoomSnapshot? normalizedSnapshot = null;
+        try
+        {
+            normalizedSnapshot = LegacySnapshotAdapter.FromWebHostResponse(
+                ctx,
+                json,
+                totalsBySlot,
+                DateTimeOffset.UtcNow);
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine($"[TDM][Adaptive] Snapshot hash unavailable ({exception.GetType().Name}).");
+        }
+
+        if (Declare.EnableTrackingV2 && normalizedSnapshot != null)
+            await TryPersistTrackingV2Async(normalizedSnapshot, channel, ctChan).ConfigureAwait(false);
 
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
         var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, totalsBySlot);
         if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0)
-            return RoomPollResult.Ok();
+            return RoomPollResult.Ok(normalizedSnapshot?.ContentHash);
 
         if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
         if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
@@ -729,23 +776,16 @@ public static class TrackingDataManager
             }
         }
 
-        return RoomPollResult.Ok();
+        return RoomPollResult.Ok(normalizedSnapshot?.ContentHash);
     }
 
     private static async Task TryPersistTrackingV2Async(
-        ProcessingContext context,
-        string runtimeJson,
-        IReadOnlyDictionary<int, int> totalsBySlot,
+        NormalizedRoomSnapshot snapshot,
         string destinationChannelId,
         CancellationToken cancellationToken)
     {
         try
         {
-            var snapshot = LegacySnapshotAdapter.FromWebHostResponse(
-                context,
-                runtimeJson,
-                totalsBySlot,
-                DateTimeOffset.UtcNow);
             var store = new TrackingV2Store();
             await store.ApplySnapshotAsync(
                 snapshot,

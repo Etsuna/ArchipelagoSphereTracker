@@ -658,4 +658,57 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
             Db.WriteGate.Release();
         }
     }
+
+    public static async Task Migrate_5_0_9(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.9: adaptive polling and durable room controls.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var inspect = conn.CreateCommand())
+            {
+                inspect.CommandText = "PRAGMA table_info(RoomPollState);";
+                using var reader = await inspect.ExecuteReaderAsync(ct);
+                while (await reader.ReadAsync(ct))
+                    columns.Add(reader["name"]?.ToString() ?? string.Empty);
+            }
+
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                var additions = new (string Name, string Sql)[]
+                {
+                    ("IsPaused", "ALTER TABLE RoomPollState ADD COLUMN IsPaused INTEGER NOT NULL DEFAULT 0 CHECK (IsPaused IN (0, 1));"),
+                    ("PausedAtUtc", "ALTER TABLE RoomPollState ADD COLUMN PausedAtUtc TEXT;"),
+                    ("LastForcedSyncAtUtc", "ALTER TABLE RoomPollState ADD COLUMN LastForcedSyncAtUtc TEXT;"),
+                    ("LastContentHash", "ALTER TABLE RoomPollState ADD COLUMN LastContentHash TEXT;"),
+                    ("UnchangedSuccessCount", "ALTER TABLE RoomPollState ADD COLUMN UnchangedSuccessCount INTEGER NOT NULL DEFAULT 0;"),
+                    ("EffectiveIntervalSeconds", "ALTER TABLE RoomPollState ADD COLUMN EffectiveIntervalSeconds REAL NOT NULL DEFAULT 0;"),
+                    ("LastChangeAtUtc", "ALTER TABLE RoomPollState ADD COLUMN LastChangeAtUtc TEXT;")
+                };
+
+                foreach (var addition in additions.Where(addition => !columns.Contains(addition.Name)))
+                {
+                    using var command = conn.CreateCommand();
+                    command.Transaction = transaction;
+                    command.CommandText = addition.Sql;
+                    await command.ExecuteNonQueryAsync(ct);
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
 }

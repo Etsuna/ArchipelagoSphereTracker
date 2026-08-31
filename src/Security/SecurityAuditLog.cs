@@ -55,7 +55,8 @@ public static class SecurityAuditLog
         {
             "add-url" => SecurityAuditAction.RoomAdd,
             "delete-url" => SecurityAuditAction.RoomDelete,
-            "update-frequency-check" or "update-silent-option" or "excluded-item" or "delete-excluded-item"
+            "update-frequency-check" or "update-silent-option" or "excluded-item" or "delete-excluded-item" or
+                "ast-sync-now" or "ast-pause" or "ast-resume"
                 => SecurityAuditAction.RoomSettingsUpdate,
             "ast-user-portal" or "ast-room-portal" or "ast-portal" => SecurityAuditAction.PortalAccessIssue,
             "add-alias" => SecurityAuditAction.AliasAdd,

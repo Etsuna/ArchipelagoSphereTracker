@@ -7,6 +7,7 @@ public static class WebPortalThreadCommandsPage
     {
         static string T(string key) => Resource.ResourceManager.GetString(key) ?? key;
         static string Js(string key) => JsonSerializer.Serialize(T(key));
+        static string L(string french, string english) => Declare.Language == "fr" ? french : english;
 
         return @$"<!doctype html>
 <html lang=""{Declare.Language}"">
@@ -225,6 +226,30 @@ public static class WebPortalThreadCommandsPage
       <h2>Status games list</h2>
       <form data-command=""status-games-list"">
         <button type=""submit"">{T("WebShowGameStatus")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>{L("Santé et contrôle du suivi", "Tracking health and controls")}</h2>
+      <form data-command=""ast-room-health"">
+        <button type=""submit"">{L("Santé de la room", "Room health")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-health"">
+        <button type=""submit"">{L("Santé globale AST", "Overall AST health")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-sync-now"">
+        <button type=""submit"">{L("Synchroniser maintenant", "Sync now")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-pause"">
+        <button type=""submit"">{L("Suspendre le suivi", "Pause tracking")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-resume"">
+        <button type=""submit"">{L("Reprendre le suivi", "Resume tracking")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>

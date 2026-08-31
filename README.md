@@ -54,6 +54,8 @@ Le bot existe en **deux modes** :
 - Multi-serveurs Discord, multi-salons et multi-threads.
 - Gestion de rooms avec `/add-url` et `/delete-url`.
 - Paramétrage de fréquence de polling (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
+- Polling adaptatif : après trois snapshots inchangés, l'intervalle ralentit progressivement jusqu'à une heure et revient immédiatement au minimum configuré dès qu'une activité est détectée.
+- Santé et contrôle du suivi avec `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause` et `/ast-resume` (également disponibles dans le portail de room).
 - Option silencieuse (`silent`) configurable à la création puis via commande.
 - Alias joueurs : ajout/suppression/liste.
 - Gestion des items affichés, items exclus et hints.
@@ -213,6 +215,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `AUDIT_RETENTION_DAYS` fixe la rétention du journal des actions sensibles.
 - `ENABLE_TRACKING_V2=true` active le dual-write expérimental des snapshots, événements et livraisons V2. Aucun worker Discord V2 n'est démarré dans cette version : les notifications historiques restent seules publiées.
 - `USE_LEGACY_TRACKING_SCHEDULER=true` réactive temporairement l'ancien scan minute ; le scheduler central est utilisé par défaut.
+- Le mode historique désactive les commandes de pause/reprise/synchronisation forcée et ne tient pas compte des pauses persistées. Revenir au scheduler central restaure leur application.
 - `TRACKING_GLOBAL_CONCURRENCY` et `TRACKING_ORIGIN_CONCURRENCY` bornent respectivement les requêtes WebHost simultanées du processus et d'une même origine.
 - `ARCHIPELAGO_ALLOWED_HOSTS` est une liste séparée par des virgules. Elle constitue une dérogation explicite au blocage SSRF des adresses privées/locales.
 - `EXPORT_METRICS=true` active les exports Prometheus.
@@ -520,6 +523,8 @@ AST supports **two modes**:
 - Multi-server, multi-channel, multi-thread support.
 - Room lifecycle management through `/add-url` and `/delete-url`.
 - Configurable polling frequency (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
+- Adaptive polling: after three unchanged snapshots, the interval progressively slows down up to one hour and immediately returns to the configured minimum when activity resumes.
+- Tracking health and controls through `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause`, and `/ast-resume` (also available in the room portal).
 - Silent option configurable at room creation and later updates.
 - Player alias management (add/remove/list).
 - Displayed/excluded items and hints management.
@@ -679,6 +684,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `AUDIT_RETENTION_DAYS` controls retention of sensitive-action audit records.
 - `ENABLE_TRACKING_V2=true` enables experimental dual-write of V2 snapshots, events, and deliveries. No V2 Discord worker is started in this release, so only legacy notifications are published.
 - `USE_LEGACY_TRACKING_SCHEDULER=true` temporarily restores the old minute scan; the central scheduler is the default.
+- Legacy mode disables pause/resume/forced-sync commands and ignores persisted pauses. Switching back to the central scheduler restores their enforcement.
 - `TRACKING_GLOBAL_CONCURRENCY` and `TRACKING_ORIGIN_CONCURRENCY` cap concurrent WebHost requests process-wide and per origin.
 - `ARCHIPELAGO_ALLOWED_HOSTS` is a comma-separated list and explicitly bypasses private/local-address SSRF blocking for those hosts.
 - `EXPORT_METRICS=true` enables Prometheus exports.

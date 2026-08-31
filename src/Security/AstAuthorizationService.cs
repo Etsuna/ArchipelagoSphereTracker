@@ -52,6 +52,9 @@ public static class AstAuthorizationService
                 "send-spoiler-log" or
                 "ast-room-portal" or
                 "update-frequency-check" or
+                "ast-sync-now" or
+                "ast-pause" or
+                "ast-resume" or
                 "excluded-item" or
                 "delete-excluded-item" or
                 "update-silent-option" => AstAuthorizationLevel.RoomManager,

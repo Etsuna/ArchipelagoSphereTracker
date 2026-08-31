@@ -84,6 +84,22 @@ public static class SlashCommandDefinitions
             new SlashCommandBuilder().WithName("delete-url").WithDescription(Resource.SCDeleteUrlDescription),
             new SlashCommandBuilder().WithName("status-games-list").WithDescription(Resource.SCStatusGameListDescription),
 
+            new SlashCommandBuilder()
+                .WithName("ast-health")
+                .WithDescription(Declare.Language == "fr" ? "Afficher la santé globale du suivi AST" : "Show overall AST tracking health"),
+            new SlashCommandBuilder()
+                .WithName("ast-room-health")
+                .WithDescription(Declare.Language == "fr" ? "Afficher la santé du suivi de cette room" : "Show tracking health for this room"),
+            new SlashCommandBuilder()
+                .WithName("ast-sync-now")
+                .WithDescription(Declare.Language == "fr" ? "Prioriser une synchronisation de cette room" : "Prioritize a sync for this room"),
+            new SlashCommandBuilder()
+                .WithName("ast-pause")
+                .WithDescription(Declare.Language == "fr" ? "Suspendre le suivi de cette room" : "Pause tracking for this room"),
+            new SlashCommandBuilder()
+                .WithName("ast-resume")
+                .WithDescription(Declare.Language == "fr" ? "Reprendre le suivi de cette room" : "Resume tracking for this room"),
+
             new SlashCommandBuilder().WithName("info").WithDescription(Resource.SCInfoDescription),
 
             new SlashCommandBuilder()

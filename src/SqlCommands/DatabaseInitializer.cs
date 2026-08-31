@@ -161,6 +161,13 @@ CREATE TABLE IF NOT EXISTS RoomPollState (
     LastFailureKind TEXT NOT NULL DEFAULT 'None',
     BreakerOpenUntilUtc TEXT,
     LastLatencyMilliseconds REAL NOT NULL DEFAULT 0,
+    IsPaused INTEGER NOT NULL DEFAULT 0 CHECK (IsPaused IN (0, 1)),
+    PausedAtUtc TEXT,
+    LastForcedSyncAtUtc TEXT,
+    LastContentHash TEXT,
+    UnchangedSuccessCount INTEGER NOT NULL DEFAULT 0,
+    EffectiveIntervalSeconds REAL NOT NULL DEFAULT 0,
+    LastChangeAtUtc TEXT,
     UpdatedAtUtc TEXT NOT NULL,
     PRIMARY KEY (GuildId, ChannelId)
 );

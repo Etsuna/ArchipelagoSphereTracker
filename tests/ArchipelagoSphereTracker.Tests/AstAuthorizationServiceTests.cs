@@ -58,11 +58,33 @@ public class AstAuthorizationServiceTests
     [Theory]
     [InlineData("delete-url", true, AstAuthorizationLevel.RoomManager)]
     [InlineData("status-games-list", true, AstAuthorizationLevel.GuildMember)]
+    [InlineData("ast-room-health", true, AstAuthorizationLevel.GuildMember)]
+    [InlineData("ast-sync-now", true, AstAuthorizationLevel.RoomManager)]
+    [InlineData("ast-pause", true, AstAuthorizationLevel.RoomManager)]
+    [InlineData("ast-resume", true, AstAuthorizationLevel.RoomManager)]
+    [InlineData("ast-health", false, AstAuthorizationLevel.GuildManager)]
     [InlineData("send-apworld", false, AstAuthorizationLevel.InstanceOwner)]
     [InlineData("generate", false, AstAuthorizationLevel.GuildManager)]
     public void CommandMatrix_IsExplicit(string command, bool isThread, AstAuthorizationLevel expected)
     {
         Assert.Equal(expected, AstAuthorizationService.RequiredForDiscordCommand(command, isThread));
+    }
+
+    [Theory]
+    [InlineData("ast-sync-now")]
+    [InlineData("ast-pause")]
+    [InlineData("ast-resume")]
+    public void MutatingTrackingCommands_AreAuditedAsRoomSettings(string command)
+    {
+        Assert.Equal(SecurityAuditAction.RoomSettingsUpdate, SecurityAuditLog.ForCommand(command));
+    }
+
+    [Theory]
+    [InlineData("ast-health")]
+    [InlineData("ast-room-health")]
+    public void ReadOnlyTrackingCommands_DoNotCreateAuditNoise(string command)
+    {
+        Assert.Null(SecurityAuditLog.ForCommand(command));
     }
 
     private static AstAuthorizationContext Context(

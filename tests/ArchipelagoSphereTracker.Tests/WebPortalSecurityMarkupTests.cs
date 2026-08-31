@@ -39,6 +39,10 @@ public class WebPortalSecurityMarkupTests
             Assert.Contains("securedApiBase + '/thread-commands/execute'", html);
             Assert.Contains("securedApiBase + '/thread-commands/patches'", html);
             Assert.Contains("securedApiBase + '/info'", html);
+            Assert.Contains("data-command=\"ast-room-health\"", html);
+            Assert.Contains("data-command=\"ast-sync-now\"", html);
+            Assert.Contains("data-command=\"ast-pause\"", html);
+            Assert.Contains("data-command=\"ast-resume\"", html);
         }
         finally
         {

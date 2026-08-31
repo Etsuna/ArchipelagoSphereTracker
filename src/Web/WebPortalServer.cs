@@ -535,6 +535,15 @@ public static class WebPortalServer
                 case "status-games-list":
                     message = await HelperClass.StatusGameList(channelId, guildId);
                     break;
+                case "ast-health":
+                    message = TrackingControlCommands.GetGuildHealth(guildId);
+                    break;
+                case "ast-room-health":
+                case "ast-sync-now":
+                case "ast-pause":
+                case "ast-resume":
+                    message = await TrackingControlCommands.ExecuteRoomAsync(command, guildId, channelId);
+                    break;
                 case "get-patch":
                     {
                         var alias = form["alias"].FirstOrDefault();

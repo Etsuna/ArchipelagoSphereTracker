@@ -35,7 +35,14 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
                 state.ConsecutiveFailures,
                 state.LastFailureKind,
                 state.BreakerOpenUntilUtc,
-                state.LastLatencyMilliseconds
+                state.LastLatencyMilliseconds,
+                state.IsPaused,
+                state.PausedAtUtc,
+                state.LastForcedSyncAtUtc,
+                state.LastContentHash,
+                state.UnchangedSuccessCount,
+                state.EffectiveIntervalSeconds,
+                state.LastChangeAtUtc
             FROM ChannelsAndUrlsTable channel
             LEFT JOIN RoomPollState state
               ON state.GuildId = channel.GuildId
@@ -87,7 +94,14 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
                     Integer(reader, "ConsecutiveFailures"),
                     failureKind,
                     Timestamp(reader, "BreakerOpenUntilUtc"),
-                    Double(reader, "LastLatencyMilliseconds"));
+                    Double(reader, "LastLatencyMilliseconds"),
+                    Integer(reader, "IsPaused") == 1,
+                    Timestamp(reader, "PausedAtUtc"),
+                    Timestamp(reader, "LastForcedSyncAtUtc"),
+                    NullText(reader, "LastContentHash"),
+                    Integer(reader, "UnchangedSuccessCount"),
+                    Double(reader, "EffectiveIntervalSeconds"),
+                    Timestamp(reader, "LastChangeAtUtc"));
             }
 
             rooms.Add(new ScheduledRoomRegistration(definition, state));
@@ -105,11 +119,15 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
                 INSERT INTO RoomPollState
                     (GuildId, ChannelId, NextPollAtUtc, LastAttemptAtUtc, LastSuccessAtUtc,
                      ConsecutiveFailures, LastFailureKind, BreakerOpenUntilUtc,
-                     LastLatencyMilliseconds, UpdatedAtUtc)
+                     LastLatencyMilliseconds, IsPaused, PausedAtUtc, LastForcedSyncAtUtc,
+                     LastContentHash, UnchangedSuccessCount, EffectiveIntervalSeconds,
+                     LastChangeAtUtc, UpdatedAtUtc)
                 VALUES
                     (@GuildId, @ChannelId, @NextPollAtUtc, @LastAttemptAtUtc, @LastSuccessAtUtc,
                      @ConsecutiveFailures, @LastFailureKind, @BreakerOpenUntilUtc,
-                     @LastLatencyMilliseconds, @UpdatedAtUtc)
+                     @LastLatencyMilliseconds, @IsPaused, @PausedAtUtc, @LastForcedSyncAtUtc,
+                     @LastContentHash, @UnchangedSuccessCount, @EffectiveIntervalSeconds,
+                     @LastChangeAtUtc, @UpdatedAtUtc)
                 ON CONFLICT(GuildId, ChannelId) DO UPDATE SET
                     NextPollAtUtc = excluded.NextPollAtUtc,
                     LastAttemptAtUtc = excluded.LastAttemptAtUtc,
@@ -118,6 +136,13 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
                     LastFailureKind = excluded.LastFailureKind,
                     BreakerOpenUntilUtc = excluded.BreakerOpenUntilUtc,
                     LastLatencyMilliseconds = excluded.LastLatencyMilliseconds,
+                    IsPaused = excluded.IsPaused,
+                    PausedAtUtc = excluded.PausedAtUtc,
+                    LastForcedSyncAtUtc = excluded.LastForcedSyncAtUtc,
+                    LastContentHash = excluded.LastContentHash,
+                    UnchangedSuccessCount = excluded.UnchangedSuccessCount,
+                    EffectiveIntervalSeconds = excluded.EffectiveIntervalSeconds,
+                    LastChangeAtUtc = excluded.LastChangeAtUtc,
                     UpdatedAtUtc = excluded.UpdatedAtUtc;";
             command.Parameters.AddWithValue("@GuildId", state.GuildId);
             command.Parameters.AddWithValue("@ChannelId", state.ChannelId);
@@ -128,6 +153,15 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
             command.Parameters.AddWithValue("@LastFailureKind", state.LastFailureKind.ToString());
             command.Parameters.AddWithValue("@BreakerOpenUntilUtc", DbValue(state.BreakerOpenUntilUtc));
             command.Parameters.AddWithValue("@LastLatencyMilliseconds", state.LastLatencyMilliseconds);
+            command.Parameters.AddWithValue("@IsPaused", state.IsPaused ? 1 : 0);
+            command.Parameters.AddWithValue("@PausedAtUtc", DbValue(state.PausedAtUtc));
+            command.Parameters.AddWithValue("@LastForcedSyncAtUtc", DbValue(state.LastForcedSyncAtUtc));
+            command.Parameters.AddWithValue(
+                "@LastContentHash",
+                string.IsNullOrWhiteSpace(state.LastContentHash) ? DBNull.Value : state.LastContentHash);
+            command.Parameters.AddWithValue("@UnchangedSuccessCount", state.UnchangedSuccessCount);
+            command.Parameters.AddWithValue("@EffectiveIntervalSeconds", state.EffectiveIntervalSeconds);
+            command.Parameters.AddWithValue("@LastChangeAtUtc", DbValue(state.LastChangeAtUtc));
             command.Parameters.AddWithValue("@UpdatedAtUtc", Format(_timeProvider.GetUtcNow()));
             await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             return true;
@@ -149,6 +183,9 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
 
     private static string Text(DbDataReader reader, string name, string fallback = "")
         => reader[name] is DBNull ? fallback : reader[name]?.ToString() ?? fallback;
+
+    private static string? NullText(DbDataReader reader, string name)
+        => reader[name] is DBNull ? null : reader[name]?.ToString();
 
     private static int Integer(DbDataReader reader, string name)
         => reader[name] is DBNull ? 0 : Convert.ToInt32(reader[name], CultureInfo.InvariantCulture);

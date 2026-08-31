@@ -126,6 +126,106 @@ public sealed class CentralRoomSchedulerTests
     }
 
     [Fact]
+    public async Task Unchanged_room_slows_down_and_new_activity_restores_configured_interval()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("c", "https://a.example", T0)]);
+        var hash = "snapshot-a";
+        var scheduler = Scheduler(store, (_, _) => Task.FromResult(RoomPollResult.Ok(hash)), time, global: 1);
+        await scheduler.InitializeAsync();
+
+        Assert.Equal(1, await scheduler.RunDueOnceAsync()); // establish the baseline
+        for (var unchanged = 0; unchanged < 3; unchanged++)
+        {
+            time.Advance(TimeSpan.FromMinutes(5));
+            Assert.Equal(1, await scheduler.RunDueOnceAsync());
+        }
+
+        var slowed = Assert.IsType<RoomHealthSnapshot>(scheduler.GetHealth("g", "c"));
+        Assert.Equal(TimeSpan.FromMinutes(10), slowed.EffectiveInterval);
+        Assert.Equal(3, slowed.UnchangedSuccessCount);
+
+        hash = "snapshot-b";
+        time.Advance(TimeSpan.FromMinutes(10));
+        Assert.Equal(1, await scheduler.RunDueOnceAsync());
+
+        var active = Assert.IsType<RoomHealthSnapshot>(scheduler.GetHealth("g", "c"));
+        Assert.Equal(TimeSpan.FromMinutes(5), active.EffectiveInterval);
+        Assert.Equal(0, active.UnchangedSuccessCount);
+        Assert.Equal(time.GetUtcNow(), active.LastChangeAtUtc);
+    }
+
+    [Fact]
+    public async Task Pause_survives_restart_and_resume_schedules_an_immediate_poll()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("c", "https://a.example", T0)]);
+        var executions = 0;
+        var first = Scheduler(store, (_, _) =>
+        {
+            executions++;
+            return Task.FromResult(RoomPollResult.Ok("snapshot"));
+        }, time, global: 1);
+        await first.InitializeAsync();
+
+        Assert.Equal(TrackingControlOutcome.Accepted, await first.PauseAsync("g", "c"));
+        Assert.Equal(TrackingControlOutcome.AlreadyPaused, await first.PauseAsync("g", "c"));
+        Assert.Equal(0, await first.RunDueOnceAsync());
+
+        var restarted = Scheduler(store, (_, _) =>
+        {
+            executions++;
+            return Task.FromResult(RoomPollResult.Ok("snapshot"));
+        }, time, global: 1);
+        await restarted.InitializeAsync();
+        Assert.True(restarted.GetHealth("g", "c")!.IsPaused);
+        Assert.Equal(0, await restarted.RunDueOnceAsync());
+
+        Assert.Equal(TrackingControlOutcome.Accepted, await restarted.ResumeAsync("g", "c"));
+        Assert.Equal(TrackingControlOutcome.AlreadyRunning, await restarted.ResumeAsync("g", "c"));
+        Assert.Equal(1, await restarted.RunDueOnceAsync());
+        Assert.Equal(1, executions);
+        Assert.False(store.States["g:c"].IsPaused);
+    }
+
+    [Fact]
+    public async Task Forced_sync_cooldown_survives_scheduler_restart()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("c", "https://a.example", T0.AddHours(1))]);
+        var first = Scheduler(store, (_, _) => Task.FromResult(RoomPollResult.Ok()), time, global: 1);
+        await first.InitializeAsync();
+
+        Assert.Equal(TrackingControlOutcome.Accepted, await first.ForceSyncAsync("g", "c"));
+        Assert.Equal(T0, store.States["g:c"].LastForcedSyncAtUtc);
+
+        var restarted = Scheduler(store, (_, _) => Task.FromResult(RoomPollResult.Ok()), time, global: 1);
+        await restarted.InitializeAsync();
+        Assert.Equal(TrackingControlOutcome.RateLimited, await restarted.ForceSyncAsync("g", "c"));
+
+        time.Advance(TimeSpan.FromSeconds(31));
+        Assert.Equal(TrackingControlOutcome.Accepted, await restarted.ForceSyncAsync("g", "c"));
+        Assert.Equal(T0.AddSeconds(31), store.States["g:c"].LastForcedSyncAtUtc);
+    }
+
+    [Fact]
+    public async Task Guild_health_returns_only_rooms_from_the_requested_guild()
+    {
+        var store = new MemoryScheduleStore([
+            Registration("one", "https://a.example", T0),
+            Registration("two", "https://b.example", T0) with
+            {
+                Definition = Registration("two", "https://b.example", T0).Definition with { GuildId = "other" }
+            }
+        ]);
+        var scheduler = Scheduler(store, (_, _) => Task.FromResult(RoomPollResult.Ok()), new ManualTimeProvider(T0));
+        await scheduler.InitializeAsync();
+
+        var health = Assert.Single(scheduler.GetGuildHealth("g"));
+        Assert.Equal("one", health.ChannelId);
+    }
+
+    [Fact]
     public async Task Open_breaker_delays_other_rooms_on_the_same_origin()
     {
         var time = new ManualTimeProvider(T0);
@@ -333,8 +433,17 @@ public sealed class CentralRoomSchedulerTests
             false,
             "5m",
             "0");
+        await Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = "DROP TABLE RoomPollState;";
+            await command.ExecuteNonQueryAsync();
+            return true;
+        });
         await DBMigration_5.Migrate_5_0_8();
         await DBMigration_5.Migrate_5_0_8();
+        await DBMigration_5.Migrate_5_0_9();
+        await DBMigration_5.Migrate_5_0_9();
         var store = new SqliteRoomScheduleStore(new ManualTimeProvider(T0));
         var state = new RoomScheduleState(
             "g",
@@ -345,7 +454,14 @@ public sealed class CentralRoomSchedulerTests
             2,
             PollFailureKind.Timeout,
             T0.AddMinutes(2),
-            123.5);
+            123.5,
+            true,
+            T0.AddMinutes(-1),
+            T0.AddMinutes(-2),
+            "content-hash",
+            6,
+            TimeSpan.FromMinutes(20).TotalSeconds,
+            T0.AddMinutes(-3));
 
         await store.SaveStateAsync(state, CancellationToken.None);
         var loaded = await store.LoadAsync(CancellationToken.None);

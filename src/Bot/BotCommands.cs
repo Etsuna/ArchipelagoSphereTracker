@@ -293,6 +293,9 @@ public static class BotCommands
             "analyze-spoiler-log" => await SpoilerAnalysisClass.AnalyzeSpoilerLog(command, channelId, guildId, alias),
             "send-spoiler-log" => await SpoilerLogClass.SendSpoilerLog(command, channelId),
             "status-games-list" => await HelperClass.StatusGameList(channelId, guildId),
+            "ast-health" => TrackingControlCommands.GetGuildHealth(guildId),
+            "ast-room-health" or "ast-sync-now" or "ast-pause" or "ast-resume"
+                => await TrackingControlCommands.ExecuteRoomAsync(command.CommandName, guildId, channelId),
             "info" => await HelperClass.Info(channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, user, channelId, guildId),
             "ast-user-portal" => await WebPortalLinkAsync(command, channelId, guildId, command.User.Id.ToString()),
@@ -311,6 +314,7 @@ public static class BotCommands
         return command.CommandName switch
         {
             "add-url" => await UrlClass.AddUrl(command, user, channelId, guildId, (ITextChannel)command.Channel),
+            "ast-health" => TrackingControlCommands.GetGuildHealth(guildId),
             "ast-portal" => await WebPortalCommandsLinkAsync(command, guildId, channelId, command.User.Id.ToString()),
             "list-yamls" => YamlClass.ListYamls(channelId),
             "backup-yamls" => await YamlClass.BackupYamls(command, channelId),
