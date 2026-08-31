@@ -4,7 +4,7 @@
 
 ## Goal
 
-AST currently registers 47 slash commands: 35 general commands and 12 additional commands in Archipelago mode. PR 9 replaces the entire public command surface with one parameterless command:
+AST currently registers 47 slash commands: 35 general commands and 12 additional commands in Archipelago mode. PR 9 replaces the entire public command surface with one command, with an optional attachment for imports:
 
 ```text
 /ast
@@ -68,7 +68,7 @@ In a regular guild channel it displays accessible rooms, room setup, global heal
 | `hint-for-receiver` | My space → Hints → Received by slot | selector + pagination | Member |
 | `list-items` | My space → Items | selector, filters and pagination | Member |
 | `analyze-spoiler-log` | Manage → Spoiler → Analyze | guided analysis form | Room manager |
-| `send-spoiler-log` | Manage → Spoiler → Upload | secure private portal upload | Room manager |
+| `send-spoiler-log` | `/ast file:<spoiler.txt>` | native Discord attachment | Room manager |
 | `apworlds-info` | Help → APWorlds | private information view | Member |
 | `discord` | Help → Community | link button | Member |
 | `excluded-item` | My space → Exclusions → Add | own-slot and item selectors | Member, own data only |
@@ -89,9 +89,9 @@ In a regular guild channel it displays accessible rooms, room setup, global heal
 | `download-template` | Administration → YAML → Templates | selector + private download | Guild manager |
 | `delete-yaml` | Administration → YAML → Delete | selector + confirmation | Guild manager |
 | `clean-yamls` | Administration → YAML → Delete all | strong confirmation | Guild manager |
-| `send-yaml` | Administration → YAML → Upload | secure private portal upload | Guild manager |
-| `generate-with-zip` | Administration → Generation → ZIP | private upload + balancing choice | Guild manager |
-| `send-apworld` | Administration → APWorld → Upload | secure private portal upload | Instance owner |
+| `send-yaml` | `/ast file:<players.yaml>` | native Discord attachment | Guild manager |
+| `generate-with-zip` | `/ast file:<players.zip>` | native attachment + balancing choice | Guild manager |
+| `send-apworld` | `/ast file:<world.apworld>` | native Discord attachment | Instance owner |
 | `generate` | Administration → Generation → Run | confirmation + balancing choice | Guild manager |
 | `test-generate` | Administration → Generation → Test | confirmation | Guild manager |
 
@@ -99,7 +99,7 @@ Personal exclusions are deliberately reclassified: storage is already user-scope
 
 ## Private uploads
 
-Buttons and text modals do not carry the attachment options used by the legacy commands in Discord.Net 3.18. Upload buttons therefore issue short-lived, scoped Web-portal links. The token is bound to the actor, guild, room and upload type. Existing quarantine, size, extension and content checks remain mandatory. YAML, APWorld and generation ZIP uploads already exist in the portal; spoiler-log upload is added to the same mechanism. If the portal is disabled, uploads are reported as unavailable rather than requesting files in a public channel.
+Discord buttons and modals cannot request attachments, so the single `/ast` command keeps an optional `file` parameter. Its extension routes the upload to YAML, generation ZIP, APWorld or spoiler-log handling. Authorization runs before processing, and existing size, quarantine, extension and content validation remains mandatory. The response is ephemeral and no sensitive file is requested in a public message. Explicit Web-portal buttons remain available as a parallel system, but Discord imports do not depend on the portal.
 
 ## Session and security model
 
@@ -121,7 +121,7 @@ Bulk command overwrite removes all 47 legacy Discord entries during deployment. 
 
 ## Accepted product decisions
 
-1. The secure private portal is the only upload path for YAML, ZIP, APWorld and spoiler logs.
+1. `/ast file:` is the native Discord upload path for YAML, ZIP, APWorld and spoiler logs; the private portal remains an explicit parallel path.
 2. Members may download patches only for their associated slots; room managers may access every room slot.
 3. Members see room slots, their own Discord association and public game data. The complete Discord-to-slot mapping is manager-only.
 4. Recap cleanup remains under an Advanced section with confirmation.

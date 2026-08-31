@@ -236,6 +236,57 @@ public sealed class AstUiSessionStore
 public static class AstCommandCenter
 {
     public const string CustomIdPrefix = "astui";
+    public static IReadOnlyDictionary<string, string> LegacyCommandCoverage { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["get-aliases"] = "room-associations",
+            ["add-alias"] = "personal-slots",
+            ["delete-alias"] = "personal-slots",
+            ["update-frequency-check"] = "manage-polling",
+            ["add-url"] = "admin-setup",
+            ["ast-setup"] = "admin-setup",
+            ["update-silent-option"] = "manage-more",
+            ["delete-url"] = "manage-more",
+            ["status-games-list"] = "room-games",
+            ["ast-health"] = "guild-health",
+            ["ast-room-health"] = "room",
+            ["ast-sync-now"] = "sync-now",
+            ["ast-pause"] = "pause",
+            ["ast-resume"] = "resume",
+            ["ast-polling"] = "manage-polling",
+            ["info"] = "room-info",
+            ["get-patch"] = "personal-patch",
+            ["recap-all"] = "personal-recap",
+            ["recap"] = "personal-recap",
+            ["recap-and-clean"] = "personal-advanced",
+            ["clean"] = "personal-advanced",
+            ["clean-all"] = "personal-advanced",
+            ["hint-from-finder"] = "personal-hints",
+            ["hint-for-receiver"] = "personal-hints",
+            ["list-items"] = "personal-items",
+            ["analyze-spoiler-log"] = "manage-spoiler",
+            ["send-spoiler-log"] = "ast-file",
+            ["apworlds-info"] = "help",
+            ["ast-user-portal"] = "personal-portal",
+            ["ast-room-portal"] = "room-portal",
+            ["ast-portal"] = "admin-portal",
+            ["discord"] = "help",
+            ["excluded-item"] = "personal-exclusions",
+            ["excluded-item-list"] = "personal-exclusions",
+            ["delete-excluded-item"] = "personal-exclusions",
+            ["list-yamls"] = "yaml-list",
+            ["list-apworld"] = "apworld-list",
+            ["backup-yamls"] = "yaml-backup",
+            ["backup-apworld"] = "apworld-backup",
+            ["download-template"] = "yaml-template-download",
+            ["delete-yaml"] = "yaml-delete-select",
+            ["clean-yamls"] = "yaml-clean-request",
+            ["send-yaml"] = "ast-file",
+            ["generate-with-zip"] = "ast-file",
+            ["send-apworld"] = "ast-file",
+            ["generate"] = "generation-run",
+            ["test-generate"] = "generation-test"
+        };
     private const string SpoilerAliasInputId = "ast-spoiler-alias";
     private const string SpoilerSphereInputId = "ast-spoiler-sphere";
     private const string SpoilerValidateInputId = "ast-spoiler-validate";
@@ -366,6 +417,67 @@ public static class AstCommandCenter
                     return;
                 }
                 await AstSetupWizard.StartFromCommandCenterAsync(component).ConfigureAwait(false);
+                return;
+            }
+
+            if (action is "personal-portal-revoke-request" or "room-portal-revoke-request" or "admin-portal-revoke-request" or
+                "confirm-portal-revoke" or "cancel-portal-revoke")
+            {
+                if (action.EndsWith("-request", StringComparison.Ordinal))
+                {
+                    var pending = action switch
+                    {
+                        "personal-portal-revoke-request" => "revoke-personal-portal",
+                        "room-portal-revoke-request" => "revoke-room-portal",
+                        _ => "revoke-admin-portal"
+                    };
+                    var required = pending switch
+                    {
+                        "revoke-room-portal" => AstAuthorizationLevel.RoomManager,
+                        "revoke-admin-portal" => AstAuthorizationLevel.GuildManager,
+                        _ => AstAuthorizationLevel.GuildMember
+                    };
+                    if (!AstAuthorizationService.IsAllowed(required, authorization))
+                    {
+                        await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                        return;
+                    }
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, pending, null, out session);
+                    await SetViewAsync(component, await RenderAsync(session, authorization).ConfigureAwait(false)).ConfigureAwait(false);
+                    return;
+                }
+                if (action == "cancel-portal-revoke")
+                {
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                    await SetViewAsync(component, await RenderAsync(session, authorization).ConfigureAwait(false)).ConfigureAwait(false);
+                    return;
+                }
+                var requiredLevel = session.PendingAction switch
+                {
+                    "revoke-room-portal" => AstAuthorizationLevel.RoomManager,
+                    "revoke-admin-portal" => AstAuthorizationLevel.GuildManager,
+                    "revoke-personal-portal" => AstAuthorizationLevel.GuildMember,
+                    _ => (AstAuthorizationLevel?)null
+                };
+                var portalChannel = session.PendingAction == "revoke-admin-portal"
+                    ? session.SourceChannelId
+                    : session.RoomChannelId;
+                if (requiredLevel == null || portalChannel == null || !AstAuthorizationService.IsAllowed(requiredLevel.Value, authorization))
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                await PortalAccessCommands.RevokePortalTokenAsync(
+                    guildId.ToString(CultureInfo.InvariantCulture), portalChannel.Value.ToString(CultureInfo.InvariantCulture),
+                    component.User.Id.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+                Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                var portalView = await RenderAsync(session, authorization).ConfigureAwait(false);
+                await component.ModifyOriginalResponseAsync(p =>
+                {
+                    p.Content = IsFrench ? "Le lien du portail a été révoqué." : "The portal link was revoked.";
+                    p.Embed = portalView.Embed;
+                    p.Components = portalView.Components;
+                }).ConfigureAwait(false);
                 return;
             }
 
@@ -1044,7 +1156,9 @@ public static class AstCommandCenter
     }
 
     private static AstUiView RenderPersonal(AstUiSession session)
-        => Screen(session,
+    {
+        if (session.PendingAction == "revoke-personal-portal") return PortalRevokeConfirmation(session);
+        return Screen(session,
             IsFrench ? "👤 Mon espace" : "👤 My space",
             IsFrench ? "Vos données et préférences personnelles." : "Your personal data and preferences.",
             [(IsFrench ? "Mes slots" : "My slots", "personal-slots"),
@@ -1054,7 +1168,9 @@ public static class AstCommandCenter
              (IsFrench ? "Mon patch" : "My patch", "personal-patch"),
              (IsFrench ? "Mes exclusions" : "My exclusions", "personal-exclusions"),
              (IsFrench ? "Mon portail" : "My portal", "personal-portal"),
+             (IsFrench ? "Révoquer portail" : "Revoke portal", "personal-portal-revoke-request"),
              (IsFrench ? "Avancé" : "Advanced", "personal-advanced")]);
+    }
 
     private static async Task<AstUiView> RenderRoomAsync(AstUiSession session, string? roomName)
     {
@@ -1082,11 +1198,13 @@ public static class AstCommandCenter
 
     private static AstUiView RenderAdministration(AstUiSession session, AstAuthorizationContext authorization)
     {
+        if (session.PendingAction == "revoke-admin-portal") return PortalRevokeConfirmation(session);
         var actions = new List<(string, string)>
         {
             (IsFrench ? "Configurer une room" : "Configure room", "admin-setup"),
             (IsFrench ? "Santé AST" : "AST health", "guild-health"),
-            (IsFrench ? "Portail" : "Portal", "admin-portal")
+            (IsFrench ? "Portail" : "Portal", "admin-portal"),
+            (IsFrench ? "Révoquer portail" : "Revoke portal", "admin-portal-revoke-request")
         };
         if (Declare.IsArchipelagoMode)
         {
@@ -1139,6 +1257,7 @@ public static class AstCommandCenter
 
     private static AstUiView RenderManageMore(AstUiSession session)
     {
+        if (session.PendingAction == "revoke-room-portal") return PortalRevokeConfirmation(session);
         if (session.PendingAction == "delete-room")
         {
             var confirmation = new ComponentBuilder()
@@ -1157,6 +1276,7 @@ public static class AstCommandCenter
         var components = new ComponentBuilder()
             .WithButton(IsFrench ? "Analyser le spoiler" : "Analyze spoiler", Id(session, "manage-spoiler"), ButtonStyle.Primary, row: 0)
             .WithButton(IsFrench ? "Portail de la room" : "Room portal", Id(session, "room-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(IsFrench ? "Révoquer portail" : "Revoke portal", Id(session, "room-portal-revoke-request"), ButtonStyle.Secondary, row: 0)
             .WithButton(IsFrench ? "Supprimer la room" : "Delete room", Id(session, "delete-room-request"), ButtonStyle.Danger, row: 0)
             .WithButton(IsFrench ? "Retour" : "Back", Id(session, "manage"), ButtonStyle.Primary, row: 0)
             .WithSelectMenu(notifications, row: 1)
@@ -1654,6 +1774,17 @@ public static class AstCommandCenter
             .AddTextInput(sphere, row: 1)
             .AddTextInput(validate, row: 2)
             .Build();
+    }
+
+    private static AstUiView PortalRevokeConfirmation(AstUiSession session)
+    {
+        var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Révoquer le lien" : "Revoke link", Id(session, "confirm-portal-revoke"), ButtonStyle.Danger)
+            .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-portal-revoke"), ButtonStyle.Secondary)
+            .Build();
+        return new AstUiView(null, BaseEmbed("⚠️ " + (IsFrench ? "Révoquer le portail" : "Revoke portal"),
+            IsFrench ? "Les URL précédemment émises pour ce contexte cesseront immédiatement de fonctionner."
+                : "Previously issued URLs for this context will immediately stop working.").Build(), components);
     }
 
     private static bool TryOptionalNonNegativeInt(string? value, out int? parsed)

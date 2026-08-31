@@ -6,7 +6,7 @@
 
 AST expose actuellement 47 commandes slash : 35 commandes générales et 12 commandes supplémentaires en mode Archipelago. Cette surface est difficile à découvrir, encombre le sélecteur Discord et oblige les utilisateurs à connaître les noms et paramètres techniques.
 
-La PR 9 remplace toutes les commandes slash publiques par une seule commande sans paramètre :
+La PR 9 remplace toutes les commandes slash publiques par une seule commande, avec une pièce jointe facultative pour les imports :
 
 ```text
 /ast
@@ -136,7 +136,7 @@ Les fonctions YAML, génération et APWorld ne sont visibles que lorsque `Declar
 | `hint-for-receiver` | Mon espace → Mes hints → Reçus par mon slot | sélecteur + pagination | GuildMember |
 | `list-items` | Mon espace → Mes objets | sélecteur + filtres + pagination | GuildMember |
 | `analyze-spoiler-log` | Gérer la room → Spoiler → Analyser | assistant : slot, sphère, mode, masquage et validation | RoomManager |
-| `send-spoiler-log` | Gérer la room → Spoiler → Importer | dépôt privé via portail sécurisé | RoomManager |
+| `send-spoiler-log` | `/ast file:<spoiler.txt>` | pièce jointe privée contrôlée par Discord | RoomManager |
 | `apworlds-info` | Aide et liens → APWorlds | vue directe | GuildMember |
 | `discord` | Aide et liens → Communauté Discord | lien direct | GuildMember |
 | `excluded-item` | Mon espace → Mes exclusions → Ajouter | sélecteur slot puis objet | GuildMember sur ses propres données |
@@ -159,23 +159,15 @@ La matrice corrige une incohérence actuelle : les exclusions sont stockées ave
 | `download-template` | Administration → YAML → Modèles | sélecteur paginé puis téléchargement privé | GuildManager |
 | `delete-yaml` | Administration → YAML → Supprimer | sélecteur + confirmation | GuildManager |
 | `clean-yamls` | Administration → YAML → Tout supprimer | confirmation forte | GuildManager |
-| `send-yaml` | Administration → YAML → Importer | dépôt privé via portail sécurisé | GuildManager |
-| `generate-with-zip` | Administration → Génération → Depuis un ZIP | dépôt privé + choix de balancing | GuildManager |
-| `send-apworld` | Administration → APWorld → Importer | dépôt privé via portail sécurisé | InstanceOwner |
+| `send-yaml` | `/ast file:<players.yaml>` | pièce jointe Discord native | GuildManager |
+| `generate-with-zip` | `/ast file:<players.zip>` | pièce jointe native + option de balancing | GuildManager |
+| `send-apworld` | `/ast file:<world.apworld>` | pièce jointe Discord native | InstanceOwner |
 | `generate` | Administration → Génération → Lancer | confirmation + choix de balancing | GuildManager |
 | `test-generate` | Administration → Génération → Tester | confirmation | GuildManager |
 
 ## 6. Import de fichiers
 
-Les commandes slash actuelles transportent directement une pièce jointe. Un bouton ou une modale textuelle ne fournit pas cette pièce jointe avec Discord.Net 3.18. La solution proposée est donc :
-
-1. l’utilisateur clique sur `Importer` dans son interface éphémère ;
-2. AST crée un jeton privé, à usage limité, lié à l’utilisateur, au serveur, à la room et au type de fichier ;
-3. le bouton ouvre une page d’import du portail Web ;
-4. le serveur réutilise la quarantaine, les limites de taille, les extensions autorisées et les validations de contenu existantes ;
-5. le résultat est visible dans l’interface privée ou lors de son actualisation.
-
-Le portail sait déjà importer YAML, APWorld et ZIP de génération. La PR 9 doit ajouter le spoiler log au même mécanisme. Si le portail Web est désactivé, AST affiche que l’import est indisponible ; aucune pièce jointe sensible ne doit être demandée dans un salon public.
+Discord ne permet pas à un bouton ou à une modale de demander une pièce jointe. L’unique commande `/ast` conserve donc une option facultative `file`. Le type de fichier détermine l’action : YAML, ZIP de génération, APWorld ou spoiler log. Les permissions sont contrôlées avant traitement, puis les limites de taille, la quarantaine, l’extension et le contenu sont validés comme auparavant. Le résultat est une réponse éphémère ; aucun fichier sensible n’est demandé dans un message public. Le portail reste disponible séparément via ses boutons explicites, mais il n’est pas requis pour les imports Discord.
 
 ## 7. Navigation et état de session
 
@@ -236,7 +228,7 @@ L’ancienne logique de dispatch par grand `switch` sur `CommandName` est suppri
 
 ## 12. Décisions produit validées
 
-1. **Imports** : le portail privé sécurisé est la méthode unique pour YAML, ZIP, APWorld et spoiler log.
+1. **Imports** : `/ast file:` est la méthode Discord native pour YAML, ZIP, APWorld et spoiler log ; le portail privé reste une méthode parallèle explicite.
 2. **Patches** : un joueur accède uniquement aux patches de ses propres slots ; les gestionnaires peuvent accéder à tous les slots de la room.
 3. **Associations visibles** : les membres voient les slots de la room, leur propre association Discord et les données de jeu publiques. La correspondance Discord ↔ slot complète est réservée aux gestionnaires.
 4. **Nettoyage des récaps** : les actions sont conservées dans une section avancée et protégées par confirmation.

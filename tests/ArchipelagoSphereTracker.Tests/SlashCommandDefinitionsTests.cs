@@ -1,4 +1,3 @@
-using ArchipelagoSphereTracker.src.Resources;
 using Discord;
 using System;
 using System.Collections.Generic;
@@ -7,133 +6,52 @@ using Xunit;
 
 public class SlashCommandDefinitionsTests
 {
-    [Fact]
-    public void GetAll_ReturnsBaseCommandsWithExpectedOptions()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GetAll_publishes_only_the_unified_ast_command(bool archipelagoMode)
     {
-        Declare.IsArchipelagoMode = false;
-        var commands = SlashCommandDefinitions.GetAll().ToList();
+        Declare.IsArchipelagoMode = archipelagoMode;
 
-        var names = commands.Select(c => c.Name).ToList();
-        var expected = new List<string>
-        {
-            "ast",
-            "get-aliases",
-            "add-alias",
-            "delete-alias",
-            "update-frequency-check",
-            "add-url",
-            "ast-setup",
-            "update-silent-option",
-            "delete-url",
-            "status-games-list",
-            "ast-health",
-            "ast-room-health",
-            "ast-sync-now",
-            "ast-pause",
-            "ast-resume",
-            "ast-polling",
-            "info",
-            "get-patch",
-            "recap-all",
-            "recap",
-            "recap-and-clean",
-            "clean",
-            "clean-all",
-            "hint-from-finder",
-            "hint-for-receiver",
-            "list-items",
-            "analyze-spoiler-log",
-            "send-spoiler-log",
-            "apworlds-info",
-            "ast-user-portal",
-            "ast-room-portal",
-            "ast-portal",
-            "discord",
-            "excluded-item",
-            "excluded-item-list",
-            "delete-excluded-item"
-        };
+        var command = Assert.Single(SlashCommandDefinitions.GetAll());
 
-        Assert.Equal(expected.OrderBy(n => n), names.OrderBy(n => n));
-        Assert.Equal(names.Count, names.Distinct(StringComparer.Ordinal).Count());
-        Assert.All(commands, command => Assert.False(string.IsNullOrWhiteSpace(command.Description)));
-
-        AssertCommandOption(commands, "add-alias", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "delete-alias", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "add-url", "url", ApplicationCommandOptionType.String, required: true, autocomplete: false);
-        AssertCommandOption(commands, "add-url", "auto-add-members", ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
-        Assert.Null(commands.Single(command => command.Name == "ast-setup").Options);
-        AssertCommandOption(commands, "ast", "file", ApplicationCommandOptionType.Attachment, required: false, autocomplete: false);
-        AssertCommandOption(commands, "get-patch", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "recap", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "recap-and-clean", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "clean", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "hint-from-finder", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "hint-for-receiver", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "list-items", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "analyze-spoiler-log", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "analyze-spoiler-log", "sphere", ApplicationCommandOptionType.Integer, required: false, autocomplete: false);
-        AssertCommandOption(commands, "analyze-spoiler-log", "missing-mode", ApplicationCommandOptionType.String, required: false, autocomplete: false);
-        AssertCommandOption(commands, "analyze-spoiler-log", "validate-sphere", ApplicationCommandOptionType.Integer, required: false, autocomplete: false);
-        AssertCommandOption(commands, "analyze-spoiler-log", "reset-validation", ApplicationCommandOptionType.Boolean, required: false, autocomplete: false);
-        AssertCommandOption(commands, "send-spoiler-log", "file", ApplicationCommandOptionType.Attachment, required: true, autocomplete: false);
-        AssertCommandOption(commands, "excluded-item", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "excluded-item", "items", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "delete-excluded-item", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "delete-excluded-item", "delete-items", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "ast-polling", "mode", ApplicationCommandOptionType.String, required: true, autocomplete: false);
-        AssertCommandOption(commands, "ast-polling", "maximum-frequency", ApplicationCommandOptionType.String, required: true, autocomplete: false);
+        Assert.Equal("ast", command.Name);
+        Assert.False(string.IsNullOrWhiteSpace(command.Description));
+        AssertOption(command, "file", ApplicationCommandOptionType.Attachment);
+        AssertOption(command, "skip-prog-balancing", ApplicationCommandOptionType.Boolean);
     }
 
     [Fact]
-    public void GetAll_IncludesArchipelagoCommandsWhenEnabled()
+    public void Every_removed_slash_command_has_an_ast_destination()
     {
-        Declare.IsArchipelagoMode = true;
-        var commands = SlashCommandDefinitions.GetAll().ToList();
-
-        var names = commands.Select(c => c.Name).ToList();
-        var expected = new HashSet<string>
+        var expected = new HashSet<string>(StringComparer.Ordinal)
         {
-            "list-yamls",
-            "list-apworld",
-            "backup-yamls",
-            "backup-apworld",
-            "download-template",
-            "delete-yaml",
-            "clean-yamls",
-            "send-yaml",
-            "generate-with-zip",
-            "send-apworld",
-            "generate",
-            "test-generate"
+            "get-aliases", "add-alias", "delete-alias", "update-frequency-check", "add-url", "ast-setup",
+            "update-silent-option", "delete-url", "status-games-list", "ast-health", "ast-room-health",
+            "ast-sync-now", "ast-pause", "ast-resume", "ast-polling", "info", "get-patch", "recap-all",
+            "recap", "recap-and-clean", "clean", "clean-all", "hint-from-finder", "hint-for-receiver",
+            "list-items", "analyze-spoiler-log", "send-spoiler-log", "apworlds-info", "ast-user-portal",
+            "ast-room-portal", "ast-portal", "discord", "excluded-item", "excluded-item-list",
+            "delete-excluded-item", "list-yamls", "list-apworld", "backup-yamls", "backup-apworld",
+            "download-template", "delete-yaml", "clean-yamls", "send-yaml", "generate-with-zip",
+            "send-apworld", "generate", "test-generate"
         };
 
-        foreach (var name in expected)
-        {
-            Assert.Contains(name, names);
-        }
-
-        AssertCommandOption(commands, "download-template", "template", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "delete-yaml", "yamlfile", ApplicationCommandOptionType.String, required: true, autocomplete: true);
-        AssertCommandOption(commands, "send-yaml", "file", ApplicationCommandOptionType.Attachment, required: true, autocomplete: false);
-        AssertCommandOption(commands, "generate-with-zip", "file", ApplicationCommandOptionType.Attachment, required: true, autocomplete: false);
-        AssertCommandOption(commands, "send-apworld", "file", ApplicationCommandOptionType.Attachment, required: true, autocomplete: false);
+        Assert.Equal(expected.Count, AstCommandCenter.LegacyCommandCoverage.Count);
+        Assert.True(expected.SetEquals(AstCommandCenter.LegacyCommandCoverage.Keys));
+        Assert.All(AstCommandCenter.LegacyCommandCoverage.Values, destination =>
+            Assert.False(string.IsNullOrWhiteSpace(destination)));
     }
 
-    private static void AssertCommandOption(
-        IEnumerable<SlashCommandBuilder> commands,
-        string commandName,
+    private static void AssertOption(
+        SlashCommandBuilder command,
         string optionName,
-        ApplicationCommandOptionType optionType,
-        bool required,
-        bool autocomplete)
+        ApplicationCommandOptionType optionType)
     {
-        var command = commands.Single(c => c.Name == commandName);
-        var option = command.Options.Single(o => o.Name == optionName);
-
+        var option = command.Options.Single(candidate => candidate.Name == optionName);
         Assert.Equal(optionType, option.Type);
-        Assert.Equal(required, option.IsRequired);
-        Assert.Equal(autocomplete, option.IsAutocomplete);
+        Assert.False(option.IsRequired);
+        Assert.False(option.IsAutocomplete);
         Assert.False(string.IsNullOrWhiteSpace(option.Description));
     }
 }
