@@ -385,6 +385,7 @@ public static class AstCommandCenter
              (IsFrench ? "Mes objets" : "My items", "personal-items"),
              ("Hints", "personal-hints"),
              (IsFrench ? "Mon récap" : "My recap", "personal-recap"),
+             (IsFrench ? "Mon patch" : "My patch", "personal-patch"),
              (IsFrench ? "Avancé" : "Advanced", "personal-advanced")]);
 
     private static async Task<AstUiView> RenderRoomAsync(AstUiSession session, string? roomName)
@@ -423,6 +424,8 @@ public static class AstCommandCenter
         {
             actions.Add(("YAML", "admin-yaml"));
             actions.Add((IsFrench ? "Génération" : "Generation", "admin-generation"));
+            if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization))
+                actions.Add(("APWorld", "admin-apworld"));
         }
         return Screen(session,
             IsFrench ? "🛠️ Administration AST" : "🛠️ AST administration",
@@ -466,7 +469,7 @@ public static class AstCommandCenter
                 ? TrackingControlCommands.GetGuildHealth(guildId)
                 : AstAuthorizationService.DeniedMessage;
         }
-        if (action is "admin-portal" or "admin-yaml" or "admin-generation")
+        if (action is "admin-portal" or "admin-yaml" or "admin-generation" or "admin-apworld")
         {
             if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
                 return AstAuthorizationService.DeniedMessage;
@@ -497,6 +500,7 @@ public static class AstCommandCenter
             "personal-slots" => await WithUserPortalAsync(await BuildPersonalSlotsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false), guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-items" or "personal-recap" => await WithUserPortalAsync(await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false), guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-hints" => await WithUserPortalAsync(await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false), guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-patch" => await BuildPersonalPatchesAsync(guildId, channelId, session.OwnerUserId, authorization).ConfigureAwait(false),
             "personal-advanced" => await BuildPersonalAdvancedAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "manage-polling" or "manage-more" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await BuildPortalResponseAsync(
@@ -570,6 +574,28 @@ public static class AstCommandCenter
         }
         if (count == 0) output.AppendLine().Append(IsFrench ? "Aucune exclusion personnelle." : "No personal exclusion.");
         return await WithUserPortalAsync(output.ToString(), guildId, channelId, userId).ConfigureAwait(false);
+    }
+
+    private static async Task<string> BuildPersonalPatchesAsync(
+        string guildId,
+        string channelId,
+        ulong userId,
+        AstAuthorizationContext authorization)
+    {
+        var patches = await ChannelsAndUrlsCommands.GetPatchesForChannelAsync(guildId, channelId).ConfigureAwait(false);
+        if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization))
+        {
+            var aliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
+                guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)).Keys
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            patches = patches.Where(patch => aliases.Contains(patch.Alias)).ToList();
+        }
+        if (patches.Count == 0)
+            return IsFrench ? "Aucun patch autorisé n’est disponible pour vos slots." : "No authorized patch is available for your slots.";
+        var output = new System.Text.StringBuilder(IsFrench ? "**Mes patches**" : "**My patches**");
+        foreach (var patch in patches.Take(20))
+            output.AppendLine($"• **{Safe(patch.Alias)}** · {Safe(patch.GameName)}\n  {Safe(patch.Patch)}");
+        return Clamp(output.ToString());
     }
 
     private static async Task<string> WithUserPortalAsync(
