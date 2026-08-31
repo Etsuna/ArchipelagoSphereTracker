@@ -84,9 +84,13 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
                 guildId,
                 channelId,
                 origin,
-                Text(reader, "Tracker"),
+                SensitiveDataProtector.Unprotect(
+                    Text(reader, "Tracker"),
+                    SensitiveDataPurposes.Tracker),
                 baseUrl,
-                Text(reader, "Room"),
+                SensitiveDataProtector.Unprotect(
+                    Text(reader, "Room"),
+                    SensitiveDataPurposes.Room),
                 reader["Silent"] is not DBNull && Convert.ToBoolean(reader["Silent"], CultureInfo.InvariantCulture),
                 Text(reader, "Port", "0"),
                 interval,

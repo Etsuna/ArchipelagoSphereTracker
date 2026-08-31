@@ -110,7 +110,7 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
 
         foreach (var guild in guildList)
         {
-            Console.WriteLine($"Migrate Guild: {guild.GuildId}, Channel: {guild.ChannelId}, Room: {guild.Room}");
+            Console.WriteLine($"Migrate Guild: {guild.GuildId}, Channel: {guild.ChannelId}");
 
             var roomInfo = await UrlClass.RoomInfo(guild.BaseUrl, guild.Room);
             if (roomInfo == null)
@@ -477,6 +477,11 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
         try
         {
             await using var conn = await Db.OpenWriteAsync();
+            using (var secureDelete = conn.CreateCommand())
+            {
+                secureDelete.CommandText = "PRAGMA secure_delete=ON;";
+                await secureDelete.ExecuteNonQueryAsync(ct);
+            }
             using var transaction = conn.BeginTransaction();
             try
             {
@@ -745,6 +750,107 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
                 transaction.Rollback();
                 throw;
             }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
+
+    public static async Task Migrate_5_0_11(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.11: encrypted WebHost identifiers and patch links.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                await SensitiveDataProtectionStore.EnsureReadyAsync(conn, transaction, ct);
+
+                var channels = new List<(long Id, string Room, string Tracker)>();
+                using (var readChannels = conn.CreateCommand())
+                {
+                    readChannels.Transaction = transaction;
+                    readChannels.CommandText = "SELECT Id, Room, Tracker FROM ChannelsAndUrlsTable;";
+                    using var reader = await readChannels.ExecuteReaderAsync(ct);
+                    while (await reader.ReadAsync(ct))
+                    {
+                        channels.Add((
+                            Convert.ToInt64(reader["Id"]),
+                            reader["Room"]?.ToString() ?? string.Empty,
+                            reader["Tracker"]?.ToString() ?? string.Empty));
+                    }
+                }
+
+                using (var update = conn.CreateCommand())
+                {
+                    update.Transaction = transaction;
+                    update.CommandText = @"
+                        UPDATE ChannelsAndUrlsTable
+                        SET Room = @Room, Tracker = @Tracker
+                        WHERE Id = @Id;";
+                    var roomParameter = update.Parameters.Add("@Room", System.Data.DbType.String);
+                    var trackerParameter = update.Parameters.Add("@Tracker", System.Data.DbType.String);
+                    var idParameter = update.Parameters.Add("@Id", System.Data.DbType.Int64);
+                    update.Prepare();
+                    foreach (var channel in channels)
+                    {
+                        roomParameter.Value = SensitiveDataProtector.Protect(
+                            channel.Room,
+                            SensitiveDataPurposes.Room);
+                        trackerParameter.Value = SensitiveDataProtector.Protect(
+                            channel.Tracker,
+                            SensitiveDataPurposes.Tracker);
+                        idParameter.Value = channel.Id;
+                        await update.ExecuteNonQueryAsync(ct);
+                    }
+                }
+
+                var patches = new List<(long Id, string Patch)>();
+                using (var readPatches = conn.CreateCommand())
+                {
+                    readPatches.Transaction = transaction;
+                    readPatches.CommandText = "SELECT Id, Patch FROM UrlAndChannelPatchTable;";
+                    using var reader = await readPatches.ExecuteReaderAsync(ct);
+                    while (await reader.ReadAsync(ct))
+                    {
+                        patches.Add((
+                            Convert.ToInt64(reader["Id"]),
+                            reader["Patch"]?.ToString() ?? string.Empty));
+                    }
+                }
+
+                using (var update = conn.CreateCommand())
+                {
+                    update.Transaction = transaction;
+                    update.CommandText = "UPDATE UrlAndChannelPatchTable SET Patch = @Patch WHERE Id = @Id;";
+                    var patchParameter = update.Parameters.Add("@Patch", System.Data.DbType.String);
+                    var idParameter = update.Parameters.Add("@Id", System.Data.DbType.Int64);
+                    update.Prepare();
+                    foreach (var patch in patches)
+                    {
+                        patchParameter.Value = SensitiveDataProtector.Protect(
+                            patch.Patch,
+                            SensitiveDataPurposes.Patch);
+                        idParameter.Value = patch.Id;
+                        await update.ExecuteNonQueryAsync(ct);
+                    }
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+
+            using var checkpoint = conn.CreateCommand();
+            checkpoint.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+            await checkpoint.ExecuteNonQueryAsync(ct);
         }
         finally
         {

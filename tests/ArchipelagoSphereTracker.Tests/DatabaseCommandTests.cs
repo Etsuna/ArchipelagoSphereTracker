@@ -38,6 +38,18 @@ public class DatabaseCommandTests
         Assert.Equal("https://example.com", cached.BaseUrl);
         Assert.Equal("alpha", cached.Room);
         Assert.True(cached.Silent);
+
+        await using var connection = await Db.OpenReadAsync();
+        using var command = new SQLiteCommand(@"
+            SELECT Room, Tracker
+            FROM ChannelsAndUrlsTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        Assert.True(SensitiveDataProtector.IsProtected(reader["Room"]?.ToString()));
+        Assert.True(SensitiveDataProtector.IsProtected(reader["Tracker"]?.ToString()));
     }
 
     [Fact]
@@ -70,6 +82,10 @@ public class DatabaseCommandTests
             "Alias (PlayerOne)");
 
         Assert.Equal("GameA : https://example.com/patch", result);
+
+        await using var connection = await Db.OpenReadAsync();
+        using var command = new SQLiteCommand("SELECT Patch FROM UrlAndChannelPatchTable LIMIT 1;", connection);
+        Assert.True(SensitiveDataProtector.IsProtected((await command.ExecuteScalarAsync())?.ToString()));
     }
 
     [Fact]

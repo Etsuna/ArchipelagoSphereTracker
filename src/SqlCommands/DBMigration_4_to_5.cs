@@ -69,7 +69,7 @@ public static class DBMigration
         {
             ct.ThrowIfCancellationRequested();
 
-            Console.WriteLine($"Migrate Guild: {guild.GuildId}, Channel: {guild.ChannelId}, Room: {guild.Room}");
+            Console.WriteLine($"Migrate Guild: {guild.GuildId}, Channel: {guild.ChannelId}");
 
             string guildId = guild.GuildId;
             string channelId = guild.ChannelId;
@@ -163,7 +163,7 @@ public static class DBMigration
                                     PatchLink = baseUrl + download.Download,
                                 };
                                 patchLinkList.Add(patchLink);
-                                Console.WriteLine(string.Format(Resource.UrlGamePatch, patchLink.GameAlias, patchLink.PatchLink));
+                                Console.WriteLine("Patch metadata migrated.");
                             });
                         }
 
@@ -186,7 +186,7 @@ public static class DBMigration
                             Declare.AddedChannelId.Remove(channelId);
                         }
 
-                        Console.WriteLine(string.Format(Resource.URLSet, newUrl));
+                        Console.WriteLine("Archipelago room URL migrated.");
                     }
                 }
             }

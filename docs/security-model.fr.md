@@ -45,3 +45,7 @@ Une instance Archipelago privée peut être autorisée explicitement avec `ARCHI
 Les journaux HTTP n'affichent plus les identifiants de room, de tracker ni les URLs de patch. La métrique `ast_channel_info` n'exporte plus `base_url`, `room`, `tracker` et `port` comme labels.
 
 Les actions sensibles sont inscrites dans `SecurityAuditLogTable` avec date UTC, corrélation, source, auteur Discord, serveur, salon, action et résultat. Aucun argument de commande, token, URL, alias ou nom de fichier n'est enregistré. La rétention est contrôlée par `AUDIT_RETENTION_DAYS`; l'API `/api/portal/{guild}/{channel}/{token}/audit` est réservée aux gestionnaires du serveur.
+
+## Chiffrement au repos
+
+Depuis la migration SQLite `5.0.11`, les identifiants de room, de tracker et les liens de patch sont protégés par des enveloppes AES-256-GCM contextualisées. AST utilise `AST_DATA_PROTECTION_KEY` ou génère `AST.data-protection.key` à côté de la base. Un marqueur chiffré bloque le démarrage si la clé ne correspond plus. Voir [protection des secrets au repos](data-protection-at-rest.fr.md).

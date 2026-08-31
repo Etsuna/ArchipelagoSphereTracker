@@ -39,8 +39,12 @@ public static class ChannelsAndUrlsCommands
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 command.Parameters.AddWithValue("@BaseUrl", new Uri(baseUrl).GetLeftPart(UriPartial.Authority));
-                command.Parameters.AddWithValue("@Room", room);
-                command.Parameters.AddWithValue("@Tracker", tracker ?? DefaultTrackerValue);
+                command.Parameters.AddWithValue(
+                    "@Room",
+                    SensitiveDataProtector.Protect(room, SensitiveDataPurposes.Room));
+                command.Parameters.AddWithValue(
+                    "@Tracker",
+                    SensitiveDataProtector.Protect(tracker ?? DefaultTrackerValue, SensitiveDataPurposes.Tracker));
                 command.Parameters.AddWithValue("@CheckFrequency", string.IsNullOrWhiteSpace(checkFrequency) ? "5m" : checkFrequency);
                 command.Parameters.AddWithValue("@Silent", silent);
                 command.Parameters.AddWithValue("@Port", port ?? "0");
@@ -104,7 +108,9 @@ public static class ChannelsAndUrlsCommands
                 {
                     aliasParam.Value = p.GameAlias ?? string.Empty;
                     gameNameParam.Value = p.GameName ?? string.Empty;
-                    patchParam.Value = p.PatchLink ?? string.Empty;
+                    patchParam.Value = SensitiveDataProtector.Protect(
+                        p.PatchLink ?? string.Empty,
+                        SensitiveDataPurposes.Patch);
                     await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             });
@@ -136,9 +142,13 @@ public static class ChannelsAndUrlsCommands
             using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
-                var tracker = reader["Tracker"]?.ToString() ?? string.Empty;
+                var tracker = SensitiveDataProtector.Unprotect(
+                    reader["Tracker"]?.ToString(),
+                    SensitiveDataPurposes.Tracker);
                 var baseUrl = reader["BaseUrl"]?.ToString() ?? string.Empty;
-                var room = reader["Room"]?.ToString() ?? string.Empty;
+                var room = SensitiveDataProtector.Unprotect(
+                    reader["Room"]?.ToString(),
+                    SensitiveDataPurposes.Room);
                 var silent = reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]);
                 var checkFreq = reader["CheckFrequency"]?.ToString() ?? string.Empty;
                 var port = reader["Port"]?.ToString() ?? "0";
@@ -242,7 +252,9 @@ public static class ChannelsAndUrlsCommands
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var game = reader["GameName"]?.ToString() ?? string.Empty;
-                var patch = reader["Patch"]?.ToString() ?? string.Empty;
+                var patch = SensitiveDataProtector.Unprotect(
+                    reader["Patch"]?.ToString(),
+                    SensitiveDataPurposes.Patch);
                 return $"{game} : {patch}";
             }
 
@@ -286,7 +298,9 @@ public static class ChannelsAndUrlsCommands
             {
                 var alias = reader["Alias"]?.ToString() ?? string.Empty;
                 var gameName = reader["GameName"]?.ToString() ?? string.Empty;
-                var patch = reader["Patch"]?.ToString() ?? string.Empty;
+                var patch = SensitiveDataProtector.Unprotect(
+                    reader["Patch"]?.ToString(),
+                    SensitiveDataPurposes.Patch);
 
                 if (!string.IsNullOrWhiteSpace(alias))
                 {
@@ -344,7 +358,10 @@ public static class ChannelsAndUrlsCommands
 
                 string alias = reader["Alias"]?.ToString() ?? "Inconnu";
                 string gameName = reader["GameName"]?.ToString() ?? "Non spécifié";
-                string patch = reader["Patch"]?.ToString() ?? "Non spécifié";
+                string patch = SensitiveDataProtector.Unprotect(
+                    reader["Patch"]?.ToString(),
+                    SensitiveDataPurposes.Patch);
+                if (string.IsNullOrWhiteSpace(patch)) patch = "Non spécifié";
 
                 string line = "• " + string.Format(
                     Resource.SendAllPatchesForChannelAsyncPathLink, alias, gameName, patch);
@@ -415,9 +432,13 @@ public static class ChannelsAndUrlsCommands
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 return (
-                    reader["Tracker"]?.ToString() ?? string.Empty,
+                    SensitiveDataProtector.Unprotect(
+                        reader["Tracker"]?.ToString(),
+                        SensitiveDataPurposes.Tracker),
                     reader["BaseUrl"]?.ToString() ?? string.Empty,
-                    reader["Room"]?.ToString() ?? string.Empty,
+                    SensitiveDataProtector.Unprotect(
+                        reader["Room"]?.ToString(),
+                        SensitiveDataPurposes.Room),
                     reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]),
                     reader["CheckFrequency"]?.ToString() ?? "5m",
                     reader["LastCheck"] as string,
@@ -742,19 +763,24 @@ public static class ChannelsAndUrlsCommands
 
             using var command = connection.CreateCommand();
             command.CommandText = @"
-            SELECT ChannelId
+            SELECT ChannelId, Room
             FROM ChannelsAndUrlsTable
             WHERE GuildId = @GuildId
               AND BaseUrl = @BaseUrl
-              AND Room    = @Room
-            LIMIT 1;";
+            ORDER BY Id;";
 
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@BaseUrl", new Uri(baseUrl).GetLeftPart(UriPartial.Authority));
-            command.Parameters.AddWithValue("@Room", room);
-
-            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
-            return result?.ToString();
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var storedRoom = SensitiveDataProtector.Unprotect(
+                    reader["Room"]?.ToString(),
+                    SensitiveDataPurposes.Room);
+                if (string.Equals(storedRoom, room, StringComparison.Ordinal))
+                    return reader["ChannelId"]?.ToString();
+            }
+            return null;
         }
         catch (Exception ex)
         {

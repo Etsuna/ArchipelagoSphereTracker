@@ -402,7 +402,7 @@ public static class TrackingDataManager
                                             }
                                             else
                                             {
-                                                Console.WriteLine($"[TDM] Impossible de récupérer les informations de la salle pour {nameForLog} ({cfg.BaseUrl} / {cfg.Room}).");
+                                                Console.WriteLine($"[TDM] Impossible de récupérer les informations de la salle pour {nameForLog}.");
                                             }
 
                                             await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
@@ -414,7 +414,7 @@ public static class TrackingDataManager
                                         }
                                         catch (Exception ex)
                                         {
-                                            Console.WriteLine($"[TDM] Channel processing error for guild {guild} / channel {channel}: {ex}");
+                                            Console.WriteLine($"[TDM] Channel processing error for guild {guild} / channel {channel} ({ex.GetType().Name}).");
                                         }
                                         finally
                                         {
@@ -428,7 +428,7 @@ public static class TrackingDataManager
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine($"[TDM] Guild processing error for {guild}: {ex}");
+                                    Console.WriteLine($"[TDM] Guild processing error for {guild} ({ex.GetType().Name}).");
                                 }
                             });
 
@@ -443,7 +443,7 @@ public static class TrackingDataManager
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[TDM] Tracking loop error: {ex}");
+                        Console.WriteLine($"[TDM] Tracking loop error ({ex.GetType().Name}).");
                         var delay = TimeSpan.FromSeconds(Math.Min(backoffSeconds, 60));
                         backoffSeconds = Math.Min(backoffSeconds * 2, 60);
                         await Task.Delay(delay, token);
@@ -456,7 +456,7 @@ public static class TrackingDataManager
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[TDM] Tracking task crashed: {ex}");
+                Console.WriteLine($"[TDM] Tracking task crashed ({ex.GetType().Name}).");
             }
         }, token);
     }
