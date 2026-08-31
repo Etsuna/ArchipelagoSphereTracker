@@ -7,6 +7,12 @@ public static class SlashCommandDefinitions
     {
         var commands = new List<SlashCommandBuilder>
         {
+            new SlashCommandBuilder()
+                .WithName("ast")
+                .WithDescription(Declare.Language == "fr"
+                    ? "Ouvrir votre centre de commandes AST privé"
+                    : "Open your private AST command center"),
+
             new SlashCommandBuilder().WithName("get-aliases").WithDescription(Resource.SCGetAliasesDescription),
 
             new SlashCommandBuilder()

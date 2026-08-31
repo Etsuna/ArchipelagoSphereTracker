@@ -16,6 +16,7 @@ public class SlashCommandDefinitionsTests
         var names = commands.Select(c => c.Name).ToList();
         var expected = new List<string>
         {
+            "ast",
             "get-aliases",
             "add-alias",
             "delete-alias",

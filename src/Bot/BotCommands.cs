@@ -59,6 +59,7 @@ public static class BotCommands
                 Declare.Client.SlashCommandExecuted += HandleSlashCommandAsync;
                 Declare.Client.AutocompleteExecuted += HandleAutocompleteAsync;
                 Declare.Client.ButtonExecuted += AstSetupWizard.HandleComponentAsync;
+                Declare.Client.ButtonExecuted += AstCommandCenter.HandleButtonAsync;
                 Declare.Client.SelectMenuExecuted += AstSetupWizard.HandleComponentAsync;
                 Declare.Client.ModalSubmitted += AstSetupWizard.HandleModalAsync;
                 _handlersRegistered = true;
@@ -149,6 +150,12 @@ public static class BotCommands
 
     public static async Task HandleSlashCommandAsync(SocketSlashCommand command)
     {
+        if (command.CommandName == "ast")
+        {
+            await AstCommandCenter.StartAsync(command);
+            return;
+        }
+
         if (command.CommandName == "ast-setup")
         {
             await AstSetupWizard.StartAsync(command);
