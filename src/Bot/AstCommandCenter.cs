@@ -476,6 +476,89 @@ public static class AstCommandCenter
                 return;
             }
 
+            if (action is "yaml-backup" or "apworld-backup")
+            {
+                var allowed = action == "yaml-backup"
+                    ? AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization)
+                    : AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization);
+                if (!allowed)
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                var fileName = action == "yaml-backup"
+                    ? $"backup_yaml_{session.SourceChannelId}.zip"
+                    : "backup_apworld.zip";
+                var tempPath = Path.Combine(Path.GetTempPath(), $"ast-{Guid.NewGuid():N}-{fileName}");
+                try
+                {
+                    var error = action == "yaml-backup"
+                        ? await YamlClass.BackupYamlsToFileAsync(session.SourceChannelId.ToString(CultureInfo.InvariantCulture), tempPath).ConfigureAwait(false)
+                        : await ApworldClass.BackupApworldToFileAsync(tempPath).ConfigureAwait(false);
+                    if (!string.IsNullOrWhiteSpace(error) || !File.Exists(tempPath))
+                    {
+                        await SetErrorAsync(component, string.IsNullOrWhiteSpace(error) ? Unavailable() : error).ConfigureAwait(false);
+                        return;
+                    }
+                    await component.FollowupWithFileAsync(tempPath, fileName,
+                        text: IsFrench ? "Sauvegarde privée prête." : "Private backup ready.", ephemeral: true).ConfigureAwait(false);
+                    await SetErrorAsync(component, IsFrench ? "La sauvegarde a été envoyée ci-dessous." : "The backup was sent below.").ConfigureAwait(false);
+                }
+                finally
+                {
+                    if (File.Exists(tempPath)) File.Delete(tempPath);
+                }
+                return;
+            }
+
+            if (action is "yaml-clean-request" or "yaml-confirm-clean" or "yaml-cancel")
+            {
+                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                string? result = null;
+                if (action == "yaml-clean-request")
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "yaml-clean", null, out session);
+                else if (action == "yaml-confirm-clean" && session.PendingAction == "yaml-clean")
+                {
+                    result = YamlClass.CleanYamls(session.SourceChannelId.ToString(CultureInfo.InvariantCulture));
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                }
+                else
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                var yamlView = await RenderYamlAsync(session).ConfigureAwait(false);
+                await component.ModifyOriginalResponseAsync(p =>
+                {
+                    p.Content = string.IsNullOrWhiteSpace(result) ? null : Clamp(result);
+                    p.Embed = yamlView.Embed;
+                    p.Components = yamlView.Components;
+                }).ConfigureAwait(false);
+                return;
+            }
+
+            if (action is "yaml-confirm-delete" or "yaml-cancel-delete")
+            {
+                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                var result = action == "yaml-confirm-delete" && session.PendingAction == "yaml-delete" && session.PendingItem != null
+                    ? YamlClass.DeleteYamlByName(session.SourceChannelId.ToString(CultureInfo.InvariantCulture), session.PendingItem)
+                    : null;
+                Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                var yamlView = await RenderYamlAsync(session).ConfigureAwait(false);
+                await component.ModifyOriginalResponseAsync(p =>
+                {
+                    p.Content = string.IsNullOrWhiteSpace(result) ? null : Clamp(result);
+                    p.Embed = yamlView.Embed;
+                    p.Components = yamlView.Components;
+                }).ConfigureAwait(false);
+                return;
+            }
+
             if (TryScreen(action, out var screen))
             {
                 if (!CanOpen(screen, authorization, session.RoomChannelId != null) ||
@@ -516,7 +599,7 @@ public static class AstCommandCenter
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide"))
+            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide" or "yaml-delete-select" or "yaml-template-download"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
             component.Data.Values.FirstOrDefault() is not { } selected ||
@@ -527,6 +610,41 @@ public static class AstCommandCenter
         }
 
         await component.DeferAsync(ephemeral: true);
+        if (action is "yaml-delete-select" or "yaml-template-download")
+        {
+            var yamlAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildId.ToString(CultureInfo.InvariantCulture), sourceChannelId.ToString(CultureInfo.InvariantCulture),
+                component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+            if (yamlAuthorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, yamlAuthorization))
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+            if (action == "yaml-delete-select")
+            {
+                Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "yaml-delete", null, out session, selected);
+                await SetViewAsync(component, await RenderYamlAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+                return;
+            }
+            var tempPath = Path.Combine(Path.GetTempPath(), $"ast-{Guid.NewGuid():N}-{Path.GetFileName(selected)}");
+            try
+            {
+                var error = YamlClass.DownloadTemplateToFile(selected, tempPath);
+                if (!string.IsNullOrWhiteSpace(error) || !File.Exists(tempPath))
+                {
+                    await SetErrorAsync(component, string.IsNullOrWhiteSpace(error) ? Unavailable() : error).ConfigureAwait(false);
+                    return;
+                }
+                await component.FollowupWithFileAsync(tempPath, Path.GetFileName(selected),
+                    text: IsFrench ? "Modèle YAML privé." : "Private YAML template.", ephemeral: true).ConfigureAwait(false);
+                await SetErrorAsync(component, IsFrench ? "Le modèle a été envoyé ci-dessous." : "The template was sent below.").ConfigureAwait(false);
+            }
+            finally
+            {
+                if (File.Exists(tempPath)) File.Delete(tempPath);
+            }
+            return;
+        }
         if (action is "spoiler-alias" or "spoiler-mode" or "spoiler-hide")
         {
             if (session.RoomChannelId is not { } spoilerRoom)
@@ -796,7 +914,7 @@ public static class AstCommandCenter
             AstUiScreen.Help => RenderHelp(session),
             AstUiScreen.Polling => RenderPolling(session),
             AstUiScreen.ManageMore => RenderManageMore(session),
-            AstUiScreen.Yaml => RenderYaml(session),
+            AstUiScreen.Yaml => await RenderYamlAsync(session).ConfigureAwait(false),
             AstUiScreen.Generation => RenderGeneration(session),
             AstUiScreen.Apworld => RenderApworld(session),
             AstUiScreen.Slots => await RenderSlotsAsync(session).ConfigureAwait(false),
@@ -1028,9 +1146,57 @@ public static class AstCommandCenter
         return new AstUiView(null, BaseEmbed(IsFrench ? "🔎 Analyse du spoiler" : "🔎 Spoiler analysis", description).Build(), components.Build());
     }
 
-    private static AstUiView RenderYaml(AstUiSession session)
-        => Screen(session, "YAML", IsFrench ? "Gestion Discord native des fichiers YAML." : "Native Discord YAML management.",
-            [(IsFrench ? "Lister" : "List", "yaml-list"), (IsFrench ? "Portail" : "Portal", "admin-portal")]);
+    private static Task<AstUiView> RenderYamlAsync(AstUiSession session)
+    {
+        if (session.PendingAction == "yaml-clean")
+        {
+            var confirmation = new ComponentBuilder()
+                .WithButton(IsFrench ? "Tout supprimer" : "Delete all", Id(session, "yaml-confirm-clean"), ButtonStyle.Danger)
+                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "yaml-cancel"), ButtonStyle.Secondary)
+                .Build();
+            return Task.FromResult(new AstUiView(null, BaseEmbed("⚠️ " + (IsFrench ? "Nettoyer les YAML" : "Clean YAML files"),
+                IsFrench ? "Tous les YAML et les données de génération de ce salon seront supprimés."
+                    : "All YAML files and generation data for this channel will be deleted.").Build(), confirmation));
+        }
+        if (session.PendingAction == "yaml-delete" && session.PendingItem != null)
+        {
+            var confirmation = new ComponentBuilder()
+                .WithButton(IsFrench ? "Supprimer" : "Delete", Id(session, "yaml-confirm-delete"), ButtonStyle.Danger)
+                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "yaml-cancel-delete"), ButtonStyle.Secondary)
+                .Build();
+            return Task.FromResult(new AstUiView(null, BaseEmbed("⚠️ " + (IsFrench ? "Supprimer un YAML" : "Delete YAML"),
+                IsFrench ? $"Confirmer la suppression de **{Safe(session.PendingItem)}** ?"
+                    : $"Confirm deletion of **{Safe(session.PendingItem)}**?").Build(), confirmation));
+        }
+
+        var channelId = session.SourceChannelId.ToString(CultureInfo.InvariantCulture);
+        var yamls = YamlClass.GetYamlFileNames(channelId);
+        var templates = YamlClass.GetTemplateFileNames();
+        var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Lister" : "List", Id(session, "yaml-list"), ButtonStyle.Primary, row: 0)
+            .WithButton(IsFrench ? "Sauvegarder" : "Backup", Id(session, "yaml-backup"), ButtonStyle.Success, row: 0)
+            .WithButton(IsFrench ? "Tout nettoyer" : "Clean all", Id(session, "yaml-clean-request"), ButtonStyle.Danger, row: 0)
+            .WithButton(IsFrench ? "Portail" : "Portal", Id(session, "admin-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "admin"), ButtonStyle.Secondary, row: 0);
+        if (yamls.Count > 0)
+        {
+            var delete = new SelectMenuBuilder().WithCustomId(Id(session, "yaml-delete-select"))
+                .WithPlaceholder(IsFrench ? "Supprimer un YAML…" : "Delete a YAML…");
+            foreach (var file in yamls.Take(25)) delete.AddOption(file[..Math.Min(file.Length, 100)], file);
+            components.WithSelectMenu(delete, row: 1);
+        }
+        if (templates.Count > 0)
+        {
+            var download = new SelectMenuBuilder().WithCustomId(Id(session, "yaml-template-download"))
+                .WithPlaceholder(IsFrench ? "Télécharger un modèle…" : "Download a template…");
+            foreach (var file in templates.Take(25)) download.AddOption(file[..Math.Min(file.Length, 100)], file);
+            components.WithSelectMenu(download, row: 2);
+        }
+        var description = IsFrench
+            ? $"{yamls.Count} fichier(s) YAML pour ce salon. Les actions sont exécutées directement depuis Discord."
+            : $"{yamls.Count} YAML file(s) for this channel. Actions execute directly from Discord.";
+        return Task.FromResult(new AstUiView(null, BaseEmbed("YAML", description).Build(), components.Build()));
+    }
 
     private static AstUiView RenderGeneration(AstUiSession session)
         => Screen(session, IsFrench ? "Génération" : "Generation", IsFrench ? "Commandes de génération Discord." : "Discord generation actions.",
@@ -1038,7 +1204,9 @@ public static class AstCommandCenter
 
     private static AstUiView RenderApworld(AstUiSession session)
         => Screen(session, "APWorld", IsFrench ? "Gestion Discord native des APWorld." : "Native Discord APWorld management.",
-            [(IsFrench ? "Lister" : "List", "apworld-list"), (IsFrench ? "Portail" : "Portal", "admin-portal")]);
+            [(IsFrench ? "Lister" : "List", "apworld-list"),
+             (IsFrench ? "Sauvegarder" : "Backup", "apworld-backup"),
+             (IsFrench ? "Portail" : "Portal", "admin-portal")]);
 
     private static async Task<AstUiView> RenderSlotsAsync(AstUiSession session)
     {
@@ -1191,6 +1359,14 @@ public static class AstCommandCenter
                     session.OwnerUserId.ToString(CultureInfo.InvariantCulture)),
                 IsFrench ? "Portail privé d’administration" : "Private administration portal").ConfigureAwait(false);
         }
+        if (action == "yaml-list")
+            return AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization)
+                ? YamlClass.ListYamls(session.SourceChannelId.ToString(CultureInfo.InvariantCulture))
+                : AstAuthorizationService.DeniedMessage;
+        if (action == "apworld-list")
+            return AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization)
+                ? ApworldClass.ListApworld()
+                : AstAuthorizationService.DeniedMessage;
         if (channelId == null) return Unavailable();
 
         return action switch
@@ -1216,8 +1392,6 @@ public static class AstCommandCenter
                 IsFrench ? "Mon portail privé" : "My private portal").ConfigureAwait(false),
             "room-portal" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await BuildPortalResponseAsync(() => WebPortalPages.EnsureThreadCommandsPageAsync(guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)), IsFrench ? "Portail privé de la room" : "Private room portal").ConfigureAwait(false),
-            "yaml-list" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization) => YamlClass.ListYamls(session.SourceChannelId.ToString(CultureInfo.InvariantCulture)),
-            "apworld-list" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization) => ApworldClass.ListApworld(),
             _ => AstAuthorizationService.DeniedMessage
         };
     }

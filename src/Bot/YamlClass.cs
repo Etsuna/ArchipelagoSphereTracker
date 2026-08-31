@@ -316,4 +316,16 @@ public class YamlClass : Declare
             .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
             .ToList()!;
     }
+
+    public static IReadOnlyList<string> GetTemplateFileNames()
+    {
+        var templatesFolder = Path.Combine(BasePath, "extern", "Archipelago", "Players", "Templates");
+        if (!Directory.Exists(templatesFolder))
+            return Array.Empty<string>();
+        return Directory.EnumerateFiles(templatesFolder, "*.yaml")
+            .Select(Path.GetFileName)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ToList()!;
+    }
 }
