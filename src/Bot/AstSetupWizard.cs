@@ -196,6 +196,71 @@ public static class AstSetupWizard
         }
     }
 
+    public static async Task StartFromCommandCenterAsync(SocketMessageComponent component)
+    {
+        var correlationId = Guid.NewGuid().ToString("N");
+        var guildId = component.GuildId ?? 0;
+        var channelId = component.ChannelId ?? 0;
+        try
+        {
+            if (guildId == 0 || channelId == 0 ||
+                component.Channel is IThreadChannel ||
+                component.Channel is not ITextChannel)
+            {
+                await component.ModifyOriginalResponseAsync(properties =>
+                {
+                    properties.Content = IsFrench
+                        ? "Ouvrez `/ast` dans le salon texte qui accueillera la nouvelle room."
+                        : "Open `/ast` in the text channel that will host the new room.";
+                    properties.Embed = null;
+                    properties.Components = new ComponentBuilder().Build();
+                }).ConfigureAwait(false);
+                return;
+            }
+
+            var authorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildId.ToString(), channelId.ToString(), component.User.Id, component.User as IGuildUser)
+                .ConfigureAwait(false);
+            if (authorization == null ||
+                !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+            {
+                await SecurityAuditLog.WriteAsync(
+                    correlationId,
+                    SecurityAuditSource.Discord,
+                    component.User.Id.ToString(),
+                    guildId.ToString(),
+                    channelId.ToString(),
+                    SecurityAuditAction.RoomAdd,
+                    SecurityAuditOutcome.Denied).ConfigureAwait(false);
+                await component.ModifyOriginalResponseAsync(properties =>
+                {
+                    properties.Content = AstAuthorizationService.DeniedMessage;
+                    properties.Embed = null;
+                    properties.Components = new ComponentBuilder().Build();
+                }).ConfigureAwait(false);
+                return;
+            }
+
+            var draft = Sessions.Start(component.User.Id, guildId, channelId);
+            await component.ModifyOriginalResponseAsync(properties =>
+            {
+                properties.Content = BuildSummary(draft);
+                properties.Embed = null;
+                properties.Components = BuildComponents(draft);
+            }).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine($"[Setup:{correlationId}] Failed to start from command center ({exception.GetType().Name}).");
+            await component.ModifyOriginalResponseAsync(properties =>
+            {
+                properties.Content = SafeFailureMessage();
+                properties.Embed = null;
+                properties.Components = new ComponentBuilder().Build();
+            }).ConfigureAwait(false);
+        }
+    }
+
     public static async Task HandleComponentAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action)) return;

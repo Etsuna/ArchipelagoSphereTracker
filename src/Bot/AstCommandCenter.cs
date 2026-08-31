@@ -204,6 +204,17 @@ public static class AstCommandCenter
                 return;
             }
 
+            if (action == "admin-setup")
+            {
+                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                await AstSetupWizard.StartFromCommandCenterAsync(component).ConfigureAwait(false);
+                return;
+            }
+
             if (TryScreen(action, out var screen))
             {
                 if (!CanOpen(screen, authorization, session.RoomChannelId != null) ||
@@ -455,6 +466,17 @@ public static class AstCommandCenter
                 ? TrackingControlCommands.GetGuildHealth(guildId)
                 : AstAuthorizationService.DeniedMessage;
         }
+        if (action is "admin-portal" or "admin-yaml" or "admin-generation")
+        {
+            if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+                return AstAuthorizationService.DeniedMessage;
+            return await BuildPortalResponseAsync(
+                () => WebPortalPages.EnsureCommandsPageAsync(
+                    guildId,
+                    session.SourceChannelId.ToString(CultureInfo.InvariantCulture),
+                    session.OwnerUserId.ToString(CultureInfo.InvariantCulture)),
+                IsFrench ? "Portail privé d’administration" : "Private administration portal").ConfigureAwait(false);
+        }
         if (channelId == null) return Unavailable();
 
         return action switch
@@ -472,12 +494,15 @@ public static class AstCommandCenter
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-pause", guildId, channelId).ConfigureAwait(false),
             "resume" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-resume", guildId, channelId).ConfigureAwait(false),
-            "personal-slots" => await BuildPersonalSlotsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
-            "personal-items" or "personal-recap" => await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
-            "personal-hints" => await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-slots" => await WithUserPortalAsync(await BuildPersonalSlotsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false), guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-items" or "personal-recap" => await WithUserPortalAsync(await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false), guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-hints" => await WithUserPortalAsync(await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false), guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-advanced" => await BuildPersonalAdvancedAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
-            "manage-polling" or "manage-more" or "admin-setup" or "admin-portal" or "admin-yaml" or "admin-generation"
-                => IsFrench ? "Cet écran sera branché à l’étape suivante de la PR 9." : "This screen will be connected in the next PR 9 step.",
+            "manage-polling" or "manage-more" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
+                => await BuildPortalResponseAsync(
+                    () => WebPortalPages.EnsureThreadCommandsPageAsync(
+                        guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)),
+                    IsFrench ? "Portail privé de gestion de la room" : "Private room-management portal").ConfigureAwait(false),
             _ => AstAuthorizationService.DeniedMessage
         };
     }
@@ -544,10 +569,31 @@ public static class AstCommandCenter
             count += items.Count;
         }
         if (count == 0) output.AppendLine().Append(IsFrench ? "Aucune exclusion personnelle." : "No personal exclusion.");
-        output.AppendLine().Append(IsFrench
-            ? "\nLes ajouts, suppressions et nettoyages avec confirmation arrivent dans le prochain écran interactif."
-            : "\nAdd, remove and confirmed cleanup actions are coming in the next interactive screen.");
-        return Clamp(output.ToString());
+        return await WithUserPortalAsync(output.ToString(), guildId, channelId, userId).ConfigureAwait(false);
+    }
+
+    private static async Task<string> WithUserPortalAsync(
+        string content,
+        string guildId,
+        string channelId,
+        ulong userId)
+    {
+        if (!Declare.EnableWebPortal) return Clamp(content);
+        var url = await WebPortalPages.EnsureUserPageAsync(
+            guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+        return string.IsNullOrWhiteSpace(url)
+            ? Clamp(content)
+            : Clamp(content + (IsFrench ? $"\n\nGérer ces données : {url}" : $"\n\nManage this data: {url}"));
+    }
+
+    private static async Task<string> BuildPortalResponseAsync(Func<Task<string?>> factory, string label)
+    {
+        if (!Declare.EnableWebPortal)
+            return IsFrench ? "Le portail Web est désactivé." : "The Web portal is disabled.";
+        var url = await factory().ConfigureAwait(false);
+        return string.IsNullOrWhiteSpace(url)
+            ? (IsFrench ? "Le portail est temporairement indisponible." : "The portal is temporarily unavailable.")
+            : $"**{label}**\n{url}";
     }
 
     private static bool TryScreen(string action, out AstUiScreen screen)
