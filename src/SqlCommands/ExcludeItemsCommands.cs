@@ -79,6 +79,33 @@ public static class ExcludedItemsCommands
         return items;
     }
 
+    public static async Task<List<string>> GetExcludedItemsForUserByAliasAsync(
+        string guildId,
+        string channelId,
+        string userId,
+        string alias)
+    {
+        var items = new List<string>();
+        await using var connection = await Db.OpenReadAsync().ConfigureAwait(false);
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT Item
+            FROM ExcludedItemTable
+            WHERE GuildId = @GuildId
+              AND ChannelId = @ChannelId
+              AND UserId = @UserId
+              AND Alias = @Alias
+            ORDER BY Item;";
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        command.Parameters.AddWithValue("@UserId", userId);
+        command.Parameters.AddWithValue("@Alias", alias);
+        await using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
+            items.Add(reader.GetString(0));
+        return items;
+    }
+
     public static async Task<string> AddExcludedItemAsync(SocketSlashCommand command, string? alias, string channelId, string guildId)
     {
         var userId = command.User.Id.ToString();

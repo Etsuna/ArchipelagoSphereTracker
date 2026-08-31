@@ -472,11 +472,82 @@ public static class AstCommandCenter
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-pause", guildId, channelId).ConfigureAwait(false),
             "resume" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-resume", guildId, channelId).ConfigureAwait(false),
-            "personal-slots" or "personal-items" or "personal-hints" or "personal-recap" or "personal-advanced" or
+            "personal-slots" => await BuildPersonalSlotsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-items" or "personal-recap" => await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-hints" => await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            "personal-advanced" => await BuildPersonalAdvancedAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "manage-polling" or "manage-more" or "admin-setup" or "admin-portal" or "admin-yaml" or "admin-generation"
                 => IsFrench ? "Cet écran sera branché à l’étape suivante de la PR 9." : "This screen will be connected in the next PR 9 step.",
             _ => AstAuthorizationService.DeniedMessage
         };
+    }
+
+    private static async Task<string> BuildPersonalSlotsAsync(string guildId, string channelId, ulong userId)
+    {
+        var aliases = await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
+            guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+        if (aliases.Count == 0)
+            return IsFrench ? "Aucun slot n’est associé à votre compte dans cette room." : "No slot is associated with your account in this room.";
+        return (IsFrench ? "**Mes slots associés**" : "**My associated slots**") +
+               string.Concat(aliases.Keys.OrderBy(value => value, StringComparer.OrdinalIgnoreCase).Select(alias => $"\n• {Safe(alias)}"));
+    }
+
+    private static async Task<string> BuildPersonalItemsAsync(string guildId, string channelId, ulong userId)
+    {
+        var aliases = await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
+            guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+        if (aliases.Count == 0)
+            return IsFrench ? "Aucun slot n’est associé à votre compte dans cette room." : "No slot is associated with your account in this room.";
+        var output = new System.Text.StringBuilder(IsFrench ? "**Mes objets**" : "**My items**");
+        foreach (var pair in aliases.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            output.AppendLine().AppendLine($"**{Safe(pair.Key)}**");
+            foreach (var item in pair.Value.Take(30)) output.AppendLine($"• {Safe(item.Item)}");
+            if (pair.Value.Count > 30) output.AppendLine(IsFrench ? $"… et {pair.Value.Count - 30} autre(s)" : $"… and {pair.Value.Count - 30} more");
+        }
+        return Clamp(output.ToString());
+    }
+
+    private static async Task<string> BuildPersonalHintsAsync(string guildId, string channelId, ulong userId)
+    {
+        var aliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
+            guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)).Keys.ToArray();
+        if (aliases.Length == 0)
+            return IsFrench ? "Aucun slot n’est associé à votre compte dans cette room." : "No slot is associated with your account in this room.";
+        var hints = new List<HintStatus>();
+        foreach (var alias in aliases)
+        {
+            hints.AddRange(await HintStatusCommands.GetHintStatusForReceiver(guildId, channelId, alias).ConfigureAwait(false));
+            hints.AddRange(await HintStatusCommands.GetHintStatusForFinder(guildId, channelId, alias).ConfigureAwait(false));
+        }
+        var unique = hints.DistinctBy(hint => $"{hint.Finder}\0{hint.Receiver}\0{hint.Item}\0{hint.Location}").Take(30).ToArray();
+        if (unique.Length == 0) return IsFrench ? "Aucun hint non trouvé pour vos slots." : "No unfound hint for your slots.";
+        return Clamp((IsFrench ? "**Mes hints non trouvés**" : "**My unfound hints**") +
+                     string.Concat(unique.Select(hint => $"\n• {Safe(hint.Item)} — {Safe(hint.Location)} ({Safe(hint.Finder)} → {Safe(hint.Receiver)})")));
+    }
+
+    private static async Task<string> BuildPersonalAdvancedAsync(string guildId, string channelId, ulong userId)
+    {
+        var aliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
+            guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)).Keys.ToArray();
+        if (aliases.Length == 0)
+            return IsFrench ? "Aucun slot n’est associé à votre compte dans cette room." : "No slot is associated with your account in this room.";
+        var output = new System.Text.StringBuilder(IsFrench ? "**Mes exclusions**" : "**My exclusions**");
+        var count = 0;
+        foreach (var alias in aliases)
+        {
+            var items = await ExcludedItemsCommands.GetExcludedItemsForUserByAliasAsync(
+                guildId, channelId, userId.ToString(CultureInfo.InvariantCulture), alias).ConfigureAwait(false);
+            if (items.Count == 0) continue;
+            output.AppendLine().AppendLine($"**{Safe(alias)}**");
+            foreach (var item in items.Take(20)) output.AppendLine($"• {Safe(item)}");
+            count += items.Count;
+        }
+        if (count == 0) output.AppendLine().Append(IsFrench ? "Aucune exclusion personnelle." : "No personal exclusion.");
+        output.AppendLine().Append(IsFrench
+            ? "\nLes ajouts, suppressions et nettoyages avec confirmation arrivent dans le prochain écran interactif."
+            : "\nAdd, remove and confirmed cleanup actions are coming in the next interactive screen.");
+        return Clamp(output.ToString());
     }
 
     private static bool TryScreen(string action, out AstUiScreen screen)
