@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Xunit;
 
 public sealed class AstCommandCenterTests
@@ -98,6 +99,35 @@ public sealed class AstCommandCenterTests
         Assert.True(store.TrySetGenerationSkipProgBalancing(session.Id, 10, 20, 30, true, out var updated));
         Assert.True(updated.GenerationSkipProgBalancing);
         Assert.False(store.TrySetGenerationSkipProgBalancing(session.Id, 11, 20, 30, false, out _));
+    }
+
+    [Fact]
+    public void Long_outputs_are_bounded_and_mentions_are_neutralized()
+    {
+        var output = string.Join('\n', Enumerable.Range(1, 300).Select(index => $"Player @{index}: data"));
+
+        var pages = AstCommandCenter.PaginateOutput(output, 120);
+
+        Assert.True(pages.Count > 1);
+        Assert.All(pages, page => Assert.InRange(page.Length, 1, 120));
+        Assert.DoesNotContain(pages, page => page.Contains("@1", StringComparison.Ordinal));
+        Assert.Contains(pages, page => page.Contains("@\u200b1", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Output_pagination_is_private_and_bounded()
+    {
+        var store = new AstUiSessionStore();
+        var session = store.Start(10, 20, 30, 40);
+        var pages = new[] { "one", "two", "three" };
+
+        Assert.True(store.TrySetOutputPages(session.Id, 10, 20, 30, pages, out var first));
+        Assert.Equal(0, first.OutputPageIndex);
+        Assert.True(store.TryMoveOutputPage(session.Id, 10, 20, 30, 1, out var second));
+        Assert.Equal(1, second.OutputPageIndex);
+        Assert.True(store.TryMoveOutputPage(session.Id, 10, 20, 30, 99, out var last));
+        Assert.Equal(2, last.OutputPageIndex);
+        Assert.False(store.TryMoveOutputPage(session.Id, 11, 20, 30, -1, out _));
     }
 
     [Theory]

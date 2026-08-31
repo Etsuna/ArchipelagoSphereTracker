@@ -105,6 +105,46 @@ public static class ReceiverAliasesCommands
         return userIds;
     }
 
+    public static async Task<HashSet<string>> GetAssociatedReceiversAsync(string guildId, string channelId)
+    {
+        var receivers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await using var connection = await Db.OpenReadAsync();
+        using var command = new SQLiteCommand(@"
+            SELECT DISTINCT Receiver
+            FROM ReceiverAliasesTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
+        {
+            var receiver = reader["Receiver"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(receiver)) receivers.Add(receiver);
+        }
+        return receivers;
+    }
+
+    public static async Task<List<string>> GetReceiversForUserAsync(string guildId, string channelId, string userId)
+    {
+        var receivers = new List<string>();
+        await using var connection = await Db.OpenReadAsync();
+        using var command = new SQLiteCommand(@"
+            SELECT DISTINCT Receiver
+            FROM ReceiverAliasesTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND UserId = @UserId
+            ORDER BY Receiver COLLATE NOCASE;", connection);
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        command.Parameters.AddWithValue("@UserId", userId);
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
+        {
+            var receiver = reader["Receiver"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(receiver)) receivers.Add(receiver);
+        }
+        return receivers;
+    }
+
     // ==========================
     // 🎯 DELETE RECEIVER ALIAS (WRITE)
     // ==========================

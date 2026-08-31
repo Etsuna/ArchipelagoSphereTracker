@@ -38,7 +38,9 @@ public sealed record AstUiSession(
     int? SpoilerSphereLimit = null,
     string SpoilerMissingMode = "first",
     bool SpoilerHideItems = true,
-    bool GenerationSkipProgBalancing = false);
+    bool GenerationSkipProgBalancing = false,
+    IReadOnlyList<string>? OutputPages = null,
+    int OutputPageIndex = 0);
 
 public sealed class AstUiSessionStore
 {
@@ -223,6 +225,44 @@ public sealed class AstUiSessionStore
         return false;
     }
 
+    public bool TrySetOutputPages(
+        string id, ulong ownerUserId, ulong guildId, ulong sourceChannelId,
+        IReadOnlyList<string>? pages, out AstUiSession session)
+    {
+        session = default!;
+        if (pages is { Count: 0 }) pages = null;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with
+            {
+                OutputPages = pages,
+                OutputPageIndex = 0,
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
+            if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
+        }
+        return false;
+    }
+
+    public bool TryMoveOutputPage(
+        string id, ulong ownerUserId, ulong guildId, ulong sourceChannelId,
+        int delta, out AstUiSession session)
+    {
+        session = default!;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            if (current.OutputPages is not { Count: > 0 } pages) return false;
+            var index = Math.Clamp(current.OutputPageIndex + delta, 0, pages.Count - 1);
+            var updated = current with
+            {
+                OutputPageIndex = index,
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
+            if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
+        }
+        return false;
+    }
+
     public int CleanupExpired()
     {
         var now = _timeProvider.GetUtcNow();
@@ -290,6 +330,7 @@ public static class AstCommandCenter
     private const string SpoilerAliasInputId = "ast-spoiler-alias";
     private const string SpoilerSphereInputId = "ast-spoiler-sphere";
     private const string SpoilerValidateInputId = "ast-spoiler-validate";
+    private const string SlotAliasInputId = "ast-slot-alias";
     private static readonly AstUiSessionStore Sessions = new();
     private static bool IsFrench => string.Equals(Declare.Language, "fr", StringComparison.OrdinalIgnoreCase);
 
@@ -393,6 +434,11 @@ public static class AstCommandCenter
             await component.RespondWithModalAsync(BuildSpoilerConfigModal(session)).ConfigureAwait(false);
             return;
         }
+        if (action is "alias-add-manual" or "alias-delete-manual")
+        {
+            await component.RespondWithModalAsync(BuildSlotAliasModal(session, action)).ConfigureAwait(false);
+            return;
+        }
 
         await component.DeferAsync(ephemeral: true);
         try
@@ -406,6 +452,21 @@ public static class AstCommandCenter
             if (authorization == null)
             {
                 await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+
+            if (action is "output-previous" or "output-next" or "output-close")
+            {
+                var updated = action == "output-close"
+                    ? Sessions.TrySetOutputPages(session.Id, component.User.Id, guildId, sourceChannelId, null, out session)
+                    : Sessions.TryMoveOutputPage(session.Id, component.User.Id, guildId, sourceChannelId,
+                        action == "output-previous" ? -1 : 1, out session);
+                if (!updated)
+                {
+                    await SetErrorAsync(component, IsFrench ? "Cette page a expiré." : "This page expired.").ConfigureAwait(false);
+                    return;
+                }
+                await SetViewAsync(component, await RenderAsync(session, authorization).ConfigureAwait(false)).ConfigureAwait(false);
                 return;
             }
 
@@ -507,7 +568,7 @@ public static class AstCommandCenter
                     else if (session.PendingAlias != null && session.PendingAction is "clean" or "recap-clean")
                     {
                         var recap = session.PendingAction == "recap-clean"
-                            ? await BuildPersonalItemsAsync(guildText, roomText, component.User.Id).ConfigureAwait(false)
+                            ? await BuildPersonalItemsAsync(guildText, roomText, component.User.Id, session.PendingAlias).ConfigureAwait(false)
                             : string.Empty;
                         await RecapListCommands.DeleteRecapListAsync(guildText, roomText, userText, session.PendingAlias).ConfigureAwait(false);
                         result = string.IsNullOrWhiteSpace(recap)
@@ -595,13 +656,7 @@ public static class AstCommandCenter
                     session.SpoilerMissingMode == "full",
                     session.SpoilerHideItems,
                     resetValidation: action == "spoiler-reset-validation").ConfigureAwait(false);
-                var spoilerView = await RenderSpoilerAnalysisAsync(session).ConfigureAwait(false);
-                await component.ModifyOriginalResponseAsync(p =>
-                {
-                    p.Content = Clamp(result);
-                    p.Embed = spoilerView.Embed;
-                    p.Components = spoilerView.Components;
-                }).ConfigureAwait(false);
+                await ShowOutcomeAsync(component, session, authorization, result).ConfigureAwait(false);
                 return;
             }
 
@@ -735,13 +790,7 @@ public static class AstCommandCenter
                 return;
             }
 
-            var refreshed = await RenderAsync(session, authorization).ConfigureAwait(false);
-            await component.ModifyOriginalResponseAsync(properties =>
-            {
-                properties.Content = outcome;
-                properties.Embed = refreshed.Embed;
-                properties.Components = refreshed.Components;
-            }).ConfigureAwait(false);
+            await ShowOutcomeAsync(component, session, authorization, outcome).ConfigureAwait(false);
         }
         catch (Exception exception)
         {
@@ -994,7 +1043,8 @@ public static class AstCommandCenter
 
     public static async Task HandleModalAsync(SocketModal modal)
     {
-        if (!TryParseCustomId(modal.Data.CustomId, out var sessionId, out var action) || action != "spoiler-configure")
+        if (!TryParseCustomId(modal.Data.CustomId, out var sessionId, out var action) ||
+            action is not ("spoiler-configure" or "alias-add-manual" or "alias-delete-manual"))
             return;
         if (modal.GuildId is not { } guildId || modal.ChannelId is not { } sourceChannelId ||
             !Sessions.TryGetAuthorized(sessionId, modal.User.Id, guildId, sourceChannelId, out var session) ||
@@ -1007,9 +1057,40 @@ public static class AstCommandCenter
         var authorization = await AstAuthorizationService.CreateDiscordContextAsync(
             guildId.ToString(CultureInfo.InvariantCulture), roomChannelId.ToString(CultureInfo.InvariantCulture),
             modal.User.Id, modal.User as IGuildUser).ConfigureAwait(false);
-        if (authorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization))
+        var requiredLevel = action == "spoiler-configure"
+            ? AstAuthorizationLevel.RoomManager
+            : AstAuthorizationLevel.GuildMember;
+        if (authorization == null || !AstAuthorizationService.IsAllowed(requiredLevel, authorization))
         {
             await modal.RespondAsync(AstAuthorizationService.DeniedMessage, ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+
+        if (action is "alias-add-manual" or "alias-delete-manual")
+        {
+            var requestedAlias = modal.Data.Components.FirstOrDefault(c => c.CustomId == SlotAliasInputId)?.Value?.Trim();
+            var slotAliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(
+                guildId.ToString(CultureInfo.InvariantCulture), roomChannelId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+            var canonicalSlotAlias = slotAliases.FirstOrDefault(value => string.Equals(value, requestedAlias, StringComparison.OrdinalIgnoreCase));
+            if (canonicalSlotAlias == null)
+            {
+                await modal.RespondAsync(IsFrench ? "Ce slot n’existe pas dans cette room." : "This slot does not exist in this room.", ephemeral: true).ConfigureAwait(false);
+                return;
+            }
+            var slotResult = action == "alias-add-manual"
+                ? await AliasClass.AddAliasForUserAsync(
+                    canonicalSlotAlias, session.AliasMentionFlag, roomChannelId.ToString(CultureInfo.InvariantCulture),
+                    guildId.ToString(CultureInfo.InvariantCulture), modal.User.Id.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)
+                : await AliasClass.DeleteAliasForUserAsync(
+                    canonicalSlotAlias, roomChannelId.ToString(CultureInfo.InvariantCulture),
+                    guildId.ToString(CultureInfo.InvariantCulture), modal.User.Id.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+            var slotView = await RenderSlotsAsync(session).ConfigureAwait(false);
+            await modal.UpdateAsync(properties =>
+            {
+                properties.Content = PaginateOutput(slotResult)[0];
+                properties.Embed = slotView.Embed;
+                properties.Components = slotView.Components;
+            }).ConfigureAwait(false);
             return;
         }
 
@@ -1046,10 +1127,16 @@ public static class AstCommandCenter
                 canonicalAlias, sphereLimit, session.SpoilerMissingMode == "full", session.SpoilerHideItems,
                 sphereToValidate).ConfigureAwait(false)
             : (IsFrench ? "Réglages d’analyse mis à jour." : "Analysis settings updated.");
-        var view = await RenderSpoilerAnalysisAsync(session).ConfigureAwait(false);
+        var pages = PaginateOutput(result);
+        AstUiView view;
+        if (pages.Count > 1 && Sessions.TrySetOutputPages(
+                session.Id, modal.User.Id, guildId, sourceChannelId, pages, out session))
+            view = RenderPagedOutput(session);
+        else
+            view = await RenderSpoilerAnalysisAsync(session).ConfigureAwait(false);
         await modal.UpdateAsync(properties =>
         {
-            properties.Content = Clamp(result);
+            properties.Content = pages[0];
             properties.Embed = view.Embed;
             properties.Components = view.Components;
         }).ConfigureAwait(false);
@@ -1073,6 +1160,7 @@ public static class AstCommandCenter
 
     private static async Task<AstUiView> RenderAsync(AstUiSession session, AstAuthorizationContext authorization)
     {
+        if (session.OutputPages is { Count: > 0 }) return RenderPagedOutput(session);
         var roomName = session.RoomChannelId is { } roomId
             ? (Declare.Client.GetChannel(roomId) as IChannel)?.Name
             : null;
@@ -1409,14 +1497,18 @@ public static class AstCommandCenter
         var channelId = session.RoomChannelId!.Value.ToString(CultureInfo.InvariantCulture);
         var userId = session.OwnerUserId.ToString(CultureInfo.InvariantCulture);
         var allAliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId).ConfigureAwait(false);
-        var ownAliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId).ConfigureAwait(false)).Keys
-            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToArray();
-        var available = new List<string>();
-        foreach (var alias in allAliases.Distinct(StringComparer.OrdinalIgnoreCase))
-            if ((await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias).ConfigureAwait(false)).Count == 0)
-                available.Add(alias);
+        var ownAliases = (await ReceiverAliasesCommands.GetReceiversForUserAsync(guildId, channelId, userId).ConfigureAwait(false))
+            .ToArray();
+        var associated = await ReceiverAliasesCommands.GetAssociatedReceiversAsync(guildId, channelId).ConfigureAwait(false);
+        var available = allAliases.Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(alias => !associated.Contains(alias))
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
         var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Associer par nom" : "Associate by name", Id(session, "alias-add-manual"), ButtonStyle.Success, row: 0)
+            .WithButton(IsFrench ? "Dissocier par nom" : "Dissociate by name", Id(session, "alias-delete-manual"), ButtonStyle.Danger, row: 0,
+                disabled: ownAliases.Length == 0)
             .WithButton(IsFrench ? "Retour" : "Back", Id(session, "personal"), ButtonStyle.Primary, row: 0);
         if (available.Count > 0)
         {
@@ -1601,20 +1693,28 @@ public static class AstCommandCenter
                string.Concat(aliases.Keys.OrderBy(value => value, StringComparer.OrdinalIgnoreCase).Select(alias => $"\n• {Safe(alias)}"));
     }
 
-    private static async Task<string> BuildPersonalItemsAsync(string guildId, string channelId, ulong userId)
+    private static async Task<string> BuildPersonalItemsAsync(
+        string guildId, string channelId, ulong userId, string? specificAlias = null)
     {
         var aliases = await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
-            guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+            guildId, channelId, userId.ToString(CultureInfo.InvariantCulture), specificAlias ?? string.Empty).ConfigureAwait(false);
         if (aliases.Count == 0)
             return IsFrench ? "Aucun slot n’est associé à votre compte dans cette room." : "No slot is associated with your account in this room.";
         var output = new System.Text.StringBuilder(IsFrench ? "**Mes objets**" : "**My items**");
         foreach (var pair in aliases.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
         {
             output.AppendLine().AppendLine($"**{Safe(pair.Key)}**");
-            foreach (var item in pair.Value.Take(30)) output.AppendLine($"• {Safe(item.Item)}");
-            if (pair.Value.Count > 30) output.AppendLine(IsFrench ? $"… et {pair.Value.Count - 30} autre(s)" : $"… and {pair.Value.Count - 30} more");
+            foreach (var group in pair.Value.GroupBy(item => item.Flag).OrderBy(group => RecapFlagRank(group.Key)))
+            {
+                output.AppendLine($"__{RecapFlagLabel(group.Key)}__");
+                foreach (var item in group.GroupBy(value => value.Item, StringComparer.OrdinalIgnoreCase)
+                             .OrderBy(value => value.Key, StringComparer.OrdinalIgnoreCase))
+                    output.AppendLine(item.Count() > 1
+                        ? $"• {Safe(item.Key)} × {item.Count()}"
+                        : $"• {Safe(item.Key)}");
+            }
         }
-        return Clamp(output.ToString());
+        return output.ToString();
     }
 
     private static async Task<string> BuildPersonalHintsAsync(string guildId, string channelId, ulong userId)
@@ -1629,10 +1729,10 @@ public static class AstCommandCenter
             hints.AddRange(await HintStatusCommands.GetHintStatusForReceiver(guildId, channelId, alias).ConfigureAwait(false));
             hints.AddRange(await HintStatusCommands.GetHintStatusForFinder(guildId, channelId, alias).ConfigureAwait(false));
         }
-        var unique = hints.DistinctBy(hint => $"{hint.Finder}\0{hint.Receiver}\0{hint.Item}\0{hint.Location}").Take(30).ToArray();
+        var unique = hints.DistinctBy(hint => $"{hint.Finder}\0{hint.Receiver}\0{hint.Item}\0{hint.Location}").ToArray();
         if (unique.Length == 0) return IsFrench ? "Aucun hint non trouvé pour vos slots." : "No unfound hint for your slots.";
-        return Clamp((IsFrench ? "**Mes hints non trouvés**" : "**My unfound hints**") +
-                     string.Concat(unique.Select(hint => $"\n• {Safe(hint.Item)} — {Safe(hint.Location)} ({Safe(hint.Finder)} → {Safe(hint.Receiver)})")));
+        return (IsFrench ? "**Mes hints non trouvés**" : "**My unfound hints**") +
+               string.Concat(unique.Select(hint => $"\n• {Safe(hint.Item)} — {Safe(hint.Location)} ({Safe(hint.Finder)} → {Safe(hint.Receiver)})"));
     }
 
     private static async Task<string> BuildPersonalAdvancedAsync(string guildId, string channelId, ulong userId)
@@ -1649,11 +1749,11 @@ public static class AstCommandCenter
                 guildId, channelId, userId.ToString(CultureInfo.InvariantCulture), alias).ConfigureAwait(false);
             if (items.Count == 0) continue;
             output.AppendLine().AppendLine($"**{Safe(alias)}**");
-            foreach (var item in items.Take(20)) output.AppendLine($"• {Safe(item)}");
+            foreach (var item in items) output.AppendLine($"• {Safe(item)}");
             count += items.Count;
         }
         if (count == 0) output.AppendLine().Append(IsFrench ? "Aucune exclusion personnelle." : "No personal exclusion.");
-        return Clamp(output.ToString());
+        return output.ToString();
     }
 
     private static async Task<string> BuildPersonalPatchesAsync(
@@ -1673,9 +1773,9 @@ public static class AstCommandCenter
         if (patches.Count == 0)
             return IsFrench ? "Aucun patch autorisé n’est disponible pour vos slots." : "No authorized patch is available for your slots.";
         var output = new System.Text.StringBuilder(IsFrench ? "**Mes patches**" : "**My patches**");
-        foreach (var patch in patches.Take(20))
+        foreach (var patch in patches)
             output.AppendLine($"• **{Safe(patch.Alias)}** · {Safe(patch.GameName)}\n  {Safe(patch.Patch)}");
-        return Clamp(output.ToString());
+        return output.ToString();
     }
 
     private static async Task<string> BuildPortalResponseAsync(Func<Task<string?>> factory, string label)
@@ -1742,6 +1842,16 @@ public static class AstCommandCenter
     private static string Safe(string value) => value.Replace("@", "@\u200b", StringComparison.Ordinal).Replace('\r', ' ').Replace('\n', ' ');
     private static string Clamp(string value, int max = 1900) => value.Length <= max ? value : value[..(max - 1)] + "…";
     private static string Unavailable() => IsFrench ? "Action indisponible dans ce contexte." : "Action unavailable in this context.";
+    private static int RecapFlagRank(long? flag) => flag switch { 3 => 0, 1 => 1, 2 => 2, 0 => 3, 4 => 4, _ => 5 };
+    private static string RecapFlagLabel(long? flag) => flag switch
+    {
+        3 => IsFrench ? "Requis" : "Required",
+        1 => "Progression",
+        2 => IsFrench ? "Utile" : "Useful",
+        0 => IsFrench ? "Remplissage" : "Filler",
+        4 => IsFrench ? "Piège" : "Trap",
+        _ => IsFrench ? "Non classé" : "Unclassified"
+    };
 
     private static Modal BuildSpoilerConfigModal(AstUiSession session)
     {
@@ -1776,6 +1886,24 @@ public static class AstCommandCenter
             .Build();
     }
 
+    private static Modal BuildSlotAliasModal(AstUiSession session, string action)
+    {
+        var input = new TextInputBuilder()
+            .WithLabel(IsFrench ? "Nom exact du slot" : "Exact slot name")
+            .WithCustomId(SlotAliasInputId)
+            .WithStyle(TextInputStyle.Short)
+            .WithMinLength(1)
+            .WithMaxLength(100)
+            .WithRequired(true);
+        return new ModalBuilder()
+            .WithTitle(action == "alias-add-manual"
+                ? (IsFrench ? "Associer un slot" : "Associate a slot")
+                : (IsFrench ? "Dissocier un slot" : "Dissociate a slot"))
+            .WithCustomId(Id(session, action))
+            .AddTextInput(input)
+            .Build();
+    }
+
     private static AstUiView PortalRevokeConfirmation(AstUiSession session)
     {
         var components = new ComponentBuilder()
@@ -1785,6 +1913,66 @@ public static class AstCommandCenter
         return new AstUiView(null, BaseEmbed("⚠️ " + (IsFrench ? "Révoquer le portail" : "Revoke portal"),
             IsFrench ? "Les URL précédemment émises pour ce contexte cesseront immédiatement de fonctionner."
                 : "Previously issued URLs for this context will immediately stop working.").Build(), components);
+    }
+
+    public static IReadOnlyList<string> PaginateOutput(string value, int maxLength = 1900)
+    {
+        if (maxLength <= 0) throw new ArgumentOutOfRangeException(nameof(maxLength));
+        var remaining = (value ?? string.Empty).Replace("@", "@\u200b", StringComparison.Ordinal).Trim();
+        if (remaining.Length == 0) return [string.Empty];
+        var pages = new List<string>();
+        while (remaining.Length > maxLength)
+        {
+            var split = remaining.LastIndexOf('\n', maxLength - 1, maxLength);
+            if (split <= 0) split = maxLength;
+            pages.Add(remaining[..split].TrimEnd());
+            remaining = remaining[split..].TrimStart('\r', '\n');
+        }
+        pages.Add(remaining);
+        return pages;
+    }
+
+    private static AstUiView RenderPagedOutput(AstUiSession session)
+    {
+        var pages = session.OutputPages!;
+        var index = Math.Clamp(session.OutputPageIndex, 0, pages.Count - 1);
+        var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Précédent" : "Previous", Id(session, "output-previous"), ButtonStyle.Secondary,
+                disabled: index == 0)
+            .WithButton(IsFrench ? "Suivant" : "Next", Id(session, "output-next"), ButtonStyle.Secondary,
+                disabled: index == pages.Count - 1)
+            .WithButton(IsFrench ? "Fermer" : "Close", Id(session, "output-close"), ButtonStyle.Primary)
+            .Build();
+        return new AstUiView(pages[index], BaseEmbed(
+            IsFrench ? "Résultat paginé" : "Paginated result",
+            IsFrench ? $"Page {index + 1} sur {pages.Count}." : $"Page {index + 1} of {pages.Count}.").Build(), components);
+    }
+
+    private static async Task ShowOutcomeAsync(
+        SocketMessageComponent component,
+        AstUiSession session,
+        AstAuthorizationContext authorization,
+        string outcome)
+    {
+        var pages = PaginateOutput(outcome);
+        if (pages.Count > 1)
+        {
+            if (!Sessions.TrySetOutputPages(
+                    session.Id, session.OwnerUserId, session.GuildId, session.SourceChannelId, pages, out session))
+            {
+                await SetErrorAsync(component, IsFrench ? "Cette interface a expiré." : "This interface expired.").ConfigureAwait(false);
+                return;
+            }
+            await SetViewAsync(component, RenderPagedOutput(session)).ConfigureAwait(false);
+            return;
+        }
+        var refreshed = await RenderAsync(session, authorization).ConfigureAwait(false);
+        await component.ModifyOriginalResponseAsync(properties =>
+        {
+            properties.Content = pages[0];
+            properties.Embed = refreshed.Embed;
+            properties.Components = refreshed.Components;
+        }).ConfigureAwait(false);
     }
 
     private static bool TryOptionalNonNegativeInt(string? value, out int? parsed)
