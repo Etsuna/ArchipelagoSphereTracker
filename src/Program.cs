@@ -115,6 +115,7 @@ if (args.Length == 0)
         }
 
         await DatabaseInitializer.InitializeDatabaseAsync();
+        FileUploadSecurity.CleanupExpiredQuarantineFiles();
 
         if (SetBddVersion)
         {

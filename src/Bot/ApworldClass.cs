@@ -26,10 +26,13 @@ public class ApworldClass : Declare
         using (var response = await HttpClient.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead))
         {
             response.EnsureSuccessStatusCode();
-            await FileUploadSecurity.CopyToFileWithLimitAsync(
+            var accepted = await FileUploadSecurity.CopyValidatedToFileWithLimitAsync(
                 await response.Content.ReadAsStreamAsync(),
                 filePath,
-                Declare.WebPortalMaxUploadBytes);
+                Declare.WebPortalMaxUploadBytes,
+                quarantinePath => FileUploadSecurity.IsArchiveWithinLimits(quarantinePath));
+            if (!accepted)
+                return Resource.ApworldWrongFile;
         }
         CustomApworldClass.GenerateYamls();
         var message = string.Format(Resource.ApworldFileSent, safeFileName);
@@ -47,7 +50,13 @@ public class ApworldClass : Declare
         Directory.CreateDirectory(customWorldPath);
 
         var filePath = Path.Combine(customWorldPath, safeFileName);
-        await FileUploadSecurity.CopyToFileWithLimitAsync(content, filePath, Declare.WebPortalMaxUploadBytes);
+        var accepted = await FileUploadSecurity.CopyValidatedToFileWithLimitAsync(
+            content,
+            filePath,
+            Declare.WebPortalMaxUploadBytes,
+            quarantinePath => FileUploadSecurity.IsArchiveWithinLimits(quarantinePath));
+        if (!accepted)
+            return Resource.ApworldWrongFile;
 
         CustomApworldClass.GenerateYamls();
         var message = string.Format(Resource.ApworldFileSent, safeFileName);

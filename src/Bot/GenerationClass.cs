@@ -206,10 +206,13 @@ public class GenerationClass : Declare
         using (var response = await HttpClient.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead))
         {
             response.EnsureSuccessStatusCode();
-            await FileUploadSecurity.CopyToFileWithLimitAsync(
+            var accepted = await FileUploadSecurity.CopyValidatedToFileWithLimitAsync(
                 await response.Content.ReadAsStreamAsync(),
                 filePath,
-                Declare.WebPortalMaxUploadBytes);
+                Declare.WebPortalMaxUploadBytes,
+                quarantinePath => FileUploadSecurity.IsZipWithinLimits(quarantinePath, ".yaml"));
+            if (!accepted)
+                return Resource.GenerationWrongZipFormat;
         }
 
         if (!FileUploadSecurity.IsZipWithinLimits(filePath, ".yaml"))
@@ -266,7 +269,13 @@ public class GenerationClass : Declare
 
         Directory.CreateDirectory(playersFolder);
 
-        await FileUploadSecurity.CopyToFileWithLimitAsync(content, filePath, Declare.WebPortalMaxUploadBytes);
+        var accepted = await FileUploadSecurity.CopyValidatedToFileWithLimitAsync(
+            content,
+            filePath,
+            Declare.WebPortalMaxUploadBytes,
+            quarantinePath => FileUploadSecurity.IsZipWithinLimits(quarantinePath, ".yaml"));
+        if (!accepted)
+            return new GenerationResult(Resource.GenerationWrongZipFormat, null);
 
         if (!FileUploadSecurity.IsZipWithinLimits(filePath, ".yaml"))
         {

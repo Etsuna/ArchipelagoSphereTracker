@@ -173,6 +173,12 @@ AST_OWNER_USER_ID=123456789012345678
 # Optionnel (défaut : 67108864, soit 64 Mio)
 WEB_MAX_UPLOAD_BYTES=67108864
 
+# Optionnel (défaut : 60 minutes, intervalle accepté : 5–1440)
+UPLOAD_QUARANTINE_RETENTION_MINUTES=60
+
+# Optionnel (défaut : 30 jours, intervalle accepté : 1–365)
+SPOILER_LOG_RETENTION_DAYS=30
+
 # Optionnel (défaut : 30 jours, intervalle accepté : 1–365)
 PORTAL_TOKEN_LIFETIME_DAYS=30
 
@@ -211,6 +217,8 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_BASE_URL` est utile si AST est exposé derrière un domaine/proxy.
 - `AST_OWNER_USER_ID` réserve les opérations globales APWorld à cet utilisateur. Sans valeur, le propriétaire de chaque serveur Discord est utilisé comme solution de repli.
 - `WEB_MAX_UPLOAD_BYTES` limite la taille des fichiers Web et Discord acceptés.
+- `UPLOAD_QUARANTINE_RETENTION_MINUTES` fixe le délai de nettoyage des téléversements interrompus placés en quarantaine.
+- `SPOILER_LOG_RETENTION_DAYS` fixe la rétention des fichiers spoiler `.txt` et `.json`.
 - `PORTAL_TOKEN_LIFETIME_DAYS` fixe l'expiration des nouveaux liens du portail.
 - `AUDIT_RETENTION_DAYS` fixe la rétention du journal des actions sensibles.
 - `ENABLE_TRACKING_V2=true` active le dual-write expérimental des snapshots, événements et livraisons V2. Aucun worker Discord V2 n'est démarré dans cette version : les notifications historiques restent seules publiées.
@@ -642,6 +650,12 @@ AST_OWNER_USER_ID=123456789012345678
 # Optional (default: 67108864, i.e. 64 MiB)
 WEB_MAX_UPLOAD_BYTES=67108864
 
+# Optional (default: 60 minutes, accepted range: 5–1440)
+UPLOAD_QUARANTINE_RETENTION_MINUTES=60
+
+# Optional (default: 30 days, accepted range: 1–365)
+SPOILER_LOG_RETENTION_DAYS=30
+
 # Optional (default: 30 days, accepted range: 1–365)
 PORTAL_TOKEN_LIFETIME_DAYS=30
 
@@ -680,6 +694,8 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_BASE_URL` is useful behind a domain/reverse proxy.
 - `AST_OWNER_USER_ID` reserves global APWorld operations for that user. If unset, each Discord guild owner is used as the fallback.
 - `WEB_MAX_UPLOAD_BYTES` limits accepted Web and Discord file sizes.
+- `UPLOAD_QUARANTINE_RETENTION_MINUTES` controls cleanup of interrupted uploads left in quarantine.
+- `SPOILER_LOG_RETENTION_DAYS` controls retention of `.txt` and `.json` spoiler files.
 - `PORTAL_TOKEN_LIFETIME_DAYS` controls expiry for newly issued portal links.
 - `AUDIT_RETENTION_DAYS` controls retention of sensitive-action audit records.
 - `ENABLE_TRACKING_V2=true` enables experimental dual-write of V2 snapshots, events, and deliveries. No V2 Discord worker is started in this release, so only legacy notifications are published.

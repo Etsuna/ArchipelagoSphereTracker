@@ -28,7 +28,9 @@ Les URLs de portail doivent être traitées comme des mots de passe : ne pas les
 
 ## Fichiers et code APWorld
 
-Les noms de fichiers sont réduits à un nom simple et leur extension est vérifiée. La limite par défaut est de 64 Mio (`WEB_MAX_UPLOAD_BYTES`). Les ZIP de génération sont limités à 500 entrées et 256 Mio décompressés, et seules des entrées YAML non imbriquées sont acceptées.
+Les noms de fichiers sont réduits à un nom simple et leur extension est vérifiée. La limite par défaut est de 64 Mio (`WEB_MAX_UPLOAD_BYTES`). Chaque téléversement est d'abord écrit sous un nom opaque dans une quarantaine hors des dossiers actifs, contrôlé, puis déplacé atomiquement vers sa destination. Un fichier refusé ne remplace donc jamais la version active. Les résidus de quarantaine et les anciens spoilers sont nettoyés selon `UPLOAD_QUARANTINE_RETENTION_MINUTES` et `SPOILER_LOG_RETENTION_DAYS`.
+
+Les ZIP de génération sont limités à 500 entrées et 256 Mio décompressés, et seules des entrées YAML non imbriquées sont acceptées. Les archives APWorld doivent être lisibles, respecter les mêmes limites et ne contenir aucun chemin absolu ou traversée de répertoire. Les YAML et spoilers texte doivent être du texte UTF-8 non vide sans octet nul; un spoiler `.json` doit contenir un objet ou un tableau JSON valide. Voir [quarantaine et validation des téléversements](upload-quarantine-security.fr.md).
 
 Un APWorld contient du code exécuté par l'outillage Archipelago local. Son chargement est donc réservé au propriétaire de l'instance ; la validation d'extension ne transforme pas un APWorld non fiable en fichier sûr.
 

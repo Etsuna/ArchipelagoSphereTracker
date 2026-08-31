@@ -21,7 +21,8 @@ Discord commands and Web requests use the same matrix. Portal tokens are bearer 
 - Personal pages are rendered dynamically, so legacy HTML files cannot bypass expiry or revocation.
 - Generated downloads are authenticated, stored outside the public static tree, and retained for one hour.
 - Portal responses use no-store caching, no-referrer, CSP, frame denial, and nosniff headers.
-- Upload names and extensions are validated. The default limit is 64 MiB (`WEB_MAX_UPLOAD_BYTES`). Generation ZIPs accept at most 500 flat YAML entries and 256 MiB uncompressed.
+- Upload names and extensions are validated. The default limit is 64 MiB (`WEB_MAX_UPLOAD_BYTES`). Each upload is first written under an opaque name in quarantine outside active folders, validated, then atomically promoted. A rejected file therefore never replaces the active copy. Quarantine residue and old spoiler files are cleaned according to `UPLOAD_QUARANTINE_RETENTION_MINUTES` and `SPOILER_LOG_RETENTION_DAYS`.
+- Generation ZIPs accept at most 500 flat YAML entries and 256 MiB uncompressed. APWorld archives must be readable, stay within the same limits, and contain no absolute or traversal path. YAML and text spoilers must be non-empty UTF-8 text without NUL bytes; a `.json` spoiler must contain a valid JSON object or array. See [upload quarantine and validation](upload-quarantine-security.en.md).
 - APWorld files contain executable code and are restricted to the instance owner.
 - Room URLs must be exact HTTP(S) `/room/{id}` URLs. Private, local, link-local, reserved, and multicast addresses are blocked during validation and on each HTTP connection. Explicit private hosts require `ARCHIPELAGO_ALLOWED_HOSTS`.
 - Logs and `ast_channel_info` no longer expose room, tracker, patch URL, or server port secrets.

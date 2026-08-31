@@ -54,10 +54,13 @@ public class YamlClass : Declare
         using (var response = await HttpClient.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead))
             if (response.IsSuccessStatusCode)
             {
-                await FileUploadSecurity.CopyToFileWithLimitAsync(
+                var accepted = await FileUploadSecurity.CopyValidatedToFileWithLimitAsync(
                     await response.Content.ReadAsStreamAsync(),
                     filePath,
-                    Declare.WebPortalMaxUploadBytes);
+                    Declare.WebPortalMaxUploadBytes,
+                    FileUploadSecurity.IsSafeTextFile);
+                if (!accepted)
+                    return Resource.YamlWrongFile;
                 message = string.Format(Resource.YamlFileSent, safeFileName);
             }
             else
@@ -79,7 +82,13 @@ public class YamlClass : Declare
         Directory.CreateDirectory(playersFolderChannel);
 
         string filePath = Path.Combine(playersFolderChannel, safeFileName);
-        await FileUploadSecurity.CopyToFileWithLimitAsync(content, filePath, Declare.WebPortalMaxUploadBytes);
+        var accepted = await FileUploadSecurity.CopyValidatedToFileWithLimitAsync(
+            content,
+            filePath,
+            Declare.WebPortalMaxUploadBytes,
+            FileUploadSecurity.IsSafeTextFile);
+        if (!accepted)
+            return Resource.YamlWrongFile;
 
         return string.Format(Resource.YamlFileSent, safeFileName);
     }
