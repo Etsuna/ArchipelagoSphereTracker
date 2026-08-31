@@ -61,6 +61,7 @@ public static class BotCommands
                 Declare.Client.ButtonExecuted += AstSetupWizard.HandleComponentAsync;
                 Declare.Client.ButtonExecuted += AstCommandCenter.HandleButtonAsync;
                 Declare.Client.SelectMenuExecuted += AstSetupWizard.HandleComponentAsync;
+                Declare.Client.SelectMenuExecuted += AstCommandCenter.HandleSelectMenuAsync;
                 Declare.Client.ModalSubmitted += AstSetupWizard.HandleModalAsync;
                 _handlersRegistered = true;
             }

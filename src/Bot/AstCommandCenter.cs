@@ -107,6 +107,32 @@ public sealed class AstUiSessionStore
         return false;
     }
 
+    public bool TrySelectRoom(
+        string id,
+        ulong ownerUserId,
+        ulong guildId,
+        ulong sourceChannelId,
+        ulong roomChannelId,
+        out AstUiSession session)
+    {
+        session = default!;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with
+            {
+                RoomChannelId = roomChannelId,
+                Screen = AstUiScreen.Home,
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
+            if (_sessions.TryUpdate(id, updated, current))
+            {
+                session = updated;
+                return true;
+            }
+        }
+        return false;
+    }
+
     public int CleanupExpired()
     {
         var now = _timeProvider.GetUtcNow();
@@ -215,6 +241,40 @@ public static class AstCommandCenter
         }
     }
 
+    public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
+    {
+        if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) || action != "select-room")
+            return;
+        if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
+            component.Data.Values.FirstOrDefault() is not { } selected || !ulong.TryParse(selected, out var roomChannelId) ||
+            !Sessions.TryGetAuthorized(sessionId, component.User.Id, guildId, sourceChannelId, out var session))
+        {
+            await component.RespondAsync(IsFrench ? "Cette interface a expiré. Relancez `/ast`." : "This interface expired. Run `/ast` again.", ephemeral: true);
+            return;
+        }
+
+        await component.DeferAsync(ephemeral: true);
+        var guildIdText = guildId.ToString(CultureInfo.InvariantCulture);
+        var roomIdText = roomChannelId.ToString(CultureInfo.InvariantCulture);
+        if (!await IsTrackedRoomAsync(guildId, roomChannelId).ConfigureAwait(false))
+        {
+            await SetErrorAsync(component, IsFrench ? "Cette room n’est plus suivie." : "This room is no longer tracked.").ConfigureAwait(false);
+            return;
+        }
+
+        var authorization = await AstAuthorizationService.CreateDiscordContextAsync(
+            guildIdText, roomIdText, component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+        if (authorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization) ||
+            !Sessions.TrySelectRoom(session.Id, component.User.Id, guildId, sourceChannelId, roomChannelId, out session))
+        {
+            await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+            return;
+        }
+
+        var view = await RenderAsync(session, authorization).ConfigureAwait(false);
+        await SetViewAsync(component, view).ConfigureAwait(false);
+    }
+
     public static bool TryParseCustomId(string? customId, out string sessionId, out string action)
     {
         sessionId = string.Empty;
@@ -238,17 +298,17 @@ public static class AstCommandCenter
             : null;
         return session.Screen switch
         {
-            AstUiScreen.Home => RenderHome(session, authorization, roomName),
+            AstUiScreen.Home => await RenderHomeAsync(session, authorization, roomName).ConfigureAwait(false),
             AstUiScreen.Personal => RenderPersonal(session),
             AstUiScreen.Room => await RenderRoomAsync(session, roomName).ConfigureAwait(false),
             AstUiScreen.Manage => RenderManage(session),
             AstUiScreen.Administration => RenderAdministration(session, authorization),
             AstUiScreen.Help => RenderHelp(session),
-            _ => RenderHome(session, authorization, roomName)
+            _ => await RenderHomeAsync(session, authorization, roomName).ConfigureAwait(false)
         };
     }
 
-    private static AstUiView RenderHome(AstUiSession session, AstAuthorizationContext authorization, string? roomName)
+    private static async Task<AstUiView> RenderHomeAsync(AstUiSession session, AstAuthorizationContext authorization, string? roomName)
     {
         var builder = BaseEmbed(roomName == null
                 ? (IsFrench ? "Centre de commandes AST" : "AST command center")
@@ -267,7 +327,43 @@ public static class AstCommandCenter
         if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
             components.WithButton(IsFrench ? "Administration" : "Administration", Id(session, "admin"), ButtonStyle.Secondary, emote: new Emoji("🛠️"));
         components.WithButton(IsFrench ? "Aide" : "Help", Id(session, "help"), ButtonStyle.Secondary, emote: new Emoji("❓"));
+        if (session.RoomChannelId == null)
+        {
+            var roomMenu = await BuildRoomMenuAsync(session, authorization).ConfigureAwait(false);
+            if (roomMenu != null) components.WithSelectMenu(roomMenu, row: 1);
+            else builder.AddField(IsFrench ? "Rooms" : "Rooms", IsFrench ? "Aucune room accessible sur ce serveur." : "No accessible room on this server.");
+        }
         return new AstUiView(null, builder.Build(), components.Build());
+    }
+
+    private static async Task<SelectMenuBuilder?> BuildRoomMenuAsync(
+        AstUiSession session,
+        AstAuthorizationContext sourceAuthorization)
+    {
+        var guildId = session.GuildId.ToString(CultureInfo.InvariantCulture);
+        var channelIds = await DatabaseCommands.GetAllChannelsAsync(guildId, "ChannelsAndUrlsTable").ConfigureAwait(false);
+        var menu = new SelectMenuBuilder()
+            .WithCustomId(Id(session, "select-room"))
+            .WithPlaceholder(IsFrench ? "Choisir une room…" : "Choose a room…")
+            .WithMinValues(1)
+            .WithMaxValues(1);
+        var count = 0;
+        foreach (var channelId in channelIds.Distinct(StringComparer.Ordinal).Take(100))
+        {
+            if (!ulong.TryParse(channelId, out var channelSnowflake) || Declare.Client.GetChannel(channelSnowflake) is not IChannel channel)
+                continue;
+            var allowed = AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, sourceAuthorization);
+            if (!allowed)
+            {
+                var roomAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                    guildId, channelId, session.OwnerUserId).ConfigureAwait(false);
+                allowed = roomAuthorization != null && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, roomAuthorization);
+            }
+            if (!allowed) continue;
+            menu.AddOption(Safe(channel.Name)[..Math.Min(Safe(channel.Name).Length, 100)], channelId);
+            if (++count == 25) break;
+        }
+        return count == 0 ? null : menu;
     }
 
     private static AstUiView RenderPersonal(AstUiSession session)

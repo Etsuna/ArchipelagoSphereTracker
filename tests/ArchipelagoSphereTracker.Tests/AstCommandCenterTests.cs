@@ -52,6 +52,21 @@ public sealed class AstCommandCenterTests
         Assert.Equal(session.RoomChannelId, updated.RoomChannelId);
     }
 
+    [Fact]
+    public void Room_selection_updates_target_but_preserves_interaction_scope()
+    {
+        var store = new AstUiSessionStore();
+        var session = store.Start(10, 20, 30, null);
+
+        Assert.True(store.TrySelectRoom(session.Id, 10, 20, 30, 99, out var updated));
+
+        Assert.Equal((ulong)99, updated.RoomChannelId);
+        Assert.Equal((ulong)30, updated.SourceChannelId);
+        Assert.Equal(AstUiScreen.Home, updated.Screen);
+        Assert.True(store.TryGetAuthorized(session.Id, 10, 20, 30, out _));
+        Assert.False(store.TryGetAuthorized(session.Id, 10, 20, 99, out _));
+    }
+
     [Theory]
     [InlineData("astui:0123456789abcdef0123456789abcdef:personal", true, "personal")]
     [InlineData("astui:short:personal", false, "")]
