@@ -63,6 +63,7 @@ public class SlashCommandDefinitionsTests
         AssertCommandOption(commands, "add-url", "url", ApplicationCommandOptionType.String, required: true, autocomplete: false);
         AssertCommandOption(commands, "add-url", "auto-add-members", ApplicationCommandOptionType.Boolean, required: true, autocomplete: false);
         Assert.Null(commands.Single(command => command.Name == "ast-setup").Options);
+        AssertCommandOption(commands, "ast", "file", ApplicationCommandOptionType.Attachment, required: false, autocomplete: false);
         AssertCommandOption(commands, "get-patch", "alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "recap", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "recap-and-clean", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);

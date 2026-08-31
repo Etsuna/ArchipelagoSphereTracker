@@ -164,6 +164,12 @@ public static class AstCommandCenter
             return;
         }
 
+        if (command.Data.Options?.FirstOrDefault(option => option.Name == "file")?.Value is IAttachment attachment)
+        {
+            await HandleUploadAsync(command, guildId, channelId, attachment).ConfigureAwait(false);
+            return;
+        }
+
         var authorization = await AstAuthorizationService.CreateDiscordContextAsync(
             guildId.ToString(CultureInfo.InvariantCulture),
             channelId.ToString(CultureInfo.InvariantCulture),
@@ -180,6 +186,55 @@ public static class AstCommandCenter
         var session = Sessions.Start(command.User.Id, guildId, channelId, isRoom ? channelId : null);
         var view = await RenderAsync(session, authorization).ConfigureAwait(false);
         await command.RespondAsync(view.Content, embed: view.Embed, components: view.Components, ephemeral: true);
+    }
+
+    private static async Task HandleUploadAsync(
+        SocketSlashCommand command,
+        ulong guildId,
+        ulong channelId,
+        IAttachment attachment)
+    {
+        await command.DeferAsync(ephemeral: true).ConfigureAwait(false);
+        var guildIdText = guildId.ToString(CultureInfo.InvariantCulture);
+        var channelIdText = channelId.ToString(CultureInfo.InvariantCulture);
+        var authorization = await AstAuthorizationService.CreateDiscordContextAsync(
+            guildIdText, channelIdText, command.User.Id, command.User as IGuildUser).ConfigureAwait(false);
+        if (authorization == null)
+        {
+            await command.FollowupAsync(AstAuthorizationService.DeniedMessage, ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+
+        var extension = Path.GetExtension(attachment.Filename).ToLowerInvariant();
+        string result;
+        switch (extension)
+        {
+            case ".yaml" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization):
+                result = await YamlClass.SendYaml(command, channelIdText).ConfigureAwait(false);
+                break;
+            case ".apworld" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization):
+                result = await ApworldClass.SendApworld(command).ConfigureAwait(false);
+                break;
+            case ".zip" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization):
+                result = await GenerationClass.GenerateWithZip(command, channelIdText).ConfigureAwait(false);
+                break;
+            case ".txt" or ".json" when
+                AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization) &&
+                command.Channel is IThreadChannel &&
+                await IsTrackedRoomAsync(guildId, channelId).ConfigureAwait(false):
+                result = await SpoilerLogClass.SendSpoilerLog(command, channelIdText).ConfigureAwait(false);
+                break;
+            case ".yaml" or ".apworld" or ".zip" or ".txt" or ".json":
+                result = AstAuthorizationService.DeniedMessage;
+                break;
+            default:
+                result = IsFrench
+                    ? "Format non pris en charge. Utilisez un fichier `.yaml`, `.zip`, `.apworld`, `.txt` ou `.json`."
+                    : "Unsupported format. Use a `.yaml`, `.zip`, `.apworld`, `.txt`, or `.json` file.";
+                break;
+        }
+        if (!string.IsNullOrWhiteSpace(result))
+            await command.FollowupAsync(Clamp(result), ephemeral: true).ConfigureAwait(false);
     }
 
     public static async Task HandleButtonAsync(SocketMessageComponent component)

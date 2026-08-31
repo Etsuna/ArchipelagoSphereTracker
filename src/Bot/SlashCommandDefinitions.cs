@@ -11,7 +11,14 @@ public static class SlashCommandDefinitions
                 .WithName("ast")
                 .WithDescription(Declare.Language == "fr"
                     ? "Ouvrir votre centre de commandes AST privé"
-                    : "Open your private AST command center"),
+                    : "Open your private AST command center")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("file")
+                    .WithDescription(Declare.Language == "fr"
+                        ? "Importer un YAML, ZIP, APWorld ou spoiler log"
+                        : "Import a YAML, ZIP, APWorld or spoiler log")
+                    .WithType(ApplicationCommandOptionType.Attachment)
+                    .WithRequired(false)),
 
             new SlashCommandBuilder().WithName("get-aliases").WithDescription(Resource.SCGetAliasesDescription),
 
