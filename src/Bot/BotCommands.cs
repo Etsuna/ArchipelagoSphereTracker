@@ -296,6 +296,7 @@ public static class BotCommands
             "ast-health" => TrackingControlCommands.GetGuildHealth(guildId),
             "ast-room-health" or "ast-sync-now" or "ast-pause" or "ast-resume"
                 => await TrackingControlCommands.ExecuteRoomAsync(command.CommandName, guildId, channelId),
+            "ast-polling" => await ChannelsAndUrlsCommands.UpdatePollingPolicy(command, channelId, guildId),
             "info" => await HelperClass.Info(channelId, guildId),
             "get-patch" => await HelperClass.GetPatch(command, user, channelId, guildId),
             "ast-user-portal" => await WebPortalLinkAsync(command, channelId, guildId, command.User.Id.ToString()),

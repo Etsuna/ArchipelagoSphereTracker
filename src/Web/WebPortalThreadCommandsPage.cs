@@ -252,6 +252,27 @@ public static class WebPortalThreadCommandsPage
         <button type=""submit"">{L("Reprendre le suivi", "Resume tracking")}</button>
         <div class=""result"" data-result></div>
       </form>
+      <form data-command=""ast-polling"">
+        <label>{L("Mode de polling", "Polling mode")}
+          <select name=""mode"" required>
+            <option value=""automatic"">{L("Automatique", "Automatic")}</option>
+            <option value=""fixed"">{L("Fréquence fixe", "Fixed frequency")}</option>
+          </select>
+        </label>
+        <label>{L("Fréquence maximale", "Maximum interval")}
+          <select name=""maximumFrequency"" required>
+            <option value=""15m"">15 minutes</option>
+            <option value=""30m"">30 minutes</option>
+            <option value=""1h"">1 hour</option>
+            <option value=""6h"">6 hours</option>
+            <option value=""12h"">12 hours</option>
+            <option value=""18h"">18 hours</option>
+            <option value=""1d"">1 day</option>
+          </select>
+        </label>
+        <button type=""submit"">{L("Mettre à jour la politique", "Update policy")}</button>
+        <div class=""result"" data-result></div>
+      </form>
     </section>
 
     <section class=""panel"">

@@ -28,6 +28,8 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
                 channel.Silent,
                 channel.Port,
                 channel.CheckFrequency,
+                channel.PollingMode,
+                channel.MaximumCheckFrequency,
                 channel.LastCheck,
                 state.NextPollAtUtc,
                 state.LastAttemptAtUtc,
@@ -69,6 +71,15 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
                 null);
             var lastCheck = Timestamp(reader, "LastCheck");
             var initialNext = lastCheck?.Add(interval) ?? _timeProvider.GetUtcNow();
+            if (!Enum.TryParse(Text(reader, "PollingMode", "Automatic"), true, out RoomPollingMode pollingMode))
+                pollingMode = RoomPollingMode.Automatic;
+            var maximumInterval = TrackingDataManager.CheckFrequencyParser.ParseOrDefault(
+                Text(reader, "MaximumCheckFrequency", "1h"),
+                TimeSpan.FromHours(1),
+                TimeSpan.FromMinutes(5),
+                TimeSpan.FromDays(1));
+            if (maximumInterval < interval)
+                maximumInterval = interval;
             var definition = new ScheduledRoomDefinition(
                 guildId,
                 channelId,
@@ -79,7 +90,9 @@ public sealed class SqliteRoomScheduleStore : IRoomScheduleStore
                 reader["Silent"] is not DBNull && Convert.ToBoolean(reader["Silent"], CultureInfo.InvariantCulture),
                 Text(reader, "Port", "0"),
                 interval,
-                initialNext);
+                initialNext,
+                pollingMode,
+                maximumInterval);
 
             RoomScheduleState? state = null;
             if (Timestamp(reader, "NextPollAtUtc") is { } nextPollAt)

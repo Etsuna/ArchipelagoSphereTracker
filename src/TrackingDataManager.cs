@@ -141,6 +141,9 @@ public static class TrackingDataManager
     public static IReadOnlyList<RoomHealthSnapshot>? GetGuildHealth(string guildId)
         => GetCentralScheduler()?.GetGuildHealth(guildId);
 
+    public static Task ReloadTrackingConfigurationAsync(CancellationToken cancellationToken = default)
+        => GetCentralScheduler()?.ReloadConfigurationAsync(cancellationToken) ?? Task.CompletedTask;
+
     private static CentralRoomScheduler? GetCentralScheduler()
     {
         lock (SchedulerLifecycleLock)

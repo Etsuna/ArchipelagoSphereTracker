@@ -29,6 +29,7 @@ public class SlashCommandDefinitionsTests
             "ast-sync-now",
             "ast-pause",
             "ast-resume",
+            "ast-polling",
             "info",
             "get-patch",
             "recap-all",
@@ -76,6 +77,8 @@ public class SlashCommandDefinitionsTests
         AssertCommandOption(commands, "excluded-item", "items", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "delete-excluded-item", "added-alias", ApplicationCommandOptionType.String, required: true, autocomplete: true);
         AssertCommandOption(commands, "delete-excluded-item", "delete-items", ApplicationCommandOptionType.String, required: true, autocomplete: true);
+        AssertCommandOption(commands, "ast-polling", "mode", ApplicationCommandOptionType.String, required: true, autocomplete: false);
+        AssertCommandOption(commands, "ast-polling", "maximum-frequency", ApplicationCommandOptionType.String, required: true, autocomplete: false);
     }
 
     [Fact]

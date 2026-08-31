@@ -711,4 +711,58 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
             Db.WriteGate.Release();
         }
     }
+
+    public static async Task Migrate_5_0_10(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.10: per-room adaptive polling policy.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            var columns = await GetColumnsAsync(conn, "ChannelsAndUrlsTable", ct);
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                var additions = new (string Name, string Sql)[]
+                {
+                    ("PollingMode", "ALTER TABLE ChannelsAndUrlsTable ADD COLUMN PollingMode TEXT NOT NULL DEFAULT 'Automatic' CHECK (PollingMode IN ('Automatic', 'Fixed'));"),
+                    ("MaximumCheckFrequency", "ALTER TABLE ChannelsAndUrlsTable ADD COLUMN MaximumCheckFrequency TEXT NOT NULL DEFAULT '1h';")
+                };
+
+                foreach (var addition in additions.Where(addition => !columns.Contains(addition.Name)))
+                {
+                    using var command = conn.CreateCommand();
+                    command.Transaction = transaction;
+                    command.CommandText = addition.Sql;
+                    await command.ExecuteNonQueryAsync(ct);
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
+
+    private static async Task<HashSet<string>> GetColumnsAsync(
+        System.Data.Common.DbConnection connection,
+        string tableName,
+        CancellationToken cancellationToken)
+    {
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using var inspect = connection.CreateCommand();
+        inspect.CommandText = $"PRAGMA table_info({tableName});";
+        using var reader = await inspect.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            columns.Add(reader["name"]?.ToString() ?? string.Empty);
+        return columns;
+    }
 }

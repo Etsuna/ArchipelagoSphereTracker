@@ -9,6 +9,8 @@ using static TrackingDataManager;
 public static class ChannelsAndUrlsCommands
 {
     private static string DefaultTrackerValue = Resource.NotFound;
+    private static readonly HashSet<string> AllowedMaximumFrequencies =
+        new(["15m", "30m", "1h", "6h", "12h", "18h", "1d"], StringComparer.OrdinalIgnoreCase);
 
     // ==========================
     // 🎯 Channel et URL (WRITE)
@@ -649,6 +651,84 @@ public static class ChannelsAndUrlsCommands
         }
 
         return message;
+    }
+
+    public static Task<string> UpdatePollingPolicy(
+        SocketSlashCommand command,
+        string channelId,
+        string guildId)
+    {
+        var mode = command.Data.Options.FirstOrDefault(option => option.Name == "mode")?.Value?.ToString();
+        var maximum = command.Data.Options.FirstOrDefault(option => option.Name == "maximum-frequency")?.Value?.ToString();
+        return UpdatePollingPolicyInternal(mode, maximum, channelId, guildId);
+    }
+
+    public static Task<string> UpdatePollingPolicyFromWeb(
+        string? mode,
+        string? maximumFrequency,
+        string channelId,
+        string guildId)
+        => UpdatePollingPolicyInternal(mode, maximumFrequency, channelId, guildId);
+
+    private static async Task<string> UpdatePollingPolicyInternal(
+        string? mode,
+        string? maximumFrequency,
+        string channelId,
+        string guildId)
+    {
+        var normalizedMode = mode?.Trim().ToLowerInvariant() switch
+        {
+            "automatic" => "Automatic",
+            "fixed" => "Fixed",
+            _ => null
+        };
+        if (normalizedMode == null ||
+            string.IsNullOrWhiteSpace(maximumFrequency) ||
+            !AllowedMaximumFrequencies.Contains(maximumFrequency))
+        {
+            return Declare.Language == "fr"
+                ? "Mode ou fréquence maximale invalide."
+                : "Invalid polling mode or maximum frequency.";
+        }
+
+        var current = await GetChannelConfigAsync(guildId, channelId).ConfigureAwait(false);
+        var minimum = CheckFrequencyParser.ParseOrDefault(
+            current.checkFrequency,
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromDays(1));
+        if (!CheckFrequencyParser.TryParse(
+                maximumFrequency,
+                out var maximum,
+                minimum,
+                TimeSpan.FromDays(1)))
+        {
+            return Declare.Language == "fr"
+                ? "La fréquence maximale doit être supérieure ou égale à la fréquence minimale configurée."
+                : "The maximum frequency must be greater than or equal to the configured minimum frequency.";
+        }
+
+        await Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                UPDATE ChannelsAndUrlsTable
+                SET PollingMode = @PollingMode,
+                    MaximumCheckFrequency = @MaximumCheckFrequency
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+            command.Parameters.AddWithValue("@PollingMode", normalizedMode);
+            command.Parameters.AddWithValue("@MaximumCheckFrequency", maximumFrequency.ToLowerInvariant());
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+        }).ConfigureAwait(false);
+
+        await TrackingDataManager.ReloadTrackingConfigurationAsync().ConfigureAwait(false);
+        await TrackingDataManager.PromoteRoomAsync(guildId, channelId).ConfigureAwait(false);
+
+        return Declare.Language == "fr"
+            ? $"Politique de suivi mise à jour : mode {normalizedMode}, minimum {current.checkFrequency}, maximum {maximumFrequency.ToLowerInvariant()}."
+            : $"Tracking policy updated: {normalizedMode} mode, {current.checkFrequency} minimum, {maximumFrequency.ToLowerInvariant()} maximum.";
     }
 
     // =================================================

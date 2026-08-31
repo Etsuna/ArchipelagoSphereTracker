@@ -66,9 +66,13 @@ public static class TrackingControlCommands
 
         var builder = new StringBuilder();
         builder.AppendLine(IsFrench ? $"🩺 Suivi de la room : **{status}**" : $"🩺 Room tracking: **{status}**");
-        builder.AppendLine(IsFrench
-            ? $"Fréquence : {Duration(health.EffectiveInterval)} (minimum configuré : {Duration(health.ConfiguredInterval)})"
-            : $"Interval: {Duration(health.EffectiveInterval)} (configured minimum: {Duration(health.ConfiguredInterval)})");
+        builder.AppendLine(health.PollingMode == RoomPollingMode.Automatic
+            ? IsFrench
+                ? $"Polling automatique : {Duration(health.EffectiveInterval)} (minimum {Duration(health.ConfiguredInterval)}, maximum {Duration(health.MaximumPollInterval)})"
+                : $"Automatic polling: {Duration(health.EffectiveInterval)} ({Duration(health.ConfiguredInterval)} minimum, {Duration(health.MaximumPollInterval)} maximum)"
+            : IsFrench
+                ? $"Polling fixe : {Duration(health.ConfiguredInterval)}"
+                : $"Fixed polling: {Duration(health.ConfiguredInterval)}");
         builder.AppendLine(IsFrench
             ? $"Dernière synchronisation réussie : {Relative(health.LastSuccessAtUtc, now)}"
             : $"Last successful sync: {Relative(health.LastSuccessAtUtc, now)}");

@@ -15,6 +15,12 @@ public enum PollFailureKind
     Unexpected
 }
 
+public enum RoomPollingMode
+{
+    Automatic,
+    Fixed
+}
+
 public sealed record RoomPollResult(
     bool Success,
     PollFailureKind FailureKind = PollFailureKind.None,
@@ -43,7 +49,9 @@ public sealed record ScheduledRoomDefinition(
     bool Silent,
     string Port,
     TimeSpan PollInterval,
-    DateTimeOffset InitialNextPollAtUtc)
+    DateTimeOffset InitialNextPollAtUtc,
+    RoomPollingMode PollingMode = RoomPollingMode.Automatic,
+    TimeSpan? MaximumPollInterval = null)
 {
     public string Key => $"{GuildId}:{ChannelId}";
 }
@@ -93,7 +101,9 @@ public sealed record RoomHealthSnapshot(
     TimeSpan EffectiveInterval,
     int UnchangedSuccessCount,
     DateTimeOffset? LastChangeAtUtc,
-    double LastLatencyMilliseconds);
+    double LastLatencyMilliseconds,
+    RoomPollingMode PollingMode,
+    TimeSpan MaximumPollInterval);
 
 public sealed record ScheduledRoomRegistration(
     ScheduledRoomDefinition Definition,

@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS ChannelsAndUrlsTable (
     Room           TEXT NOT NULL,
     Tracker        TEXT NOT NULL,
     CheckFrequency TEXT NOT NULL,
+    PollingMode TEXT NOT NULL DEFAULT 'Automatic'
+        CHECK (PollingMode IN ('Automatic', 'Fixed')),
+    MaximumCheckFrequency TEXT NOT NULL DEFAULT '1h',
     LastCheck      TEXT,
     Silent         BOOLEAN,
     Port           TEXT

@@ -99,6 +99,28 @@ public static class SlashCommandDefinitions
             new SlashCommandBuilder()
                 .WithName("ast-resume")
                 .WithDescription(Declare.Language == "fr" ? "Reprendre le suivi de cette room" : "Resume tracking for this room"),
+            new SlashCommandBuilder()
+                .WithName("ast-polling")
+                .WithDescription(Declare.Language == "fr" ? "Configurer le polling automatique de cette room" : "Configure adaptive polling for this room")
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("mode")
+                    .WithDescription(Declare.Language == "fr" ? "Mode automatique ou fréquence fixe" : "Automatic or fixed-frequency mode")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .AddChoice(Declare.Language == "fr" ? "Automatique" : "Automatic", "automatic")
+                    .AddChoice(Declare.Language == "fr" ? "Fixe" : "Fixed", "fixed"))
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("maximum-frequency")
+                    .WithDescription(Declare.Language == "fr" ? "Intervalle maximal en mode automatique" : "Maximum interval in automatic mode")
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(true)
+                    .AddChoice("15 minutes", "15m")
+                    .AddChoice("30 minutes", "30m")
+                    .AddChoice("1 hour", "1h")
+                    .AddChoice("6 hours", "6h")
+                    .AddChoice("12 hours", "12h")
+                    .AddChoice("18 hours", "18h")
+                    .AddChoice("1 day", "1d")),
 
             new SlashCommandBuilder().WithName("info").WithDescription(Resource.SCInfoDescription),
 

@@ -72,6 +72,9 @@ public sealed class CentralRoomScheduler
         _nextReloadAtUtc = _timeProvider.GetUtcNow().Add(_options.ReloadInterval);
     }
 
+    public Task ReloadConfigurationAsync(CancellationToken cancellationToken = default)
+        => ReloadAsync(cancellationToken);
+
     public async Task RunAsync(CancellationToken cancellationToken)
     {
         if (Interlocked.Exchange(ref _runStarted, 1) != 0)
@@ -265,7 +268,7 @@ public sealed class CentralRoomScheduler
         }
     }
 
-    private static RoomHealthSnapshot CreateHealthSnapshotLocked(RuntimeRoom room)
+    private RoomHealthSnapshot CreateHealthSnapshotLocked(RuntimeRoom room)
     {
         var effective = room.State.EffectiveIntervalSeconds > 0
             ? TimeSpan.FromSeconds(room.State.EffectiveIntervalSeconds)
@@ -285,7 +288,9 @@ public sealed class CentralRoomScheduler
             effective,
             room.State.UnchangedSuccessCount,
             room.State.LastChangeAtUtc,
-            room.State.LastLatencyMilliseconds);
+            room.State.LastLatencyMilliseconds,
+            room.Definition.PollingMode,
+            GetMaximumInterval(room.Definition));
     }
 
     private async Task ReloadAsync(CancellationToken cancellationToken)
@@ -301,7 +306,21 @@ public sealed class CentralRoomScheduler
             {
                 if (_rooms.TryGetValue(registration.Definition.Key, out var existing))
                 {
+                    var configurationChanged = existing.Definition.PollInterval != registration.Definition.PollInterval ||
+                                               existing.Definition.PollingMode != registration.Definition.PollingMode ||
+                                               existing.Definition.MaximumPollInterval != registration.Definition.MaximumPollInterval;
                     existing.Definition = registration.Definition;
+                    if (configurationChanged)
+                    {
+                        existing.State = existing.State with
+                        {
+                            NextPollAtUtc = now,
+                            EffectiveIntervalSeconds = registration.Definition.PollInterval.TotalSeconds,
+                            UnchangedSuccessCount = 0
+                        };
+                        if (!existing.State.IsPaused && !existing.Running)
+                            EnqueueLocked(existing);
+                    }
                     existing.RemovedOnReload = false;
                     continue;
                 }
@@ -319,6 +338,16 @@ public sealed class CentralRoomScheduler
                     EffectiveIntervalSeconds: registration.Definition.PollInterval.TotalSeconds);
                 if (state.EffectiveIntervalSeconds <= 0)
                     state = state with { EffectiveIntervalSeconds = registration.Definition.PollInterval.TotalSeconds };
+                if (registration.Definition.PollingMode == RoomPollingMode.Fixed ||
+                    state.EffectiveIntervalSeconds < registration.Definition.PollInterval.TotalSeconds ||
+                    state.EffectiveIntervalSeconds > GetMaximumInterval(registration.Definition).TotalSeconds)
+                {
+                    state = state with
+                    {
+                        EffectiveIntervalSeconds = registration.Definition.PollInterval.TotalSeconds,
+                        UnchangedSuccessCount = 0
+                    };
+                }
                 var room = new RuntimeRoom(registration.Definition, state);
                 _rooms.Add(registration.Definition.Key, room);
                 if (state.BreakerOpenUntilUtc is { } persistedBreaker && persistedBreaker > now)
@@ -488,8 +517,11 @@ public sealed class CentralRoomScheduler
                     }
                     else if (string.Equals(lastContentHash, result.ContentHash, StringComparison.Ordinal))
                     {
-                        unchangedSuccesses++;
-                        effectiveInterval = ComputeAdaptiveInterval(room.Definition.PollInterval, unchangedSuccesses);
+                        if (room.Definition.PollingMode == RoomPollingMode.Automatic)
+                        {
+                            unchangedSuccesses++;
+                            effectiveInterval = ComputeAdaptiveInterval(room.Definition, unchangedSuccesses);
+                        }
                     }
                     else
                     {
@@ -500,6 +532,11 @@ public sealed class CentralRoomScheduler
                     lastContentHash = result.ContentHash;
                 }
                 else
+                {
+                    unchangedSuccesses = 0;
+                    effectiveInterval = room.Definition.PollInterval;
+                }
+                if (room.Definition.PollingMode == RoomPollingMode.Fixed)
                 {
                     unchangedSuccesses = 0;
                     effectiveInterval = room.Definition.PollInterval;
@@ -590,16 +627,22 @@ public sealed class CentralRoomScheduler
         return TimeSpan.FromSeconds(Math.Max(1, seconds));
     }
 
-    private TimeSpan ComputeAdaptiveInterval(TimeSpan configured, int unchangedSuccesses)
+    private TimeSpan ComputeAdaptiveInterval(ScheduledRoomDefinition room, int unchangedSuccesses)
     {
         var steps = unchangedSuccesses / _options.UnchangedPollsBeforeSlowdown;
         if (steps <= 0)
-            return configured;
+            return room.PollInterval;
         var factor = Math.Pow(_options.AdaptiveIntervalMultiplier, Math.Min(steps, 20));
         var seconds = Math.Min(
-            configured.TotalSeconds * factor,
-            _options.MaximumAdaptiveInterval.TotalSeconds);
-        return TimeSpan.FromSeconds(Math.Max(configured.TotalSeconds, seconds));
+            room.PollInterval.TotalSeconds * factor,
+            GetMaximumInterval(room).TotalSeconds);
+        return TimeSpan.FromSeconds(Math.Max(room.PollInterval.TotalSeconds, seconds));
+    }
+
+    private TimeSpan GetMaximumInterval(ScheduledRoomDefinition room)
+    {
+        var configuredMaximum = room.MaximumPollInterval ?? _options.MaximumAdaptiveInterval;
+        return configuredMaximum < room.PollInterval ? room.PollInterval : configuredMaximum;
     }
 
     private TimeSpan ComputePositiveJitter(string key, DateTimeOffset now)

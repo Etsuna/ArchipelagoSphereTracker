@@ -55,6 +55,7 @@ public static class AstAuthorizationService
                 "ast-sync-now" or
                 "ast-pause" or
                 "ast-resume" or
+                "ast-polling" or
                 "excluded-item" or
                 "delete-excluded-item" or
                 "update-silent-option" => AstAuthorizationLevel.RoomManager,

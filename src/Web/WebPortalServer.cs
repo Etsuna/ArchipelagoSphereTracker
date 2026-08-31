@@ -544,6 +544,13 @@ public static class WebPortalServer
                 case "ast-resume":
                     message = await TrackingControlCommands.ExecuteRoomAsync(command, guildId, channelId);
                     break;
+                case "ast-polling":
+                    message = await ChannelsAndUrlsCommands.UpdatePollingPolicyFromWeb(
+                        form["mode"].FirstOrDefault(),
+                        form["maximumFrequency"].FirstOrDefault(),
+                        channelId,
+                        guildId);
+                    break;
                 case "get-patch":
                     {
                         var alias = form["alias"].FirstOrDefault();

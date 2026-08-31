@@ -55,7 +55,7 @@ Le bot existe en **deux modes** :
 - Gestion de rooms avec `/add-url` et `/delete-url`.
 - Paramétrage de fréquence de polling (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
 - Polling adaptatif : après trois snapshots inchangés, l'intervalle ralentit progressivement jusqu'à une heure et revient immédiatement au minimum configuré dès qu'une activité est détectée.
-- Santé et contrôle du suivi avec `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause` et `/ast-resume` (également disponibles dans le portail de room).
+- Santé et contrôle du suivi avec `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause`, `/ast-resume` et `/ast-polling` (également disponibles dans le portail de room).
 - Option silencieuse (`silent`) configurable à la création puis via commande.
 - Alias joueurs : ajout/suppression/liste.
 - Gestion des items affichés, items exclus et hints.
@@ -524,7 +524,7 @@ AST supports **two modes**:
 - Room lifecycle management through `/add-url` and `/delete-url`.
 - Configurable polling frequency (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
 - Adaptive polling: after three unchanged snapshots, the interval progressively slows down up to one hour and immediately returns to the configured minimum when activity resumes.
-- Tracking health and controls through `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause`, and `/ast-resume` (also available in the room portal).
+- Tracking health and controls through `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause`, `/ast-resume`, and `/ast-polling` (also available in the room portal).
 - Silent option configurable at room creation and later updates.
 - Player alias management (add/remove/list).
 - Displayed/excluded items and hints management.

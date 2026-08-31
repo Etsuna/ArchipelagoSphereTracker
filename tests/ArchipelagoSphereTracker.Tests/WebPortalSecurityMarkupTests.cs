@@ -43,6 +43,7 @@ public class WebPortalSecurityMarkupTests
             Assert.Contains("data-command=\"ast-sync-now\"", html);
             Assert.Contains("data-command=\"ast-pause\"", html);
             Assert.Contains("data-command=\"ast-resume\"", html);
+            Assert.Contains("data-command=\"ast-polling\"", html);
         }
         finally
         {

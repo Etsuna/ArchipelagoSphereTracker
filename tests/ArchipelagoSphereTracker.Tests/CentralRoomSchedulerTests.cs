@@ -156,6 +156,51 @@ public sealed class CentralRoomSchedulerTests
     }
 
     [Fact]
+    public async Task Automatic_mode_respects_room_maximum_and_fixed_mode_never_slows_down()
+    {
+        var automaticTime = new ManualTimeProvider(T0);
+        var automaticStore = new MemoryScheduleStore([
+            Registration("automatic", "https://a.example", T0, maximum: TimeSpan.FromMinutes(10))
+        ]);
+        var automatic = Scheduler(
+            automaticStore,
+            (_, _) => Task.FromResult(RoomPollResult.Ok("unchanged")),
+            automaticTime,
+            global: 1);
+        await automatic.InitializeAsync();
+        Assert.Equal(1, await automatic.RunDueOnceAsync());
+        for (var poll = 0; poll < 9; poll++)
+        {
+            automaticTime.Advance(automatic.GetHealth("g", "automatic")!.EffectiveInterval);
+            Assert.Equal(1, await automatic.RunDueOnceAsync());
+        }
+        var capped = automatic.GetHealth("g", "automatic")!;
+        Assert.Equal(RoomPollingMode.Automatic, capped.PollingMode);
+        Assert.Equal(TimeSpan.FromMinutes(10), capped.MaximumPollInterval);
+        Assert.Equal(TimeSpan.FromMinutes(10), capped.EffectiveInterval);
+
+        var fixedTime = new ManualTimeProvider(T0);
+        var fixedStore = new MemoryScheduleStore([
+            Registration("fixed", "https://a.example", T0, RoomPollingMode.Fixed, TimeSpan.FromHours(1))
+        ]);
+        var fixedScheduler = Scheduler(
+            fixedStore,
+            (_, _) => Task.FromResult(RoomPollResult.Ok("unchanged")),
+            fixedTime,
+            global: 1);
+        await fixedScheduler.InitializeAsync();
+        for (var poll = 0; poll < 5; poll++)
+        {
+            Assert.Equal(1, await fixedScheduler.RunDueOnceAsync());
+            fixedTime.Advance(TimeSpan.FromMinutes(5));
+        }
+        var fixedHealth = fixedScheduler.GetHealth("g", "fixed")!;
+        Assert.Equal(RoomPollingMode.Fixed, fixedHealth.PollingMode);
+        Assert.Equal(TimeSpan.FromMinutes(5), fixedHealth.EffectiveInterval);
+        Assert.Equal(0, fixedHealth.UnchangedSuccessCount);
+    }
+
+    [Fact]
     public async Task Pause_survives_restart_and_resume_schedules_an_immediate_poll()
     {
         var time = new ManualTimeProvider(T0);
@@ -436,7 +481,10 @@ public sealed class CentralRoomSchedulerTests
         await Db.WriteAsync(async connection =>
         {
             using var command = connection.CreateCommand();
-            command.CommandText = "DROP TABLE RoomPollState;";
+            command.CommandText = @"
+                DROP TABLE RoomPollState;
+                ALTER TABLE ChannelsAndUrlsTable DROP COLUMN PollingMode;
+                ALTER TABLE ChannelsAndUrlsTable DROP COLUMN MaximumCheckFrequency;";
             await command.ExecuteNonQueryAsync();
             return true;
         });
@@ -444,6 +492,8 @@ public sealed class CentralRoomSchedulerTests
         await DBMigration_5.Migrate_5_0_8();
         await DBMigration_5.Migrate_5_0_9();
         await DBMigration_5.Migrate_5_0_9();
+        await DBMigration_5.Migrate_5_0_10();
+        await DBMigration_5.Migrate_5_0_10();
         var store = new SqliteRoomScheduleStore(new ManualTimeProvider(T0));
         var state = new RoomScheduleState(
             "g",
@@ -469,6 +519,8 @@ public sealed class CentralRoomSchedulerTests
         var registration = Assert.Single(loaded);
         Assert.Equal(state, registration.State);
         Assert.Equal(T0, registration.Definition.InitialNextPollAtUtc);
+        Assert.Equal(RoomPollingMode.Automatic, registration.Definition.PollingMode);
+        Assert.Equal(TimeSpan.FromHours(1), registration.Definition.MaximumPollInterval);
     }
 
     private static CentralRoomScheduler Scheduler(
@@ -492,7 +544,9 @@ public sealed class CentralRoomSchedulerTests
     private static ScheduledRoomRegistration Registration(
         string channel,
         string origin,
-        DateTimeOffset due)
+        DateTimeOffset due,
+        RoomPollingMode pollingMode = RoomPollingMode.Automatic,
+        TimeSpan? maximum = null)
         => new(new ScheduledRoomDefinition(
             "g",
             channel,
@@ -503,7 +557,9 @@ public sealed class CentralRoomSchedulerTests
             false,
             "0",
             TimeSpan.FromMinutes(5),
-            due), null);
+            due,
+            pollingMode,
+            maximum), null);
 
     private static HttpResponseMessage Response(HttpStatusCode status, string body, string contentType)
         => new(status)

@@ -62,6 +62,7 @@ public class AstAuthorizationServiceTests
     [InlineData("ast-sync-now", true, AstAuthorizationLevel.RoomManager)]
     [InlineData("ast-pause", true, AstAuthorizationLevel.RoomManager)]
     [InlineData("ast-resume", true, AstAuthorizationLevel.RoomManager)]
+    [InlineData("ast-polling", true, AstAuthorizationLevel.RoomManager)]
     [InlineData("ast-health", false, AstAuthorizationLevel.GuildManager)]
     [InlineData("send-apworld", false, AstAuthorizationLevel.InstanceOwner)]
     [InlineData("generate", false, AstAuthorizationLevel.GuildManager)]
@@ -74,6 +75,7 @@ public class AstAuthorizationServiceTests
     [InlineData("ast-sync-now")]
     [InlineData("ast-pause")]
     [InlineData("ast-resume")]
+    [InlineData("ast-polling")]
     public void MutatingTrackingCommands_AreAuditedAsRoomSettings(string command)
     {
         Assert.Equal(SecurityAuditAction.RoomSettingsUpdate, SecurityAuditLog.ForCommand(command));

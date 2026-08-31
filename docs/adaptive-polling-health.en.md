@@ -16,7 +16,7 @@ Every successful WebHost read now produces the normalized snapshot hash, even wh
 - any content change immediately restores the configured frequency;
 - failures still use the PR 5 backoff, `Retry-After`, and circuit breaker.
 
-The database version becomes `5.0.9`. `RoomPollState` stores pause state, the last forced sync, previous hash, unchanged-success count, effective interval, and last detected activity. Migration `5.0.9` is idempotent and all state is restored after restart.
+The base PR uses database version `5.0.9` for `RoomPollState`, which stores pause state, the last forced sync, previous hash, unchanged-success count, effective interval, and last detected activity. The administrator-policy follow-up moves the database to `5.0.10`: `ChannelsAndUrlsTable` stores the per-room `Automatic`/`Fixed` mode and maximum frequency. Both migrations are idempotent and all state is restored after restart.
 
 ## Commands and authorization
 
@@ -24,6 +24,7 @@ The database version becomes `5.0.9`. `RoomPollState` stores pause state, the la
 - `/ast-room-health`: status, freshness, last sync/activity, next due time, errors, and latency; thread member.
 - `/ast-sync-now`: immediate queue promotion; room organizer, durable 30-second cooldown.
 - `/ast-pause` and `/ast-resume`: durable pause and immediate resume; room organizer.
+- `/ast-polling`: automatic/fixed mode and automatic ceiling selection; room organizer. The command rejects a ceiling lower than the floor set through `update-frequency-check`.
 
 Mutating operations use centralized authorization and are written to the audit log without tracker URLs. The same controls are available from the room portal, which is already restricted to room organizers.
 
@@ -40,6 +41,6 @@ Tests cover slowdown and immediate acceleration, pause/resume across restart, fo
 
 ## Risks and rollback
 
-The normalized hash is calculated for every successful WebHost response, adding CPU work proportional to response size but no network request. The existing administrator frequency becomes the automatic mode floor; the initial ceiling is deliberately conservative at one hour.
+The normalized hash is calculated for every successful WebHost response, adding CPU work proportional to response size but no network request. The existing administrator frequency becomes the automatic mode floor; the default ceiling is deliberately conservative at one hour and can be configured up to one day. Fixed mode strictly keeps the configured minimum frequency.
 
 Immediate rollback: set `USE_LEGACY_TRACKING_SCHEDULER=true` and restart. The additive SQLite columns may remain. Legacy mode does not enforce persisted pauses and makes control commands unavailable, so it should only be used as a temporary rollback.

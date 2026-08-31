@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Data.SQLite;
+using System;
 using Xunit;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -228,5 +229,45 @@ public class DatabaseCommandTests
         var result = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(guildId, channelId);
 
         Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task UpdatePollingPolicyFromWeb_ValidatesBoundsAndPersistsPolicy()
+    {
+        using var scope = new TestDatabaseScope();
+        const string guildId = "guild-policy";
+        const string channelId = "channel-policy";
+        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(
+            guildId,
+            channelId,
+            "https://example.com/room/policy",
+            "policy",
+            "tracker",
+            silent: false,
+            checkFrequency: "30m",
+            port: "0");
+
+        var rejected = await ChannelsAndUrlsCommands.UpdatePollingPolicyFromWeb(
+            "automatic",
+            "15m",
+            channelId,
+            guildId);
+        Assert.Contains("maximum", rejected, StringComparison.OrdinalIgnoreCase);
+
+        await ChannelsAndUrlsCommands.UpdatePollingPolicyFromWeb(
+            "fixed",
+            "1h",
+            channelId,
+            guildId);
+
+        await using var connection = await Db.OpenReadAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT PollingMode || ':' || MaximumCheckFrequency
+            FROM ChannelsAndUrlsTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        Assert.Equal("Fixed:1h", await command.ExecuteScalarAsync());
     }
 }
