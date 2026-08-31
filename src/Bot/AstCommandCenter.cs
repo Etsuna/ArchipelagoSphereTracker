@@ -15,7 +15,8 @@ public enum AstUiScreen
     ManageMore,
     Yaml,
     Generation,
-    Apworld
+    Apworld,
+    Slots
 }
 
 public sealed record AstUiSession(
@@ -25,7 +26,8 @@ public sealed record AstUiSession(
     ulong SourceChannelId,
     ulong? RoomChannelId,
     AstUiScreen Screen,
-    DateTimeOffset ExpiresAtUtc);
+    DateTimeOffset ExpiresAtUtc,
+    string AliasMentionFlag = "0");
 
 public sealed class AstUiSessionStore
 {
@@ -134,6 +136,19 @@ public sealed class AstUiSessionStore
                 session = updated;
                 return true;
             }
+        }
+        return false;
+    }
+
+    public bool TrySetAliasMentionFlag(
+        string id, ulong ownerUserId, ulong guildId, ulong sourceChannelId, string flag, out AstUiSession session)
+    {
+        session = default!;
+        if (flag is not ("0" or "1" or "16" or "17" or "21" or "27" or "31")) return false;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with { AliasMentionFlag = flag, ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime) };
+            if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
         }
         return false;
     }
@@ -315,7 +330,7 @@ public static class AstCommandCenter
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("select-room" or "poll-policy" or "notifications"))
+            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
             component.Data.Values.FirstOrDefault() is not { } selected ||
@@ -326,6 +341,50 @@ public static class AstCommandCenter
         }
 
         await component.DeferAsync(ephemeral: true);
+        if (action is "alias-add" or "alias-delete" or "alias-filter")
+        {
+            if (session.RoomChannelId is not { } aliasRoomId)
+            {
+                await SetErrorAsync(component, IsFrench ? "Aucune room sélectionnée." : "No room selected.").ConfigureAwait(false);
+                return;
+            }
+            var guildText = guildId.ToString(CultureInfo.InvariantCulture);
+            var roomText = aliasRoomId.ToString(CultureInfo.InvariantCulture);
+            var memberAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildText, roomText, component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+            if (memberAuthorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, memberAuthorization))
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+            string result;
+            if (action == "alias-filter")
+            {
+                result = Sessions.TrySetAliasMentionFlag(session.Id, component.User.Id, guildId, sourceChannelId, selected, out session)
+                    ? (IsFrench ? "Filtre de mentions mis à jour." : "Mention filter updated.")
+                    : (IsFrench ? "Filtre invalide." : "Invalid filter.");
+            }
+            else if (action == "alias-add")
+            {
+                result = await AliasClass.AddAliasForUserAsync(
+                    selected, session.AliasMentionFlag, roomText, guildText,
+                    component.User.Id.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+            }
+            else
+            {
+                result = await AliasClass.DeleteAliasForUserAsync(
+                    selected, roomText, guildText, component.User.Id.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+            }
+            var slotsView = await RenderSlotsAsync(session).ConfigureAwait(false);
+            await component.ModifyOriginalResponseAsync(properties =>
+            {
+                properties.Content = result;
+                properties.Embed = slotsView.Embed;
+                properties.Components = slotsView.Components;
+            }).ConfigureAwait(false);
+            return;
+        }
+
         if (action is "poll-policy" or "notifications")
         {
             if (session.RoomChannelId is not { } selectedRoomId)
@@ -424,6 +483,7 @@ public static class AstCommandCenter
             AstUiScreen.Yaml => RenderYaml(session),
             AstUiScreen.Generation => RenderGeneration(session),
             AstUiScreen.Apworld => RenderApworld(session),
+            AstUiScreen.Slots => await RenderSlotsAsync(session).ConfigureAwait(false),
             _ => await RenderHomeAsync(session, authorization, roomName).ConfigureAwait(false)
         };
     }
@@ -606,6 +666,51 @@ public static class AstCommandCenter
         => Screen(session, "APWorld", IsFrench ? "Gestion Discord native des APWorld." : "Native Discord APWorld management.",
             [(IsFrench ? "Lister" : "List", "apworld-list"), (IsFrench ? "Portail" : "Portal", "admin-portal")]);
 
+    private static async Task<AstUiView> RenderSlotsAsync(AstUiSession session)
+    {
+        var guildId = session.GuildId.ToString(CultureInfo.InvariantCulture);
+        var channelId = session.RoomChannelId!.Value.ToString(CultureInfo.InvariantCulture);
+        var userId = session.OwnerUserId.ToString(CultureInfo.InvariantCulture);
+        var allAliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId).ConfigureAwait(false);
+        var ownAliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId).ConfigureAwait(false)).Keys
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToArray();
+        var available = new List<string>();
+        foreach (var alias in allAliases.Distinct(StringComparer.OrdinalIgnoreCase))
+            if ((await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias).ConfigureAwait(false)).Count == 0)
+                available.Add(alias);
+
+        var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "personal"), ButtonStyle.Primary, row: 0);
+        if (available.Count > 0)
+        {
+            var add = new SelectMenuBuilder().WithCustomId(Id(session, "alias-add"))
+                .WithPlaceholder(IsFrench ? "Associer un slot…" : "Associate a slot…");
+            foreach (var alias in available.Take(25)) add.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias);
+            components.WithSelectMenu(add, row: 1);
+        }
+        var filter = new SelectMenuBuilder().WithCustomId(Id(session, "alias-filter"))
+            .WithPlaceholder(IsFrench ? "Filtrer les mentions inutiles…" : "Filter unnecessary mentions…")
+            .AddOption(IsFrench ? "Aucun filtre" : "No filter", "0", isDefault: session.AliasMentionFlag == "0")
+            .AddOption(IsFrench ? "Filler" : "Filler", "1", isDefault: session.AliasMentionFlag == "1")
+            .AddOption(IsFrench ? "Pièges" : "Traps", "16", isDefault: session.AliasMentionFlag == "16")
+            .AddOption(IsFrench ? "Filler + pièges" : "Filler + traps", "17", isDefault: session.AliasMentionFlag == "17")
+            .AddOption(IsFrench ? "Jusqu’aux utiles" : "Through useful", "21", isDefault: session.AliasMentionFlag == "21")
+            .AddOption(IsFrench ? "Jusqu’aux requis" : "Through required", "27", isDefault: session.AliasMentionFlag == "27")
+            .AddOption(IsFrench ? "Tout filtrer" : "Filter all", "31", isDefault: session.AliasMentionFlag == "31");
+        components.WithSelectMenu(filter, row: 2);
+        if (ownAliases.Length > 0)
+        {
+            var delete = new SelectMenuBuilder().WithCustomId(Id(session, "alias-delete"))
+                .WithPlaceholder(IsFrench ? "Dissocier un de mes slots…" : "Dissociate one of my slots…");
+            foreach (var alias in ownAliases.Take(25)) delete.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias);
+            components.WithSelectMenu(delete, row: 3);
+        }
+        var description = ownAliases.Length == 0
+            ? (IsFrench ? "Aucun slot associé." : "No associated slot.")
+            : string.Join("\n", ownAliases.Select(alias => $"• {Safe(alias)}"));
+        return new AstUiView(null, BaseEmbed(IsFrench ? "👤 Mes slots" : "👤 My slots", description).Build(), components.Build());
+    }
+
     private static AstUiView Screen(
         AstUiSession session,
         string title,
@@ -660,7 +765,6 @@ public static class AstCommandCenter
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-pause", guildId, channelId).ConfigureAwait(false),
             "resume" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-resume", guildId, channelId).ConfigureAwait(false),
-            "personal-slots" => await BuildPersonalSlotsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-items" or "personal-recap" => await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-hints" => await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-patch" => await BuildPersonalPatchesAsync(guildId, channelId, session.OwnerUserId, authorization).ConfigureAwait(false),
@@ -785,6 +889,7 @@ public static class AstCommandCenter
             "admin-yaml" => AstUiScreen.Yaml,
             "admin-generation" => AstUiScreen.Generation,
             "admin-apworld" => AstUiScreen.Apworld,
+            "personal-slots" => AstUiScreen.Slots,
             _ => (AstUiScreen)(-1)
         };
         return (int)screen >= 0;
@@ -799,6 +904,7 @@ public static class AstCommandCenter
             AstUiScreen.Polling or AstUiScreen.ManageMore => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
             AstUiScreen.Yaml or AstUiScreen.Generation => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization),
             AstUiScreen.Apworld => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization),
+            AstUiScreen.Slots => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             _ => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization)
         };
 

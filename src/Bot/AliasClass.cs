@@ -10,6 +10,13 @@ public class AliasClass
         var userId = command.User.Id.ToString();
         var skipUselessMention = command.Data.Options.ElementAtOrDefault(1)?.Value as string ?? "0";
 
+        return await AddAliasForUserAsync(alias, skipUselessMention, channelId, guildId, userId);
+    }
+
+    public static async Task<string> AddAliasForUserAsync(
+        string? alias, string skipUselessMention, string channelId, string guildId, string userId)
+    {
+
         if (string.IsNullOrWhiteSpace(alias))
         {
             return Resource.AliasEmpty;
@@ -91,6 +98,17 @@ public class AliasClass
         }
 
         return message;
+    }
+
+    public static async Task<string> DeleteAliasForUserAsync(
+        string alias, string channelId, string guildId, string userId)
+    {
+        var owners = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
+        if (!owners.Contains(userId, StringComparer.Ordinal))
+            return string.Format(Resource.AliasOtherOwner, alias);
+        await ReceiverAliasesCommands.DeleteReceiverAliasForUser(guildId, channelId, alias, userId);
+        await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, userId, alias);
+        return string.Format(Resource.AliasDeleted, alias);
     }
 
     public static async Task<string> GetAlias(string channelId, string guildId)
