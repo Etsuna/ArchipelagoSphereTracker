@@ -18,7 +18,8 @@ public enum AstUiScreen
     Apworld,
     Slots,
     Advanced,
-    Exclusions
+    Exclusions,
+    SpoilerAnalysis
 }
 
 public sealed record AstUiSession(
@@ -32,7 +33,11 @@ public sealed record AstUiSession(
     string AliasMentionFlag = "0",
     string? PendingAction = null,
     string? PendingAlias = null,
-    string? PendingItem = null);
+    string? PendingItem = null,
+    string? SpoilerAlias = null,
+    int? SpoilerSphereLimit = null,
+    string SpoilerMissingMode = "first",
+    bool SpoilerHideItems = true);
 
 public sealed class AstUiSessionStore
 {
@@ -177,6 +182,30 @@ public sealed class AstUiSessionStore
         return false;
     }
 
+    public bool TrySetSpoilerOptions(
+        string id, ulong ownerUserId, ulong guildId, ulong sourceChannelId,
+        out AstUiSession session, string? alias = null, bool setAlias = false,
+        int? sphereLimit = null, bool setSphereLimit = false,
+        string? missingMode = null, bool? hideItems = null)
+    {
+        session = default!;
+        if (missingMode != null && missingMode is not ("first" or "full")) return false;
+        if (sphereLimit < 0) return false;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with
+            {
+                SpoilerAlias = setAlias ? alias : current.SpoilerAlias,
+                SpoilerSphereLimit = setSphereLimit ? sphereLimit : current.SpoilerSphereLimit,
+                SpoilerMissingMode = missingMode ?? current.SpoilerMissingMode,
+                SpoilerHideItems = hideItems ?? current.SpoilerHideItems,
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
+            if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
+        }
+        return false;
+    }
+
     public int CleanupExpired()
     {
         var now = _timeProvider.GetUtcNow();
@@ -190,6 +219,9 @@ public sealed class AstUiSessionStore
 public static class AstCommandCenter
 {
     public const string CustomIdPrefix = "astui";
+    private const string SpoilerAliasInputId = "ast-spoiler-alias";
+    private const string SpoilerSphereInputId = "ast-spoiler-sphere";
+    private const string SpoilerValidateInputId = "ast-spoiler-validate";
     private static readonly AstUiSessionStore Sessions = new();
     private static bool IsFrench => string.Equals(Declare.Language, "fr", StringComparison.OrdinalIgnoreCase);
 
@@ -285,6 +317,12 @@ public static class AstCommandCenter
             await component.RespondAsync(
                 IsFrench ? "Cette interface a expiré. Relancez `/ast`." : "This interface expired. Run `/ast` again.",
                 ephemeral: true);
+            return;
+        }
+
+        if (action == "spoiler-configure")
+        {
+            await component.RespondWithModalAsync(BuildSpoilerConfigModal(session)).ConfigureAwait(false);
             return;
         }
 
@@ -410,6 +448,34 @@ public static class AstCommandCenter
                 return;
             }
 
+            if (action is "spoiler-analyze" or "spoiler-reset-validation")
+            {
+                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization) ||
+                    session.RoomChannelId is not { } spoilerRoom || string.IsNullOrWhiteSpace(session.SpoilerAlias))
+                {
+                    await SetErrorAsync(component, string.IsNullOrWhiteSpace(session.SpoilerAlias)
+                        ? (IsFrench ? "Choisissez d’abord un slot à analyser." : "Choose a slot to analyze first.")
+                        : AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+                var result = await SpoilerAnalysisClass.AnalyzeSpoilerLogAsync(
+                    spoilerRoom.ToString(CultureInfo.InvariantCulture),
+                    guildId.ToString(CultureInfo.InvariantCulture),
+                    session.SpoilerAlias,
+                    session.SpoilerSphereLimit,
+                    session.SpoilerMissingMode == "full",
+                    session.SpoilerHideItems,
+                    resetValidation: action == "spoiler-reset-validation").ConfigureAwait(false);
+                var spoilerView = await RenderSpoilerAnalysisAsync(session).ConfigureAwait(false);
+                await component.ModifyOriginalResponseAsync(p =>
+                {
+                    p.Content = Clamp(result);
+                    p.Embed = spoilerView.Embed;
+                    p.Components = spoilerView.Components;
+                }).ConfigureAwait(false);
+                return;
+            }
+
             if (TryScreen(action, out var screen))
             {
                 if (!CanOpen(screen, authorization, session.RoomChannelId != null) ||
@@ -450,7 +516,7 @@ public static class AstCommandCenter
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete"))
+            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
             component.Data.Values.FirstOrDefault() is not { } selected ||
@@ -461,6 +527,35 @@ public static class AstCommandCenter
         }
 
         await component.DeferAsync(ephemeral: true);
+        if (action is "spoiler-alias" or "spoiler-mode" or "spoiler-hide")
+        {
+            if (session.RoomChannelId is not { } spoilerRoom)
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+            var managerAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildId.ToString(CultureInfo.InvariantCulture), spoilerRoom.ToString(CultureInfo.InvariantCulture),
+                component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+            if (managerAuthorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, managerAuthorization))
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+            var updated = action switch
+            {
+                "spoiler-alias" => Sessions.TrySetSpoilerOptions(session.Id, component.User.Id, guildId, sourceChannelId, out session, alias: selected, setAlias: true),
+                "spoiler-mode" => Sessions.TrySetSpoilerOptions(session.Id, component.User.Id, guildId, sourceChannelId, out session, missingMode: selected),
+                _ => bool.TryParse(selected, out var hide) && Sessions.TrySetSpoilerOptions(session.Id, component.User.Id, guildId, sourceChannelId, out session, hideItems: hide)
+            };
+            if (!updated)
+            {
+                await SetErrorAsync(component, IsFrench ? "Réglage invalide." : "Invalid setting.").ConfigureAwait(false);
+                return;
+            }
+            await SetViewAsync(component, await RenderSpoilerAnalysisAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+            return;
+        }
         if (action is "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete")
         {
             if (session.RoomChannelId is not { } exclusionRoom)
@@ -607,6 +702,69 @@ public static class AstCommandCenter
         await SetViewAsync(component, view).ConfigureAwait(false);
     }
 
+    public static async Task HandleModalAsync(SocketModal modal)
+    {
+        if (!TryParseCustomId(modal.Data.CustomId, out var sessionId, out var action) || action != "spoiler-configure")
+            return;
+        if (modal.GuildId is not { } guildId || modal.ChannelId is not { } sourceChannelId ||
+            !Sessions.TryGetAuthorized(sessionId, modal.User.Id, guildId, sourceChannelId, out var session) ||
+            session.RoomChannelId is not { } roomChannelId)
+        {
+            await modal.RespondAsync(IsFrench ? "Cette interface a expiré. Relancez `/ast`." : "This interface expired. Run `/ast` again.", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+
+        var authorization = await AstAuthorizationService.CreateDiscordContextAsync(
+            guildId.ToString(CultureInfo.InvariantCulture), roomChannelId.ToString(CultureInfo.InvariantCulture),
+            modal.User.Id, modal.User as IGuildUser).ConfigureAwait(false);
+        if (authorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization))
+        {
+            await modal.RespondAsync(AstAuthorizationService.DeniedMessage, ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+
+        var alias = modal.Data.Components.FirstOrDefault(c => c.CustomId == SpoilerAliasInputId)?.Value?.Trim();
+        var sphereRaw = modal.Data.Components.FirstOrDefault(c => c.CustomId == SpoilerSphereInputId)?.Value?.Trim();
+        var validateRaw = modal.Data.Components.FirstOrDefault(c => c.CustomId == SpoilerValidateInputId)?.Value?.Trim();
+        if (string.IsNullOrWhiteSpace(alias) || !TryOptionalNonNegativeInt(sphereRaw, out var sphereLimit) ||
+            !TryOptionalNonNegativeInt(validateRaw, out var sphereToValidate))
+        {
+            await modal.RespondAsync(IsFrench
+                ? "Indiquez un slot et utilisez uniquement des entiers positifs ou zéro pour les sphères."
+                : "Enter a slot and use only non-negative integers for spheres.", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+        var aliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(
+            guildId.ToString(CultureInfo.InvariantCulture), roomChannelId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+        var canonicalAlias = aliases.FirstOrDefault(value => string.Equals(value, alias, StringComparison.OrdinalIgnoreCase));
+        if (canonicalAlias == null)
+        {
+            await modal.RespondAsync(IsFrench ? "Ce slot n’existe pas dans cette room." : "This slot does not exist in this room.", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+        if (!Sessions.TrySetSpoilerOptions(
+                session.Id, modal.User.Id, guildId, sourceChannelId, out session,
+                alias: canonicalAlias, setAlias: true, sphereLimit: sphereLimit, setSphereLimit: true))
+        {
+            await modal.RespondAsync(IsFrench ? "Cette interface a expiré." : "This interface expired.", ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+
+        var result = sphereToValidate.HasValue
+            ? await SpoilerAnalysisClass.AnalyzeSpoilerLogAsync(
+                roomChannelId.ToString(CultureInfo.InvariantCulture), guildId.ToString(CultureInfo.InvariantCulture),
+                canonicalAlias, sphereLimit, session.SpoilerMissingMode == "full", session.SpoilerHideItems,
+                sphereToValidate).ConfigureAwait(false)
+            : (IsFrench ? "Réglages d’analyse mis à jour." : "Analysis settings updated.");
+        var view = await RenderSpoilerAnalysisAsync(session).ConfigureAwait(false);
+        await modal.UpdateAsync(properties =>
+        {
+            properties.Content = Clamp(result);
+            properties.Embed = view.Embed;
+            properties.Components = view.Components;
+        }).ConfigureAwait(false);
+    }
+
     public static bool TryParseCustomId(string? customId, out string sessionId, out string action)
     {
         sessionId = string.Empty;
@@ -644,6 +802,7 @@ public static class AstCommandCenter
             AstUiScreen.Slots => await RenderSlotsAsync(session).ConfigureAwait(false),
             AstUiScreen.Advanced => await RenderAdvancedAsync(session).ConfigureAwait(false),
             AstUiScreen.Exclusions => await RenderExclusionsAsync(session).ConfigureAwait(false),
+            AstUiScreen.SpoilerAnalysis => await RenderSpoilerAnalysisAsync(session).ConfigureAwait(false),
             _ => await RenderHomeAsync(session, authorization, roomName).ConfigureAwait(false)
         };
     }
@@ -818,6 +977,7 @@ public static class AstCommandCenter
             .AddOption(IsFrench ? "Notifications normales" : "Normal notifications", "false")
             .AddOption(IsFrench ? "Mode silencieux" : "Silent mode", "true");
         var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Analyser le spoiler" : "Analyze spoiler", Id(session, "manage-spoiler"), ButtonStyle.Primary, row: 0)
             .WithButton(IsFrench ? "Portail de la room" : "Room portal", Id(session, "room-portal"), ButtonStyle.Secondary, row: 0)
             .WithButton(IsFrench ? "Supprimer la room" : "Delete room", Id(session, "delete-room-request"), ButtonStyle.Danger, row: 0)
             .WithButton(IsFrench ? "Retour" : "Back", Id(session, "manage"), ButtonStyle.Primary, row: 0)
@@ -825,6 +985,47 @@ public static class AstCommandCenter
             .Build();
         return new AstUiView(null, BaseEmbed(IsFrench ? "⚙️ Réglages avancés" : "⚙️ Advanced settings",
             IsFrench ? "Les réglages ci-dessous sont exécutés directement dans Discord." : "The settings below execute directly in Discord.").Build(), components);
+    }
+
+    private static async Task<AstUiView> RenderSpoilerAnalysisAsync(AstUiSession session)
+    {
+        var guildId = session.GuildId.ToString(CultureInfo.InvariantCulture);
+        var channelId = session.RoomChannelId!.Value.ToString(CultureInfo.InvariantCulture);
+        var aliases = (await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId).ConfigureAwait(false))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Analyser" : "Analyze", Id(session, "spoiler-analyze"), ButtonStyle.Success, row: 0)
+            .WithButton(IsFrench ? "Configurer" : "Configure", Id(session, "spoiler-configure"), ButtonStyle.Primary, row: 0)
+            .WithButton(IsFrench ? "Réinitialiser validation" : "Reset validation", Id(session, "spoiler-reset-validation"), ButtonStyle.Danger, row: 0)
+            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "manage-more"), ButtonStyle.Secondary, row: 0);
+        if (aliases.Length > 0)
+        {
+            var aliasMenu = new SelectMenuBuilder().WithCustomId(Id(session, "spoiler-alias"))
+                .WithPlaceholder(IsFrench ? "Choisir un slot…" : "Choose a slot…");
+            foreach (var alias in aliases.Take(25))
+                aliasMenu.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias,
+                    isDefault: string.Equals(alias, session.SpoilerAlias, StringComparison.OrdinalIgnoreCase));
+            components.WithSelectMenu(aliasMenu, row: 1);
+        }
+        var mode = new SelectMenuBuilder().WithCustomId(Id(session, "spoiler-mode"))
+            .WithPlaceholder(IsFrench ? "Étendue des checks manquantes…" : "Missing checks scope…")
+            .AddOption(IsFrench ? "Première sphère bloquante" : "First blocking sphere", "first", isDefault: session.SpoilerMissingMode == "first")
+            .AddOption(IsFrench ? "Rapport complet" : "Full report", "full", isDefault: session.SpoilerMissingMode == "full");
+        var hide = new SelectMenuBuilder().WithCustomId(Id(session, "spoiler-hide"))
+            .WithPlaceholder(IsFrench ? "Affichage des objets…" : "Item display…")
+            .AddOption(IsFrench ? "Masquer les objets" : "Hide items", "true", isDefault: session.SpoilerHideItems)
+            .AddOption(IsFrench ? "Afficher les objets" : "Show items", "false", isDefault: !session.SpoilerHideItems);
+        components.WithSelectMenu(mode, row: 2).WithSelectMenu(hide, row: 3);
+        var selectedAlias = string.IsNullOrWhiteSpace(session.SpoilerAlias)
+            ? (IsFrench ? "aucun" : "none")
+            : Safe(session.SpoilerAlias);
+        var sphere = session.SpoilerSphereLimit?.ToString(CultureInfo.InvariantCulture) ?? (IsFrench ? "toutes" : "all");
+        var description = IsFrench
+            ? $"Slot : **{selectedAlias}**\nSphère maximale : **{sphere}**\nMode : **{(session.SpoilerMissingMode == "full" ? "complet" : "premier blocage")}**\nObjets : **{(session.SpoilerHideItems ? "masqués" : "visibles")}**\n\n« Configurer » permet aussi de saisir un slot au-delà des 25 premiers et de valider manuellement une sphère."
+            : $"Slot: **{selectedAlias}**\nMaximum sphere: **{sphere}**\nMode: **{(session.SpoilerMissingMode == "full" ? "full" : "first blocker")}**\nItems: **{(session.SpoilerHideItems ? "hidden" : "visible")}**\n\nConfigure also lets you enter a slot beyond the first 25 and manually validate a sphere.";
+        return new AstUiView(null, BaseEmbed(IsFrench ? "🔎 Analyse du spoiler" : "🔎 Spoiler analysis", description).Build(), components.Build());
     }
 
     private static AstUiView RenderYaml(AstUiSession session)
@@ -1136,6 +1337,7 @@ public static class AstCommandCenter
             "personal-slots" => AstUiScreen.Slots,
             "personal-advanced" => AstUiScreen.Advanced,
             "personal-exclusions" => AstUiScreen.Exclusions,
+            "manage-spoiler" => AstUiScreen.SpoilerAnalysis,
             _ => (AstUiScreen)(-1)
         };
         return (int)screen >= 0;
@@ -1153,6 +1355,7 @@ public static class AstCommandCenter
             AstUiScreen.Slots => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Advanced => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Exclusions => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
+            AstUiScreen.SpoilerAnalysis => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
             _ => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization)
         };
 
@@ -1170,6 +1373,49 @@ public static class AstCommandCenter
     private static string Safe(string value) => value.Replace("@", "@\u200b", StringComparison.Ordinal).Replace('\r', ' ').Replace('\n', ' ');
     private static string Clamp(string value, int max = 1900) => value.Length <= max ? value : value[..(max - 1)] + "…";
     private static string Unavailable() => IsFrench ? "Action indisponible dans ce contexte." : "Action unavailable in this context.";
+
+    private static Modal BuildSpoilerConfigModal(AstUiSession session)
+    {
+        var alias = new TextInputBuilder()
+            .WithLabel(IsFrench ? "Slot à analyser" : "Slot to analyze")
+            .WithCustomId(SpoilerAliasInputId)
+            .WithStyle(TextInputStyle.Short)
+            .WithMinLength(1)
+            .WithMaxLength(100)
+            .WithRequired(true);
+        if (!string.IsNullOrWhiteSpace(session.SpoilerAlias)) alias.WithValue(session.SpoilerAlias);
+        var sphere = new TextInputBuilder()
+            .WithLabel(IsFrench ? "Sphère maximale (vide = toutes)" : "Maximum sphere (blank = all)")
+            .WithCustomId(SpoilerSphereInputId)
+            .WithStyle(TextInputStyle.Short)
+            .WithMaxLength(10)
+            .WithRequired(false);
+        if (session.SpoilerSphereLimit.HasValue)
+            sphere.WithValue(session.SpoilerSphereLimit.Value.ToString(CultureInfo.InvariantCulture));
+        var validate = new TextInputBuilder()
+            .WithLabel(IsFrench ? "Sphère à valider (facultatif)" : "Sphere to validate (optional)")
+            .WithCustomId(SpoilerValidateInputId)
+            .WithStyle(TextInputStyle.Short)
+            .WithMaxLength(10)
+            .WithRequired(false);
+        return new ModalBuilder()
+            .WithTitle(IsFrench ? "Configurer l’analyse" : "Configure analysis")
+            .WithCustomId(Id(session, "spoiler-configure"))
+            .AddTextInput(alias, row: 0)
+            .AddTextInput(sphere, row: 1)
+            .AddTextInput(validate, row: 2)
+            .Build();
+    }
+
+    private static bool TryOptionalNonNegativeInt(string? value, out int? parsed)
+    {
+        parsed = null;
+        if (string.IsNullOrWhiteSpace(value)) return true;
+        if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var number) || number < 0)
+            return false;
+        parsed = number;
+        return true;
+    }
 
     private static Task SetViewAsync(SocketMessageComponent component, AstUiView view)
         => component.ModifyOriginalResponseAsync(properties =>

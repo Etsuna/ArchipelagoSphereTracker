@@ -67,6 +67,28 @@ public sealed class AstCommandCenterTests
         Assert.False(store.TryGetAuthorized(session.Id, 10, 20, 99, out _));
     }
 
+    [Fact]
+    public void Spoiler_options_are_private_validated_and_can_clear_sphere_limit()
+    {
+        var store = new AstUiSessionStore();
+        var session = store.Start(10, 20, 30, 40);
+
+        Assert.True(store.TrySetSpoilerOptions(
+            session.Id, 10, 20, 30, out var configured,
+            alias: "Player 1", setAlias: true, sphereLimit: 7, setSphereLimit: true,
+            missingMode: "full", hideItems: false));
+        Assert.Equal("Player 1", configured.SpoilerAlias);
+        Assert.Equal(7, configured.SpoilerSphereLimit);
+        Assert.Equal("full", configured.SpoilerMissingMode);
+        Assert.False(configured.SpoilerHideItems);
+
+        Assert.False(store.TrySetSpoilerOptions(session.Id, 11, 20, 30, out _, alias: "Other", setAlias: true));
+        Assert.False(store.TrySetSpoilerOptions(session.Id, 10, 20, 30, out _, sphereLimit: -1, setSphereLimit: true));
+        Assert.False(store.TrySetSpoilerOptions(session.Id, 10, 20, 30, out _, missingMode: "invalid"));
+        Assert.True(store.TrySetSpoilerOptions(session.Id, 10, 20, 30, out var cleared, sphereLimit: null, setSphereLimit: true));
+        Assert.Null(cleared.SpoilerSphereLimit);
+    }
+
     [Theory]
     [InlineData("astui:0123456789abcdef0123456789abcdef:personal", true, "personal")]
     [InlineData("astui:short:personal", false, "")]
