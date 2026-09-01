@@ -17,6 +17,7 @@ public enum AstUiScreen
     Generation,
     Apworld,
     Slots,
+    Patch,
     Advanced,
     Exclusions,
     SpoilerAnalysis
@@ -1059,7 +1060,7 @@ public static class AstCommandCenter
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide" or "yaml-delete-select" or "yaml-template-download" or "generation-skip"))
+            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "patch-alias" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide" or "yaml-delete-select" or "yaml-template-download" or "generation-skip"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
             component.Data.Values.FirstOrDefault() is not { } selected ||
@@ -1185,6 +1186,46 @@ public static class AstCommandCenter
                 Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "exclude-delete-confirm", session.PendingAlias, out session, selected);
             var exclusions = await RenderExclusionsAsync(session).ConfigureAwait(false);
             await component.ModifyOriginalResponseAsync(p => { p.Content = result; p.Embed = exclusions.Embed; p.Components = exclusions.Components; }).ConfigureAwait(false);
+            return;
+        }
+        if (action == "patch-alias")
+        {
+            if (session.RoomChannelId is not { } patchRoom)
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+            var guildText = guildId.ToString(CultureInfo.InvariantCulture);
+            var roomText = patchRoom.ToString(CultureInfo.InvariantCulture);
+            var memberAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildText, roomText, component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+            if (memberAuthorization == null ||
+                !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, memberAuthorization))
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+            var ownedAliases = await ReceiverAliasesCommands.GetReceiversForUserAsync(
+                guildText, roomText, component.User.Id.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+            var canonicalAlias = ownedAliases.FirstOrDefault(alias =>
+                string.Equals(alias, selected, StringComparison.OrdinalIgnoreCase));
+            if (canonicalAlias == null)
+            {
+                await SetErrorAsync(component, IsFrench
+                    ? "Ce slot n’est pas associé à votre compte."
+                    : "This slot is not associated with your account.").ConfigureAwait(false);
+                return;
+            }
+            var result = await AuditedAsync(session, patchRoom, SecurityAuditAction.PatchAccess,
+                () => ChannelsAndUrlsCommands.GetPatchAndGameNameForAlias(
+                    guildText, roomText, canonicalAlias)).ConfigureAwait(false);
+            var patchView = await RenderPatchAsync(session).ConfigureAwait(false);
+            await component.ModifyOriginalResponseAsync(properties =>
+            {
+                properties.Content = Clamp(result);
+                properties.Embed = patchView.Embed;
+                properties.Components = patchView.Components;
+            }).ConfigureAwait(false);
             return;
         }
         if (action is "clean-select" or "recap-clean-select")
@@ -1502,6 +1543,7 @@ public static class AstCommandCenter
             AstUiScreen.Generation => RenderGeneration(session),
             AstUiScreen.Apworld => RenderApworld(session),
             AstUiScreen.Slots => await RenderSlotsAsync(session).ConfigureAwait(false),
+            AstUiScreen.Patch => await RenderPatchAsync(session).ConfigureAwait(false),
             AstUiScreen.Advanced => await RenderAdvancedAsync(session).ConfigureAwait(false),
             AstUiScreen.Exclusions => await RenderExclusionsAsync(session).ConfigureAwait(false),
             AstUiScreen.SpoilerAnalysis => await RenderSpoilerAnalysisAsync(session).ConfigureAwait(false),
@@ -1908,6 +1950,71 @@ public static class AstCommandCenter
         return new AstUiView(null, BaseEmbed(IsFrench ? "👤 Mes slots" : "👤 My slots", description).Build(), components.Build());
     }
 
+    private static async Task<AstUiView> RenderPatchAsync(AstUiSession session)
+    {
+        var guildId = session.GuildId.ToString(CultureInfo.InvariantCulture);
+        var channelId = session.RoomChannelId!.Value.ToString(CultureInfo.InvariantCulture);
+        var allAliases = await GetPersonalPatchAliasesAsync(
+            session, guildId, channelId, applySearch: false).ConfigureAwait(false);
+        var components = new ComponentBuilder()
+            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "personal"), ButtonStyle.Primary, row: 0);
+
+        if (allAliases.Count == 0)
+        {
+            return new AstUiView(null, BaseEmbed(IsFrench ? "🩹 Mon patch" : "🩹 My patch",
+                IsFrench ? "Aucun slot n’est associé à votre compte dans cette room."
+                    : "No slot is associated with your account in this room.").Build(), components.Build());
+        }
+
+        if (allAliases.Count == 1)
+        {
+            var alias = allAliases[0];
+            var patch = await AuditedAsync(session, session.RoomChannelId.Value, SecurityAuditAction.PatchAccess,
+                () => ChannelsAndUrlsCommands.GetPatchAndGameNameForAlias(guildId, channelId, alias)).ConfigureAwait(false);
+            return new AstUiView(Clamp(patch), BaseEmbed(IsFrench ? "🩹 Mon patch" : "🩹 My patch",
+                IsFrench ? $"Patch du slot associé **{Safe(alias)}**."
+                    : $"Patch for associated slot **{Safe(alias)}**.").Build(), components.Build());
+        }
+
+        var aliases = await GetPersonalPatchAliasesAsync(
+            session, guildId, channelId, applySearch: true).ConfigureAwait(false);
+        var page = PageValues(aliases, session.SelectionPageIndex);
+        if (page.Count > 0)
+        {
+            var menu = new SelectMenuBuilder()
+                .WithCustomId(Id(session, "patch-alias"))
+                .WithPlaceholder(IsFrench ? "Choisir un de mes slots…" : "Choose one of my slots…");
+            foreach (var alias in page)
+                menu.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias);
+            components.WithSelectMenu(menu, row: 1);
+        }
+        AddSelectionNavigation(components, session, aliases.Count, row: 2);
+
+        var description = aliases.Count == 0
+            ? (IsFrench ? "Aucun de vos slots ne correspond à ce filtre."
+                : "None of your slots match this filter.")
+            : IsFrench
+                ? $"Vous avez {allAliases.Count} slots associés. Choisissez l’alias dont vous souhaitez récupérer le patch. {PageLabel(session, aliases.Count)}"
+                : $"You have {allAliases.Count} associated slots. Choose the alias whose patch you want to retrieve. {PageLabel(session, aliases.Count)}";
+        return new AstUiView(null, BaseEmbed(IsFrench ? "🩹 Mon patch" : "🩹 My patch", description).Build(), components.Build());
+    }
+
+    private static async Task<IReadOnlyList<string>> GetPersonalPatchAliasesAsync(
+        AstUiSession session,
+        string guildId,
+        string channelId,
+        bool applySearch)
+    {
+        var aliases = await ReceiverAliasesCommands.GetReceiversForUserAsync(
+            guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+        return aliases
+            .Where(alias => !string.IsNullOrWhiteSpace(alias))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(alias => !applySearch || MatchesSelectionSearch(session, alias))
+            .OrderBy(alias => alias, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
     private static async Task<AstUiView> RenderAdvancedAsync(AstUiSession session)
     {
         var guildId = session.GuildId.ToString(CultureInfo.InvariantCulture);
@@ -2093,6 +2200,8 @@ public static class AstCommandCenter
                 YamlClass.GetTemplateFileNames().Count(file => MatchesSelectionSearch(session, file))),
             AstUiScreen.Slots when channelId != null
                 => await GetSlotSelectionCountAsync(session, guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
+            AstUiScreen.Patch when channelId != null
+                => (await GetPersonalPatchAliasesAsync(session, guildId, channelId, applySearch: true).ConfigureAwait(false)).Count,
             AstUiScreen.Advanced or AstUiScreen.Exclusions when channelId != null
                 => (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
                     guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)).Keys
@@ -2185,7 +2294,6 @@ public static class AstCommandCenter
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-resume", guildId, channelId).ConfigureAwait(false),
             "personal-items" or "personal-recap" => await BuildPersonalItemsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-hints" => await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
-            "personal-patch" => await BuildPersonalPatchesAsync(guildId, channelId, session.OwnerUserId, authorization).ConfigureAwait(false),
             "personal-portal" => await BuildPortalResponseAsync(
                 () => WebPortalPages.EnsureUserPageAsync(guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)),
                 IsFrench ? "Mon portail privé" : "My private portal").ConfigureAwait(false),
@@ -2268,28 +2376,6 @@ public static class AstCommandCenter
         return output.ToString();
     }
 
-    private static async Task<string> BuildPersonalPatchesAsync(
-        string guildId,
-        string channelId,
-        ulong userId,
-        AstAuthorizationContext authorization)
-    {
-        var patches = await ChannelsAndUrlsCommands.GetPatchesForChannelAsync(guildId, channelId).ConfigureAwait(false);
-        if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization))
-        {
-            var aliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
-                guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)).Keys
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            patches = patches.Where(patch => aliases.Contains(patch.Alias)).ToList();
-        }
-        if (patches.Count == 0)
-            return IsFrench ? "Aucun patch autorisé n’est disponible pour vos slots." : "No authorized patch is available for your slots.";
-        var output = new System.Text.StringBuilder(IsFrench ? "**Mes patches**" : "**My patches**");
-        foreach (var patch in patches)
-            output.AppendLine($"• **{Safe(patch.Alias)}** · {Safe(patch.GameName)}\n  {Safe(patch.Patch)}");
-        return output.ToString();
-    }
-
     private static async Task<string> BuildPortalResponseAsync(Func<Task<string?>> factory, string label)
     {
         if (!Declare.EnableWebPortal)
@@ -2306,8 +2392,6 @@ public static class AstCommandCenter
             "sync-now" or "pause" or "resume"
                 when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => SecurityAuditAction.RoomSettingsUpdate,
-            "personal-patch" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization)
-                => SecurityAuditAction.PatchAccess,
             "personal-portal" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization)
                 => SecurityAuditAction.PortalAccessIssue,
             "room-portal" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
@@ -2374,6 +2458,7 @@ public static class AstCommandCenter
             "admin-generation" => AstUiScreen.Generation,
             "admin-apworld" => AstUiScreen.Apworld,
             "personal-slots" => AstUiScreen.Slots,
+            "personal-patch" => AstUiScreen.Patch,
             "personal-advanced" => AstUiScreen.Advanced,
             "personal-exclusions" => AstUiScreen.Exclusions,
             "manage-spoiler" => AstUiScreen.SpoilerAnalysis,
@@ -2392,6 +2477,7 @@ public static class AstCommandCenter
             AstUiScreen.Yaml or AstUiScreen.Generation => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization),
             AstUiScreen.Apworld => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization),
             AstUiScreen.Slots => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
+            AstUiScreen.Patch => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Advanced => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Exclusions => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.SpoilerAnalysis => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
