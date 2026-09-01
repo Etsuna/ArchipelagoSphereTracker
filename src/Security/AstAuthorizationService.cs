@@ -1,4 +1,5 @@
 using Discord;
+using ArchipelagoSphereTracker.src.Resources;
 
 public enum AstAuthorizationLevel
 {
@@ -21,9 +22,7 @@ public sealed record AstPortalActor(string UserId, IGuildUser User, AstAuthoriza
 
 public static class AstAuthorizationService
 {
-    public static string DeniedMessage => Declare.Language == "fr"
-        ? "Vous n’avez pas les permissions requises pour cette action."
-        : "You do not have permission to perform this action.";
+    public static string DeniedMessage => Resource.AuthorizationYouDoNotHavePermissionToPerformThisAction;
 
     public static bool IsAllowed(AstAuthorizationLevel required, AstAuthorizationContext context)
     {

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using Discord;
 using Discord.WebSocket;
+using ArchipelagoSphereTracker.src.Resources;
 
 public enum AstUiScreen
 {
@@ -457,14 +458,12 @@ public static class AstCommandCenter
     private const string SelectionSearchInputId = "ast-selection-search";
     private const string ExclusionSearchInputId = "ast-exclusion-search";
     private static readonly AstUiSessionStore Sessions = new();
-    private static bool IsFrench => string.Equals(Declare.Language, "fr", StringComparison.OrdinalIgnoreCase);
-
     public static async Task StartAsync(SocketSlashCommand command)
     {
         if (command.GuildId is not { } guildId || command.ChannelId is not { } channelId)
         {
             await command.RespondAsync(
-                IsFrench ? "`/ast` doit être utilisé dans un serveur Discord." : "`/ast` must be used in a Discord server.",
+                Resource.AstCenterAstMustBeUsedInADiscordServer,
                 ephemeral: true);
             return;
         }
@@ -513,9 +512,7 @@ public static class AstCommandCenter
         var extension = Path.GetExtension(attachment.Filename).ToLowerInvariant();
         if (!IsUploadExtensionAvailable(extension, Declare.IsArchipelagoMode))
         {
-            await command.FollowupAsync(IsFrench
-                ? "Ce type de fichier est réservé au mode Archipelago. En mode Normal, `/ast file:` accepte uniquement les spoilers `.txt` et `.json`."
-                : "This file type is only available in Archipelago mode. In Normal mode, `/ast file:` only accepts `.txt` and `.json` spoiler logs.",
+            await command.FollowupAsync(Resource.AstCenterThisFileTypeIsOnlyAvailableInArchipelagoMode,
                 ephemeral: true).ConfigureAwait(false);
             return;
         }
@@ -545,9 +542,7 @@ public static class AstCommandCenter
                 result = AstAuthorizationService.DeniedMessage;
                 break;
             default:
-                result = IsFrench
-                    ? "Format non pris en charge. Utilisez un fichier `.yaml`, `.zip`, `.apworld`, `.txt` ou `.json`."
-                    : "Unsupported format. Use a `.yaml`, `.zip`, `.apworld`, `.txt`, or `.json` file.";
+                result = Resource.AstCenterUnsupportedFormatUseAYamlZipApworldTxtOr;
                 break;
         }
         if (!string.IsNullOrWhiteSpace(result))
@@ -567,7 +562,7 @@ public static class AstCommandCenter
             !Sessions.TryGetAuthorized(sessionId, component.User.Id, guildId, sourceChannelId, out var session))
         {
             await component.RespondAsync(
-                IsFrench ? "Cette interface a expiré. Relancez `/ast`." : "This interface expired. Run `/ast` again.",
+                Resource.AstCenterThisInterfaceExpiredRunAstAgain,
                 ephemeral: true);
             return;
         }
@@ -618,7 +613,7 @@ public static class AstCommandCenter
                         action == "output-previous" ? -1 : 1, out session);
                 if (!updated)
                 {
-                    await SetErrorAsync(component, IsFrench ? "Cette page a expiré." : "This page expired.").ConfigureAwait(false);
+                    await SetErrorAsync(component, Resource.AstCenterThisPageExpired).ConfigureAwait(false);
                     return;
                 }
                 await SetViewAsync(component, await RenderAsync(session, authorization).ConfigureAwait(false)).ConfigureAwait(false);
@@ -642,7 +637,7 @@ public static class AstCommandCenter
                         totalItems,
                         out session))
                 {
-                    await SetErrorAsync(component, IsFrench ? "Cette page a expiré." : "This page expired.").ConfigureAwait(false);
+                    await SetErrorAsync(component, Resource.AstCenterThisPageExpired).ConfigureAwait(false);
                     return;
                 }
                 await SetViewAsync(component, await RenderAsync(session, authorization).ConfigureAwait(false)).ConfigureAwait(false);
@@ -659,7 +654,7 @@ public static class AstCommandCenter
                 if (!Sessions.TrySetSelectionSearch(
                         session.Id, component.User.Id, guildId, sourceChannelId, null, out session))
                 {
-                    await SetErrorAsync(component, IsFrench ? "Cette recherche a expiré." : "This search expired.").ConfigureAwait(false);
+                    await SetErrorAsync(component, Resource.AstCenterThisSearchExpired).ConfigureAwait(false);
                     return;
                 }
                 await SetViewAsync(component, await RenderAsync(session, authorization).ConfigureAwait(false)).ConfigureAwait(false);
@@ -673,7 +668,7 @@ public static class AstCommandCenter
                     session.PendingAction is not ("exclude-add" or "exclude-delete") ||
                     !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization))
                 {
-                    await SetErrorAsync(component, IsFrench ? "Sélection expirée." : "Selection expired.").ConfigureAwait(false);
+                    await SetErrorAsync(component, Resource.AstCenterSelectionExpired).ConfigureAwait(false);
                     return;
                 }
                 var choices = await GetExclusionChoicesAsync(
@@ -690,7 +685,7 @@ public static class AstCommandCenter
                         choices.Count,
                         out session))
                 {
-                    await SetErrorAsync(component, IsFrench ? "Cette page a expiré." : "This page expired.").ConfigureAwait(false);
+                    await SetErrorAsync(component, Resource.AstCenterThisPageExpired).ConfigureAwait(false);
                     return;
                 }
                 await SetViewAsync(component, await RenderExclusionsAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
@@ -702,7 +697,7 @@ public static class AstCommandCenter
                 if (!Sessions.TrySetExclusionSearch(
                         session.Id, component.User.Id, guildId, sourceChannelId, null, out session))
                 {
-                    await SetErrorAsync(component, IsFrench ? "Cette recherche a expiré." : "This search expired.").ConfigureAwait(false);
+                    await SetErrorAsync(component, Resource.AstCenterThisSearchExpired).ConfigureAwait(false);
                     return;
                 }
                 await SetViewAsync(component, await RenderExclusionsAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
@@ -775,7 +770,7 @@ public static class AstCommandCenter
                 var portalView = await RenderAsync(session, authorization).ConfigureAwait(false);
                 await component.ModifyOriginalResponseAsync(p =>
                 {
-                    p.Content = IsFrench ? "Le lien du portail a été révoqué." : "The portal link was revoked.";
+                    p.Content = Resource.AstCenterThePortalLinkWasRevoked;
                     p.Embed = portalView.Embed;
                     p.Components = portalView.Components;
                 }).ConfigureAwait(false);
@@ -804,7 +799,7 @@ public static class AstCommandCenter
                     {
                         await AuditedAsync(session, cleanupRoom, SecurityAuditAction.DataCleanup,
                             () => RecapListCommands.DeleteAliasAndItemsForUserIdAsync(guildText, roomText, userText)).ConfigureAwait(false);
-                        result = IsFrench ? "Tous vos récaps ont été vidés." : "All your recaps were cleared.";
+                        result = Resource.AstCenterAllYourRecapsWereCleared;
                     }
                     else if (session.PendingAlias != null && session.PendingAction is "clean" or "recap-clean")
                     {
@@ -814,10 +809,10 @@ public static class AstCommandCenter
                         await AuditedAsync(session, cleanupRoom, SecurityAuditAction.DataCleanup,
                             () => RecapListCommands.DeleteRecapListAsync(guildText, roomText, userText, session.PendingAlias)).ConfigureAwait(false);
                         result = string.IsNullOrWhiteSpace(recap)
-                            ? (IsFrench ? $"Récap de **{Safe(session.PendingAlias)}** vidé." : $"Recap for **{Safe(session.PendingAlias)}** cleared.")
-                            : recap + (IsFrench ? "\n\nRécap vidé." : "\n\nRecap cleared.");
+                            ? (string.Format(Resource.AstCenterRecapForCleared, Safe(session.PendingAlias)))
+                            : recap + (Resource.AstCenterRecapCleared);
                     }
-                    else result = IsFrench ? "Confirmation expirée." : "Confirmation expired.";
+                    else result = Resource.AstCenterConfirmationExpired;
                     Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
                     var advanced = await RenderAdvancedAsync(session).ConfigureAwait(false);
                     await component.ModifyOriginalResponseAsync(p => { p.Content = Clamp(result); p.Embed = advanced.Embed; p.Components = advanced.Components; }).ConfigureAwait(false);
@@ -889,7 +884,7 @@ public static class AstCommandCenter
                     session.RoomChannelId is not { } spoilerRoom || string.IsNullOrWhiteSpace(session.SpoilerAlias))
                 {
                     await SetErrorAsync(component, string.IsNullOrWhiteSpace(session.SpoilerAlias)
-                        ? (IsFrench ? "Choisissez d’abord un slot à analyser." : "Choose a slot to analyze first.")
+                        ? (Resource.AstCenterChooseASlotToAnalyzeFirst)
                         : AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
                     return;
                 }
@@ -932,8 +927,8 @@ public static class AstCommandCenter
                         return;
                     }
                     await component.FollowupWithFileAsync(tempPath, fileName,
-                        text: IsFrench ? "Sauvegarde privée prête." : "Private backup ready.", ephemeral: true).ConfigureAwait(false);
-                    await SetErrorAsync(component, IsFrench ? "La sauvegarde a été envoyée ci-dessous." : "The backup was sent below.").ConfigureAwait(false);
+                        text: Resource.AstCenterPrivateBackupReady, ephemeral: true).ConfigureAwait(false);
+                    await SetErrorAsync(component, Resource.AstCenterTheBackupWasSentBelow).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -1017,8 +1012,8 @@ public static class AstCommandCenter
                     return;
                 }
                 await component.FollowupWithFileAsync(generation.ZipPath, Path.GetFileName(generation.ZipPath),
-                    text: IsFrench ? "Génération privée terminée." : "Private generation completed.", ephemeral: true).ConfigureAwait(false);
-                await SetErrorAsync(component, IsFrench ? "La génération a été envoyée ci-dessous." : "The generation was sent below.").ConfigureAwait(false);
+                    text: Resource.AstCenterPrivateGenerationCompleted, ephemeral: true).ConfigureAwait(false);
+                await SetErrorAsync(component, Resource.AstCenterTheGenerationWasSentBelow).ConfigureAwait(false);
                 return;
             }
 
@@ -1042,7 +1037,7 @@ public static class AstCommandCenter
                     () => ExecuteImmediateActionAsync(action, session, authorization)).ConfigureAwait(false);
             if (outcome == null)
             {
-                await SetErrorAsync(component, IsFrench ? "Action inconnue." : "Unknown action.").ConfigureAwait(false);
+                await SetErrorAsync(component, Resource.AstCenterUnknownAction).ConfigureAwait(false);
                 return;
             }
 
@@ -1051,9 +1046,7 @@ public static class AstCommandCenter
         catch (Exception exception)
         {
             Console.WriteLine($"[AstUI] Interaction failed ({exception.GetType().Name}).");
-            await SetErrorAsync(component, IsFrench
-                ? "Le centre de commandes est temporairement indisponible."
-                : "The command center is temporarily unavailable.").ConfigureAwait(false);
+            await SetErrorAsync(component, Resource.AstCenterTheCommandCenterIsTemporarilyUnavailable).ConfigureAwait(false);
         }
     }
 
@@ -1066,7 +1059,7 @@ public static class AstCommandCenter
             component.Data.Values.FirstOrDefault() is not { } selected ||
             !Sessions.TryGetAuthorized(sessionId, component.User.Id, guildId, sourceChannelId, out var session))
         {
-            await component.RespondAsync(IsFrench ? "Cette interface a expiré. Relancez `/ast`." : "This interface expired. Run `/ast` again.", ephemeral: true);
+            await component.RespondAsync(Resource.AstCenterThisInterfaceExpiredRunAstAgain, ephemeral: true);
             return;
         }
 
@@ -1114,8 +1107,8 @@ public static class AstCommandCenter
                     return;
                 }
                 await component.FollowupWithFileAsync(tempPath, Path.GetFileName(selected),
-                    text: IsFrench ? "Modèle YAML privé." : "Private YAML template.", ephemeral: true).ConfigureAwait(false);
-                await SetErrorAsync(component, IsFrench ? "Le modèle a été envoyé ci-dessous." : "The template was sent below.").ConfigureAwait(false);
+                    text: Resource.AstCenterPrivateYAMLTemplate, ephemeral: true).ConfigureAwait(false);
+                await SetErrorAsync(component, Resource.AstCenterTheTemplateWasSentBelow).ConfigureAwait(false);
             }
             finally
             {
@@ -1146,7 +1139,7 @@ public static class AstCommandCenter
             };
             if (!updated)
             {
-                await SetErrorAsync(component, IsFrench ? "Réglage invalide." : "Invalid setting.").ConfigureAwait(false);
+                await SetErrorAsync(component, Resource.AstCenterInvalidSetting).ConfigureAwait(false);
                 return;
             }
             await SetViewAsync(component, await RenderSpoilerAnalysisAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
@@ -1211,9 +1204,7 @@ public static class AstCommandCenter
                 string.Equals(alias, selected, StringComparison.OrdinalIgnoreCase));
             if (canonicalAlias == null)
             {
-                await SetErrorAsync(component, IsFrench
-                    ? "Ce slot n’est pas associé à votre compte."
-                    : "This slot is not associated with your account.").ConfigureAwait(false);
+                await SetErrorAsync(component, Resource.AstCenterThisSlotIsNotAssociatedWithYourAccount).ConfigureAwait(false);
                 return;
             }
             var result = await AuditedAsync(session, patchRoom, SecurityAuditAction.PatchAccess,
@@ -1233,7 +1224,7 @@ public static class AstCommandCenter
             var pending = action == "clean-select" ? "clean" : "recap-clean";
             if (!Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, pending, selected, out session))
             {
-                await SetErrorAsync(component, IsFrench ? "Sélection expirée." : "Selection expired.").ConfigureAwait(false);
+                await SetErrorAsync(component, Resource.AstCenterSelectionExpired).ConfigureAwait(false);
                 return;
             }
             var confirmation = await RenderAdvancedAsync(session).ConfigureAwait(false);
@@ -1244,7 +1235,7 @@ public static class AstCommandCenter
         {
             if (session.RoomChannelId is not { } aliasRoomId)
             {
-                await SetErrorAsync(component, IsFrench ? "Aucune room sélectionnée." : "No room selected.").ConfigureAwait(false);
+                await SetErrorAsync(component, Resource.AstCenterNoRoomSelected).ConfigureAwait(false);
                 return;
             }
             var guildText = guildId.ToString(CultureInfo.InvariantCulture);
@@ -1260,8 +1251,8 @@ public static class AstCommandCenter
             if (action == "alias-filter")
             {
                 result = Sessions.TrySetAliasMentionFlag(session.Id, component.User.Id, guildId, sourceChannelId, selected, out session)
-                    ? (IsFrench ? "Filtre de mentions mis à jour." : "Mention filter updated.")
-                    : (IsFrench ? "Filtre invalide." : "Invalid filter.");
+                    ? (Resource.AstCenterMentionFilterUpdated)
+                    : (Resource.AstCenterInvalidFilter);
             }
             else if (action == "alias-add")
             {
@@ -1290,7 +1281,7 @@ public static class AstCommandCenter
         {
             if (session.RoomChannelId is not { } selectedRoomId)
             {
-                await SetErrorAsync(component, IsFrench ? "Aucune room sélectionnée." : "No room selected.").ConfigureAwait(false);
+                await SetErrorAsync(component, Resource.AstCenterNoRoomSelected).ConfigureAwait(false);
                 return;
             }
             var guildText = guildId.ToString(CultureInfo.InvariantCulture);
@@ -1309,7 +1300,7 @@ public static class AstCommandCenter
                 result = parts.Length == 2
                     ? await AuditedAsync(session, selectedRoomId, SecurityAuditAction.RoomSettingsUpdate,
                         () => ChannelsAndUrlsCommands.UpdatePollingPolicyFromWeb(parts[0], parts[1], roomText, guildText)).ConfigureAwait(false)
-                    : (IsFrench ? "Choix de polling invalide." : "Invalid polling choice.");
+                    : (Resource.AstCenterInvalidPollingChoice);
             }
             else
             {
@@ -1328,14 +1319,14 @@ public static class AstCommandCenter
 
         if (!ulong.TryParse(selected, out var roomChannelId))
         {
-            await SetErrorAsync(component, IsFrench ? "Sélection invalide." : "Invalid selection.").ConfigureAwait(false);
+            await SetErrorAsync(component, Resource.AstCenterInvalidSelection).ConfigureAwait(false);
             return;
         }
         var guildIdText = guildId.ToString(CultureInfo.InvariantCulture);
         var roomIdText = roomChannelId.ToString(CultureInfo.InvariantCulture);
         if (!await IsTrackedRoomAsync(guildId, roomChannelId).ConfigureAwait(false))
         {
-            await SetErrorAsync(component, IsFrench ? "Cette room n’est plus suivie." : "This room is no longer tracked.").ConfigureAwait(false);
+            await SetErrorAsync(component, Resource.AstCenterThisRoomIsNoLongerTracked).ConfigureAwait(false);
             return;
         }
 
@@ -1360,7 +1351,7 @@ public static class AstCommandCenter
         if (modal.GuildId is not { } guildId || modal.ChannelId is not { } sourceChannelId ||
             !Sessions.TryGetAuthorized(sessionId, modal.User.Id, guildId, sourceChannelId, out var session))
         {
-            await modal.RespondAsync(IsFrench ? "Cette interface a expiré. Relancez `/ast`." : "This interface expired. Run `/ast` again.", ephemeral: true).ConfigureAwait(false);
+            await modal.RespondAsync(Resource.AstCenterThisInterfaceExpiredRunAstAgain, ephemeral: true).ConfigureAwait(false);
             return;
         }
 
@@ -1385,7 +1376,7 @@ public static class AstCommandCenter
             if (!Sessions.TrySetSelectionSearch(
                     session.Id, modal.User.Id, guildId, sourceChannelId, search, out session))
             {
-                await modal.RespondAsync(IsFrench ? "Recherche invalide." : "Invalid search.", ephemeral: true).ConfigureAwait(false);
+                await modal.RespondAsync(Resource.AstCenterInvalidSearch, ephemeral: true).ConfigureAwait(false);
                 return;
             }
             var filteredView = await RenderAsync(session, authorization).ConfigureAwait(false);
@@ -1400,7 +1391,7 @@ public static class AstCommandCenter
 
         if (session.RoomChannelId is not { } roomChannelId)
         {
-            await modal.RespondAsync(IsFrench ? "Cette interface a expiré. Relancez `/ast`." : "This interface expired. Run `/ast` again.", ephemeral: true).ConfigureAwait(false);
+            await modal.RespondAsync(Resource.AstCenterThisInterfaceExpiredRunAstAgain, ephemeral: true).ConfigureAwait(false);
             return;
         }
 
@@ -1408,7 +1399,7 @@ public static class AstCommandCenter
         {
             if (session.PendingAlias == null || session.PendingAction is not ("exclude-add" or "exclude-delete"))
             {
-                await modal.RespondAsync(IsFrench ? "Cette recherche a expiré." : "This search expired.", ephemeral: true).ConfigureAwait(false);
+                await modal.RespondAsync(Resource.AstCenterThisSearchExpired, ephemeral: true).ConfigureAwait(false);
                 return;
             }
             var search = modal.Data.Components
@@ -1416,7 +1407,7 @@ public static class AstCommandCenter
             if (!Sessions.TrySetExclusionSearch(
                     session.Id, modal.User.Id, guildId, sourceChannelId, search, out session))
             {
-                await modal.RespondAsync(IsFrench ? "Recherche invalide." : "Invalid search.", ephemeral: true).ConfigureAwait(false);
+                await modal.RespondAsync(Resource.AstCenterInvalidSearch, ephemeral: true).ConfigureAwait(false);
                 return;
             }
             var exclusions = await RenderExclusionsAsync(session).ConfigureAwait(false);
@@ -1437,7 +1428,7 @@ public static class AstCommandCenter
             var canonicalSlotAlias = slotAliases.FirstOrDefault(value => string.Equals(value, requestedAlias, StringComparison.OrdinalIgnoreCase));
             if (canonicalSlotAlias == null)
             {
-                await modal.RespondAsync(IsFrench ? "Ce slot n’existe pas dans cette room." : "This slot does not exist in this room.", ephemeral: true).ConfigureAwait(false);
+                await modal.RespondAsync(Resource.AstCenterThisSlotDoesNotExistInThisRoom, ephemeral: true).ConfigureAwait(false);
                 return;
             }
             var slotResult = action == "alias-add-manual"
@@ -1465,9 +1456,7 @@ public static class AstCommandCenter
         if (string.IsNullOrWhiteSpace(alias) || !TryOptionalNonNegativeInt(sphereRaw, out var sphereLimit) ||
             !TryOptionalNonNegativeInt(validateRaw, out var sphereToValidate))
         {
-            await modal.RespondAsync(IsFrench
-                ? "Indiquez un slot et utilisez uniquement des entiers positifs ou zéro pour les sphères."
-                : "Enter a slot and use only non-negative integers for spheres.", ephemeral: true).ConfigureAwait(false);
+            await modal.RespondAsync(Resource.AstCenterEnterASlotAndUseOnlyNonNegativeIntegers, ephemeral: true).ConfigureAwait(false);
             return;
         }
         var aliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(
@@ -1475,14 +1464,14 @@ public static class AstCommandCenter
         var canonicalAlias = aliases.FirstOrDefault(value => string.Equals(value, alias, StringComparison.OrdinalIgnoreCase));
         if (canonicalAlias == null)
         {
-            await modal.RespondAsync(IsFrench ? "Ce slot n’existe pas dans cette room." : "This slot does not exist in this room.", ephemeral: true).ConfigureAwait(false);
+            await modal.RespondAsync(Resource.AstCenterThisSlotDoesNotExistInThisRoom, ephemeral: true).ConfigureAwait(false);
             return;
         }
         if (!Sessions.TrySetSpoilerOptions(
                 session.Id, modal.User.Id, guildId, sourceChannelId, out session,
                 alias: canonicalAlias, setAlias: true, sphereLimit: sphereLimit, setSphereLimit: true))
         {
-            await modal.RespondAsync(IsFrench ? "Cette interface a expiré." : "This interface expired.", ephemeral: true).ConfigureAwait(false);
+            await modal.RespondAsync(Resource.AstCenterThisInterfaceExpired, ephemeral: true).ConfigureAwait(false);
             return;
         }
 
@@ -1491,7 +1480,7 @@ public static class AstCommandCenter
                 roomChannelId.ToString(CultureInfo.InvariantCulture), guildId.ToString(CultureInfo.InvariantCulture),
                 canonicalAlias, sphereLimit, session.SpoilerMissingMode == "full", session.SpoilerHideItems,
                 sphereToValidate).ConfigureAwait(false)
-            : (IsFrench ? "Réglages d’analyse mis à jour." : "Analysis settings updated.");
+            : (Resource.AstCenterAnalysisSettingsUpdated);
         var pages = PaginateOutput(result);
         AstUiView view;
         if (pages.Count > 1 && Sessions.TrySetOutputPages(
@@ -1554,22 +1543,22 @@ public static class AstCommandCenter
     private static async Task<AstUiView> RenderHomeAsync(AstUiSession session, AstAuthorizationContext authorization, string? roomName)
     {
         var builder = BaseEmbed(roomName == null
-                ? (IsFrench ? "Centre de commandes AST" : "AST command center")
+                ? (Resource.AstCenterASTCommandCenter)
                 : $"🌐 {Safe(roomName)}",
             roomName == null
-                ? (IsFrench ? "Choisissez l’espace que vous souhaitez ouvrir." : "Choose the area you want to open.")
-                : (IsFrench ? "Interface personnelle de cette room." : "Your personal interface for this room."));
+                ? (Resource.AstCenterChooseTheAreaYouWantToOpen)
+                : (Resource.AstCenterYourPersonalInterfaceForThisRoom));
         var components = new ComponentBuilder();
         if (session.RoomChannelId != null)
         {
-            components.WithButton(IsFrench ? "Mon espace" : "My space", Id(session, "personal"), ButtonStyle.Primary, emote: new Emoji("👤"));
-            components.WithButton(IsFrench ? "La room" : "The room", Id(session, "room"), ButtonStyle.Primary, emote: new Emoji("🌐"));
+            components.WithButton(Resource.AstCenterMySpace, Id(session, "personal"), ButtonStyle.Primary, emote: new Emoji("👤"));
+            components.WithButton(Resource.AstCenterTheRoom, Id(session, "room"), ButtonStyle.Primary, emote: new Emoji("🌐"));
             if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization))
-                components.WithButton(IsFrench ? "Gérer" : "Manage", Id(session, "manage"), ButtonStyle.Secondary, emote: new Emoji("⚙️"));
+                components.WithButton(Resource.AstCenterManage, Id(session, "manage"), ButtonStyle.Secondary, emote: new Emoji("⚙️"));
         }
         if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
-            components.WithButton(IsFrench ? "Administration" : "Administration", Id(session, "admin"), ButtonStyle.Secondary, emote: new Emoji("🛠️"));
-        components.WithButton(IsFrench ? "Aide" : "Help", Id(session, "help"), ButtonStyle.Secondary, emote: new Emoji("❓"));
+            components.WithButton(Resource.AstCenterAdministration, Id(session, "admin"), ButtonStyle.Secondary, emote: new Emoji("🛠️"));
+        components.WithButton(Resource.AstCenterHelp, Id(session, "help"), ButtonStyle.Secondary, emote: new Emoji("❓"));
         if (session.RoomChannelId == null)
         {
             var accessibleRooms = (await GetAccessibleRoomsAsync(session, authorization).ConfigureAwait(false))
@@ -1586,9 +1575,9 @@ public static class AstCommandCenter
             {
                 if (session.SelectionSearch != null)
                     AddSelectionNavigation(components, session, accessibleRooms.Length, row: 2);
-                builder.AddField(IsFrench ? "Rooms" : "Rooms", session.SelectionSearch == null
-                    ? (IsFrench ? "Aucune room accessible sur ce serveur." : "No accessible room on this server.")
-                    : (IsFrench ? $"Aucune room ne correspond à « {Safe(session.SelectionSearch)} »." : $"No room matches “{Safe(session.SelectionSearch)}”."));
+                builder.AddField(Resource.AstCenterRooms, session.SelectionSearch == null
+                    ? (Resource.AstCenterNoAccessibleRoomOnThisServer)
+                    : (string.Format(Resource.AstCenterNoRoomMatches, Safe(session.SelectionSearch))));
             }
         }
         return new AstUiView(null, builder.Build(), components.Build());
@@ -1602,7 +1591,7 @@ public static class AstCommandCenter
         if (page.Count == 0) return null;
         var menu = new SelectMenuBuilder()
             .WithCustomId(Id(session, "select-room"))
-            .WithPlaceholder(IsFrench ? "Choisir une room…" : "Choose a room…")
+            .WithPlaceholder(Resource.AstCenterChooseARoom)
             .WithMinValues(1)
             .WithMaxValues(1);
         foreach (var room in page)
@@ -1639,17 +1628,17 @@ public static class AstCommandCenter
     {
         if (session.PendingAction == "revoke-personal-portal") return PortalRevokeConfirmation(session);
         return Screen(session,
-            IsFrench ? "👤 Mon espace" : "👤 My space",
-            IsFrench ? "Vos données et préférences personnelles." : "Your personal data and preferences.",
-            [(IsFrench ? "Mes slots" : "My slots", "personal-slots"),
-             (IsFrench ? "Mes objets" : "My items", "personal-items"),
+            Resource.AstCenterMySpace2,
+            Resource.AstCenterYourPersonalDataAndPreferences,
+            [(Resource.AstCenterMySlots, "personal-slots"),
+             (Resource.AstCenterMyItems, "personal-items"),
              ("Hints", "personal-hints"),
-             (IsFrench ? "Mon récap" : "My recap", "personal-recap"),
-             (IsFrench ? "Mon patch" : "My patch", "personal-patch"),
-             (IsFrench ? "Mes exclusions" : "My exclusions", "personal-exclusions"),
-             (IsFrench ? "Mon portail" : "My portal", "personal-portal"),
-             (IsFrench ? "Révoquer portail" : "Revoke portal", "personal-portal-revoke-request"),
-             (IsFrench ? "Avancé" : "Advanced", "personal-advanced")]);
+             (Resource.AstCenterMyRecap, "personal-recap"),
+             (Resource.AstCenterMyPatch, "personal-patch"),
+             (Resource.AstCenterMyExclusions, "personal-exclusions"),
+             (Resource.AstCenterMyPortal, "personal-portal"),
+             (Resource.AstCenterRevokePortal, "personal-portal-revoke-request"),
+             (Resource.AstCenterAdvanced, "personal-advanced")]);
     }
 
     private static async Task<AstUiView> RenderRoomAsync(AstUiSession session, string? roomName)
@@ -1658,81 +1647,77 @@ public static class AstCommandCenter
         var channelId = session.RoomChannelId!.Value.ToString(CultureInfo.InvariantCulture);
         var health = TrackingControlCommands.FormatRoomHealth(TrackingDataManager.GetRoomHealth(guildId, channelId));
         var view = Screen(session,
-            $"🌐 {Safe(roomName ?? (IsFrench ? "Room" : "Room"))}",
+            $"🌐 {Safe(roomName ?? (Resource.AstCenterRoom))}",
             health,
-            [(IsFrench ? "Progression" : "Progress", "room-games"),
-             (IsFrench ? "Informations" : "Information", "room-info"),
-             (IsFrench ? "Associations" : "Associations", "room-associations")]);
+            [(Resource.AstCenterProgress, "room-games"),
+             (Resource.AstCenterInformation, "room-info"),
+             (Resource.AstCenterAssociations, "room-associations")]);
         return await Task.FromResult(view);
     }
 
     private static AstUiView RenderManage(AstUiSession session)
         => Screen(session,
-            IsFrench ? "⚙️ Gérer la room" : "⚙️ Manage room",
-            IsFrench ? "Actions réservées aux gestionnaires de cette room." : "Actions restricted to this room's managers.",
-            [(IsFrench ? "Synchroniser" : "Sync now", "sync-now"),
-             (IsFrench ? "Suspendre" : "Pause", "pause"),
-             (IsFrench ? "Reprendre" : "Resume", "resume"),
+            Resource.AstCenterManageRoom,
+            Resource.AstCenterActionsRestrictedToThisRoomSManagers,
+            [(Resource.AstCenterSyncNow, "sync-now"),
+             (Resource.AstCenterPause, "pause"),
+             (Resource.AstCenterResume, "resume"),
              ("Polling", "manage-polling"),
-             (IsFrench ? "Plus…" : "More…", "manage-more")]);
+             (Resource.AstCenterMore, "manage-more")]);
 
     private static AstUiView RenderAdministration(AstUiSession session, AstAuthorizationContext authorization)
     {
         if (session.PendingAction == "revoke-admin-portal") return PortalRevokeConfirmation(session);
         var actions = new List<(string, string)>
         {
-            (IsFrench ? "Configurer une room" : "Configure room", "admin-setup"),
-            (IsFrench ? "Santé AST" : "AST health", "guild-health"),
-            (IsFrench ? "Portail" : "Portal", "admin-portal"),
-            (IsFrench ? "Révoquer portail" : "Revoke portal", "admin-portal-revoke-request")
+            (Resource.AstCenterConfigureRoom, "admin-setup"),
+            (Resource.AstCenterASTHealth, "guild-health"),
+            (Resource.AstCenterPortal, "admin-portal"),
+            (Resource.AstCenterRevokePortal, "admin-portal-revoke-request")
         };
         if (Declare.IsArchipelagoMode)
         {
             actions.Add(("YAML", "admin-yaml"));
-            actions.Add((IsFrench ? "Génération" : "Generation", "admin-generation"));
+            actions.Add((Resource.WebGeneration, "admin-generation"));
             if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization))
                 actions.Add(("APWorld", "admin-apworld"));
         }
         return Screen(session,
-            IsFrench ? "🛠️ Administration AST" : "🛠️ AST administration",
+            Resource.AstCenterASTAdministration,
             AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization)
-                ? (IsFrench ? "Accès propriétaire de l’instance." : "Instance-owner access.")
-                : (IsFrench ? "Accès gestionnaire du serveur." : "Guild-manager access."),
+                ? (Resource.AstCenterInstanceOwnerAccess)
+                : (Resource.AstCenterGuildManagerAccess),
             actions);
     }
 
     private static AstUiView RenderHelp(AstUiSession session)
         => Screen(session,
-            IsFrench ? "❓ Aide et liens" : "❓ Help and links",
-            IsFrench
-                ? $"Utilisez les boutons pour naviguer.\n\n{ArchipelagoSphereTracker.src.Resources.Resource.Discord}\n{string.Format(ArchipelagoSphereTracker.src.Resources.Resource.ApworldInfo, Declare.ApworldInfoSheet)}"
-                : $"Use the buttons to navigate.\n\n{ArchipelagoSphereTracker.src.Resources.Resource.Discord}\n{string.Format(ArchipelagoSphereTracker.src.Resources.Resource.ApworldInfo, Declare.ApworldInfoSheet)}",
+            Resource.AstCenterHelpAndLinks,
+            string.Format(Resource.AstCenterUseTheButtonsToNavigate, ArchipelagoSphereTracker.src.Resources.Resource.Discord, string.Format(ArchipelagoSphereTracker.src.Resources.Resource.ApworldInfo, Declare.ApworldInfoSheet)),
             []);
 
     private static AstUiView RenderPolling(AstUiSession session)
     {
         var menu = new SelectMenuBuilder()
             .WithCustomId(Id(session, "poll-policy"))
-            .WithPlaceholder(IsFrench ? "Choisir le mode et la fréquence…" : "Choose mode and interval…")
-            .AddOption(IsFrench ? "Automatique · 15 min max" : "Automatic · 15 min max", "automatic|15m")
-            .AddOption(IsFrench ? "Automatique · 30 min max" : "Automatic · 30 min max", "automatic|30m")
-            .AddOption(IsFrench ? "Automatique · 1 h max" : "Automatic · 1 h max", "automatic|1h")
-            .AddOption(IsFrench ? "Automatique · 6 h max" : "Automatic · 6 h max", "automatic|6h")
-            .AddOption(IsFrench ? "Fixe · 5 min" : "Fixed · 5 min", "fixed|5m")
-            .AddOption(IsFrench ? "Fixe · 15 min" : "Fixed · 15 min", "fixed|15m")
-            .AddOption(IsFrench ? "Fixe · 30 min" : "Fixed · 30 min", "fixed|30m")
-            .AddOption(IsFrench ? "Fixe · 1 h" : "Fixed · 1 h", "fixed|1h")
-            .AddOption(IsFrench ? "Fixe · 6 h" : "Fixed · 6 h", "fixed|6h")
-            .AddOption(IsFrench ? "Fixe · 12 h" : "Fixed · 12 h", "fixed|12h")
-            .AddOption(IsFrench ? "Fixe · 18 h" : "Fixed · 18 h", "fixed|18h")
-            .AddOption(IsFrench ? "Fixe · 1 jour" : "Fixed · 1 day", "fixed|1d");
+            .WithPlaceholder(Resource.AstCenterChooseModeAndInterval)
+            .AddOption(Resource.AstCenterAutomatic15MinMax, "automatic|15m")
+            .AddOption(Resource.AstCenterAutomatic30MinMax, "automatic|30m")
+            .AddOption(Resource.AstCenterAutomatic1HMax, "automatic|1h")
+            .AddOption(Resource.AstCenterAutomatic6HMax, "automatic|6h")
+            .AddOption(Resource.AstCenterFixed5Min, "fixed|5m")
+            .AddOption(Resource.AstCenterFixed15Min, "fixed|15m")
+            .AddOption(Resource.AstCenterFixed30Min, "fixed|30m")
+            .AddOption(Resource.AstCenterFixed1H, "fixed|1h")
+            .AddOption(Resource.AstCenterFixed6H, "fixed|6h")
+            .AddOption(Resource.AstCenterFixed12H, "fixed|12h")
+            .AddOption(Resource.AstCenterFixed18H, "fixed|18h")
+            .AddOption(Resource.AstCenterFixed1Day, "fixed|1d");
         var components = new ComponentBuilder()
-            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "manage"), ButtonStyle.Primary, emote: new Emoji("↩️"), row: 0)
+            .WithButton(Resource.AstCenterBack, Id(session, "manage"), ButtonStyle.Primary, emote: new Emoji("↩️"), row: 0)
             .WithSelectMenu(menu, row: 1)
             .Build();
-        return new AstUiView(null, BaseEmbed("⚙️ Polling", IsFrench
-            ? "Ce réglage est appliqué directement par Discord."
-            : "This setting is applied directly from Discord.").Build(), components);
+        return new AstUiView(null, BaseEmbed("⚙️ Polling", Resource.AstCenterThisSettingIsAppliedDirectlyFromDiscord).Build(), components);
     }
 
     private static AstUiView RenderManageMore(AstUiSession session)
@@ -1741,28 +1726,27 @@ public static class AstCommandCenter
         if (session.PendingAction == "delete-room")
         {
             var confirmation = new ComponentBuilder()
-                .WithButton(IsFrench ? "Supprimer définitivement" : "Delete permanently", Id(session, "confirm-delete-room"), ButtonStyle.Danger)
-                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-delete-room"), ButtonStyle.Secondary)
+                .WithButton(Resource.AstCenterDeletePermanently, Id(session, "confirm-delete-room"), ButtonStyle.Danger)
+                .WithButton(Resource.AstCenterCancel, Id(session, "cancel-delete-room"), ButtonStyle.Secondary)
                 .Build();
-            return new AstUiView(null, BaseEmbed("⚠️ " + (IsFrench ? "Supprimer la room" : "Delete room"),
-                IsFrench ? "Cette action supprime le suivi et les données locales de la room. Elle est irréversible."
-                    : "This removes room tracking and its local data. It cannot be undone.").Build(), confirmation);
+            return new AstUiView(null, BaseEmbed("⚠️ " + (Resource.AstCenterDeleteRoom),
+                Resource.AstCenterThisRemovesRoomTrackingAndItsLocalDataIt).Build(), confirmation);
         }
         var notifications = new SelectMenuBuilder()
             .WithCustomId(Id(session, "notifications"))
-            .WithPlaceholder(IsFrench ? "Mode de notification…" : "Notification mode…")
-            .AddOption(IsFrench ? "Notifications normales" : "Normal notifications", "false")
-            .AddOption(IsFrench ? "Mode silencieux" : "Silent mode", "true");
+            .WithPlaceholder(Resource.AstCenterNotificationMode)
+            .AddOption(Resource.AstCenterNormalNotifications, "false")
+            .AddOption(Resource.WebSilentMode, "true");
         var components = new ComponentBuilder()
-            .WithButton(IsFrench ? "Analyser le spoiler" : "Analyze spoiler", Id(session, "manage-spoiler"), ButtonStyle.Primary, row: 0)
-            .WithButton(IsFrench ? "Portail de la room" : "Room portal", Id(session, "room-portal"), ButtonStyle.Secondary, row: 0)
-            .WithButton(IsFrench ? "Révoquer portail" : "Revoke portal", Id(session, "room-portal-revoke-request"), ButtonStyle.Secondary, row: 0)
-            .WithButton(IsFrench ? "Supprimer la room" : "Delete room", Id(session, "delete-room-request"), ButtonStyle.Danger, row: 0)
-            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "manage"), ButtonStyle.Primary, row: 0)
+            .WithButton(Resource.AstCenterAnalyzeSpoiler, Id(session, "manage-spoiler"), ButtonStyle.Primary, row: 0)
+            .WithButton(Resource.AstCenterRoomPortal, Id(session, "room-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.AstCenterRevokePortal, Id(session, "room-portal-revoke-request"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.AstCenterDeleteRoom, Id(session, "delete-room-request"), ButtonStyle.Danger, row: 0)
+            .WithButton(Resource.AstCenterBack, Id(session, "manage"), ButtonStyle.Primary, row: 0)
             .WithSelectMenu(notifications, row: 1)
             .Build();
-        return new AstUiView(null, BaseEmbed(IsFrench ? "⚙️ Réglages avancés" : "⚙️ Advanced settings",
-            IsFrench ? "Les réglages ci-dessous sont exécutés directement dans Discord." : "The settings below execute directly in Discord.").Build(), components);
+        return new AstUiView(null, BaseEmbed(Resource.AstCenterAdvancedSettings,
+            Resource.AstCenterTheSettingsBelowExecuteDirectlyInDiscord).Build(), components);
     }
 
     private static async Task<AstUiView> RenderSpoilerAnalysisAsync(AstUiSession session)
@@ -1775,37 +1759,47 @@ public static class AstCommandCenter
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var components = new ComponentBuilder()
-            .WithButton(IsFrench ? "Analyser" : "Analyze", Id(session, "spoiler-analyze"), ButtonStyle.Success, row: 0)
-            .WithButton(IsFrench ? "Configurer" : "Configure", Id(session, "spoiler-configure"), ButtonStyle.Primary, row: 0)
-            .WithButton(IsFrench ? "Réinitialiser validation" : "Reset validation", Id(session, "spoiler-reset-validation"), ButtonStyle.Danger, row: 0)
-            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "manage-more"), ButtonStyle.Secondary, row: 0);
+            .WithButton(Resource.AstCenterAnalyze, Id(session, "spoiler-analyze"), ButtonStyle.Success, row: 0)
+            .WithButton(Resource.AstCenterConfigure, Id(session, "spoiler-configure"), ButtonStyle.Primary, row: 0)
+            .WithButton(Resource.AstCenterResetValidation, Id(session, "spoiler-reset-validation"), ButtonStyle.Danger, row: 0)
+            .WithButton(Resource.AstCenterBack, Id(session, "manage-more"), ButtonStyle.Secondary, row: 0);
         if (aliases.Length > 0)
         {
             var aliasMenu = new SelectMenuBuilder().WithCustomId(Id(session, "spoiler-alias"))
-                .WithPlaceholder(IsFrench ? "Choisir un slot…" : "Choose a slot…");
+                .WithPlaceholder(Resource.AstCenterChooseASlot);
             foreach (var alias in PageValues(aliases, session.SelectionPageIndex))
                 aliasMenu.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias,
                     isDefault: string.Equals(alias, session.SpoilerAlias, StringComparison.OrdinalIgnoreCase));
             components.WithSelectMenu(aliasMenu, row: 1);
         }
         var mode = new SelectMenuBuilder().WithCustomId(Id(session, "spoiler-mode"))
-            .WithPlaceholder(IsFrench ? "Étendue des checks manquantes…" : "Missing checks scope…")
-            .AddOption(IsFrench ? "Première sphère bloquante" : "First blocking sphere", "first", isDefault: session.SpoilerMissingMode == "first")
-            .AddOption(IsFrench ? "Rapport complet" : "Full report", "full", isDefault: session.SpoilerMissingMode == "full");
+            .WithPlaceholder(Resource.AstCenterMissingChecksScope)
+            .AddOption(Resource.AstCenterFirstBlockingSphere, "first", isDefault: session.SpoilerMissingMode == "first")
+            .AddOption(Resource.AstCenterFullReport, "full", isDefault: session.SpoilerMissingMode == "full");
         var hide = new SelectMenuBuilder().WithCustomId(Id(session, "spoiler-hide"))
-            .WithPlaceholder(IsFrench ? "Affichage des objets…" : "Item display…")
-            .AddOption(IsFrench ? "Masquer les objets" : "Hide items", "true", isDefault: session.SpoilerHideItems)
-            .AddOption(IsFrench ? "Afficher les objets" : "Show items", "false", isDefault: !session.SpoilerHideItems);
+            .WithPlaceholder(Resource.AstCenterItemDisplay)
+            .AddOption(Resource.AstCenterHideItems, "true", isDefault: session.SpoilerHideItems)
+            .AddOption(Resource.AstCenterShowItems, "false", isDefault: !session.SpoilerHideItems);
         components.WithSelectMenu(mode, row: 2).WithSelectMenu(hide, row: 3);
         AddSelectionNavigation(components, session, aliases.Length, row: 4);
         var selectedAlias = string.IsNullOrWhiteSpace(session.SpoilerAlias)
-            ? (IsFrench ? "aucun" : "none")
+            ? (Resource.AstCenterNone)
             : Safe(session.SpoilerAlias);
-        var sphere = session.SpoilerSphereLimit?.ToString(CultureInfo.InvariantCulture) ?? (IsFrench ? "toutes" : "all");
-        var description = IsFrench
-            ? $"Slot : **{selectedAlias}**\nSphère maximale : **{sphere}**\nMode : **{(session.SpoilerMissingMode == "full" ? "complet" : "premier blocage")}**\nObjets : **{(session.SpoilerHideItems ? "masqués" : "visibles")}**\n\n{PageLabel(session, aliases.Length)} « Configurer » permet aussi de saisir directement un slot et de valider manuellement une sphère."
-            : $"Slot: **{selectedAlias}**\nMaximum sphere: **{sphere}**\nMode: **{(session.SpoilerMissingMode == "full" ? "full" : "first blocker")}**\nItems: **{(session.SpoilerHideItems ? "hidden" : "visible")}**\n\n{PageLabel(session, aliases.Length)} Configure also lets you enter a slot directly and manually validate a sphere.";
-        return new AstUiView(null, BaseEmbed(IsFrench ? "🔎 Analyse du spoiler" : "🔎 Spoiler analysis", description).Build(), components.Build());
+        var sphere = session.SpoilerSphereLimit?.ToString(CultureInfo.InvariantCulture) ?? (Resource.AstCenterAll);
+        var spoilerMode = session.SpoilerMissingMode == "full"
+            ? Resource.AstCenterSpoilerModeFull
+            : Resource.AstCenterSpoilerModeFirstBlocker;
+        var itemDisplay = session.SpoilerHideItems
+            ? Resource.AstCenterSpoilerItemsHidden
+            : Resource.AstCenterSpoilerItemsVisible;
+        var description = string.Format(
+            Resource.AstCenterSpoilerAnalysisDescription,
+            selectedAlias,
+            sphere,
+            spoilerMode,
+            itemDisplay,
+            PageLabel(session, aliases.Length));
+        return new AstUiView(null, BaseEmbed(Resource.AstCenterSpoilerAnalysis, description).Build(), components.Build());
     }
 
     private static Task<AstUiView> RenderYamlAsync(AstUiSession session)
@@ -1813,22 +1807,20 @@ public static class AstCommandCenter
         if (session.PendingAction == "yaml-clean")
         {
             var confirmation = new ComponentBuilder()
-                .WithButton(IsFrench ? "Tout supprimer" : "Delete all", Id(session, "yaml-confirm-clean"), ButtonStyle.Danger)
-                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "yaml-cancel"), ButtonStyle.Secondary)
+                .WithButton(Resource.AstCenterDeleteAll, Id(session, "yaml-confirm-clean"), ButtonStyle.Danger)
+                .WithButton(Resource.AstCenterCancel, Id(session, "yaml-cancel"), ButtonStyle.Secondary)
                 .Build();
-            return Task.FromResult(new AstUiView(null, BaseEmbed("⚠️ " + (IsFrench ? "Nettoyer les YAML" : "Clean YAML files"),
-                IsFrench ? "Tous les YAML et les données de génération de ce salon seront supprimés."
-                    : "All YAML files and generation data for this channel will be deleted.").Build(), confirmation));
+            return Task.FromResult(new AstUiView(null, BaseEmbed("⚠️ " + (Resource.AstCenterCleanYAMLFiles),
+                Resource.AstCenterAllYAMLFilesAndGenerationDataForThisChannel).Build(), confirmation));
         }
         if (session.PendingAction == "yaml-delete" && session.PendingItem != null)
         {
             var confirmation = new ComponentBuilder()
-                .WithButton(IsFrench ? "Supprimer" : "Delete", Id(session, "yaml-confirm-delete"), ButtonStyle.Danger)
-                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "yaml-cancel-delete"), ButtonStyle.Secondary)
+                .WithButton(Resource.AstCenterDelete, Id(session, "yaml-confirm-delete"), ButtonStyle.Danger)
+                .WithButton(Resource.AstCenterCancel, Id(session, "yaml-cancel-delete"), ButtonStyle.Secondary)
                 .Build();
-            return Task.FromResult(new AstUiView(null, BaseEmbed("⚠️ " + (IsFrench ? "Supprimer un YAML" : "Delete YAML"),
-                IsFrench ? $"Confirmer la suppression de **{Safe(session.PendingItem)}** ?"
-                    : $"Confirm deletion of **{Safe(session.PendingItem)}**?").Build(), confirmation));
+            return Task.FromResult(new AstUiView(null, BaseEmbed("⚠️ " + (Resource.AstCenterDeleteYAML),
+                string.Format(Resource.AstCenterConfirmDeletionOf, Safe(session.PendingItem))).Build(), confirmation));
         }
 
         var channelId = session.SourceChannelId.ToString(CultureInfo.InvariantCulture);
@@ -1837,16 +1829,16 @@ public static class AstCommandCenter
         var templates = YamlClass.GetTemplateFileNames()
             .Where(file => MatchesSelectionSearch(session, file)).ToArray();
         var components = new ComponentBuilder()
-            .WithButton(IsFrench ? "Lister" : "List", Id(session, "yaml-list"), ButtonStyle.Primary, row: 0)
-            .WithButton(IsFrench ? "Sauvegarder" : "Backup", Id(session, "yaml-backup"), ButtonStyle.Success, row: 0)
-            .WithButton(IsFrench ? "Tout nettoyer" : "Clean all", Id(session, "yaml-clean-request"), ButtonStyle.Danger, row: 0)
-            .WithButton(IsFrench ? "Portail" : "Portal", Id(session, "admin-portal"), ButtonStyle.Secondary, row: 0)
-            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "admin"), ButtonStyle.Secondary, row: 0);
+            .WithButton(Resource.AstCenterList, Id(session, "yaml-list"), ButtonStyle.Primary, row: 0)
+            .WithButton(Resource.AstCenterBackup, Id(session, "yaml-backup"), ButtonStyle.Success, row: 0)
+            .WithButton(Resource.AstCenterCleanAll, Id(session, "yaml-clean-request"), ButtonStyle.Danger, row: 0)
+            .WithButton(Resource.AstCenterPortal, Id(session, "admin-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.AstCenterBack, Id(session, "admin"), ButtonStyle.Secondary, row: 0);
         var yamlPage = PageValues(yamls, session.SelectionPageIndex);
         if (yamlPage.Count > 0)
         {
             var delete = new SelectMenuBuilder().WithCustomId(Id(session, "yaml-delete-select"))
-                .WithPlaceholder(IsFrench ? "Supprimer un YAML…" : "Delete a YAML…");
+                .WithPlaceholder(Resource.AstCenterDeleteAYAML);
             foreach (var file in yamlPage) delete.AddOption(file[..Math.Min(file.Length, 100)], file);
             components.WithSelectMenu(delete, row: 1);
         }
@@ -1854,42 +1846,38 @@ public static class AstCommandCenter
         if (templatePage.Count > 0)
         {
             var download = new SelectMenuBuilder().WithCustomId(Id(session, "yaml-template-download"))
-                .WithPlaceholder(IsFrench ? "Télécharger un modèle…" : "Download a template…");
+                .WithPlaceholder(Resource.AstCenterDownloadATemplate);
             foreach (var file in templatePage) download.AddOption(file[..Math.Min(file.Length, 100)], file);
             components.WithSelectMenu(download, row: 2);
         }
         var selectionCount = Math.Max(yamls.Length, templates.Length);
         AddSelectionNavigation(components, session, selectionCount, row: 3);
-        var description = IsFrench
-            ? $"{yamls.Length} fichier(s) YAML pour ce salon. {PageLabel(session, selectionCount)} Les actions sont exécutées directement depuis Discord."
-            : $"{yamls.Length} YAML file(s) for this channel. {PageLabel(session, selectionCount)} Actions execute directly from Discord.";
+        var description = string.Format(Resource.AstCenterYAMLFileSForThisChannelActionsExecuteDirectly, yamls.Length, PageLabel(session, selectionCount));
         return Task.FromResult(new AstUiView(null, BaseEmbed("YAML", description).Build(), components.Build()));
     }
 
     private static AstUiView RenderGeneration(AstUiSession session)
     {
         var skip = new SelectMenuBuilder().WithCustomId(Id(session, "generation-skip"))
-            .WithPlaceholder(IsFrench ? "Équilibrage de progression…" : "Progression balancing…")
-            .AddOption(IsFrench ? "Équilibrage normal" : "Normal balancing", "false", isDefault: !session.GenerationSkipProgBalancing)
-            .AddOption(IsFrench ? "Ignorer l’équilibrage" : "Skip balancing", "true", isDefault: session.GenerationSkipProgBalancing);
+            .WithPlaceholder(Resource.AstCenterProgressionBalancing)
+            .AddOption(Resource.AstCenterNormalBalancing, "false", isDefault: !session.GenerationSkipProgBalancing)
+            .AddOption(Resource.AstCenterSkipBalancing, "true", isDefault: session.GenerationSkipProgBalancing);
         var components = new ComponentBuilder()
-            .WithButton(IsFrench ? "Générer" : "Generate", Id(session, "generation-run"), ButtonStyle.Success, row: 0)
-            .WithButton(IsFrench ? "Tester" : "Test", Id(session, "generation-test"), ButtonStyle.Primary, row: 0)
-            .WithButton(IsFrench ? "Portail" : "Portal", Id(session, "admin-portal"), ButtonStyle.Secondary, row: 0)
-            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "admin"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.WebGenerate, Id(session, "generation-run"), ButtonStyle.Success, row: 0)
+            .WithButton(Resource.AstCenterTest, Id(session, "generation-test"), ButtonStyle.Primary, row: 0)
+            .WithButton(Resource.AstCenterPortal, Id(session, "admin-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.AstCenterBack, Id(session, "admin"), ButtonStyle.Secondary, row: 0)
             .WithSelectMenu(skip, row: 1)
             .Build();
-        var description = IsFrench
-            ? "Générez depuis les YAML du salon ou testez-les sans produire de sortie. Un ZIP envoyé avec `/ast file:` déclenche aussi la génération native."
-            : "Generate from the channel YAML files or test them without output. A ZIP sent with `/ast file:` also starts native generation.";
-        return new AstUiView(null, BaseEmbed(IsFrench ? "Génération" : "Generation", description).Build(), components);
+        var description = Resource.AstCenterGenerateFromTheChannelYAMLFilesOrTestThem;
+        return new AstUiView(null, BaseEmbed(Resource.WebGeneration, description).Build(), components);
     }
 
     private static AstUiView RenderApworld(AstUiSession session)
-        => Screen(session, "APWorld", IsFrench ? "Gestion Discord native des APWorld." : "Native Discord APWorld management.",
-            [(IsFrench ? "Lister" : "List", "apworld-list"),
-             (IsFrench ? "Sauvegarder" : "Backup", "apworld-backup"),
-             (IsFrench ? "Portail" : "Portal", "admin-portal")]);
+        => Screen(session, "APWorld", Resource.AstCenterNativeDiscordAPWorldManagement,
+            [(Resource.AstCenterList, "apworld-list"),
+             (Resource.AstCenterBackup, "apworld-backup"),
+             (Resource.AstCenterPortal, "admin-portal")]);
 
     private static async Task<AstUiView> RenderSlotsAsync(AstUiSession session)
     {
@@ -1910,44 +1898,44 @@ public static class AstCommandCenter
             .ToList();
 
         var components = new ComponentBuilder()
-            .WithButton(IsFrench ? "Associer par nom" : "Associate by name", Id(session, "alias-add-manual"), ButtonStyle.Success, row: 0)
-            .WithButton(IsFrench ? "Dissocier par nom" : "Dissociate by name", Id(session, "alias-delete-manual"), ButtonStyle.Danger, row: 0,
+            .WithButton(Resource.AstCenterAssociateByName, Id(session, "alias-add-manual"), ButtonStyle.Success, row: 0)
+            .WithButton(Resource.AstCenterDissociateByName, Id(session, "alias-delete-manual"), ButtonStyle.Danger, row: 0,
                 disabled: allOwnAliases.Length == 0)
-            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "personal"), ButtonStyle.Primary, row: 0);
+            .WithButton(Resource.AstCenterBack, Id(session, "personal"), ButtonStyle.Primary, row: 0);
         var availablePage = PageValues(available, session.SelectionPageIndex);
         if (availablePage.Count > 0)
         {
             var add = new SelectMenuBuilder().WithCustomId(Id(session, "alias-add"))
-                .WithPlaceholder(IsFrench ? "Associer un slot…" : "Associate a slot…");
+                .WithPlaceholder(Resource.AstCenterAssociateASlot);
             foreach (var alias in availablePage) add.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias);
             components.WithSelectMenu(add, row: 1);
         }
         var filter = new SelectMenuBuilder().WithCustomId(Id(session, "alias-filter"))
-            .WithPlaceholder(IsFrench ? "Filtrer les mentions inutiles…" : "Filter unnecessary mentions…")
-            .AddOption(IsFrench ? "Aucun filtre" : "No filter", "0", isDefault: session.AliasMentionFlag == "0")
-            .AddOption(IsFrench ? "Filler" : "Filler", "1", isDefault: session.AliasMentionFlag == "1")
-            .AddOption(IsFrench ? "Pièges" : "Traps", "16", isDefault: session.AliasMentionFlag == "16")
-            .AddOption(IsFrench ? "Filler + pièges" : "Filler + traps", "17", isDefault: session.AliasMentionFlag == "17")
-            .AddOption(IsFrench ? "Jusqu’aux utiles" : "Through useful", "21", isDefault: session.AliasMentionFlag == "21")
-            .AddOption(IsFrench ? "Jusqu’aux requis" : "Through required", "27", isDefault: session.AliasMentionFlag == "27")
-            .AddOption(IsFrench ? "Tout filtrer" : "Filter all", "31", isDefault: session.AliasMentionFlag == "31");
+            .WithPlaceholder(Resource.AstCenterFilterUnnecessaryMentions)
+            .AddOption(Resource.AstCenterNoFilter, "0", isDefault: session.AliasMentionFlag == "0")
+            .AddOption(Resource.AstCenterFiller, "1", isDefault: session.AliasMentionFlag == "1")
+            .AddOption(Resource.AstCenterTraps, "16", isDefault: session.AliasMentionFlag == "16")
+            .AddOption(Resource.AstCenterFillerTraps, "17", isDefault: session.AliasMentionFlag == "17")
+            .AddOption(Resource.AstCenterThroughUseful, "21", isDefault: session.AliasMentionFlag == "21")
+            .AddOption(Resource.AstCenterThroughRequired, "27", isDefault: session.AliasMentionFlag == "27")
+            .AddOption(Resource.AstCenterFilterAll, "31", isDefault: session.AliasMentionFlag == "31");
         components.WithSelectMenu(filter, row: 2);
         var ownAliasPage = PageValues(ownAliases, session.SelectionPageIndex);
         if (ownAliasPage.Count > 0)
         {
             var delete = new SelectMenuBuilder().WithCustomId(Id(session, "alias-delete"))
-                .WithPlaceholder(IsFrench ? "Dissocier un de mes slots…" : "Dissociate one of my slots…");
+                .WithPlaceholder(Resource.AstCenterDissociateOneOfMySlots);
             foreach (var alias in ownAliasPage) delete.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias);
             components.WithSelectMenu(delete, row: 3);
         }
         var selectionCount = Math.Max(available.Count, ownAliases.Length);
         AddSelectionNavigation(components, session, selectionCount, row: 4);
         var description = allOwnAliases.Length == 0
-            ? (IsFrench ? "Aucun slot associé." : "No associated slot.")
+            ? (Resource.AstCenterNoAssociatedSlot)
             : ownAliasPage.Count == 0
-                ? PageLabel(session, selectionCount) + " " + (IsFrench ? "Aucun slot associé sur cette page." : "No associated slot on this page.")
+                ? PageLabel(session, selectionCount) + " " + (Resource.AstCenterNoAssociatedSlotOnThisPage)
                 : PageLabel(session, selectionCount) + "\n" + string.Join("\n", ownAliasPage.Select(alias => $"• {Safe(alias)}"));
-        return new AstUiView(null, BaseEmbed(IsFrench ? "👤 Mes slots" : "👤 My slots", description).Build(), components.Build());
+        return new AstUiView(null, BaseEmbed(Resource.AstCenterMySlots2, description).Build(), components.Build());
     }
 
     private static async Task<AstUiView> RenderPatchAsync(AstUiSession session)
@@ -1957,13 +1945,12 @@ public static class AstCommandCenter
         var allAliases = await GetPersonalPatchAliasesAsync(
             session, guildId, channelId, applySearch: false).ConfigureAwait(false);
         var components = new ComponentBuilder()
-            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "personal"), ButtonStyle.Primary, row: 0);
+            .WithButton(Resource.AstCenterBack, Id(session, "personal"), ButtonStyle.Primary, row: 0);
 
         if (allAliases.Count == 0)
         {
-            return new AstUiView(null, BaseEmbed(IsFrench ? "🩹 Mon patch" : "🩹 My patch",
-                IsFrench ? "Aucun slot n’est associé à votre compte dans cette room."
-                    : "No slot is associated with your account in this room.").Build(), components.Build());
+            return new AstUiView(null, BaseEmbed(Resource.AstCenterMyPatch2,
+                Resource.AstCenterNoSlotIsAssociatedWithYourAccountInThis).Build(), components.Build());
         }
 
         if (allAliases.Count == 1)
@@ -1971,9 +1958,8 @@ public static class AstCommandCenter
             var alias = allAliases[0];
             var patch = await AuditedAsync(session, session.RoomChannelId.Value, SecurityAuditAction.PatchAccess,
                 () => ChannelsAndUrlsCommands.GetPatchAndGameNameForAlias(guildId, channelId, alias)).ConfigureAwait(false);
-            return new AstUiView(Clamp(patch), BaseEmbed(IsFrench ? "🩹 Mon patch" : "🩹 My patch",
-                IsFrench ? $"Patch du slot associé **{Safe(alias)}**."
-                    : $"Patch for associated slot **{Safe(alias)}**.").Build(), components.Build());
+            return new AstUiView(Clamp(patch), BaseEmbed(Resource.AstCenterMyPatch2,
+                string.Format(Resource.AstCenterPatchForAssociatedSlot, Safe(alias))).Build(), components.Build());
         }
 
         var aliases = await GetPersonalPatchAliasesAsync(
@@ -1983,7 +1969,7 @@ public static class AstCommandCenter
         {
             var menu = new SelectMenuBuilder()
                 .WithCustomId(Id(session, "patch-alias"))
-                .WithPlaceholder(IsFrench ? "Choisir un de mes slots…" : "Choose one of my slots…");
+                .WithPlaceholder(Resource.AstCenterChooseOneOfMySlots);
             foreach (var alias in page)
                 menu.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias);
             components.WithSelectMenu(menu, row: 1);
@@ -1991,12 +1977,9 @@ public static class AstCommandCenter
         AddSelectionNavigation(components, session, aliases.Count, row: 2);
 
         var description = aliases.Count == 0
-            ? (IsFrench ? "Aucun de vos slots ne correspond à ce filtre."
-                : "None of your slots match this filter.")
-            : IsFrench
-                ? $"Vous avez {allAliases.Count} slots associés. Choisissez l’alias dont vous souhaitez récupérer le patch. {PageLabel(session, aliases.Count)}"
-                : $"You have {allAliases.Count} associated slots. Choose the alias whose patch you want to retrieve. {PageLabel(session, aliases.Count)}";
-        return new AstUiView(null, BaseEmbed(IsFrench ? "🩹 Mon patch" : "🩹 My patch", description).Build(), components.Build());
+            ? (Resource.AstCenterNoneOfYourSlotsMatchThisFilter)
+            : string.Format(Resource.AstCenterYouHaveAssociatedSlotsChooseTheAliasWhosePatch, allAliases.Count, PageLabel(session, aliases.Count));
+        return new AstUiView(null, BaseEmbed(Resource.AstCenterMyPatch2, description).Build(), components.Build());
     }
 
     private static async Task<IReadOnlyList<string>> GetPersonalPatchAliasesAsync(
@@ -2026,24 +2009,24 @@ public static class AstCommandCenter
         var components = new ComponentBuilder();
         if (session.PendingAction != null)
         {
-            var target = session.PendingAlias == null ? (IsFrench ? "tous vos récaps" : "all your recaps") : $"**{Safe(session.PendingAlias)}**";
-            components.WithButton(IsFrench ? "Confirmer" : "Confirm", Id(session, "confirm-clean"), ButtonStyle.Danger)
-                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-pending"), ButtonStyle.Secondary);
-            return new AstUiView(null, BaseEmbed(IsFrench ? "⚠️ Confirmation" : "⚠️ Confirmation",
-                IsFrench ? $"Confirmer le nettoyage de {target} ?" : $"Confirm clearing {target}?").Build(), components.Build());
+            var target = session.PendingAlias == null ? (Resource.AstCenterAllYourRecaps) : $"**{Safe(session.PendingAlias)}**";
+            components.WithButton(Resource.AstCenterConfirm, Id(session, "confirm-clean"), ButtonStyle.Danger)
+                .WithButton(Resource.AstCenterCancel, Id(session, "cancel-pending"), ButtonStyle.Secondary);
+            return new AstUiView(null, BaseEmbed(Resource.AstCenterConfirmation,
+                string.Format(Resource.AstCenterConfirmClearing, target)).Build(), components.Build());
         }
-        components.WithButton(IsFrench ? "Tout vider" : "Clear all", Id(session, "clean-all-request"), ButtonStyle.Danger, row: 0)
-            .WithButton(IsFrench ? "Retour" : "Back", Id(session, "personal"), ButtonStyle.Primary, row: 0);
+        components.WithButton(Resource.AstCenterClearAll, Id(session, "clean-all-request"), ButtonStyle.Danger, row: 0)
+            .WithButton(Resource.AstCenterBack, Id(session, "personal"), ButtonStyle.Primary, row: 0);
         if (aliases.Length > 0)
         {
-            var clean = new SelectMenuBuilder().WithCustomId(Id(session, "clean-select")).WithPlaceholder(IsFrench ? "Vider un récap…" : "Clear one recap…");
-            var recapClean = new SelectMenuBuilder().WithCustomId(Id(session, "recap-clean-select")).WithPlaceholder(IsFrench ? "Afficher puis vider…" : "Show then clear…");
+            var clean = new SelectMenuBuilder().WithCustomId(Id(session, "clean-select")).WithPlaceholder(Resource.AstCenterClearOneRecap);
+            var recapClean = new SelectMenuBuilder().WithCustomId(Id(session, "recap-clean-select")).WithPlaceholder(Resource.AstCenterShowThenClear);
             foreach (var alias in PageValues(aliases, session.SelectionPageIndex)) { clean.AddOption(Safe(alias), alias); recapClean.AddOption(Safe(alias), alias); }
             components.WithSelectMenu(clean, row: 1).WithSelectMenu(recapClean, row: 2);
         }
         AddSelectionNavigation(components, session, aliases.Length, row: 3);
-        return new AstUiView(null, BaseEmbed(IsFrench ? "🧹 Récaps avancés" : "🧹 Advanced recaps",
-            (IsFrench ? "Toutes les suppressions demandent une confirmation. " : "Every deletion requires confirmation. ") +
+        return new AstUiView(null, BaseEmbed(Resource.AstCenterAdvancedRecaps,
+            (Resource.AstCenterEveryDeletionRequiresConfirmation) +
             PageLabel(session, aliases.Length)).Build(), components.Build());
     }
 
@@ -2058,19 +2041,17 @@ public static class AstCommandCenter
         var components = new ComponentBuilder();
         if (session.PendingAction == "exclude-delete-confirm" && session.PendingAlias != null && session.PendingItem != null)
         {
-            components.WithButton(IsFrench ? "Confirmer le retrait" : "Confirm removal", Id(session, "confirm-exclusion-delete"), ButtonStyle.Danger)
-                .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-exclusion"), ButtonStyle.Secondary);
-            return new AstUiView(null, BaseEmbed("⚠️ Confirmation", IsFrench
-                ? $"Retirer **{Safe(session.PendingItem)}** des exclusions de **{Safe(session.PendingAlias)}** ?"
-                : $"Remove **{Safe(session.PendingItem)}** from **{Safe(session.PendingAlias)}** exclusions?").Build(), components.Build());
+            components.WithButton(Resource.AstCenterConfirmRemoval, Id(session, "confirm-exclusion-delete"), ButtonStyle.Danger)
+                .WithButton(Resource.AstCenterCancel, Id(session, "cancel-exclusion"), ButtonStyle.Secondary);
+            return new AstUiView(null, BaseEmbed("⚠️ Confirmation", string.Format(Resource.AstCenterRemoveFromExclusions, Safe(session.PendingItem), Safe(session.PendingAlias))).Build(), components.Build());
         }
-        components.WithButton(IsFrench ? "Retour" : "Back", Id(session, "personal"), ButtonStyle.Primary, row: 0)
-            .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-exclusion"), ButtonStyle.Secondary, row: 0);
+        components.WithButton(Resource.AstCenterBack, Id(session, "personal"), ButtonStyle.Primary, row: 0)
+            .WithButton(Resource.AstCenterCancel, Id(session, "cancel-exclusion"), ButtonStyle.Secondary, row: 0);
         if (session.PendingAlias != null && session.PendingAction is "exclude-add" or "exclude-delete")
         {
-            components.WithButton(IsFrench ? "Rechercher" : "Search", Id(session, "exclusion-search"), ButtonStyle.Secondary, row: 0);
+            components.WithButton(Resource.AstCenterSearch, Id(session, "exclusion-search"), ButtonStyle.Secondary, row: 0);
             if (session.ExclusionSearch != null)
-                components.WithButton(IsFrench ? "Effacer le filtre" : "Clear filter", Id(session, "exclusion-clear-search"), ButtonStyle.Secondary, row: 0);
+                components.WithButton(Resource.AstCenterClearFilter, Id(session, "exclusion-clear-search"), ButtonStyle.Secondary, row: 0);
             var items = await GetExclusionChoicesAsync(session, guildId, channelId, userId).ConfigureAwait(false);
             const int pageSize = 25;
             var pageCount = Math.Max(1, (items.Count + pageSize - 1) / pageSize);
@@ -2078,37 +2059,35 @@ public static class AstCommandCenter
             var pageItems = items.Skip(pageIndex * pageSize).Take(pageSize).ToArray();
             var menu = new SelectMenuBuilder()
                 .WithCustomId(Id(session, session.PendingAction == "exclude-add" ? "exclude-item-add" : "exclude-item-delete"))
-                .WithPlaceholder(IsFrench ? "Choisir un objet…" : "Choose an item…");
+                .WithPlaceholder(Resource.AstCenterChooseAnItem);
             foreach (var item in pageItems)
                 menu.AddOption(Safe(item)[..Math.Min(Safe(item).Length, 100)], item);
             if (pageItems.Length > 0) components.WithSelectMenu(menu, row: 1);
             if (pageCount > 1)
             {
                 components
-                    .WithButton(IsFrench ? "Précédent" : "Previous", Id(session, "exclusion-previous"),
+                    .WithButton(Resource.AstCenterPrevious, Id(session, "exclusion-previous"),
                         ButtonStyle.Secondary, disabled: pageIndex == 0, row: 2)
-                    .WithButton(IsFrench ? "Suivant" : "Next", Id(session, "exclusion-next"),
+                    .WithButton(Resource.AstCenterNext, Id(session, "exclusion-next"),
                         ButtonStyle.Secondary, disabled: pageIndex == pageCount - 1, row: 2);
             }
             var filterDescription = session.ExclusionSearch == null
                 ? string.Empty
-                : IsFrench ? $" Filtre : « {Safe(session.ExclusionSearch)} »." : $" Filter: “{Safe(session.ExclusionSearch)}”.";
-            var pageDescription = IsFrench
-                ? $"{items.Count} objets disponibles — page {pageIndex + 1}/{pageCount}.{filterDescription}"
-                : $"{items.Count} available items — page {pageIndex + 1}/{pageCount}.{filterDescription}";
-            return new AstUiView(null, BaseEmbed(IsFrench ? "🚫 Mes exclusions" : "🚫 My exclusions", pageDescription).Build(), components.Build());
+                : string.Format(Resource.AstCenterFilter, Safe(session.ExclusionSearch));
+            var pageDescription = string.Format(Resource.AstCenterAvailableItemsPage, items.Count, pageIndex + 1, pageCount, filterDescription);
+            return new AstUiView(null, BaseEmbed(Resource.AstCenterMyExclusions2, pageDescription).Build(), components.Build());
         }
         else if (aliases.Length > 0)
         {
-            var add = new SelectMenuBuilder().WithCustomId(Id(session, "exclude-add-alias")).WithPlaceholder(IsFrench ? "Ajouter une exclusion au slot…" : "Add an exclusion for slot…");
-            var delete = new SelectMenuBuilder().WithCustomId(Id(session, "exclude-delete-alias")).WithPlaceholder(IsFrench ? "Retirer une exclusion du slot…" : "Remove an exclusion from slot…");
+            var add = new SelectMenuBuilder().WithCustomId(Id(session, "exclude-add-alias")).WithPlaceholder(Resource.AstCenterAddAnExclusionForSlot);
+            var delete = new SelectMenuBuilder().WithCustomId(Id(session, "exclude-delete-alias")).WithPlaceholder(Resource.AstCenterRemoveAnExclusionFromSlot);
             foreach (var alias in PageValues(aliases, session.SelectionPageIndex)) { add.AddOption(Safe(alias), alias); delete.AddOption(Safe(alias), alias); }
             components.WithSelectMenu(add, row: 1).WithSelectMenu(delete, row: 2);
         }
         if (session.PendingAlias == null)
             AddSelectionNavigation(components, session, aliases.Length, row: 3);
-        return new AstUiView(null, BaseEmbed(IsFrench ? "🚫 Mes exclusions" : "🚫 My exclusions",
-            (IsFrench ? "Ajoutez ou retirez les exclusions de vos propres slots. " : "Add or remove exclusions for your own slots. ") +
+        return new AstUiView(null, BaseEmbed(Resource.AstCenterMyExclusions2,
+            (Resource.AstCenterAddOrRemoveExclusionsForYourOwnSlots) +
             PageLabel(session, aliases.Length)).Build(), components.Build());
     }
 
@@ -2147,18 +2126,18 @@ public static class AstCommandCenter
         int totalItems,
         int row)
     {
-        components.WithButton(IsFrench ? "Rechercher" : "Search", Id(session, "selection-search"),
+        components.WithButton(Resource.AstCenterSearch, Id(session, "selection-search"),
             ButtonStyle.Secondary, row: row);
         if (session.SelectionSearch != null)
-            components.WithButton(IsFrench ? "Effacer le filtre" : "Clear filter", Id(session, "selection-clear-search"),
+            components.WithButton(Resource.AstCenterClearFilter, Id(session, "selection-clear-search"),
                 ButtonStyle.Secondary, row: row);
         var pageCount = Math.Max(1, (Math.Max(0, totalItems) + 24) / 25);
         if (pageCount <= 1) return;
         var page = Math.Clamp(session.SelectionPageIndex, 0, pageCount - 1);
         components
-            .WithButton(IsFrench ? "Précédent" : "Previous", Id(session, "selection-previous"),
+            .WithButton(Resource.AstCenterPrevious, Id(session, "selection-previous"),
                 ButtonStyle.Secondary, disabled: page == 0, row: row)
-            .WithButton(IsFrench ? "Suivant" : "Next", Id(session, "selection-next"),
+            .WithButton(Resource.AstCenterNext, Id(session, "selection-next"),
                 ButtonStyle.Secondary, disabled: page == pageCount - 1, row: row);
     }
 
@@ -2168,7 +2147,7 @@ public static class AstCommandCenter
         var page = Math.Clamp(session.SelectionPageIndex, 0, pageCount - 1);
         var filter = session.SelectionSearch == null
             ? string.Empty
-            : IsFrench ? $"Filtre : « {Safe(session.SelectionSearch)} ». " : $"Filter: “{Safe(session.SelectionSearch)}”. ";
+            : string.Format(Resource.AstCenterFilter2, Safe(session.SelectionSearch));
         var pagination = pageCount <= 1 ? string.Empty : $"Page {page + 1}/{pageCount}.";
         return filter + pagination;
     }
@@ -2180,7 +2159,7 @@ public static class AstCommandCenter
     private static void AddPageField(EmbedBuilder builder, AstUiSession session, int totalItems)
     {
         var label = PageLabel(session, totalItems);
-        if (!string.IsNullOrEmpty(label)) builder.AddField(IsFrench ? "Navigation" : "Navigation", label);
+        if (!string.IsNullOrEmpty(label)) builder.AddField(Resource.AstCenterNavigation, label);
     }
 
     private static async Task<int> GetSelectionItemCountAsync(
@@ -2239,7 +2218,7 @@ public static class AstCommandCenter
         var components = new ComponentBuilder();
         foreach (var (label, action) in actions.Take(20))
             components.WithButton(label, Id(session, action), ButtonStyle.Secondary);
-        components.WithButton(IsFrench ? "Retour" : "Back", Id(session, "home"), ButtonStyle.Primary, emote: new Emoji("↩️"));
+        components.WithButton(Resource.AstCenterBack, Id(session, "home"), ButtonStyle.Primary, emote: new Emoji("↩️"));
         return new AstUiView(null, BaseEmbed(title, Clamp(description, 4000)).Build(), components.Build());
     }
 
@@ -2265,7 +2244,7 @@ public static class AstCommandCenter
                     guildId,
                     session.SourceChannelId.ToString(CultureInfo.InvariantCulture),
                     session.OwnerUserId.ToString(CultureInfo.InvariantCulture)),
-                IsFrench ? "Portail privé d’administration" : "Private administration portal").ConfigureAwait(false);
+                Resource.AstCenterPrivateAdministrationPortal).ConfigureAwait(false);
         }
         if (action == "yaml-list")
             return AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization)
@@ -2283,9 +2262,7 @@ public static class AstCommandCenter
             "room-info" => await HelperClass.Info(channelId, guildId).ConfigureAwait(false),
             "room-associations" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await AliasClass.GetAlias(channelId, guildId).ConfigureAwait(false),
-            "room-associations" => IsFrench
-                ? "La liste complète des associations Discord est réservée aux gestionnaires. Vos associations seront disponibles dans « Mon espace »."
-                : "The complete Discord association list is manager-only. Your associations will be available under My space.",
+            "room-associations" => Resource.AstCenterTheCompleteDiscordAssociationListIsManagerOnlyYour,
             "sync-now" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
                 => await TrackingControlCommands.ExecuteRoomAsync("ast-sync-now", guildId, channelId).ConfigureAwait(false),
             "pause" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
@@ -2296,9 +2273,9 @@ public static class AstCommandCenter
             "personal-hints" => await BuildPersonalHintsAsync(guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             "personal-portal" => await BuildPortalResponseAsync(
                 () => WebPortalPages.EnsureUserPageAsync(guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)),
-                IsFrench ? "Mon portail privé" : "My private portal").ConfigureAwait(false),
+                Resource.AstCenterMyPrivatePortal).ConfigureAwait(false),
             "room-portal" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization)
-                => await BuildPortalResponseAsync(() => WebPortalPages.EnsureThreadCommandsPageAsync(guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)), IsFrench ? "Portail privé de la room" : "Private room portal").ConfigureAwait(false),
+                => await BuildPortalResponseAsync(() => WebPortalPages.EnsureThreadCommandsPageAsync(guildId, channelId, session.OwnerUserId.ToString(CultureInfo.InvariantCulture)), Resource.AstCenterPrivateRoomPortal).ConfigureAwait(false),
             _ => AstAuthorizationService.DeniedMessage
         };
     }
@@ -2308,8 +2285,8 @@ public static class AstCommandCenter
         var aliases = await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
             guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
         if (aliases.Count == 0)
-            return IsFrench ? "Aucun slot n’est associé à votre compte dans cette room." : "No slot is associated with your account in this room.";
-        return (IsFrench ? "**Mes slots associés**" : "**My associated slots**") +
+            return Resource.AstCenterNoSlotIsAssociatedWithYourAccountInThis;
+        return (Resource.AstCenterMyAssociatedSlots) +
                string.Concat(aliases.Keys.OrderBy(value => value, StringComparer.OrdinalIgnoreCase).Select(alias => $"\n• {Safe(alias)}"));
     }
 
@@ -2319,8 +2296,8 @@ public static class AstCommandCenter
         var aliases = await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
             guildId, channelId, userId.ToString(CultureInfo.InvariantCulture), specificAlias ?? string.Empty).ConfigureAwait(false);
         if (aliases.Count == 0)
-            return IsFrench ? "Aucun slot n’est associé à votre compte dans cette room." : "No slot is associated with your account in this room.";
-        var output = new System.Text.StringBuilder(IsFrench ? "**Mes objets**" : "**My items**");
+            return Resource.AstCenterNoSlotIsAssociatedWithYourAccountInThis;
+        var output = new System.Text.StringBuilder(Resource.AstCenterMyItems2);
         foreach (var pair in aliases.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
         {
             output.AppendLine().AppendLine($"**{Safe(pair.Key)}**");
@@ -2342,7 +2319,7 @@ public static class AstCommandCenter
         var aliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
             guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)).Keys.ToArray();
         if (aliases.Length == 0)
-            return IsFrench ? "Aucun slot n’est associé à votre compte dans cette room." : "No slot is associated with your account in this room.";
+            return Resource.AstCenterNoSlotIsAssociatedWithYourAccountInThis;
         var hints = new List<HintStatus>();
         foreach (var alias in aliases)
         {
@@ -2350,8 +2327,8 @@ public static class AstCommandCenter
             hints.AddRange(await HintStatusCommands.GetHintStatusForFinder(guildId, channelId, alias).ConfigureAwait(false));
         }
         var unique = hints.DistinctBy(hint => $"{hint.Finder}\0{hint.Receiver}\0{hint.Item}\0{hint.Location}").ToArray();
-        if (unique.Length == 0) return IsFrench ? "Aucun hint non trouvé pour vos slots." : "No unfound hint for your slots.";
-        return (IsFrench ? "**Mes hints non trouvés**" : "**My unfound hints**") +
+        if (unique.Length == 0) return Resource.AstCenterNoUnfoundHintForYourSlots;
+        return (Resource.AstCenterMyUnfoundHints) +
                string.Concat(unique.Select(hint => $"\n• {Safe(hint.Item)} — {Safe(hint.Location)} ({Safe(hint.Finder)} → {Safe(hint.Receiver)})"));
     }
 
@@ -2360,8 +2337,8 @@ public static class AstCommandCenter
         var aliases = (await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(
             guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)).Keys.ToArray();
         if (aliases.Length == 0)
-            return IsFrench ? "Aucun slot n’est associé à votre compte dans cette room." : "No slot is associated with your account in this room.";
-        var output = new System.Text.StringBuilder(IsFrench ? "**Mes exclusions**" : "**My exclusions**");
+            return Resource.AstCenterNoSlotIsAssociatedWithYourAccountInThis;
+        var output = new System.Text.StringBuilder(Resource.AstCenterMyExclusions3);
         var count = 0;
         foreach (var alias in aliases)
         {
@@ -2372,17 +2349,17 @@ public static class AstCommandCenter
             foreach (var item in items) output.AppendLine($"• {Safe(item)}");
             count += items.Count;
         }
-        if (count == 0) output.AppendLine().Append(IsFrench ? "Aucune exclusion personnelle." : "No personal exclusion.");
+        if (count == 0) output.AppendLine().Append(Resource.AstCenterNoPersonalExclusion);
         return output.ToString();
     }
 
     private static async Task<string> BuildPortalResponseAsync(Func<Task<string?>> factory, string label)
     {
         if (!Declare.EnableWebPortal)
-            return IsFrench ? "Le portail Web est désactivé." : "The Web portal is disabled.";
+            return Resource.AstCenterTheWebPortalIsDisabled;
         var url = await factory().ConfigureAwait(false);
         return string.IsNullOrWhiteSpace(url)
-            ? (IsFrench ? "Le portail est temporairement indisponible." : "The portal is temporarily unavailable.")
+            ? (Resource.AstCenterThePortalIsTemporarilyUnavailable)
             : $"**{label}**\n{url}";
     }
 
@@ -2492,27 +2469,27 @@ public static class AstCommandCenter
 
     private static EmbedBuilder BaseEmbed(string title, string description)
         => new EmbedBuilder().WithTitle(title).WithDescription(description).WithColor(Color.Blue)
-            .WithFooter(IsFrench ? "AST · interface privée" : "AST · private interface");
+            .WithFooter(Resource.AstCenterASTPrivateInterface);
 
     private static string Id(AstUiSession session, string action) => $"{CustomIdPrefix}:{session.Id}:{action}";
     private static string Safe(string value) => value.Replace("@", "@\u200b", StringComparison.Ordinal).Replace('\r', ' ').Replace('\n', ' ');
     private static string Clamp(string value, int max = 1900) => value.Length <= max ? value : value[..(max - 1)] + "…";
-    private static string Unavailable() => IsFrench ? "Action indisponible dans ce contexte." : "Action unavailable in this context.";
+    private static string Unavailable() => Resource.AstCenterActionUnavailableInThisContext;
     private static int RecapFlagRank(long? flag) => flag switch { 3 => 0, 1 => 1, 2 => 2, 0 => 3, 4 => 4, _ => 5 };
     private static string RecapFlagLabel(long? flag) => flag switch
     {
-        3 => IsFrench ? "Requis" : "Required",
+        3 => Resource.AstCenterRequired,
         1 => "Progression",
-        2 => IsFrench ? "Utile" : "Useful",
-        0 => IsFrench ? "Remplissage" : "Filler",
-        4 => IsFrench ? "Piège" : "Trap",
-        _ => IsFrench ? "Non classé" : "Unclassified"
+        2 => Resource.Useful,
+        0 => Resource.Filler,
+        4 => Resource.Trap,
+        _ => Resource.AstCenterUnclassified
     };
 
     private static Modal BuildSpoilerConfigModal(AstUiSession session)
     {
         var alias = new TextInputBuilder()
-            .WithLabel(IsFrench ? "Slot à analyser" : "Slot to analyze")
+            .WithLabel(Resource.AstCenterSlotToAnalyze)
             .WithCustomId(SpoilerAliasInputId)
             .WithStyle(TextInputStyle.Short)
             .WithMinLength(1)
@@ -2520,7 +2497,7 @@ public static class AstCommandCenter
             .WithRequired(true);
         if (!string.IsNullOrWhiteSpace(session.SpoilerAlias)) alias.WithValue(session.SpoilerAlias);
         var sphere = new TextInputBuilder()
-            .WithLabel(IsFrench ? "Sphère maximale (vide = toutes)" : "Maximum sphere (blank = all)")
+            .WithLabel(Resource.AstCenterMaximumSphereBlankAll)
             .WithCustomId(SpoilerSphereInputId)
             .WithStyle(TextInputStyle.Short)
             .WithMaxLength(10)
@@ -2528,13 +2505,13 @@ public static class AstCommandCenter
         if (session.SpoilerSphereLimit.HasValue)
             sphere.WithValue(session.SpoilerSphereLimit.Value.ToString(CultureInfo.InvariantCulture));
         var validate = new TextInputBuilder()
-            .WithLabel(IsFrench ? "Sphère à valider (facultatif)" : "Sphere to validate (optional)")
+            .WithLabel(Resource.AstCenterSphereToValidateOptional)
             .WithCustomId(SpoilerValidateInputId)
             .WithStyle(TextInputStyle.Short)
             .WithMaxLength(10)
             .WithRequired(false);
         return new ModalBuilder()
-            .WithTitle(IsFrench ? "Configurer l’analyse" : "Configure analysis")
+            .WithTitle(Resource.AstCenterConfigureAnalysis)
             .WithCustomId(Id(session, "spoiler-configure"))
             .AddTextInput(alias, row: 0)
             .AddTextInput(sphere, row: 1)
@@ -2545,7 +2522,7 @@ public static class AstCommandCenter
     private static Modal BuildSlotAliasModal(AstUiSession session, string action)
     {
         var input = new TextInputBuilder()
-            .WithLabel(IsFrench ? "Nom exact du slot" : "Exact slot name")
+            .WithLabel(Resource.AstCenterExactSlotName)
             .WithCustomId(SlotAliasInputId)
             .WithStyle(TextInputStyle.Short)
             .WithMinLength(1)
@@ -2553,8 +2530,8 @@ public static class AstCommandCenter
             .WithRequired(true);
         return new ModalBuilder()
             .WithTitle(action == "alias-add-manual"
-                ? (IsFrench ? "Associer un slot" : "Associate a slot")
-                : (IsFrench ? "Dissocier un slot" : "Dissociate a slot"))
+                ? (Resource.AstCenterAssociateASlot2)
+                : (Resource.AstCenterDissociateASlot))
             .WithCustomId(Id(session, action))
             .AddTextInput(input)
             .Build();
@@ -2563,7 +2540,7 @@ public static class AstCommandCenter
     private static Modal BuildSelectionSearchModal(AstUiSession session)
     {
         var input = new TextInputBuilder()
-            .WithLabel(IsFrench ? "Nom ou partie du nom" : "Full or partial name")
+            .WithLabel(Resource.AstCenterFullOrPartialName)
             .WithCustomId(SelectionSearchInputId)
             .WithStyle(TextInputStyle.Short)
             .WithMaxLength(100)
@@ -2571,7 +2548,7 @@ public static class AstCommandCenter
         if (!string.IsNullOrWhiteSpace(session.SelectionSearch))
             input.WithValue(session.SelectionSearch);
         return new ModalBuilder()
-            .WithTitle(IsFrench ? "Rechercher dans la liste" : "Search the list")
+            .WithTitle(Resource.AstCenterSearchTheList)
             .WithCustomId(Id(session, "selection-search"))
             .AddTextInput(input)
             .Build();
@@ -2580,7 +2557,7 @@ public static class AstCommandCenter
     private static Modal BuildExclusionSearchModal(AstUiSession session)
     {
         var input = new TextInputBuilder()
-            .WithLabel(IsFrench ? "Nom ou partie du nom de l’objet" : "Full or partial item name")
+            .WithLabel(Resource.AstCenterFullOrPartialItemName)
             .WithCustomId(ExclusionSearchInputId)
             .WithStyle(TextInputStyle.Short)
             .WithMaxLength(100)
@@ -2588,7 +2565,7 @@ public static class AstCommandCenter
         if (!string.IsNullOrWhiteSpace(session.ExclusionSearch))
             input.WithValue(session.ExclusionSearch);
         return new ModalBuilder()
-            .WithTitle(IsFrench ? "Rechercher un objet" : "Search for an item")
+            .WithTitle(Resource.AstCenterSearchForAnItem)
             .WithCustomId(Id(session, "exclusion-search"))
             .AddTextInput(input)
             .Build();
@@ -2597,12 +2574,11 @@ public static class AstCommandCenter
     private static AstUiView PortalRevokeConfirmation(AstUiSession session)
     {
         var components = new ComponentBuilder()
-            .WithButton(IsFrench ? "Révoquer le lien" : "Revoke link", Id(session, "confirm-portal-revoke"), ButtonStyle.Danger)
-            .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-portal-revoke"), ButtonStyle.Secondary)
+            .WithButton(Resource.AstCenterRevokeLink, Id(session, "confirm-portal-revoke"), ButtonStyle.Danger)
+            .WithButton(Resource.AstCenterCancel, Id(session, "cancel-portal-revoke"), ButtonStyle.Secondary)
             .Build();
-        return new AstUiView(null, BaseEmbed("⚠️ " + (IsFrench ? "Révoquer le portail" : "Revoke portal"),
-            IsFrench ? "Les URL précédemment émises pour ce contexte cesseront immédiatement de fonctionner."
-                : "Previously issued URLs for this context will immediately stop working.").Build(), components);
+        return new AstUiView(null, BaseEmbed("⚠️ " + (Resource.AstCenterRevokePortal2),
+            Resource.AstCenterPreviouslyIssuedURLsForThisContextWillImmediatelyStop).Build(), components);
     }
 
     public static IReadOnlyList<string> PaginateOutput(string value, int maxLength = 1900)
@@ -2627,15 +2603,15 @@ public static class AstCommandCenter
         var pages = session.OutputPages!;
         var index = Math.Clamp(session.OutputPageIndex, 0, pages.Count - 1);
         var components = new ComponentBuilder()
-            .WithButton(IsFrench ? "Précédent" : "Previous", Id(session, "output-previous"), ButtonStyle.Secondary,
+            .WithButton(Resource.AstCenterPrevious, Id(session, "output-previous"), ButtonStyle.Secondary,
                 disabled: index == 0)
-            .WithButton(IsFrench ? "Suivant" : "Next", Id(session, "output-next"), ButtonStyle.Secondary,
+            .WithButton(Resource.AstCenterNext, Id(session, "output-next"), ButtonStyle.Secondary,
                 disabled: index == pages.Count - 1)
-            .WithButton(IsFrench ? "Fermer" : "Close", Id(session, "output-close"), ButtonStyle.Primary)
+            .WithButton(Resource.AstCenterClose, Id(session, "output-close"), ButtonStyle.Primary)
             .Build();
         return new AstUiView(pages[index], BaseEmbed(
-            IsFrench ? "Résultat paginé" : "Paginated result",
-            IsFrench ? $"Page {index + 1} sur {pages.Count}." : $"Page {index + 1} of {pages.Count}.").Build(), components);
+            Resource.AstCenterPaginatedResult,
+            string.Format(Resource.AstCenterPageOf, index + 1, pages.Count)).Build(), components);
     }
 
     private static async Task ShowOutcomeAsync(
@@ -2650,7 +2626,7 @@ public static class AstCommandCenter
             if (!Sessions.TrySetOutputPages(
                     session.Id, session.OwnerUserId, session.GuildId, session.SourceChannelId, pages, out session))
             {
-                await SetErrorAsync(component, IsFrench ? "Cette interface a expiré." : "This interface expired.").ConfigureAwait(false);
+                await SetErrorAsync(component, Resource.AstCenterThisInterfaceExpired).ConfigureAwait(false);
                 return;
             }
             await SetViewAsync(component, RenderPagedOutput(session)).ConfigureAwait(false);

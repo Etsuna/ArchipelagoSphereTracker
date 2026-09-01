@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Discord;
 using Discord.WebSocket;
+using ArchipelagoSphereTracker.src.Resources;
 
 public sealed record AstSetupDraft(
     string SessionId,
@@ -139,8 +140,6 @@ public static class AstSetupWizard
     private const string RoomUrlInputId = "room-url";
     private const string ThreadTitleInputId = "thread-title";
     private static readonly AstSetupSessionStore Sessions = new();
-    private static bool IsFrench => Declare.Language == "fr";
-
     public static async Task StartAsync(SocketSlashCommand command)
     {
         var correlationId = Guid.NewGuid().ToString("N");
@@ -153,9 +152,7 @@ public static class AstSetupWizard
                 command.Channel is not ITextChannel)
             {
                 await command.RespondAsync(
-                    IsFrench
-                        ? "Utilisez `/ast-setup` dans le salon texte qui accueillera la room."
-                        : "Use `/ast-setup` in the text channel that will host the room.",
+                    Resource.AstSetupUseAstSetupInTheTextChannelThatWill,
                     ephemeral: true);
                 return;
             }
@@ -209,9 +206,7 @@ public static class AstSetupWizard
             {
                 await component.ModifyOriginalResponseAsync(properties =>
                 {
-                    properties.Content = IsFrench
-                        ? "Ouvrez `/ast` dans le salon texte qui accueillera la nouvelle room."
-                        : "Open `/ast` in the text channel that will host the new room.";
+                    properties.Content = Resource.AstSetupOpenAstInTheTextChannelThatWillHost;
                     properties.Embed = null;
                     properties.Components = new ComponentBuilder().Build();
                 }).ConfigureAwait(false);
@@ -283,7 +278,7 @@ public static class AstSetupWizard
             Sessions.Cancel(sessionId, component.User.Id, guildId, channelId);
             await component.UpdateAsync(properties =>
             {
-                properties.Content = IsFrench ? "Configuration annulée." : "Setup cancelled.";
+                properties.Content = Resource.AstSetupSetupCancelled;
                 properties.Components = new ComponentBuilder().Build();
             });
             return;
@@ -384,42 +379,40 @@ public static class AstSetupWizard
 
     public static string BuildSummary(AstSetupDraft draft)
     {
-        var urlStatus = IsFrench ? "non configurée" : "not configured";
+        var urlStatus = Resource.AstSetupNotConfigured;
         if (!string.IsNullOrWhiteSpace(draft.RoomUrl))
         {
             urlStatus = ArchipelagoUrlSecurity.TryParseRoomUrl(draft.RoomUrl, out var parsed) && parsed != null
                 ? parsed.Host
-                : IsFrench ? "format invalide" : "invalid format";
+                : Resource.AstSetupInvalidFormat;
         }
 
         var title = string.IsNullOrWhiteSpace(draft.ThreadTitle)
-            ? IsFrench ? "non configuré" : "not configured"
+            ? Resource.AstSetupNotConfigured2
             : SafePreviewValue(draft.ThreadTitle);
         var thread = draft.ThreadType == "Private"
-            ? IsFrench ? "privé" : "private"
+            ? Resource.AstSetupPrivate
             : draft.AutoAddMembers
-                ? IsFrench ? "public, membres ajoutés" : "public, members added"
-                : IsFrench ? "public" : "public";
+                ? Resource.AstSetupPublicMembersAdded
+                : Resource.AstSetupPublic;
         var notifications = draft.Silent
-            ? IsFrench ? "silencieuses" : "silent"
-            : IsFrench ? "normales" : "normal";
+            ? Resource.AstSetupSilent
+            : Resource.AstSetupNormal;
         var ready = IsReady(draft)
-            ? IsFrench ? "✅ Prêt à confirmer" : "✅ Ready to confirm"
-            : IsFrench ? "🟡 Configurez l’URL et le nom du thread" : "🟡 Configure the URL and thread name";
+            ? Resource.AstSetupReadyToConfirm
+            : Resource.AstSetupConfigureTheURLAndThreadName;
 
-        return IsFrench
-            ? $"**Assistant de configuration AST**\nSalon cible : <#{draft.TargetChannelId}>\nHôte WebHost : `{urlStatus}`\nThread : `{title}` ({thread})\nNotifications : {notifications}\nFréquence minimale : `{draft.CheckFrequency}`\n\n{ready}\nLa session expire après 15 minutes d’inactivité."
-            : $"**AST setup assistant**\nTarget channel: <#{draft.TargetChannelId}>\nWebHost: `{urlStatus}`\nThread: `{title}` ({thread})\nNotifications: {notifications}\nMinimum frequency: `{draft.CheckFrequency}`\n\n{ready}\nThe session expires after 15 minutes of inactivity.";
+        return string.Format(Resource.AstSetupASTSetupAssistantTargetChannelWebHostThreadNotificationsMinimum, draft.TargetChannelId, urlStatus, title, thread, notifications, draft.CheckFrequency, ready);
     }
 
     public static MessageComponent BuildComponents(AstSetupDraft draft)
     {
         var id = draft.SessionId;
         var builder = new ComponentBuilder()
-            .WithButton(IsFrench ? "Configurer la room" : "Configure room", CustomId(id, "details"), ButtonStyle.Primary, row: 0)
-            .WithButton(IsFrench ? "Aperçu" : "Preview", CustomId(id, "preview"), ButtonStyle.Secondary, row: 0)
-            .WithButton(IsFrench ? "Confirmer" : "Confirm", CustomId(id, "confirm"), ButtonStyle.Success, disabled: !IsReady(draft), row: 0)
-            .WithButton(IsFrench ? "Annuler" : "Cancel", CustomId(id, "cancel"), ButtonStyle.Danger, row: 0)
+            .WithButton(Resource.AstSetupConfigureRoom, CustomId(id, "details"), ButtonStyle.Primary, row: 0)
+            .WithButton(Resource.AstSetupPreview, CustomId(id, "preview"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.AstCenterConfirm, CustomId(id, "confirm"), ButtonStyle.Success, disabled: !IsReady(draft), row: 0)
+            .WithButton(Resource.AstCenterCancel, CustomId(id, "cancel"), ButtonStyle.Danger, row: 0)
             .WithSelectMenu(ChannelMenu(draft), row: 1)
             .WithSelectMenu(ThreadMenu(draft), row: 2)
             .WithSelectMenu(NotificationMenu(draft), row: 3)
@@ -448,9 +441,7 @@ public static class AstSetupWizard
         var channelId = draft.TargetChannelId;
         await component.UpdateAsync(properties =>
         {
-            properties.Content = IsFrench
-                ? "⏳ Validation de la room et création du thread…"
-                : "⏳ Validating the room and creating the thread…";
+            properties.Content = Resource.AstSetupValidatingTheRoomAndCreatingTheThread;
             properties.Components = new ComponentBuilder().Build();
         });
 
@@ -538,7 +529,7 @@ public static class AstSetupWizard
     private static Modal BuildDetailsModal(AstSetupDraft draft)
     {
         var urlInput = new TextInputBuilder()
-            .WithLabel(IsFrench ? "URL de la room Archipelago" : "Archipelago room URL")
+            .WithLabel(Resource.AstSetupArchipelagoRoomURL)
             .WithCustomId(RoomUrlInputId)
             .WithStyle(TextInputStyle.Short)
             .WithPlaceholder("https://archipelago.example/room/…")
@@ -548,7 +539,7 @@ public static class AstSetupWizard
         if (!string.IsNullOrWhiteSpace(draft.RoomUrl)) urlInput.WithValue(draft.RoomUrl);
 
         var titleInput = new TextInputBuilder()
-            .WithLabel(IsFrench ? "Nom du thread" : "Thread name")
+            .WithLabel(Resource.WebThreadName)
             .WithCustomId(ThreadTitleInputId)
             .WithStyle(TextInputStyle.Short)
             .WithPlaceholder("Archipelago")
@@ -558,7 +549,7 @@ public static class AstSetupWizard
         if (!string.IsNullOrWhiteSpace(draft.ThreadTitle)) titleInput.WithValue(draft.ThreadTitle);
 
         return new ModalBuilder()
-            .WithTitle(IsFrench ? "Configurer la room" : "Configure room")
+            .WithTitle(Resource.AstSetupConfigureRoom)
             .WithCustomId(CustomId(draft.SessionId, "details"))
             .AddTextInput(urlInput, row: 0)
             .AddTextInput(titleInput, row: 1)
@@ -568,17 +559,17 @@ public static class AstSetupWizard
     private static SelectMenuBuilder ThreadMenu(AstSetupDraft draft)
         => new SelectMenuBuilder()
             .WithCustomId(CustomId(draft.SessionId, "thread"))
-            .WithPlaceholder(IsFrench ? "Type de thread" : "Thread type")
+            .WithPlaceholder(Resource.WebThreadType)
             .WithMinValues(1)
             .WithMaxValues(1)
-            .AddOption(Option(IsFrench ? "Privé" : "Private", "private", draft.ThreadType == "Private"))
-            .AddOption(Option(IsFrench ? "Public" : "Public", "public", draft.ThreadType == "Public" && !draft.AutoAddMembers))
-            .AddOption(Option(IsFrench ? "Public + ajouter les membres" : "Public + add members", "public-auto", draft.ThreadType == "Public" && draft.AutoAddMembers));
+            .AddOption(Option(Resource.SCThreadPrivate, "private", draft.ThreadType == "Private"))
+            .AddOption(Option(Resource.SCThreadPublic, "public", draft.ThreadType == "Public" && !draft.AutoAddMembers))
+            .AddOption(Option(Resource.AstSetupPublicAddMembers, "public-auto", draft.ThreadType == "Public" && draft.AutoAddMembers));
 
     private static SelectMenuBuilder ChannelMenu(AstSetupDraft draft)
         => new SelectMenuBuilder()
             .WithCustomId(CustomId(draft.SessionId, "channel"))
-            .WithPlaceholder(IsFrench ? "Canal qui accueillera la room" : "Channel that will host the room")
+            .WithPlaceholder(Resource.AstSetupChannelThatWillHostTheRoom)
             .WithMinValues(1)
             .WithMaxValues(1)
             .WithType(ComponentType.ChannelSelect)
@@ -588,17 +579,17 @@ public static class AstSetupWizard
     private static SelectMenuBuilder NotificationMenu(AstSetupDraft draft)
         => new SelectMenuBuilder()
             .WithCustomId(CustomId(draft.SessionId, "notifications"))
-            .WithPlaceholder(IsFrench ? "Notifications" : "Notifications")
+            .WithPlaceholder(Resource.AstSetupNotifications)
             .WithMinValues(1)
             .WithMaxValues(1)
-            .AddOption(Option(IsFrench ? "Normales" : "Normal", "normal", !draft.Silent))
-            .AddOption(Option(IsFrench ? "Silencieuses" : "Silent", "silent", draft.Silent));
+            .AddOption(Option(Resource.AstSetupNormal2, "normal", !draft.Silent))
+            .AddOption(Option(Resource.AstSetupSilent2, "silent", draft.Silent));
 
     private static SelectMenuBuilder FrequencyMenu(AstSetupDraft draft)
     {
         var menu = new SelectMenuBuilder()
             .WithCustomId(CustomId(draft.SessionId, "frequency"))
-            .WithPlaceholder(IsFrench ? "Fréquence minimale" : "Minimum frequency")
+            .WithPlaceholder(Resource.AstSetupMinimumFrequency)
             .WithMinValues(1)
             .WithMaxValues(1);
         foreach (var frequency in new[] { "5m", "15m", "30m", "1h", "6h", "12h", "18h", "1d" })
@@ -619,12 +610,8 @@ public static class AstSetupWizard
         => value.Replace('`', '\'').Replace("@", "@\u200b", StringComparison.Ordinal);
 
     private static string SessionUnavailableMessage()
-        => IsFrench
-            ? "Cette session a expiré ou ne vous appartient pas. Relancez `/ast-setup`."
-            : "This session expired or does not belong to you. Run `/ast-setup` again.";
+        => Resource.AstSetupThisSessionExpiredOrDoesNotBelongToYou;
 
     private static string SafeFailureMessage()
-        => IsFrench
-            ? "❌ La configuration a échoué. Réessayez ou contactez un administrateur AST."
-            : "❌ Setup failed. Please retry or contact an AST administrator.";
+        => Resource.AstSetupSetupFailedPleaseRetryOrContactAnASTAdministrator;
 }

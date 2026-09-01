@@ -1,4 +1,4 @@
-﻿using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.src.Resources;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -276,9 +276,7 @@ public static class BotCommands
                 }
 
                 Console.WriteLine($"[Command:{correlationId}] {command.CommandName} failed: {ex.GetType().Name}");
-                var safeErrorMessage = Declare.Language == "fr"
-                    ? "❌ La commande a échoué. Réessayez ou contactez un administrateur AST."
-                    : "❌ The command failed. Please retry or contact an AST administrator.";
+                var safeErrorMessage = Resource.BotTheCommandFailedPleaseRetryOrContactAnAST;
                 await command.FollowupAsync(safeErrorMessage, ephemeral: true,
                     options: new RequestOptions { Timeout = 10000 });
             }
@@ -408,9 +406,7 @@ public static class BotCommands
     private static async Task<string> RevokePortalAsync(string guildId, string channelId, string userId)
     {
         await PortalAccessCommands.RevokePortalTokenAsync(guildId, channelId, userId);
-        return Declare.Language == "fr"
-            ? "Le lien du portail a été révoqué. Les anciennes URL ne sont plus valides."
-            : "The portal link was revoked. Previous URLs are no longer valid.";
+        return Resource.BotThePortalLinkWasRevokedPreviousURLsAreNo;
     }
 
 

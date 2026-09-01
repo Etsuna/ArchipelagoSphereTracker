@@ -1,4 +1,4 @@
-﻿using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.src.Resources;
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using ArchipelagoSphereTracker.Tracking.Scheduling;
 using Discord;
@@ -257,12 +257,8 @@ public class UrlClass
                     }
                 }
                 message = succeeded
-                    ? Declare.Language == "fr"
-                        ? "✅ Room Archipelago configurée et suivi démarré."
-                        : "✅ Archipelago room configured and tracking started."
-                    : Declare.Language == "fr"
-                        ? "Le tracker de cette room est indisponible."
-                        : "This room tracker is unavailable.";
+                    ? Resource.UrlArchipelagoRoomConfiguredAndTrackingStarted
+                    : Resource.UrlThisRoomTrackerIsUnavailable;
             }
         }
         else

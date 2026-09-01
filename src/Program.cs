@@ -14,6 +14,10 @@ class Program
     static async Task Main(string[] args)
     {
         Env.Load();
+        var uiCulture = CultureInfo.GetCultureInfo(Declare.Language);
+        CultureInfo.DefaultThreadCurrentUICulture = uiCulture;
+        Thread.CurrentThread.CurrentUICulture = uiCulture;
+
 if (args.Length == 0)
         {
 #if ARCHIPELAGOMODE
@@ -48,8 +52,6 @@ if (args.Length == 0)
             Console.WriteLine(Resource.ProgramOSNotSupported);
             return;
         }
-
-        Thread.CurrentThread.CurrentUICulture = new CultureInfo(Declare.Language);
 
         if (args.Length == 0)
         {

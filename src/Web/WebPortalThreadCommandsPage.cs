@@ -7,7 +7,6 @@ public static class WebPortalThreadCommandsPage
     {
         static string T(string key) => Resource.ResourceManager.GetString(key) ?? key;
         static string Js(string key) => JsonSerializer.Serialize(T(key));
-        static string L(string french, string english) => Declare.Language == "fr" ? french : english;
 
         return @$"<!doctype html>
 <html lang=""{Declare.Language}"">
@@ -231,35 +230,35 @@ public static class WebPortalThreadCommandsPage
     </section>
 
     <section class=""panel"">
-      <h2>{L("Santé et contrôle du suivi", "Tracking health and controls")}</h2>
+      <h2>{T("WebTrackingHealthAndControls")}</h2>
       <form data-command=""ast-room-health"">
-        <button type=""submit"">{L("Santé de la room", "Room health")}</button>
+        <button type=""submit"">{T("WebRoomHealth")}</button>
         <div class=""result"" data-result></div>
       </form>
       <form data-command=""ast-health"">
-        <button type=""submit"">{L("Santé globale AST", "Overall AST health")}</button>
+        <button type=""submit"">{T("WebOverallAstHealth")}</button>
         <div class=""result"" data-result></div>
       </form>
       <form data-command=""ast-sync-now"">
-        <button type=""submit"">{L("Synchroniser maintenant", "Sync now")}</button>
+        <button type=""submit"">{T("WebSyncNow")}</button>
         <div class=""result"" data-result></div>
       </form>
       <form data-command=""ast-pause"">
-        <button type=""submit"">{L("Suspendre le suivi", "Pause tracking")}</button>
+        <button type=""submit"">{T("WebPauseTracking")}</button>
         <div class=""result"" data-result></div>
       </form>
       <form data-command=""ast-resume"">
-        <button type=""submit"">{L("Reprendre le suivi", "Resume tracking")}</button>
+        <button type=""submit"">{T("WebResumeTracking")}</button>
         <div class=""result"" data-result></div>
       </form>
       <form data-command=""ast-polling"">
-        <label>{L("Mode de polling", "Polling mode")}
+        <label>{T("WebPollingMode")}
           <select name=""mode"" required>
-            <option value=""automatic"">{L("Automatique", "Automatic")}</option>
-            <option value=""fixed"">{L("Fréquence fixe", "Fixed frequency")}</option>
+            <option value=""automatic"">{T("WebPollingAutomatic")}</option>
+            <option value=""fixed"">{T("WebPollingFixedFrequency")}</option>
           </select>
         </label>
-        <label>{L("Fréquence maximale", "Maximum interval")}
+        <label>{T("WebPollingMaximumInterval")}
           <select name=""maximumFrequency"" required>
             <option value=""15m"">15 minutes</option>
             <option value=""30m"">30 minutes</option>
@@ -270,7 +269,7 @@ public static class WebPortalThreadCommandsPage
             <option value=""1d"">1 day</option>
           </select>
         </label>
-        <button type=""submit"">{L("Mettre à jour la politique", "Update policy")}</button>
+        <button type=""submit"">{T("WebPollingUpdatePolicy")}</button>
         <div class=""result"" data-result></div>
       </form>
     </section>

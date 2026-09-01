@@ -1,4 +1,4 @@
-﻿using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.src.Resources;
 using Discord.WebSocket;
 using System.Data.SQLite;
 using System.Globalization;
@@ -707,9 +707,7 @@ public static class ChannelsAndUrlsCommands
             string.IsNullOrWhiteSpace(maximumFrequency) ||
             !AllowedMaximumFrequencies.Contains(maximumFrequency))
         {
-            return Declare.Language == "fr"
-                ? "Mode ou fréquence maximale invalide."
-                : "Invalid polling mode or maximum frequency.";
+            return Resource.PollingInvalidPollingModeOrMaximumFrequency;
         }
 
         var current = await GetChannelConfigAsync(guildId, channelId).ConfigureAwait(false);
@@ -724,9 +722,7 @@ public static class ChannelsAndUrlsCommands
                 minimum,
                 TimeSpan.FromDays(1)))
         {
-            return Declare.Language == "fr"
-                ? "La fréquence maximale doit être supérieure ou égale à la fréquence minimale configurée."
-                : "The maximum frequency must be greater than or equal to the configured minimum frequency.";
+            return Resource.PollingTheMaximumFrequencyMustBeGreaterThanOrEqual;
         }
 
         await Db.WriteAsync(async connection =>
@@ -747,9 +743,7 @@ public static class ChannelsAndUrlsCommands
         await TrackingDataManager.ReloadTrackingConfigurationAsync().ConfigureAwait(false);
         await TrackingDataManager.PromoteRoomAsync(guildId, channelId).ConfigureAwait(false);
 
-        return Declare.Language == "fr"
-            ? $"Politique de suivi mise à jour : mode {normalizedMode}, minimum {current.checkFrequency}, maximum {maximumFrequency.ToLowerInvariant()}."
-            : $"Tracking policy updated: {normalizedMode} mode, {current.checkFrequency} minimum, {maximumFrequency.ToLowerInvariant()} maximum.";
+        return string.Format(Resource.PollingTrackingPolicyUpdatedModeMinimumMaximum, normalizedMode, current.checkFrequency, maximumFrequency.ToLowerInvariant());
     }
 
     // =================================================

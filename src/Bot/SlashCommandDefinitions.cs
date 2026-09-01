@@ -1,4 +1,5 @@
 using Discord;
+using ArchipelagoSphereTracker.src.Resources;
 
 public static class SlashCommandDefinitions
 {
@@ -6,18 +7,12 @@ public static class SlashCommandDefinitions
     {
         var command = new SlashCommandBuilder()
             .WithName("ast")
-            .WithDescription(Declare.Language == "fr"
-                ? "Ouvrir votre centre de commandes AST privé"
-                : "Open your private AST command center")
+            .WithDescription(Resource.SlashOpenYourPrivateASTCommandCenter)
             .AddOption(new SlashCommandOptionBuilder()
                 .WithName("file")
-                .WithDescription(Declare.Language == "fr"
-                    ? Declare.IsArchipelagoMode
-                        ? "Importer un YAML, ZIP, APWorld ou spoiler log"
-                        : "Importer un spoiler log"
-                    : Declare.IsArchipelagoMode
-                        ? "Import a YAML, ZIP, APWorld or spoiler log"
-                        : "Import a spoiler log")
+                .WithDescription(Declare.IsArchipelagoMode
+                    ? Resource.SlashImportYamlZipApworldOrSpoilerLog
+                    : Resource.SlashImportSpoilerLog)
                 .WithType(ApplicationCommandOptionType.Attachment)
                 .WithRequired(false));
 
@@ -25,9 +20,7 @@ public static class SlashCommandDefinitions
         {
             command.AddOption(new SlashCommandOptionBuilder()
                 .WithName("skip-prog-balancing")
-                .WithDescription(Declare.Language == "fr"
-                    ? "Ignorer l’équilibrage lors d’une génération"
-                    : "Skip progression balancing during generation")
+                .WithDescription(Resource.SlashSkipProgressionBalancingDuringGeneration)
                 .WithType(ApplicationCommandOptionType.Boolean)
                 .WithRequired(false));
         }

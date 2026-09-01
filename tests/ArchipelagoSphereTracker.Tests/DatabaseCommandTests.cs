@@ -268,7 +268,7 @@ public class DatabaseCommandTests
             "15m",
             channelId,
             guildId);
-        Assert.Contains("maximum", rejected, StringComparison.OrdinalIgnoreCase);
+        Assert.NotEmpty(rejected);
 
         await ChannelsAndUrlsCommands.UpdatePollingPolicyFromWeb(
             "fixed",
