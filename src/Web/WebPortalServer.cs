@@ -440,7 +440,7 @@ public static class WebPortalServer
             string token) =>
         {
             var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
-            if (actor == null)
+            if (actor == null || !ulong.TryParse(actor.UserId, out var userId))
                 return Results.NotFound(new { message = "Invalid token." });
 
             if (!Declare.EnableWebPortal)
@@ -463,6 +463,17 @@ public static class WebPortalServer
             var links = new List<PortalThreadLink>();
             foreach (var roomChannelId in distinctChannels)
             {
+                var targetAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                    guildId,
+                    roomChannelId,
+                    userId,
+                    actor.User);
+                if (targetAuthorization == null ||
+                    !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, targetAuthorization))
+                {
+                    continue;
+                }
+
                 links.Add(new PortalThreadLink(
                     roomChannelId,
                     ResolveThreadName(guild, roomChannelId),
@@ -482,7 +493,11 @@ public static class WebPortalServer
             if (actor == null || !ulong.TryParse(actor.UserId, out var userId))
                 return Results.NotFound(new { message = "Invalid token." });
 
-            var targetAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(guildId, targetChannelId, userId);
+            var targetAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildId,
+                targetChannelId,
+                userId,
+                actor.User);
             if (targetAuthorization == null ||
                 !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, targetAuthorization))
             {

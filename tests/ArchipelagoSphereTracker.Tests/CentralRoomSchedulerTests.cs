@@ -31,8 +31,7 @@ public sealed class CentralRoomSchedulerTests
         }, time, global: 1);
         await scheduler.InitializeAsync();
 
-        Assert.Equal(1, await scheduler.RunDueOnceAsync());
-        Assert.Equal(1, await scheduler.RunDueOnceAsync());
+        Assert.Equal(2, await scheduler.RunDueOnceAsync());
         Assert.Equal(0, await scheduler.RunDueOnceAsync());
 
         Assert.Equal(["first", "second"], order);
@@ -71,6 +70,50 @@ public sealed class CentralRoomSchedulerTests
         Assert.InRange(maximumGlobal, 1, 4);
         Assert.All(maximumByOrigin.Values, value => Assert.InRange(value, 1, 2));
         Assert.Equal(12, store.States.Count);
+    }
+
+    [Fact]
+    public async Task Slow_origin_does_not_block_due_rooms_on_healthy_origins()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([
+            Registration("slow-1", "https://slow.example", T0.AddMinutes(-4)),
+            Registration("slow-2", "https://slow.example", T0.AddMinutes(-3)),
+            Registration("slow-3", "https://slow.example", T0.AddMinutes(-2)),
+            Registration("healthy", "https://healthy.example", T0.AddMinutes(-1))
+        ]);
+        var slowStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSlow = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var healthyStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var scheduler = Scheduler(store, async (room, cancellationToken) =>
+        {
+            if (room.Origin == "https://slow.example")
+            {
+                slowStarted.TrySetResult();
+                await releaseSlow.Task.WaitAsync(cancellationToken);
+            }
+            else
+            {
+                healthyStarted.TrySetResult();
+            }
+
+            return RoomPollResult.Ok();
+        }, time, global: 3, perOrigin: 1);
+        await scheduler.InitializeAsync();
+
+        var run = scheduler.RunDueOnceAsync();
+        await slowStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        try
+        {
+            await healthyStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        }
+        finally
+        {
+            releaseSlow.TrySetResult();
+            await run.WaitAsync(TimeSpan.FromSeconds(2));
+        }
+
+        Assert.Equal(4, await run);
     }
 
     [Fact]

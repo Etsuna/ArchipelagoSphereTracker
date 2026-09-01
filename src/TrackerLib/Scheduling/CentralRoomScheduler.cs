@@ -109,18 +109,63 @@ public sealed class CentralRoomScheduler
     public async Task<int> RunDueOnceAsync(CancellationToken cancellationToken = default)
     {
         await _cycleGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var running = new List<RunningPoll>();
+        var activeByOrigin = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var processed = 0;
         try
         {
-            var due = TakeDueRooms(_timeProvider.GetUtcNow(), _options.GlobalConcurrency);
-            if (due.Count == 0)
-                return 0;
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var now = _timeProvider.GetUtcNow();
+                if (now >= _nextReloadAtUtc)
+                    await ReloadAsync(cancellationToken).ConfigureAwait(false);
 
-            await Task.WhenAll(due.Select(room => ExecuteRoomAsync(room, cancellationToken)))
-                .ConfigureAwait(false);
-            return due.Count;
+                var available = _options.GlobalConcurrency - running.Count;
+                if (available > 0)
+                {
+                    var due = TakeDueRooms(now, available, activeByOrigin);
+                    foreach (var room in due)
+                    {
+                        activeByOrigin.TryGetValue(room.Definition.Origin, out var activeForOrigin);
+                        activeByOrigin[room.Definition.Origin] = activeForOrigin + 1;
+                        running.Add(new RunningPoll(
+                            room.Definition.Origin,
+                            ExecuteRoomAsync(room, cancellationToken)));
+                        processed++;
+                    }
+                }
+
+                if (running.Count == 0)
+                    return processed;
+
+                await Task.WhenAny(running.Select(poll => poll.Task)).ConfigureAwait(false);
+                var completedPolls = running.Where(poll => poll.Task.IsCompleted).ToArray();
+                foreach (var completed in completedPolls)
+                {
+                    running.Remove(completed);
+                    if (activeByOrigin[completed.Origin] == 1)
+                        activeByOrigin.Remove(completed.Origin);
+                    else
+                        activeByOrigin[completed.Origin]--;
+                    await completed.Task.ConfigureAwait(false);
+                }
+            }
         }
         finally
         {
+            // Observe every poll already dispatched before releasing the cycle gate. This
+            // matters when cancellation or durable-state persistence fails mid-cycle.
+            foreach (var poll in running)
+            {
+                try
+                {
+                    await poll.Task.ConfigureAwait(false);
+                }
+                catch
+                {
+                }
+            }
             _cycleGate.Release();
         }
     }
@@ -378,9 +423,14 @@ public sealed class CentralRoomScheduler
         }
     }
 
-    private List<RuntimeRoom> TakeDueRooms(DateTimeOffset now, int maximum)
+    private List<RuntimeRoom> TakeDueRooms(
+        DateTimeOffset now,
+        int maximum,
+        IReadOnlyDictionary<string, int> activeByOrigin)
     {
         var due = new List<RuntimeRoom>(maximum);
+        var deferred = new List<(QueueEntry Entry, (long DueTicks, long Sequence) Priority)>();
+        var reservedByOrigin = new Dictionary<string, int>(activeByOrigin, StringComparer.OrdinalIgnoreCase);
         lock (_sync)
         {
             while (due.Count < maximum && _queue.TryPeek(out var entry, out var priority))
@@ -409,10 +459,21 @@ public sealed class CentralRoomScheduler
                     continue;
                 }
 
+                reservedByOrigin.TryGetValue(room.Definition.Origin, out var reservedForOrigin);
+                if (reservedForOrigin >= _options.PerOriginConcurrency)
+                {
+                    deferred.Add((entry, priority));
+                    continue;
+                }
+
                 room.Running = true;
                 due.Add(room);
+                reservedByOrigin[room.Definition.Origin] = reservedForOrigin + 1;
                 _metrics.ObserveQueueLag(now - room.State.NextPollAtUtc);
             }
+
+            foreach (var item in deferred)
+                _queue.Enqueue(item.Entry, item.Priority);
 
             UpdateMetricsLocked(now);
         }
@@ -726,4 +787,5 @@ public sealed class CentralRoomScheduler
     }
 
     private readonly record struct QueueEntry(string Key, long Version);
+    private sealed record RunningPoll(string Origin, Task Task);
 }

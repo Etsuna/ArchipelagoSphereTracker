@@ -117,19 +117,23 @@ public static class AstAuthorizationService
             ? string.Equals(configuredOwner, userId.ToString(), StringComparison.Ordinal)
             : isGuildOwner;
 
-        var isGuildManager = isGuildOwner ||
-                             user.GuildPermissions.Administrator ||
-                             user.GuildPermissions.ManageGuild ||
-                             user.GuildPermissions.ManageThreads ||
-                             isInstanceOwner;
-        var hasChannelAccess = user.GetPermissions(guildChannel).ViewChannel;
-        if (hasChannelAccess && thread?.Type == ThreadType.PrivateThread && !isThreadOwner && !isGuildManager)
+        var channelPermissions = user.GetPermissions(guildChannel);
+        var canAccessPrivateThreadWithoutMembership = isGuildOwner ||
+                                                      channelPermissions.ManageThreads ||
+                                                      isInstanceOwner;
+        var hasChannelAccess = channelPermissions.ViewChannel;
+        if (hasChannelAccess &&
+            thread?.Type == ThreadType.PrivateThread &&
+            !isThreadOwner &&
+            !canAccessPrivateThreadWithoutMembership)
+        {
             hasChannelAccess = await IsThreadMemberAsync(thread, userId);
+        }
 
         return new AstAuthorizationContext(
             IsGuildMember: hasChannelAccess,
             IsThreadOwner: isThreadOwner,
-            CanManageThreads: user.GuildPermissions.ManageThreads,
+            CanManageThreads: channelPermissions.ManageThreads,
             CanManageGuild: user.GuildPermissions.ManageGuild,
             IsAdministrator: user.GuildPermissions.Administrator,
             IsGuildOwner: isGuildOwner,
