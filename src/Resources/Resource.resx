@@ -973,14 +973,6 @@
     <value>Thread type</value>
     <comment>Thread type</comment>
   </data>
-  <data name="ASTUserCommand" xml:space="preserve">
-    <value>Use /ast-user-portal to manage your aliases and recaps.</value>
-    <comment>Use /ast-user-portal to manage your aliases and recaps.</comment>
-  </data>
-  <data name="ASTRoomCommand" xml:space="preserve">
-    <value>Use /ast-room-portal to manage your room.</value>
-    <comment>Use /ast-room-portal to manage your room.</comment>
-  </data>
   <data name="AstCenterASTAdministration" xml:space="preserve">
     <value>🛠️ AST administration</value>
   </data>

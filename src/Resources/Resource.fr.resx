@@ -759,12 +759,6 @@
   <data name="WebThreadType" xml:space="preserve">
     <value>Type de thread</value>
   </data>
-  <data name="ASTUserCommand" xml:space="preserve">
-    <value>Utilisez /ast-user-portal pour gérer vos alias et vos recaps.</value>
-  </data>
-  <data name="ASTRoomCommand" xml:space="preserve">
-    <value>Utilisez /ast-room-portal pour gérer votre room.</value>
-  </data>
   <data name="AstCenterASTAdministration" xml:space="preserve">
     <value>🛠️ Administration AST</value>
   </data>
