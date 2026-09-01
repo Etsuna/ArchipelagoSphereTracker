@@ -40,7 +40,9 @@ public sealed record AstUiSession(
     bool SpoilerHideItems = true,
     bool GenerationSkipProgBalancing = false,
     IReadOnlyList<string>? OutputPages = null,
-    int OutputPageIndex = 0);
+    int OutputPageIndex = 0,
+    int ExclusionPageIndex = 0,
+    string? ExclusionSearch = null);
 
 public sealed class AstUiSessionStore
 {
@@ -178,9 +180,66 @@ public sealed class AstUiSessionStore
                 PendingAction = action,
                 PendingAlias = alias,
                 PendingItem = item,
+                ExclusionPageIndex = 0,
+                ExclusionSearch = null,
                 ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
             };
             if (_sessions.TryUpdate(id, updated, current)) { session = updated; return true; }
+        }
+        return false;
+    }
+
+    public bool TrySetExclusionSearch(
+        string id,
+        ulong ownerUserId,
+        ulong guildId,
+        ulong sourceChannelId,
+        string? search,
+        out AstUiSession session)
+    {
+        session = default!;
+        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+        if (search?.Length > 100) return false;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with
+            {
+                ExclusionSearch = search,
+                ExclusionPageIndex = 0,
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
+            if (_sessions.TryUpdate(id, updated, current))
+            {
+                session = updated;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool TryMoveExclusionPage(
+        string id,
+        ulong ownerUserId,
+        ulong guildId,
+        ulong sourceChannelId,
+        int delta,
+        int totalItems,
+        out AstUiSession session)
+    {
+        session = default!;
+        var lastPage = Math.Max(0, (Math.Max(0, totalItems) - 1) / 25);
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with
+            {
+                ExclusionPageIndex = Math.Clamp(current.ExclusionPageIndex + delta, 0, lastPage),
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
+            if (_sessions.TryUpdate(id, updated, current))
+            {
+                session = updated;
+                return true;
+            }
         }
         return false;
     }
@@ -331,6 +390,7 @@ public static class AstCommandCenter
     private const string SpoilerSphereInputId = "ast-spoiler-sphere";
     private const string SpoilerValidateInputId = "ast-spoiler-validate";
     private const string SlotAliasInputId = "ast-slot-alias";
+    private const string ExclusionSearchInputId = "ast-exclusion-search";
     private static readonly AstUiSessionStore Sessions = new();
     private static bool IsFrench => string.Equals(Declare.Language, "fr", StringComparison.OrdinalIgnoreCase);
 
@@ -439,6 +499,13 @@ public static class AstCommandCenter
             await component.RespondWithModalAsync(BuildSlotAliasModal(session, action)).ConfigureAwait(false);
             return;
         }
+        if (action == "exclusion-search" &&
+            session.PendingAlias != null &&
+            session.PendingAction is "exclude-add" or "exclude-delete")
+        {
+            await component.RespondWithModalAsync(BuildExclusionSearchModal(session)).ConfigureAwait(false);
+            return;
+        }
 
         await component.DeferAsync(ephemeral: true);
         try
@@ -467,6 +534,48 @@ public static class AstCommandCenter
                     return;
                 }
                 await SetViewAsync(component, await RenderAsync(session, authorization).ConfigureAwait(false)).ConfigureAwait(false);
+                return;
+            }
+
+            if (action is "exclusion-previous" or "exclusion-next")
+            {
+                if (session.RoomChannelId is not { } exclusionRoom ||
+                    session.PendingAlias == null ||
+                    session.PendingAction is not ("exclude-add" or "exclude-delete"))
+                {
+                    await SetErrorAsync(component, IsFrench ? "Sélection expirée." : "Selection expired.").ConfigureAwait(false);
+                    return;
+                }
+                var choices = await GetExclusionChoicesAsync(
+                    session,
+                    guildId.ToString(CultureInfo.InvariantCulture),
+                    exclusionRoom.ToString(CultureInfo.InvariantCulture),
+                    component.User.Id.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+                if (!Sessions.TryMoveExclusionPage(
+                        session.Id,
+                        component.User.Id,
+                        guildId,
+                        sourceChannelId,
+                        action == "exclusion-previous" ? -1 : 1,
+                        choices.Count,
+                        out session))
+                {
+                    await SetErrorAsync(component, IsFrench ? "Cette page a expiré." : "This page expired.").ConfigureAwait(false);
+                    return;
+                }
+                await SetViewAsync(component, await RenderExclusionsAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+                return;
+            }
+
+            if (action == "exclusion-clear-search")
+            {
+                if (!Sessions.TrySetExclusionSearch(
+                        session.Id, component.User.Id, guildId, sourceChannelId, null, out session))
+                {
+                    await SetErrorAsync(component, IsFrench ? "Cette recherche a expiré." : "This search expired.").ConfigureAwait(false);
+                    return;
+                }
+                await SetViewAsync(component, await RenderExclusionsAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
                 return;
             }
 
@@ -1044,7 +1153,7 @@ public static class AstCommandCenter
     public static async Task HandleModalAsync(SocketModal modal)
     {
         if (!TryParseCustomId(modal.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("spoiler-configure" or "alias-add-manual" or "alias-delete-manual"))
+            action is not ("spoiler-configure" or "alias-add-manual" or "alias-delete-manual" or "exclusion-search"))
             return;
         if (modal.GuildId is not { } guildId || modal.ChannelId is not { } sourceChannelId ||
             !Sessions.TryGetAuthorized(sessionId, modal.User.Id, guildId, sourceChannelId, out var session) ||
@@ -1063,6 +1172,31 @@ public static class AstCommandCenter
         if (authorization == null || !AstAuthorizationService.IsAllowed(requiredLevel, authorization))
         {
             await modal.RespondAsync(AstAuthorizationService.DeniedMessage, ephemeral: true).ConfigureAwait(false);
+            return;
+        }
+
+        if (action == "exclusion-search")
+        {
+            if (session.PendingAlias == null || session.PendingAction is not ("exclude-add" or "exclude-delete"))
+            {
+                await modal.RespondAsync(IsFrench ? "Cette recherche a expiré." : "This search expired.", ephemeral: true).ConfigureAwait(false);
+                return;
+            }
+            var search = modal.Data.Components
+                .FirstOrDefault(component => component.CustomId == ExclusionSearchInputId)?.Value;
+            if (!Sessions.TrySetExclusionSearch(
+                    session.Id, modal.User.Id, guildId, sourceChannelId, search, out session))
+            {
+                await modal.RespondAsync(IsFrench ? "Recherche invalide." : "Invalid search.", ephemeral: true).ConfigureAwait(false);
+                return;
+            }
+            var exclusions = await RenderExclusionsAsync(session).ConfigureAwait(false);
+            await modal.UpdateAsync(properties =>
+            {
+                properties.Content = null;
+                properties.Embed = exclusions.Embed;
+                properties.Components = exclusions.Components;
+            }).ConfigureAwait(false);
             return;
         }
 
@@ -1589,14 +1723,35 @@ public static class AstCommandCenter
             .WithButton(IsFrench ? "Annuler" : "Cancel", Id(session, "cancel-exclusion"), ButtonStyle.Secondary, row: 0);
         if (session.PendingAlias != null && session.PendingAction is "exclude-add" or "exclude-delete")
         {
-            var items = session.PendingAction == "exclude-add"
-                ? await ExcludedItemsCommands.GetItemNamesForAliasAsync(guildId, channelId, session.PendingAlias).ConfigureAwait(false)
-                : await ExcludedItemsCommands.GetExcludedItemsForUserByAliasAsync(guildId, channelId, userId, session.PendingAlias).ConfigureAwait(false);
+            components.WithButton(IsFrench ? "Rechercher" : "Search", Id(session, "exclusion-search"), ButtonStyle.Secondary, row: 0);
+            if (session.ExclusionSearch != null)
+                components.WithButton(IsFrench ? "Effacer le filtre" : "Clear filter", Id(session, "exclusion-clear-search"), ButtonStyle.Secondary, row: 0);
+            var items = await GetExclusionChoicesAsync(session, guildId, channelId, userId).ConfigureAwait(false);
+            const int pageSize = 25;
+            var pageCount = Math.Max(1, (items.Count + pageSize - 1) / pageSize);
+            var pageIndex = Math.Clamp(session.ExclusionPageIndex, 0, pageCount - 1);
+            var pageItems = items.Skip(pageIndex * pageSize).Take(pageSize).ToArray();
             var menu = new SelectMenuBuilder()
                 .WithCustomId(Id(session, session.PendingAction == "exclude-add" ? "exclude-item-add" : "exclude-item-delete"))
                 .WithPlaceholder(IsFrench ? "Choisir un objet…" : "Choose an item…");
-            foreach (var item in items.Distinct(StringComparer.OrdinalIgnoreCase).Take(25)) menu.AddOption(Safe(item)[..Math.Min(Safe(item).Length, 100)], item);
-            if (items.Count > 0) components.WithSelectMenu(menu, row: 1);
+            foreach (var item in pageItems)
+                menu.AddOption(Safe(item)[..Math.Min(Safe(item).Length, 100)], item);
+            if (pageItems.Length > 0) components.WithSelectMenu(menu, row: 1);
+            if (pageCount > 1)
+            {
+                components
+                    .WithButton(IsFrench ? "Précédent" : "Previous", Id(session, "exclusion-previous"),
+                        ButtonStyle.Secondary, disabled: pageIndex == 0, row: 2)
+                    .WithButton(IsFrench ? "Suivant" : "Next", Id(session, "exclusion-next"),
+                        ButtonStyle.Secondary, disabled: pageIndex == pageCount - 1, row: 2);
+            }
+            var filterDescription = session.ExclusionSearch == null
+                ? string.Empty
+                : IsFrench ? $" Filtre : « {Safe(session.ExclusionSearch)} »." : $" Filter: “{Safe(session.ExclusionSearch)}”.";
+            var pageDescription = IsFrench
+                ? $"{items.Count} objets disponibles — page {pageIndex + 1}/{pageCount}.{filterDescription}"
+                : $"{items.Count} available items — page {pageIndex + 1}/{pageCount}.{filterDescription}";
+            return new AstUiView(null, BaseEmbed(IsFrench ? "🚫 Mes exclusions" : "🚫 My exclusions", pageDescription).Build(), components.Build());
         }
         else if (aliases.Length > 0)
         {
@@ -1607,6 +1762,27 @@ public static class AstCommandCenter
         }
         return new AstUiView(null, BaseEmbed(IsFrench ? "🚫 Mes exclusions" : "🚫 My exclusions",
             IsFrench ? "Ajoutez ou retirez les exclusions de vos propres slots." : "Add or remove exclusions for your own slots.").Build(), components.Build());
+    }
+
+    private static async Task<List<string>> GetExclusionChoicesAsync(
+        AstUiSession session,
+        string guildId,
+        string channelId,
+        string userId)
+    {
+        if (session.PendingAlias == null)
+            return [];
+        var items = session.PendingAction == "exclude-add"
+            ? await ExcludedItemsCommands.GetItemNamesForAliasAsync(guildId, channelId, session.PendingAlias).ConfigureAwait(false)
+            : await ExcludedItemsCommands.GetExcludedItemsForUserByAliasAsync(
+                guildId, channelId, userId, session.PendingAlias).ConfigureAwait(false);
+        return items
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(item => session.ExclusionSearch == null ||
+                           item.Contains(session.ExclusionSearch, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(item => item, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private static AstUiView Screen(
@@ -1900,6 +2076,23 @@ public static class AstCommandCenter
                 ? (IsFrench ? "Associer un slot" : "Associate a slot")
                 : (IsFrench ? "Dissocier un slot" : "Dissociate a slot"))
             .WithCustomId(Id(session, action))
+            .AddTextInput(input)
+            .Build();
+    }
+
+    private static Modal BuildExclusionSearchModal(AstUiSession session)
+    {
+        var input = new TextInputBuilder()
+            .WithLabel(IsFrench ? "Nom ou partie du nom de l’objet" : "Full or partial item name")
+            .WithCustomId(ExclusionSearchInputId)
+            .WithStyle(TextInputStyle.Short)
+            .WithMaxLength(100)
+            .WithRequired(false);
+        if (!string.IsNullOrWhiteSpace(session.ExclusionSearch))
+            input.WithValue(session.ExclusionSearch);
+        return new ModalBuilder()
+            .WithTitle(IsFrench ? "Rechercher un objet" : "Search for an item")
+            .WithCustomId(Id(session, "exclusion-search"))
             .AddTextInput(input)
             .Build();
     }

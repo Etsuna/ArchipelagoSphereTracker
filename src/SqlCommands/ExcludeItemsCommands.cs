@@ -46,7 +46,7 @@ public static class ExcludedItemsCommands
             await using var connection = await Db.OpenReadAsync();
 
             const string query = @"
-            SELECT dpi.Name
+            SELECT DISTINCT dpi.Name
             FROM AliasChoicesTable a
             JOIN DatapackageGameMap gm
               ON gm.GuildId = a.GuildId
@@ -58,7 +58,8 @@ public static class ExcludedItemsCommands
              AND dpi.DatasetKey = gm.DatasetKey
             WHERE a.GuildId = @GuildId
               AND a.ChannelId = @ChannelId
-              AND a.Alias LIKE @Alias;";
+              AND a.Alias = @Alias COLLATE NOCASE
+            ORDER BY dpi.Name COLLATE NOCASE;";
 
             using var command = new SQLiteCommand(query, connection);
             command.Parameters.AddWithValue("@GuildId", guildId);

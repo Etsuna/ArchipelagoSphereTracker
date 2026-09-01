@@ -34,4 +34,38 @@ public sealed class ExcludedItemsCommandsTests
         Assert.Empty(await ExcludedItemsCommands.GetExcludedItemsForUserByAliasAsync("g", "c", "user-1", "Slot"));
         Assert.Equal(["Item"], await ExcludedItemsCommands.GetExcludedItemsForUserByAliasAsync("g", "c", "user-2", "Slot"));
     }
+
+    [Fact]
+    public async Task Item_catalog_returns_every_item_for_the_exact_alias_game()
+    {
+        using var scope = new TestDatabaseScope();
+        await Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                INSERT INTO AliasChoicesTable (GuildId, ChannelId, Slot, Alias, Game)
+                VALUES ('g', 'c', 1, 'Slot%', 'Game A'),
+                       ('g', 'c', 2, 'Slot Other', 'Game B');
+                INSERT INTO DatapackageGameMap (GuildId, ChannelId, GameName, DatasetKey, ImportedAt)
+                VALUES ('g', 'c', 'Game A', 'dataset-a', '2026-09-01T00:00:00Z'),
+                       ('g', 'c', 'Game B', 'dataset-b', '2026-09-01T00:00:00Z');
+                WITH RECURSIVE numbers(value) AS (
+                    SELECT 1
+                    UNION ALL
+                    SELECT value + 1 FROM numbers WHERE value < 60
+                )
+                INSERT INTO DatapackageItems (GuildId, ChannelId, DatasetKey, Id, Name)
+                SELECT 'g', 'c', 'dataset-a', value, printf('Item %03d', value) FROM numbers;
+                INSERT INTO DatapackageItems (GuildId, ChannelId, DatasetKey, Id, Name)
+                VALUES ('g', 'c', 'dataset-b', 1, 'Wrong game item');";
+            await command.ExecuteNonQueryAsync();
+        });
+
+        var items = await ExcludedItemsCommands.GetItemNamesForAliasAsync("g", "c", "Slot%");
+
+        Assert.Equal(60, items.Count);
+        Assert.Equal("Item 001", items[0]);
+        Assert.Equal("Item 060", items[^1]);
+        Assert.DoesNotContain("Wrong game item", items);
+    }
 }

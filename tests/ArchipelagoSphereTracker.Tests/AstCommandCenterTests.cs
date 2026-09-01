@@ -130,6 +130,28 @@ public sealed class AstCommandCenterTests
         Assert.False(store.TryMoveOutputPage(session.Id, 11, 20, 30, -1, out _));
     }
 
+    [Fact]
+    public void Exclusion_pagination_is_private_bounded_and_resets_for_a_new_choice()
+    {
+        var store = new AstUiSessionStore();
+        var session = store.Start(10, 20, 30, 40);
+
+        Assert.True(store.TrySetPending(session.Id, 10, 20, 30, "exclude-add", "Slot", out var selected));
+        Assert.Equal(0, selected.ExclusionPageIndex);
+        Assert.True(store.TryMoveExclusionPage(session.Id, 10, 20, 30, 1, 76, out var second));
+        Assert.Equal(1, second.ExclusionPageIndex);
+        Assert.True(store.TryMoveExclusionPage(session.Id, 10, 20, 30, 99, 76, out var last));
+        Assert.Equal(3, last.ExclusionPageIndex);
+        Assert.False(store.TryMoveExclusionPage(session.Id, 11, 20, 30, -1, 76, out _));
+        Assert.True(store.TrySetExclusionSearch(session.Id, 10, 20, 30, "  sword  ", out var filtered));
+        Assert.Equal("sword", filtered.ExclusionSearch);
+        Assert.Equal(0, filtered.ExclusionPageIndex);
+        Assert.False(store.TrySetExclusionSearch(session.Id, 11, 20, 30, "private", out _));
+        Assert.True(store.TrySetPending(session.Id, 10, 20, 30, "exclude-delete", "Slot", out var reset));
+        Assert.Equal(0, reset.ExclusionPageIndex);
+        Assert.Null(reset.ExclusionSearch);
+    }
+
     [Theory]
     [InlineData("astui:0123456789abcdef0123456789abcdef:personal", true, "personal")]
     [InlineData("astui:short:personal", false, "")]
