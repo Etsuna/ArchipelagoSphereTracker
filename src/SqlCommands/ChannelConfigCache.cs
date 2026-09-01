@@ -75,9 +75,14 @@ public static class ChannelConfigCache
         {
             var guildId = reader["GuildId"]?.ToString() ?? "";
             var channelId = reader["ChannelId"]?.ToString() ?? "";
-            var tracker = reader["Tracker"]?.ToString() ?? Resource.NotFound;
+            var tracker = SensitiveDataProtector.Unprotect(
+                reader["Tracker"]?.ToString(),
+                SensitiveDataPurposes.Tracker);
+            if (string.IsNullOrEmpty(tracker)) tracker = Resource.NotFound;
             var baseUrl = reader["BaseUrl"]?.ToString() ?? "";
-            var room = reader["Room"]?.ToString() ?? "";
+            var room = SensitiveDataProtector.Unprotect(
+                reader["Room"]?.ToString(),
+                SensitiveDataPurposes.Room);
             var silent = reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]);
             var checkFrequencyS = reader["CheckFrequency"]?.ToString() ?? "5m";
             var port = reader["Port"]?.ToString() ?? "0";

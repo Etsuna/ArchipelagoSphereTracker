@@ -10,6 +10,13 @@ public class AliasClass
         var userId = command.User.Id.ToString();
         var skipUselessMention = command.Data.Options.ElementAtOrDefault(1)?.Value as string ?? "0";
 
+        return await AddAliasForUserAsync(alias, skipUselessMention, channelId, guildId, userId);
+    }
+
+    public static async Task<string> AddAliasForUserAsync(
+        string? alias, string skipUselessMention, string channelId, string guildId, string userId)
+    {
+
         if (string.IsNullOrWhiteSpace(alias))
         {
             return Resource.AliasEmpty;
@@ -17,7 +24,7 @@ public class AliasClass
 
         var getReceiverAlias = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
 
-        if (getReceiverAlias.Contains(userId))
+        if (getReceiverAlias.Count > 0)
         {
             return string.Format(Resource.AliasAlreadyRegistered, alias, userId);
         }
@@ -62,27 +69,26 @@ public class AliasClass
         }
         else if (alias != null)
         {
-            var getUserId = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guildId, channelId, alias);
-
-            if (getUserId != null)
+            var owners = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
+            if (owners.Count > 0)
             {
-                message = string.Format(Resource.AliasNotFound, alias);
-                foreach (var value in getUserId.Select(x => x.UserId))
+                var currentUserId = command.User.Id.ToString();
+                if (owners.Contains(currentUserId, StringComparer.Ordinal))
                 {
-                    if (value == command.User.Id.ToString() || guildUser != null && guildUser.GuildPermissions.Administrator)
-                    {
-                        await ReceiverAliasesCommands.DeleteReceiverAlias(guildId, channelId, alias);
-
-                        message = value == command.User.Id.ToString()
-                            ? string.Format(Resource.AliasDeleted, alias)
-                            : $"ADMIN: " + string.Format(Resource.AliasDeleted, alias);
-
-                        await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, value, alias);
-                    }
-                    else
-                    {
-                        message = string.Format(Resource.AliasOtherOwner, alias);
-                    }
+                    await ReceiverAliasesCommands.DeleteReceiverAliasForUser(guildId, channelId, alias, currentUserId);
+                    await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, currentUserId, alias);
+                    message = string.Format(Resource.AliasDeleted, alias);
+                }
+                else if (guildUser != null && guildUser.GuildPermissions.Administrator)
+                {
+                    await ReceiverAliasesCommands.DeleteReceiverAlias(guildId, channelId, alias);
+                    foreach (var ownerId in owners)
+                        await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, ownerId, alias);
+                    message = "ADMIN: " + string.Format(Resource.AliasDeleted, alias);
+                }
+                else
+                {
+                    message = string.Format(Resource.AliasOtherOwner, alias);
                 }
             }
             else
@@ -92,6 +98,17 @@ public class AliasClass
         }
 
         return message;
+    }
+
+    public static async Task<string> DeleteAliasForUserAsync(
+        string alias, string channelId, string guildId, string userId)
+    {
+        var owners = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
+        if (!owners.Contains(userId, StringComparer.Ordinal))
+            return string.Format(Resource.AliasOtherOwner, alias);
+        await ReceiverAliasesCommands.DeleteReceiverAliasForUser(guildId, channelId, alias, userId);
+        await RecapListCommands.DeleteAliasAndRecapListAsync(guildId, channelId, userId, alias);
+        return string.Format(Resource.AliasDeleted, alias);
     }
 
     public static async Task<string> GetAlias(string channelId, string guildId)

@@ -52,8 +52,11 @@ Le bot existe en **deux modes** :
 ### Communes (Normal + Archipelago)
 
 - Multi-serveurs Discord, multi-salons et multi-threads.
-- Gestion de rooms avec `/add-url` et `/delete-url`.
+- Centre de commandes éphémère `/ast` : toute l’interface Discord (configuration, rooms, alias, récaps, exclusions, portails et administration) est regroupée derrière une seule commande slash.
+- Assistant interactif intégré à `/ast` pour connecter une room, configurer le thread, les notifications et le polling, puis confirmer depuis un aperçu éphémère.
 - Paramétrage de fréquence de polling (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
+- Polling adaptatif : après trois snapshots inchangés, l'intervalle ralentit progressivement jusqu'à une heure et revient immédiatement au minimum configuré dès qu'une activité est détectée.
+- Santé et contrôle du suivi depuis `/ast` (également disponibles dans le portail de room).
 - Option silencieuse (`silent`) configurable à la création puis via commande.
 - Alias joueurs : ajout/suppression/liste.
 - Gestion des items affichés, items exclus et hints.
@@ -165,6 +168,41 @@ WEB_PORT=5199
 # Optionnel (URL publique pour liens de portail, reverse proxy conseillé)
 WEB_BASE_URL=https://your-domain.example
 
+# Recommandé : utilisateur Discord propriétaire de l'instance AST
+AST_OWNER_USER_ID=123456789012345678
+
+# Recommandé en conteneur/multi-instance : clé Base64 de 32 octets
+# Ne jamais la modifier après chiffrement de la base
+AST_DATA_PROTECTION_KEY=REPLACE_WITH_A_BASE64_32_BYTE_KEY
+
+# Optionnel (défaut : 67108864, soit 64 Mio)
+WEB_MAX_UPLOAD_BYTES=67108864
+
+# Optionnel (défaut : 60 minutes, intervalle accepté : 5–1440)
+UPLOAD_QUARANTINE_RETENTION_MINUTES=60
+
+# Optionnel (défaut : 30 jours, intervalle accepté : 1–365)
+SPOILER_LOG_RETENTION_DAYS=30
+
+# Optionnel (défaut : 30 jours, intervalle accepté : 1–365)
+PORTAL_TOKEN_LIFETIME_DAYS=30
+
+# Optionnel (défaut : 90 jours, intervalle accepté : 1–3650)
+AUDIT_RETENTION_DAYS=90
+
+# Modèle V2 expérimental (non branché sur les notifications en production)
+ENABLE_TRACKING_V2=false
+
+# Rollback temporaire vers l'ancien scan minute
+USE_LEGACY_TRACKING_SCHEDULER=false
+
+# Budgets du scheduler/client WebHost central
+TRACKING_GLOBAL_CONCURRENCY=10
+TRACKING_ORIGIN_CONCURRENCY=2
+
+# Optionnel : hôtes privés explicitement approuvés pour Archipelago
+ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
+
 # Optionnel (défaut: false)
 EXPORT_METRICS=false
 
@@ -182,6 +220,18 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `ENABLE_WEB_PORTAL=false` désactive totalement le serveur web interne.
 - `WEB_PORT` est le port d’écoute HTTP du portail (`0.0.0.0:<port>`).
 - `WEB_BASE_URL` est utile si AST est exposé derrière un domaine/proxy.
+- `AST_OWNER_USER_ID` réserve les opérations globales APWorld à cet utilisateur. Sans valeur, le propriétaire de chaque serveur Discord est utilisé comme solution de repli.
+- `AST_DATA_PROTECTION_KEY` protège par AES-256-GCM les identifiants WebHost et liens de patch stockés dans SQLite. Sans valeur, AST crée `AST.data-protection.key` à côté de `AST.db`; sauvegardez cette clé séparément et ne la commitez jamais.
+- `WEB_MAX_UPLOAD_BYTES` limite la taille des fichiers Web et Discord acceptés.
+- `UPLOAD_QUARANTINE_RETENTION_MINUTES` fixe le délai de nettoyage des téléversements interrompus placés en quarantaine.
+- `SPOILER_LOG_RETENTION_DAYS` fixe la rétention des fichiers spoiler `.txt` et `.json`.
+- `PORTAL_TOKEN_LIFETIME_DAYS` fixe l'expiration des nouveaux liens du portail.
+- `AUDIT_RETENTION_DAYS` fixe la rétention du journal des actions sensibles.
+- `ENABLE_TRACKING_V2=true` active le dual-write expérimental des snapshots, événements et livraisons V2. Aucun worker Discord V2 n'est démarré dans cette version : les notifications historiques restent seules publiées.
+- `USE_LEGACY_TRACKING_SCHEDULER=true` réactive temporairement l'ancien scan minute ; le scheduler central est utilisé par défaut.
+- Le mode historique désactive les commandes de pause/reprise/synchronisation forcée et ne tient pas compte des pauses persistées. Revenir au scheduler central restaure leur application.
+- `TRACKING_GLOBAL_CONCURRENCY` et `TRACKING_ORIGIN_CONCURRENCY` bornent respectivement les requêtes WebHost simultanées du processus et d'une même origine.
+- `ARCHIPELAGO_ALLOWED_HOSTS` est une liste séparée par des virgules. Elle constitue une dérogation explicite au blocage SSRF des adresses privées/locales.
 - `EXPORT_METRICS=true` active les exports Prometheus.
 
 ---
@@ -213,55 +263,15 @@ Permissions associées :
 
 ## Commandes Slash
 
-## Communes
+AST enregistre une seule commande publique : `/ast`.
 
-- Room tracking
-  - `/add-url`
-  - `/delete-url`
-  - `/update-frequency-check`
-  - `/update-silent-option`
-- Alias / joueurs
-  - `/get-aliases`
-  - `/add-alias`
-  - `/delete-alias`
-- Items / patch / hints
-  - `/get-patch`
-  - `/list-items`
-  - `/excluded-item`
-  - `/excluded-item-list`
-  - `/delete-excluded-item`
-  - `/hint-from-finder`
-  - `/hint-for-receiver`
-- Recap & nettoyage
-  - `/recap`
-  - `/recap-all`
-  - `/clean`
-  - `/clean-all`
-  - `/recap-and-clean`
-- Informations
-  - `/status-games-list`
-  - `/info`
-  - `/discord`
-  - `/apworlds-info`
-- Portail
-  - `/ast-user-portal`
-  - `/ast-room-portal`
-  - `/ast-portal`
+- `/ast` ouvre un centre de commandes personnel et éphémère, adapté au salon, à la room et aux permissions de l’utilisateur.
+- `/ast file:<fichier>` importe un YAML, un APWorld, un ZIP de génération ou un spoiler selon le mode et les permissions.
+- Les anciennes fonctions restent disponibles dans les écrans `Mon espace`, `La room`, `Gérer la room` et `Administration AST`.
+- Les grandes listes sont paginées ; les exclusions disposent en plus d’une recherche.
+- Les actions sensibles sont revérifiées côté serveur et inscrites dans le journal de sécurité.
 
-### Archipelago Mode uniquement
-
-- `/list-yamls`
-- `/list-apworld`
-- `/download-template`
-- `/send-yaml`
-- `/send-apworld`
-- `/delete-yaml`
-- `/clean-yamls`
-- `/backup-yamls`
-- `/backup-apworld`
-- `/test-generate`
-- `/generate`
-- `/generate-with-zip`
+Voir la [spécification du centre `/ast`](docs/pr9-ast-command-center-spec.fr.md) pour la correspondance complète des anciennes commandes.
 
 ---
 
@@ -339,10 +349,12 @@ Binaire final attendu :
 Depuis la racine :
 
 ```bash
-dotnet test
+dotnet test ArchipelagoSphereTracker.sln
 ```
 
-Le projet inclut des tests unitaires sur parsing/convertisseurs/services DB et commandes.
+La solution racine exécute les tests unitaires sur le parsing WebHost, les convertisseurs,
+les services DB, les commandes et les fixtures anonymisées. Les workflows Windows et Linux
+exécutent cette suite avant toute publication.
 
 ---
 
@@ -483,8 +495,11 @@ AST supports **two modes**:
 ### Shared (Normal + Archipelago)
 
 - Multi-server, multi-channel, multi-thread support.
-- Room lifecycle management through `/add-url` and `/delete-url`.
+- Ephemeral `/ast` command center: all Discord workflows (setup, rooms, aliases, recaps, exclusions, portals, and administration) are grouped behind one slash command.
+- Interactive assistant embedded in `/ast` to connect a room, configure its thread, notifications, and polling, then confirm from an ephemeral preview.
 - Configurable polling frequency (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
+- Adaptive polling: after three unchanged snapshots, the interval progressively slows down up to one hour and immediately returns to the configured minimum when activity resumes.
+- Tracking health and controls from `/ast` (also available in the room portal).
 - Silent option configurable at room creation and later updates.
 - Player alias management (add/remove/list).
 - Displayed/excluded items and hints management.
@@ -596,6 +611,41 @@ WEB_PORT=5199
 # Optional (public URL for portal links, reverse proxy recommended)
 WEB_BASE_URL=https://your-domain.example
 
+# Recommended: Discord user who owns this AST instance
+AST_OWNER_USER_ID=123456789012345678
+
+# Recommended for containers/multiple instances: Base64-encoded 32-byte key
+# Never change it after the database has been encrypted
+AST_DATA_PROTECTION_KEY=REPLACE_WITH_A_BASE64_32_BYTE_KEY
+
+# Optional (default: 67108864, i.e. 64 MiB)
+WEB_MAX_UPLOAD_BYTES=67108864
+
+# Optional (default: 60 minutes, accepted range: 5–1440)
+UPLOAD_QUARANTINE_RETENTION_MINUTES=60
+
+# Optional (default: 30 days, accepted range: 1–365)
+SPOILER_LOG_RETENTION_DAYS=30
+
+# Optional (default: 30 days, accepted range: 1–365)
+PORTAL_TOKEN_LIFETIME_DAYS=30
+
+# Optional (default: 90 days, accepted range: 1–3650)
+AUDIT_RETENTION_DAYS=90
+
+# Experimental V2 model (not wired to production notifications)
+ENABLE_TRACKING_V2=false
+
+# Temporary rollback to the legacy minute scan
+USE_LEGACY_TRACKING_SCHEDULER=false
+
+# Central scheduler/WebHost client budgets
+TRACKING_GLOBAL_CONCURRENCY=10
+TRACKING_ORIGIN_CONCURRENCY=2
+
+# Optional: explicitly trusted private Archipelago hosts
+ARCHIPELAGO_ALLOWED_HOSTS=ap.example.lan
+
 # Optional (default: false)
 EXPORT_METRICS=false
 
@@ -613,6 +663,18 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `ENABLE_WEB_PORTAL=false` disables the web server entirely.
 - `WEB_PORT` defines the portal HTTP bind port (`0.0.0.0:<port>`).
 - `WEB_BASE_URL` is useful behind a domain/reverse proxy.
+- `AST_OWNER_USER_ID` reserves global APWorld operations for that user. If unset, each Discord guild owner is used as the fallback.
+- `AST_DATA_PROTECTION_KEY` protects WebHost identifiers and patch links stored in SQLite with AES-256-GCM. When unset, AST creates `AST.data-protection.key` next to `AST.db`; back this key up separately and never commit it.
+- `WEB_MAX_UPLOAD_BYTES` limits accepted Web and Discord file sizes.
+- `UPLOAD_QUARANTINE_RETENTION_MINUTES` controls cleanup of interrupted uploads left in quarantine.
+- `SPOILER_LOG_RETENTION_DAYS` controls retention of `.txt` and `.json` spoiler files.
+- `PORTAL_TOKEN_LIFETIME_DAYS` controls expiry for newly issued portal links.
+- `AUDIT_RETENTION_DAYS` controls retention of sensitive-action audit records.
+- `ENABLE_TRACKING_V2=true` enables experimental dual-write of V2 snapshots, events, and deliveries. No V2 Discord worker is started in this release, so only legacy notifications are published.
+- `USE_LEGACY_TRACKING_SCHEDULER=true` temporarily restores the old minute scan; the central scheduler is the default.
+- Legacy mode disables pause/resume/forced-sync commands and ignores persisted pauses. Switching back to the central scheduler restores their enforcement.
+- `TRACKING_GLOBAL_CONCURRENCY` and `TRACKING_ORIGIN_CONCURRENCY` cap concurrent WebHost requests process-wide and per origin.
+- `ARCHIPELAGO_ALLOWED_HOSTS` is a comma-separated list and explicitly bypasses private/local-address SSRF blocking for those hosts.
 - `EXPORT_METRICS=true` enables Prometheus exports.
 
 ---
@@ -644,55 +706,15 @@ Permissions included:
 
 ## Slash commands
 
-### Shared
+AST registers a single public command: `/ast`.
 
-- Room tracking
-  - `/add-url`
-  - `/delete-url`
-  - `/update-frequency-check`
-  - `/update-silent-option`
-- Alias / players
-  - `/get-aliases`
-  - `/add-alias`
-  - `/delete-alias`
-- Items / patch / hints
-  - `/get-patch`
-  - `/list-items`
-  - `/excluded-item`
-  - `/excluded-item-list`
-  - `/delete-excluded-item`
-  - `/hint-from-finder`
-  - `/hint-for-receiver`
-- Recap & cleanup
-  - `/recap`
-  - `/recap-all`
-  - `/clean`
-  - `/clean-all`
-  - `/recap-and-clean`
-- Information
-  - `/status-games-list`
-  - `/info`
-  - `/discord`
-  - `/apworlds-info`
-- Portal
-  - `/ast-user-portal`
-  - `/ast-room-portal`
-  - `/ast-portal`
+- `/ast` opens a personal ephemeral command center adapted to the channel, room, and user permissions.
+- `/ast file:<file>` imports a YAML, APWorld, generation ZIP, or spoiler according to the current mode and permissions.
+- Existing capabilities remain available under `My space`, `The room`, `Manage room`, and `AST administration`.
+- Large lists are paginated; exclusions also provide search.
+- Sensitive actions are authorized again server-side and written to the security audit log.
 
-### Archipelago mode only
-
-- `/list-yamls`
-- `/list-apworld`
-- `/download-template`
-- `/send-yaml`
-- `/send-apworld`
-- `/delete-yaml`
-- `/clean-yamls`
-- `/backup-yamls`
-- `/backup-apworld`
-- `/test-generate`
-- `/generate`
-- `/generate-with-zip`
+See the [`/ast` command center specification](docs/pr9-ast-command-center-spec.en.md) for the complete legacy-command mapping.
 
 ---
 
@@ -770,10 +792,11 @@ Expected output binaries:
 From repository root:
 
 ```bash
-dotnet test
+dotnet test ArchipelagoSphereTracker.sln
 ```
 
-The repository includes unit tests for parsers, converters, DB services, and command definitions.
+The root solution runs unit tests for WebHost parsing, converters, DB services, command
+definitions, and anonymized fixtures. Windows and Linux workflows run this suite before publishing.
 
 ---
 

@@ -188,12 +188,15 @@ public class GenerationClass : Declare
         var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
         bool skipProgBalancing = command.Data.Options.FirstOrDefault(o => o.Name == "skip-prog-balancing")?.Value as bool? ?? false;
         
-        if (attachment == null || !attachment.Filename.EndsWith(".zip"))
+        if (attachment == null ||
+            attachment.Size <= 0 ||
+            attachment.Size > Declare.WebPortalMaxUploadBytes ||
+            !FileUploadSecurity.TryGetSafeFileName(attachment.Filename, ".zip", out var safeFileName))
             return Resource.GenerationWrongZipFormat;
 
         var playersFolder = Path.Combine(PlayersPath, channelId, "zip");
         var outputFolder = Path.Combine(OutputPath, channelId);
-        var filePath = Path.Combine(playersFolder, attachment.Filename);
+        var filePath = Path.Combine(playersFolder, safeFileName);
 
         if (Directory.Exists(playersFolder)) Directory.Delete(playersFolder, true);
         if (Directory.Exists(outputFolder)) Directory.Delete(outputFolder, true);
@@ -203,10 +206,19 @@ public class GenerationClass : Declare
         using (var response = await HttpClient.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead))
         {
             response.EnsureSuccessStatusCode();
-            using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
-            {
-                await response.Content.CopyToAsync(fs);
-            }
+            var accepted = await FileUploadSecurity.CopyValidatedToFileWithLimitAsync(
+                await response.Content.ReadAsStreamAsync(),
+                filePath,
+                Declare.WebPortalMaxUploadBytes,
+                quarantinePath => FileUploadSecurity.IsZipWithinLimits(quarantinePath, ".yaml"));
+            if (!accepted)
+                return Resource.GenerationWrongZipFormat;
+        }
+
+        if (!FileUploadSecurity.IsZipWithinLimits(filePath, ".yaml"))
+        {
+            File.Delete(filePath);
+            return Resource.GenerationWrongZipFormat;
         }
 
         ZipFile.ExtractToDirectory(filePath, playersFolder, true);
@@ -243,23 +255,32 @@ public class GenerationClass : Declare
 
     public static async Task<GenerationResult> GenerateWithZipFromStreamAsync(string channelId, string fileName, Stream content)
     {
-        if (string.IsNullOrWhiteSpace(fileName) || !fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        if (!FileUploadSecurity.TryGetSafeFileName(fileName, ".zip", out var safeFileName))
         {
             return new GenerationResult(Resource.GenerationWrongZipFormat, null);
         }
 
         var playersFolder = Path.Combine(PlayersPath, channelId, "zip");
         var outputFolder = Path.Combine(OutputPath, channelId);
-        var filePath = Path.Combine(playersFolder, Path.GetFileName(fileName));
+        var filePath = Path.Combine(playersFolder, safeFileName);
 
         if (Directory.Exists(playersFolder)) Directory.Delete(playersFolder, true);
         if (Directory.Exists(outputFolder)) Directory.Delete(outputFolder, true);
 
         Directory.CreateDirectory(playersFolder);
 
-        await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+        var accepted = await FileUploadSecurity.CopyValidatedToFileWithLimitAsync(
+            content,
+            filePath,
+            Declare.WebPortalMaxUploadBytes,
+            quarantinePath => FileUploadSecurity.IsZipWithinLimits(quarantinePath, ".yaml"));
+        if (!accepted)
+            return new GenerationResult(Resource.GenerationWrongZipFormat, null);
+
+        if (!FileUploadSecurity.IsZipWithinLimits(filePath, ".yaml"))
         {
-            await content.CopyToAsync(fs);
+            File.Delete(filePath);
+            return new GenerationResult(Resource.GenerationWrongZipFormat, null);
         }
 
         ZipFile.ExtractToDirectory(filePath, playersFolder, true);
@@ -364,7 +385,7 @@ public class GenerationClass : Declare
             return string.Format(Resource.GenerationError, ex.Message);
         }
     }
-    public static async Task<GenerationResult> GenerateAsyncForWeb(string channelId)
+    public static async Task<GenerationResult> GenerateAsyncForWeb(string channelId, bool skipProgBalancing = false)
     {
         var playersFolder = Path.Combine(PlayersPath, channelId, "yaml");
         var outputFolder = Path.Combine(OutputPath, channelId);
@@ -388,6 +409,10 @@ public class GenerationClass : Declare
                 return new GenerationResult(string.Format(Resource.CALauncherNotFound, launcherPath), null);
 
             var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
+            if (skipProgBalancing)
+            {
+                arguments += " --skip_prog_balancing";
+            }
             var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
             return await RunGenerationProcessForWebAsync(startInfo, outputFolder);

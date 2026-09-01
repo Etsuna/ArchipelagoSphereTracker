@@ -1,0 +1,17 @@
+{
+  "downloads": [
+    { "download": "/dl/slot-1", "slot": 1 },
+    { "download": "/dl/slot-2", "slot": 2 }
+  ],
+  "last_activity": "Tue, 02 Jan 2024 03:04:05 GMT",
+  "last_port": 38281,
+  "players": [
+    ["Alice", "GameA"],
+    ["Bob", "GameB"]
+  ],
+  "timeout": 7200,
+  "tracker": "tracker-anonymized",
+  "future_webhost_field": {
+    "ignored": true
+  }
+}

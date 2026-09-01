@@ -110,7 +110,7 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
 
         foreach (var guild in guildList)
         {
-            Console.WriteLine($"Migrate Guild: {guild.GuildId}, Channel: {guild.ChannelId}, Room: {guild.Room}");
+            Console.WriteLine($"Migrate Guild: {guild.GuildId}, Channel: {guild.ChannelId}");
 
             var roomInfo = await UrlClass.RoomInfo(guild.BaseUrl, guild.Room);
             if (roomInfo == null)
@@ -334,5 +334,541 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
         }
 
         await PostMigrationMaintenanceAsync();
+    }
+
+    public static async Task Migrate_5_0_6(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.6: hashed portal tokens, expiry and security audit log.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+
+            var portalTableExists = false;
+            var portalColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var tableCheck = conn.CreateCommand())
+            {
+                tableCheck.CommandText = "SELECT 1 FROM sqlite_master WHERE type='table' AND name='PortalAccessTable';";
+                portalTableExists = await tableCheck.ExecuteScalarAsync(ct) != null;
+            }
+
+            if (portalTableExists)
+            {
+                using var columnCheck = conn.CreateCommand();
+                columnCheck.CommandText = "PRAGMA table_info(PortalAccessTable);";
+                using var reader = await columnCheck.ExecuteReaderAsync(ct);
+                while (await reader.ReadAsync(ct))
+                    portalColumns.Add(reader["name"]?.ToString() ?? string.Empty);
+            }
+
+            var legacyRows = new List<(long Id, string GuildId, string ChannelId, string UserId, string Token)>();
+            if (portalColumns.Contains("Token") && !portalColumns.Contains("TokenHash"))
+            {
+                using var readLegacy = conn.CreateCommand();
+                readLegacy.CommandText = "SELECT Id, GuildId, ChannelId, UserId, Token FROM PortalAccessTable;";
+                using var reader = await readLegacy.ExecuteReaderAsync(ct);
+                while (await reader.ReadAsync(ct))
+                {
+                    legacyRows.Add((
+                        Convert.ToInt64(reader["Id"]),
+                        reader["GuildId"]?.ToString() ?? string.Empty,
+                        reader["ChannelId"]?.ToString() ?? string.Empty,
+                        reader["UserId"]?.ToString() ?? string.Empty,
+                        reader["Token"]?.ToString() ?? string.Empty));
+                }
+            }
+
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                if (!portalColumns.Contains("TokenHash"))
+                {
+                    using (var rebuild = conn.CreateCommand())
+                    {
+                        rebuild.Transaction = transaction;
+                        rebuild.CommandText = @"
+                            DROP TABLE IF EXISTS PortalAccessTable_5_0_6;
+                            CREATE TABLE PortalAccessTable_5_0_6 (
+                                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                GuildId TEXT NOT NULL,
+                                ChannelId TEXT NOT NULL,
+                                UserId TEXT NOT NULL,
+                                TokenHash TEXT NOT NULL,
+                                CreatedAtUtc TEXT NOT NULL,
+                                ExpiresAtUtc TEXT NOT NULL,
+                                RevokedAtUtc TEXT,
+                                UNIQUE (GuildId, ChannelId, UserId),
+                                UNIQUE (TokenHash)
+                            );";
+                        await rebuild.ExecuteNonQueryAsync(ct);
+                    }
+
+                    var createdAt = DateTimeOffset.UtcNow;
+                    var expiresAt = createdAt.AddDays(Declare.PortalTokenLifetimeDays);
+                    foreach (var row in legacyRows.Where(row => !string.IsNullOrWhiteSpace(row.Token)))
+                    {
+                        using var insert = conn.CreateCommand();
+                        insert.Transaction = transaction;
+                        insert.CommandText = @"
+                            INSERT INTO PortalAccessTable_5_0_6
+                                (Id, GuildId, ChannelId, UserId, TokenHash, CreatedAtUtc, ExpiresAtUtc, RevokedAtUtc)
+                            VALUES
+                                (@Id, @GuildId, @ChannelId, @UserId, @TokenHash, @CreatedAtUtc, @ExpiresAtUtc, NULL);";
+                        insert.Parameters.AddWithValue("@Id", row.Id);
+                        insert.Parameters.AddWithValue("@GuildId", row.GuildId);
+                        insert.Parameters.AddWithValue("@ChannelId", row.ChannelId);
+                        insert.Parameters.AddWithValue("@UserId", row.UserId);
+                        insert.Parameters.AddWithValue("@TokenHash", PortalAccessCommands.HashToken(row.Token));
+                        insert.Parameters.AddWithValue("@CreatedAtUtc", PortalAccessCommands.FormatTimestamp(createdAt));
+                        insert.Parameters.AddWithValue("@ExpiresAtUtc", PortalAccessCommands.FormatTimestamp(expiresAt));
+                        await insert.ExecuteNonQueryAsync(ct);
+                    }
+
+                    using var replace = conn.CreateCommand();
+                    replace.Transaction = transaction;
+                    replace.CommandText = @"
+                        DROP TABLE IF EXISTS PortalAccessTable;
+                        ALTER TABLE PortalAccessTable_5_0_6 RENAME TO PortalAccessTable;";
+                    await replace.ExecuteNonQueryAsync(ct);
+                }
+
+                using (var auditSchema = conn.CreateCommand())
+                {
+                    auditSchema.Transaction = transaction;
+                    auditSchema.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS SecurityAuditLogTable (
+                            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            OccurredAtUtc TEXT NOT NULL,
+                            CorrelationId TEXT NOT NULL,
+                            Source TEXT NOT NULL,
+                            ActorUserId TEXT NOT NULL,
+                            GuildId TEXT NOT NULL,
+                            ChannelId TEXT,
+                            Action TEXT NOT NULL,
+                            Outcome TEXT NOT NULL
+                        );
+                        CREATE INDEX IF NOT EXISTS idx_securityaudit_guild_time
+                            ON SecurityAuditLogTable(GuildId, OccurredAtUtc DESC);
+                        CREATE INDEX IF NOT EXISTS idx_securityaudit_time
+                            ON SecurityAuditLogTable(OccurredAtUtc);";
+                    await auditSchema.ExecuteNonQueryAsync(ct);
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
+
+    public static async Task Migrate_5_0_7(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.7: Tracking V2 ledger/outbox and deterministic V1 uniqueness.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            using (var secureDelete = conn.CreateCommand())
+            {
+                secureDelete.CommandText = "PRAGMA secure_delete=ON;";
+                await secureDelete.ExecuteNonQueryAsync(ct);
+            }
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                using var command = conn.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = @"
+                    -- Preserve patch rows while keeping the most recent URL row per guild/channel.
+                    INSERT OR IGNORE INTO UrlAndChannelPatchTable
+                        (ChannelsAndUrlsTableId, Alias, GameName, Patch)
+                    SELECT keeper.Id, patch.Alias, patch.GameName, patch.Patch
+                    FROM ChannelsAndUrlsTable duplicate
+                    JOIN ChannelsAndUrlsTable keeper
+                      ON keeper.GuildId = duplicate.GuildId
+                     AND keeper.ChannelId = duplicate.ChannelId
+                     AND keeper.Id = (
+                         SELECT MAX(candidate.Id)
+                         FROM ChannelsAndUrlsTable candidate
+                         WHERE candidate.GuildId = duplicate.GuildId
+                           AND candidate.ChannelId = duplicate.ChannelId
+                     )
+                    JOIN UrlAndChannelPatchTable patch
+                      ON patch.ChannelsAndUrlsTableId = duplicate.Id
+                    WHERE duplicate.Id <> keeper.Id;
+
+                    DELETE FROM ChannelsAndUrlsTable
+                    WHERE Id NOT IN (
+                        SELECT MAX(Id)
+                        FROM ChannelsAndUrlsTable
+                        GROUP BY GuildId, ChannelId
+                    );
+
+                    DELETE FROM HintStatusTable
+                    WHERE Id NOT IN (
+                        SELECT MAX(Id)
+                        FROM HintStatusTable
+                        GROUP BY
+                            GuildId,
+                            ChannelId,
+                            IFNULL(Finder, ''),
+                            IFNULL(Receiver, ''),
+                            IFNULL(Item, ''),
+                            IFNULL(Location, ''),
+                            IFNULL(Game, ''),
+                            IFNULL(Entrance, '')
+                    );
+
+                    CREATE UNIQUE INDEX IF NOT EXISTS uq_channels_guild_channel
+                        ON ChannelsAndUrlsTable(GuildId, ChannelId);
+                    CREATE UNIQUE INDEX IF NOT EXISTS uq_hintstatus_unique
+                        ON HintStatusTable(
+                            GuildId,
+                            ChannelId,
+                            IFNULL(Finder, ''),
+                            IFNULL(Receiver, ''),
+                            IFNULL(Item, ''),
+                            IFNULL(Location, ''),
+                            IFNULL(Game, ''),
+                            IFNULL(Entrance, '')
+                        );
+
+                    CREATE TABLE IF NOT EXISTS TrackedRooms (
+                        GuildId TEXT NOT NULL,
+                        ChannelId TEXT NOT NULL,
+                        CreatedAtUtc TEXT NOT NULL,
+                        UpdatedAtUtc TEXT NOT NULL,
+                        LastSuccessfulSyncUtc TEXT,
+                        CurrentSnapshotHash TEXT,
+                        IsBaselineInitialized INTEGER NOT NULL DEFAULT 0
+                            CHECK (IsBaselineInitialized IN (0, 1)),
+                        PRIMARY KEY (GuildId, ChannelId)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS RoomSnapshots (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        GuildId TEXT NOT NULL,
+                        ChannelId TEXT NOT NULL,
+                        ContentHash TEXT NOT NULL,
+                        CapturedAtUtc TEXT NOT NULL,
+                        LastSuccessfulSyncUtc TEXT,
+                        CompleteSections INTEGER NOT NULL,
+                        TrackingState TEXT NOT NULL CHECK (TrackingState IN ('Healthy', 'Error')),
+                        PayloadJson TEXT NOT NULL,
+                        FOREIGN KEY (GuildId, ChannelId)
+                            REFERENCES TrackedRooms(GuildId, ChannelId) ON DELETE CASCADE
+                    );
+
+                    CREATE TABLE IF NOT EXISTS TrackingEvents (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        EventKey TEXT NOT NULL UNIQUE,
+                        GuildId TEXT NOT NULL,
+                        ChannelId TEXT NOT NULL,
+                        EventType TEXT NOT NULL,
+                        OccurredAtUtc TEXT NOT NULL,
+                        PayloadJson TEXT NOT NULL,
+                        SnapshotId INTEGER NOT NULL,
+                        CreatedAtUtc TEXT NOT NULL,
+                        FOREIGN KEY (SnapshotId) REFERENCES RoomSnapshots(Id) ON DELETE CASCADE
+                    );
+
+                    CREATE TABLE IF NOT EXISTS EventDeliveries (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        EventId INTEGER NOT NULL,
+                        DestinationType TEXT NOT NULL,
+                        DestinationId TEXT NOT NULL,
+                        Status TEXT NOT NULL
+                            CHECK (Status IN ('Pending', 'Delivering', 'Delivered', 'Failed')),
+                        AttemptCount INTEGER NOT NULL DEFAULT 0,
+                        NextAttemptAtUtc TEXT NOT NULL,
+                        LeaseUntilUtc TEXT,
+                        LastAttemptAtUtc TEXT,
+                        DeliveredAtUtc TEXT,
+                        LastErrorCode TEXT,
+                        ExternalReceiptId TEXT,
+                        UNIQUE (EventId, DestinationType, DestinationId),
+                        FOREIGN KEY (EventId) REFERENCES TrackingEvents(Id) ON DELETE CASCADE
+                    );
+
+                    CREATE INDEX IF NOT EXISTS idx_roomsnapshots_room_time
+                        ON RoomSnapshots(GuildId, ChannelId, Id DESC);
+                    CREATE INDEX IF NOT EXISTS idx_trackingevents_room_time
+                        ON TrackingEvents(GuildId, ChannelId, Id DESC);
+                    CREATE INDEX IF NOT EXISTS idx_eventdeliveries_due
+                        ON EventDeliveries(Status, NextAttemptAtUtc, LeaseUntilUtc, Id);";
+                await command.ExecuteNonQueryAsync(ct);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
+
+    public static async Task Migrate_5_0_8(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.8: durable central scheduler state.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                using var command = conn.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = @"
+                    CREATE TABLE IF NOT EXISTS RoomPollState (
+                        GuildId TEXT NOT NULL,
+                        ChannelId TEXT NOT NULL,
+                        NextPollAtUtc TEXT NOT NULL,
+                        LastAttemptAtUtc TEXT,
+                        LastSuccessAtUtc TEXT,
+                        ConsecutiveFailures INTEGER NOT NULL DEFAULT 0,
+                        LastFailureKind TEXT NOT NULL DEFAULT 'None',
+                        BreakerOpenUntilUtc TEXT,
+                        LastLatencyMilliseconds REAL NOT NULL DEFAULT 0,
+                        UpdatedAtUtc TEXT NOT NULL,
+                        PRIMARY KEY (GuildId, ChannelId)
+                    );
+                    CREATE INDEX IF NOT EXISTS idx_roompollstate_due
+                        ON RoomPollState(NextPollAtUtc, GuildId, ChannelId);";
+                await command.ExecuteNonQueryAsync(ct);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
+
+    public static async Task Migrate_5_0_9(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.9: adaptive polling and durable room controls.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var inspect = conn.CreateCommand())
+            {
+                inspect.CommandText = "PRAGMA table_info(RoomPollState);";
+                using var reader = await inspect.ExecuteReaderAsync(ct);
+                while (await reader.ReadAsync(ct))
+                    columns.Add(reader["name"]?.ToString() ?? string.Empty);
+            }
+
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                var additions = new (string Name, string Sql)[]
+                {
+                    ("IsPaused", "ALTER TABLE RoomPollState ADD COLUMN IsPaused INTEGER NOT NULL DEFAULT 0 CHECK (IsPaused IN (0, 1));"),
+                    ("PausedAtUtc", "ALTER TABLE RoomPollState ADD COLUMN PausedAtUtc TEXT;"),
+                    ("LastForcedSyncAtUtc", "ALTER TABLE RoomPollState ADD COLUMN LastForcedSyncAtUtc TEXT;"),
+                    ("LastContentHash", "ALTER TABLE RoomPollState ADD COLUMN LastContentHash TEXT;"),
+                    ("UnchangedSuccessCount", "ALTER TABLE RoomPollState ADD COLUMN UnchangedSuccessCount INTEGER NOT NULL DEFAULT 0;"),
+                    ("EffectiveIntervalSeconds", "ALTER TABLE RoomPollState ADD COLUMN EffectiveIntervalSeconds REAL NOT NULL DEFAULT 0;"),
+                    ("LastChangeAtUtc", "ALTER TABLE RoomPollState ADD COLUMN LastChangeAtUtc TEXT;")
+                };
+
+                foreach (var addition in additions.Where(addition => !columns.Contains(addition.Name)))
+                {
+                    using var command = conn.CreateCommand();
+                    command.Transaction = transaction;
+                    command.CommandText = addition.Sql;
+                    await command.ExecuteNonQueryAsync(ct);
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
+
+    public static async Task Migrate_5_0_10(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.10: per-room adaptive polling policy.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            var columns = await GetColumnsAsync(conn, "ChannelsAndUrlsTable", ct);
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                var additions = new (string Name, string Sql)[]
+                {
+                    ("PollingMode", "ALTER TABLE ChannelsAndUrlsTable ADD COLUMN PollingMode TEXT NOT NULL DEFAULT 'Automatic' CHECK (PollingMode IN ('Automatic', 'Fixed'));"),
+                    ("MaximumCheckFrequency", "ALTER TABLE ChannelsAndUrlsTable ADD COLUMN MaximumCheckFrequency TEXT NOT NULL DEFAULT '1h';")
+                };
+
+                foreach (var addition in additions.Where(addition => !columns.Contains(addition.Name)))
+                {
+                    using var command = conn.CreateCommand();
+                    command.Transaction = transaction;
+                    command.CommandText = addition.Sql;
+                    await command.ExecuteNonQueryAsync(ct);
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
+
+    public static async Task Migrate_5_0_11(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.11: encrypted WebHost identifiers and patch links.");
+
+        await Db.WriteGate.WaitAsync(ct);
+        try
+        {
+            await using var conn = await Db.OpenWriteAsync();
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                await SensitiveDataProtectionStore.EnsureReadyAsync(conn, transaction, ct);
+
+                var channels = new List<(long Id, string Room, string Tracker)>();
+                using (var readChannels = conn.CreateCommand())
+                {
+                    readChannels.Transaction = transaction;
+                    readChannels.CommandText = "SELECT Id, Room, Tracker FROM ChannelsAndUrlsTable;";
+                    using var reader = await readChannels.ExecuteReaderAsync(ct);
+                    while (await reader.ReadAsync(ct))
+                    {
+                        channels.Add((
+                            Convert.ToInt64(reader["Id"]),
+                            reader["Room"]?.ToString() ?? string.Empty,
+                            reader["Tracker"]?.ToString() ?? string.Empty));
+                    }
+                }
+
+                using (var update = conn.CreateCommand())
+                {
+                    update.Transaction = transaction;
+                    update.CommandText = @"
+                        UPDATE ChannelsAndUrlsTable
+                        SET Room = @Room, Tracker = @Tracker
+                        WHERE Id = @Id;";
+                    var roomParameter = update.Parameters.Add("@Room", System.Data.DbType.String);
+                    var trackerParameter = update.Parameters.Add("@Tracker", System.Data.DbType.String);
+                    var idParameter = update.Parameters.Add("@Id", System.Data.DbType.Int64);
+                    update.Prepare();
+                    foreach (var channel in channels)
+                    {
+                        roomParameter.Value = SensitiveDataProtector.Protect(
+                            channel.Room,
+                            SensitiveDataPurposes.Room);
+                        trackerParameter.Value = SensitiveDataProtector.Protect(
+                            channel.Tracker,
+                            SensitiveDataPurposes.Tracker);
+                        idParameter.Value = channel.Id;
+                        await update.ExecuteNonQueryAsync(ct);
+                    }
+                }
+
+                var patches = new List<(long Id, string Patch)>();
+                using (var readPatches = conn.CreateCommand())
+                {
+                    readPatches.Transaction = transaction;
+                    readPatches.CommandText = "SELECT Id, Patch FROM UrlAndChannelPatchTable;";
+                    using var reader = await readPatches.ExecuteReaderAsync(ct);
+                    while (await reader.ReadAsync(ct))
+                    {
+                        patches.Add((
+                            Convert.ToInt64(reader["Id"]),
+                            reader["Patch"]?.ToString() ?? string.Empty));
+                    }
+                }
+
+                using (var update = conn.CreateCommand())
+                {
+                    update.Transaction = transaction;
+                    update.CommandText = "UPDATE UrlAndChannelPatchTable SET Patch = @Patch WHERE Id = @Id;";
+                    var patchParameter = update.Parameters.Add("@Patch", System.Data.DbType.String);
+                    var idParameter = update.Parameters.Add("@Id", System.Data.DbType.Int64);
+                    update.Prepare();
+                    foreach (var patch in patches)
+                    {
+                        patchParameter.Value = SensitiveDataProtector.Protect(
+                            patch.Patch,
+                            SensitiveDataPurposes.Patch);
+                        idParameter.Value = patch.Id;
+                        await update.ExecuteNonQueryAsync(ct);
+                    }
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+
+            using var checkpoint = conn.CreateCommand();
+            checkpoint.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+            await checkpoint.ExecuteNonQueryAsync(ct);
+        }
+        finally
+        {
+            Db.WriteGate.Release();
+        }
+    }
+
+    private static async Task<HashSet<string>> GetColumnsAsync(
+        System.Data.Common.DbConnection connection,
+        string tableName,
+        CancellationToken cancellationToken)
+    {
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using var inspect = connection.CreateCommand();
+        inspect.CommandText = $"PRAGMA table_info({tableName});";
+        using var reader = await inspect.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            columns.Add(reader["name"]?.ToString() ?? string.Empty);
+        return columns;
     }
 }

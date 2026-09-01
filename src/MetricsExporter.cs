@@ -13,12 +13,12 @@ public static class MetricsExporter
     private static readonly Gauge ChannelInfo =
         Metrics.CreateGauge(
             "ast_channel_info",
-            "Ligne brute de ChannelsAndUrlsTable.",
+            "Configuration non sensible d'un canal suivi par AST.",
             new[]
             {
                 "guild_id", "guild_name",
                 "channel_id", "channel_name",
-                "base_url", "room", "tracker", "check_frequency", "silent", "port"
+                "check_frequency", "silent"
             });
 
     private static readonly Gauge ChannelLastCheckSeconds =
@@ -120,30 +120,26 @@ public static class MetricsExporter
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = @"
-                SELECT GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, LastCheck, Silent, Port
+                SELECT GuildId, ChannelId, CheckFrequency, LastCheck, Silent
                 FROM ChannelsAndUrlsTable;";
             using var rdr = await cmd.ExecuteReaderAsync(ct);
             while (await rdr.ReadAsync(ct))
             {
                 var guild = rdr.GetString(0);
                 var channel = rdr.GetString(1);
-                var baseUrl = rdr.GetString(2);
-                var room = rdr.GetString(3);
-                var tracker = rdr.GetString(4);
-                var checkFrequency = rdr.GetString(5);
-                var silentStr = rdr.IsDBNull(7) ? "null" : (rdr.GetInt32(7) != 0 ? "true" : "false");
-                var portStr = rdr.GetString(8);
+                var checkFrequency = rdr.GetString(2);
+                var silentStr = rdr.IsDBNull(4) ? "null" : (rdr.GetInt32(4) != 0 ? "true" : "false");
 
                 var guildName = ResolveGuildName(guild) ?? "unknown";
                 var channelName = ResolveChannelName(guild, channel) ?? "unknown";
 
-                var key = string.Join("|", guild, guildName, channel, channelName, baseUrl, room, tracker, checkFrequency, silentStr, portStr);
-                var ch = ChannelInfo.WithLabels(guild, guildName, channel, channelName, baseUrl, room, tracker, checkFrequency, silentStr, portStr);
+                var key = string.Join("|", guild, guildName, channel, channelName, checkFrequency, silentStr);
+                var ch = ChannelInfo.WithLabels(guild, guildName, channel, channelName, checkFrequency, silentStr);
                 ch.Set(1);
                 curChannelInfo[key] = ch;
 
                 var chLast = ChannelLastCheckSeconds.WithLabels(guild, guildName, channel, channelName);
-                var dto = rdr.IsDBNull(6) ? null : ParseIsoOrUnixMs(rdr.GetValue(6));
+                var dto = rdr.IsDBNull(3) ? null : ParseIsoOrUnixMs(rdr.GetValue(3));
                 if (dto is null)
                 {
                     chLast.Set(double.NaN);

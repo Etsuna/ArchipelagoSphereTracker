@@ -1,4 +1,4 @@
-﻿using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.src.Resources;
 using Discord.WebSocket;
 using System.Data.SQLite;
 using System.Globalization;
@@ -9,6 +9,8 @@ using static TrackingDataManager;
 public static class ChannelsAndUrlsCommands
 {
     private static string DefaultTrackerValue = Resource.NotFound;
+    private static readonly HashSet<string> AllowedMaximumFrequencies =
+        new(["15m", "30m", "1h", "6h", "12h", "18h", "1d"], StringComparer.OrdinalIgnoreCase);
 
     // ==========================
     // 🎯 Channel et URL (WRITE)
@@ -21,16 +23,28 @@ public static class ChannelsAndUrlsCommands
             {
                 using var command = conn.CreateCommand();
                 command.CommandText = @"
-                        INSERT OR REPLACE INTO ChannelsAndUrlsTable
+                        INSERT INTO ChannelsAndUrlsTable
                             (GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, Silent, Port)
                         VALUES
-                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent, @Port);";
+                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent, @Port)
+                        ON CONFLICT(GuildId, ChannelId) DO UPDATE SET
+                            BaseUrl = excluded.BaseUrl,
+                            Room = excluded.Room,
+                            Tracker = excluded.Tracker,
+                            CheckFrequency = excluded.CheckFrequency,
+                            LastCheck = NULL,
+                            Silent = excluded.Silent,
+                            Port = excluded.Port;";
 
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 command.Parameters.AddWithValue("@BaseUrl", new Uri(baseUrl).GetLeftPart(UriPartial.Authority));
-                command.Parameters.AddWithValue("@Room", room);
-                command.Parameters.AddWithValue("@Tracker", tracker ?? DefaultTrackerValue);
+                command.Parameters.AddWithValue(
+                    "@Room",
+                    SensitiveDataProtector.Protect(room, SensitiveDataPurposes.Room));
+                command.Parameters.AddWithValue(
+                    "@Tracker",
+                    SensitiveDataProtector.Protect(tracker ?? DefaultTrackerValue, SensitiveDataPurposes.Tracker));
                 command.Parameters.AddWithValue("@CheckFrequency", string.IsNullOrWhiteSpace(checkFrequency) ? "5m" : checkFrequency);
                 command.Parameters.AddWithValue("@Silent", silent);
                 command.Parameters.AddWithValue("@Port", port ?? "0");
@@ -94,7 +108,9 @@ public static class ChannelsAndUrlsCommands
                 {
                     aliasParam.Value = p.GameAlias ?? string.Empty;
                     gameNameParam.Value = p.GameName ?? string.Empty;
-                    patchParam.Value = p.PatchLink ?? string.Empty;
+                    patchParam.Value = SensitiveDataProtector.Protect(
+                        p.PatchLink ?? string.Empty,
+                        SensitiveDataPurposes.Patch);
                     await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             });
@@ -126,9 +142,13 @@ public static class ChannelsAndUrlsCommands
             using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
-                var tracker = reader["Tracker"]?.ToString() ?? string.Empty;
+                var tracker = SensitiveDataProtector.Unprotect(
+                    reader["Tracker"]?.ToString(),
+                    SensitiveDataPurposes.Tracker);
                 var baseUrl = reader["BaseUrl"]?.ToString() ?? string.Empty;
-                var room = reader["Room"]?.ToString() ?? string.Empty;
+                var room = SensitiveDataProtector.Unprotect(
+                    reader["Room"]?.ToString(),
+                    SensitiveDataPurposes.Room);
                 var silent = reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]);
                 var checkFreq = reader["CheckFrequency"]?.ToString() ?? string.Empty;
                 var port = reader["Port"]?.ToString() ?? "0";
@@ -232,7 +252,9 @@ public static class ChannelsAndUrlsCommands
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 var game = reader["GameName"]?.ToString() ?? string.Empty;
-                var patch = reader["Patch"]?.ToString() ?? string.Empty;
+                var patch = SensitiveDataProtector.Unprotect(
+                    reader["Patch"]?.ToString(),
+                    SensitiveDataPurposes.Patch);
                 return $"{game} : {patch}";
             }
 
@@ -276,7 +298,9 @@ public static class ChannelsAndUrlsCommands
             {
                 var alias = reader["Alias"]?.ToString() ?? string.Empty;
                 var gameName = reader["GameName"]?.ToString() ?? string.Empty;
-                var patch = reader["Patch"]?.ToString() ?? string.Empty;
+                var patch = SensitiveDataProtector.Unprotect(
+                    reader["Patch"]?.ToString(),
+                    SensitiveDataPurposes.Patch);
 
                 if (!string.IsNullOrWhiteSpace(alias))
                 {
@@ -334,7 +358,10 @@ public static class ChannelsAndUrlsCommands
 
                 string alias = reader["Alias"]?.ToString() ?? "Inconnu";
                 string gameName = reader["GameName"]?.ToString() ?? "Non spécifié";
-                string patch = reader["Patch"]?.ToString() ?? "Non spécifié";
+                string patch = SensitiveDataProtector.Unprotect(
+                    reader["Patch"]?.ToString(),
+                    SensitiveDataPurposes.Patch);
+                if (string.IsNullOrWhiteSpace(patch)) patch = "Non spécifié";
 
                 string line = "• " + string.Format(
                     Resource.SendAllPatchesForChannelAsyncPathLink, alias, gameName, patch);
@@ -405,9 +432,13 @@ public static class ChannelsAndUrlsCommands
             if (await reader.ReadAsync().ConfigureAwait(false))
             {
                 return (
-                    reader["Tracker"]?.ToString() ?? string.Empty,
+                    SensitiveDataProtector.Unprotect(
+                        reader["Tracker"]?.ToString(),
+                        SensitiveDataPurposes.Tracker),
                     reader["BaseUrl"]?.ToString() ?? string.Empty,
-                    reader["Room"]?.ToString() ?? string.Empty,
+                    SensitiveDataProtector.Unprotect(
+                        reader["Room"]?.ToString(),
+                        SensitiveDataPurposes.Room),
                     reader["Silent"] != DBNull.Value && Convert.ToBoolean(reader["Silent"]),
                     reader["CheckFrequency"]?.ToString() ?? "5m",
                     reader["LastCheck"] as string,
@@ -630,6 +661,8 @@ public static class ChannelsAndUrlsCommands
                 ChannelConfigCache.Upsert(guildId, channelId, cfg with { CheckFrequency = parsed });
             }
 
+            await TrackingDataManager.PromoteRoomAsync(guildId, channelId).ConfigureAwait(false);
+
             message = string.Format(Resource.CheckFrequencyUpdated, newFrequency);
         }
         catch (Exception ex)
@@ -639,6 +672,78 @@ public static class ChannelsAndUrlsCommands
         }
 
         return message;
+    }
+
+    public static Task<string> UpdatePollingPolicy(
+        SocketSlashCommand command,
+        string channelId,
+        string guildId)
+    {
+        var mode = command.Data.Options.FirstOrDefault(option => option.Name == "mode")?.Value?.ToString();
+        var maximum = command.Data.Options.FirstOrDefault(option => option.Name == "maximum-frequency")?.Value?.ToString();
+        return UpdatePollingPolicyInternal(mode, maximum, channelId, guildId);
+    }
+
+    public static Task<string> UpdatePollingPolicyFromWeb(
+        string? mode,
+        string? maximumFrequency,
+        string channelId,
+        string guildId)
+        => UpdatePollingPolicyInternal(mode, maximumFrequency, channelId, guildId);
+
+    private static async Task<string> UpdatePollingPolicyInternal(
+        string? mode,
+        string? maximumFrequency,
+        string channelId,
+        string guildId)
+    {
+        var normalizedMode = mode?.Trim().ToLowerInvariant() switch
+        {
+            "automatic" => "Automatic",
+            "fixed" => "Fixed",
+            _ => null
+        };
+        if (normalizedMode == null ||
+            string.IsNullOrWhiteSpace(maximumFrequency) ||
+            !AllowedMaximumFrequencies.Contains(maximumFrequency))
+        {
+            return Resource.PollingInvalidPollingModeOrMaximumFrequency;
+        }
+
+        var current = await GetChannelConfigAsync(guildId, channelId).ConfigureAwait(false);
+        var minimum = CheckFrequencyParser.ParseOrDefault(
+            current.checkFrequency,
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromDays(1));
+        if (!CheckFrequencyParser.TryParse(
+                maximumFrequency,
+                out var maximum,
+                minimum,
+                TimeSpan.FromDays(1)))
+        {
+            return Resource.PollingTheMaximumFrequencyMustBeGreaterThanOrEqual;
+        }
+
+        await Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                UPDATE ChannelsAndUrlsTable
+                SET PollingMode = @PollingMode,
+                    MaximumCheckFrequency = @MaximumCheckFrequency
+                WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+            command.Parameters.AddWithValue("@PollingMode", normalizedMode);
+            command.Parameters.AddWithValue("@MaximumCheckFrequency", maximumFrequency.ToLowerInvariant());
+            command.Parameters.AddWithValue("@GuildId", guildId);
+            command.Parameters.AddWithValue("@ChannelId", channelId);
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+        }).ConfigureAwait(false);
+
+        await TrackingDataManager.ReloadTrackingConfigurationAsync().ConfigureAwait(false);
+        await TrackingDataManager.PromoteRoomAsync(guildId, channelId).ConfigureAwait(false);
+
+        return string.Format(Resource.PollingTrackingPolicyUpdatedModeMinimumMaximum, normalizedMode, current.checkFrequency, maximumFrequency.ToLowerInvariant());
     }
 
     // =================================================
@@ -652,19 +757,24 @@ public static class ChannelsAndUrlsCommands
 
             using var command = connection.CreateCommand();
             command.CommandText = @"
-            SELECT ChannelId
+            SELECT ChannelId, Room
             FROM ChannelsAndUrlsTable
             WHERE GuildId = @GuildId
               AND BaseUrl = @BaseUrl
-              AND Room    = @Room
-            LIMIT 1;";
+            ORDER BY Id;";
 
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@BaseUrl", new Uri(baseUrl).GetLeftPart(UriPartial.Authority));
-            command.Parameters.AddWithValue("@Room", room);
-
-            var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
-            return result?.ToString();
+            using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var storedRoom = SensitiveDataProtector.Unprotect(
+                    reader["Room"]?.ToString(),
+                    SensitiveDataPurposes.Room);
+                if (string.Equals(storedRoom, room, StringComparison.Ordinal))
+                    return reader["ChannelId"]?.ToString();
+            }
+            return null;
         }
         catch (Exception ex)
         {

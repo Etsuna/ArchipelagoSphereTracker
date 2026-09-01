@@ -338,14 +338,6 @@ public static class WebPortalCommandsPage
 
   <main>
     <section class=""panel"">
-      <h2>Configuration</h2>
-      <p class=""mode"">{T("WebProvideUserIdForPrivateThread")}</p>
-      <label>{T("WebUserIdOptionalPrivateThreads")}
-        <input id=""user-id"" placeholder=""123456789012345678"" />
-      </label>
-    </section>
-
-    <section class=""panel"">
       <h2>AST Room Portals (Guild)</h2>
       <p class=""mode"">{T("WebAvailableLinksForGuild")}</p>
       <ul id=""room-links"" class=""room-links-list"">
@@ -356,7 +348,6 @@ public static class WebPortalCommandsPage
     <section class=""panel"">
       <h2>{T("WebCreateThreadViaAddUrl")}</h2>
       <form data-command=""add-url"">
-        <input type=""hidden"" name=""userId"" />
         <label>URL Archipelago
           <input name=""url"" placeholder=""https://archipelago.gg/room/XXXX"" required />
         </label>
@@ -421,11 +412,12 @@ public static class WebPortalCommandsPage
     window.__astPortalCommandsInitialized = true;
 
 
-  // Attend /portal/{{guildId}}/{{channelId}}/commands.html (ids numériques)
-  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/commands\.html$/);
+  // Attend /portal/{{guildId}}/{{channelId}}/{{token}}/commands.html
+  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/([a-f0-9]+)\/commands\.html$/i);
 
   const guildId = params.get('guildId') || (m ? m[1] : '');
   const channelId = params.get('channelId') || (m ? m[2] : '');
+  const token = m ? m[3] : '';
 
   const meta = document.getElementById('channel-meta');
   meta.textContent = channelId ? ('Channel ID: ' + channelId) : 'Channel ID: —';
@@ -443,6 +435,8 @@ public static class WebPortalCommandsPage
     guildId +
     '/' +
     channelId +
+    '/' +
+    token +
     '/commands/execute';
 
   const yamlsApi =
@@ -452,9 +446,10 @@ public static class WebPortalCommandsPage
     guildId +
     '/' +
     channelId +
+    '/' +
+    token +
     '/commands/yamls';
 
-  const userInput = document.getElementById('user-id');
   const yamlSelects = document.querySelectorAll('[data-yaml-select]');
   const roomLinksRoot = document.getElementById('room-links');
 
@@ -463,6 +458,10 @@ public static class WebPortalCommandsPage
     basePath +
     '/api/portal/' +
     guildId +
+    '/' +
+    channelId +
+    '/' +
+    token +
     '/room-links';
 
   // Corrige les URL de download renvoyées par l’API (ex: /portal/... -> /AST/portal/...)
@@ -623,13 +622,6 @@ public static class WebPortalCommandsPage
           showResult(result, '{T("WebNoYamlSelected")}', null);
           return;
         }}
-      }}
-
-      // Ne pas envoyer userId vide
-      if (form.dataset.command === 'add-url') {{
-        const v = userInput.value.trim();
-        if (v) data.set('userId', v);
-        else data.delete('userId');
       }}
 
       showResult(result, '{T("WebProcessing")}', null);

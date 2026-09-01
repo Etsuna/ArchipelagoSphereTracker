@@ -70,6 +70,10 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
 
                         list.Add(new DisplayedItem
                         {
+                            FinderSlot = from,
+                            ReceiverSlot = receiverSlot,
+                            ItemId = itemId,
+                            LocationId = locId,
                             Finder = finderAlias,
                             Receiver = receiverAlias,
                             Item = itemName,
@@ -99,7 +103,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                 if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
 
                 int receiverSlot = 0;
-                List<(int from, int to, long locId, long itemId, bool found, string ent)>? buf = null;
+                List<(int from, int to, long locId, long itemId, bool found, string ent, int itemFlags, int status)>? buf = null;
 
                 while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
@@ -112,7 +116,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     }
                     else if (prop == "hints" && reader.TokenType == JsonTokenType.StartArray)
                     {
-                        buf ??= new List<(int, int, long, long, bool, string)>(16);
+                        buf ??= new List<(int, int, long, long, bool, string, int, int)>(16);
                         while (reader.Read())
                         {
                             if (reader.TokenType == JsonTokenType.EndArray) break;
@@ -124,9 +128,17 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                             reader.Read(); var itemId = ReadInt64(ref reader);
                             reader.Read(); var found = ReadBool(ref reader);
                             reader.Read(); var ent = ReadString(ref reader);
+                            var itemFlags = 0;
+                            var status = 0;
+                            if (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                            {
+                                itemFlags = ReadInt(ref reader);
+                                if (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                                    status = ReadInt(ref reader);
+                            }
                             while (reader.TokenType != JsonTokenType.EndArray && reader.Read()) { }
 
-                            buf.Add((from, to, locId, itemId, found, ent));
+                            buf.Add((from, to, locId, itemId, found, ent, itemFlags, status));
                         }
                     }
                     else
@@ -137,7 +149,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
 
                 if (receiverSlot >= 0 && buf is { Count: > 0 })
                 {
-                    foreach (var (from, to, locId, itemId, found, ent) in buf)
+                    foreach (var (from, to, locId, itemId, found, ent, itemFlags, status) in buf)
                     {
                         if (to != receiverSlot) continue;
 
@@ -152,13 +164,19 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
 
                         list.Add(new HintStatus
                         {
+                            FinderSlot = to,
+                            ReceiverSlot = from,
+                            ItemId = itemId,
+                            LocationId = locId,
                             Finder = finderAlias,
                             Receiver = receiverAlias,
                             Item = itemName,
                             Location = locName,
                             Game = finderGame,
                             Entrance = entrance,
-                            Flag = found ? "True" : "False"
+                            Flag = found ? "True" : "False",
+                            ItemFlags = itemFlags,
+                            Status = status
                         });
                     }
                 }
@@ -183,6 +201,7 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
 
                 list.Add(new GameStatus
                 {
+                    Slot = slot,
                     Name = alias,
                     Game = game,
                     Checks = found.ToString(CultureInfo.InvariantCulture),
@@ -229,9 +248,9 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
             return totalsBySlot;
         }
 
-        private static Dictionary<int, int> ParseChecksDoneCountsMap(string json)
+        public static Dictionary<int, IReadOnlyList<long>> ParseCheckedLocations(string json)
         {
-            var result = new Dictionary<int, int>();
+            var result = new Dictionary<int, IReadOnlyList<long>>();
             var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json),
                 new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
 
@@ -244,25 +263,27 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                 if (reader.TokenType != JsonTokenType.StartObject) { SkipValue(ref reader); continue; }
 
                 int slot = 0;
-                int count = 0;
+                List<long>? locations = null;
 
                 while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
                     if (reader.TokenType != JsonTokenType.PropertyName) { SkipValue(ref reader); continue; }
-                    var prop = reader.GetString(); reader.Read();
+                    var property = reader.GetString();
+                    reader.Read();
 
-                    if (prop == "player")
+                    if (property == "player")
                     {
                         slot = ReadInt(ref reader);
                     }
-                    else if (prop == "locations" && reader.TokenType == JsonTokenType.StartArray)
+                    else if (property == "locations" && reader.TokenType == JsonTokenType.StartArray)
                     {
-                        count = 0;
-                        while (reader.Read())
+                        locations = new List<long>();
+                        while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
                         {
-                            if (reader.TokenType == JsonTokenType.EndArray) break;
-                            SkipValue(ref reader);
-                            count++;
+                            if (reader.TokenType is JsonTokenType.Number or JsonTokenType.String)
+                                locations.Add(ReadInt64(ref reader));
+                            else
+                                SkipValue(ref reader);
                         }
                     }
                     else
@@ -271,11 +292,76 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                     }
                 }
 
-                if (slot >= 0)
-                    result[slot] = count;
+                if (slot > 0 && locations != null)
+                    result[slot] = locations.Distinct().Order().ToArray();
             }
 
             return result;
+        }
+
+        public static Dictionary<int, string?> ParsePlayerAliases(string json)
+        {
+            using var document = JsonDocument.Parse(json);
+            var result = new Dictionary<int, string?>();
+            if (document.RootElement.ValueKind != JsonValueKind.Object ||
+                !document.RootElement.TryGetProperty("aliases", out var aliases) ||
+                aliases.ValueKind != JsonValueKind.Array)
+            {
+                return result;
+            }
+
+            foreach (var entry in aliases.EnumerateArray())
+            {
+                if (entry.ValueKind != JsonValueKind.Object ||
+                    !entry.TryGetProperty("player", out var playerElement) ||
+                    !TryReadElementInt(playerElement, out var player) ||
+                    player <= 0)
+                {
+                    continue;
+                }
+
+                var alias = entry.TryGetProperty("alias", out var aliasElement) && aliasElement.ValueKind == JsonValueKind.String
+                    ? aliasElement.GetString()
+                    : null;
+                result[player] = string.IsNullOrWhiteSpace(alias) ? null : alias;
+            }
+
+            return result;
+        }
+
+        public static Dictionary<int, int> ParsePlayerStatuses(string json)
+        {
+            using var document = JsonDocument.Parse(json);
+            var result = new Dictionary<int, int>();
+            if (document.RootElement.ValueKind != JsonValueKind.Object ||
+                !document.RootElement.TryGetProperty("player_status", out var statuses) ||
+                statuses.ValueKind != JsonValueKind.Array)
+            {
+                return result;
+            }
+
+            foreach (var entry in statuses.EnumerateArray())
+            {
+                if (entry.ValueKind != JsonValueKind.Object ||
+                    !entry.TryGetProperty("player", out var playerElement) ||
+                    !TryReadElementInt(playerElement, out var player) ||
+                    player <= 0 ||
+                    !entry.TryGetProperty("status", out var statusElement) ||
+                    !TryReadElementInt(statusElement, out var status))
+                {
+                    continue;
+                }
+
+                result[player] = status;
+            }
+
+            return result;
+        }
+
+        private static Dictionary<int, int> ParseChecksDoneCountsMap(string json)
+        {
+            return ParseCheckedLocations(json)
+                .ToDictionary(entry => entry.Key, entry => entry.Value.Count);
         }
 
         // ---------- helpers JSON ----------
@@ -318,6 +404,17 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
                 JsonTokenType.String => long.TryParse(r.GetString(), out var n) ? n : 0L,
                 _ => 0L
             };
+
+        private static bool TryReadElementInt(JsonElement element, out int value)
+        {
+            if (element.ValueKind == JsonValueKind.Number)
+                return element.TryGetInt32(out value);
+            if (element.ValueKind == JsonValueKind.String)
+                return int.TryParse(element.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+
+            value = 0;
+            return false;
+        }
 
         private static bool ReadBool(ref Utf8JsonReader r)
             => r.TokenType switch

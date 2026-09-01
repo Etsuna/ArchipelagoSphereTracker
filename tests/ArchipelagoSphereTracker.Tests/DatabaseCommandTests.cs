@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Data.SQLite;
+using System;
 using Xunit;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -37,6 +38,18 @@ public class DatabaseCommandTests
         Assert.Equal("https://example.com", cached.BaseUrl);
         Assert.Equal("alpha", cached.Room);
         Assert.True(cached.Silent);
+
+        await using var connection = await Db.OpenReadAsync();
+        using var command = new SQLiteCommand(@"
+            SELECT Room, Tracker
+            FROM ChannelsAndUrlsTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId;", connection);
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        Assert.True(SensitiveDataProtector.IsProtected(reader["Room"]?.ToString()));
+        Assert.True(SensitiveDataProtector.IsProtected(reader["Tracker"]?.ToString()));
     }
 
     [Fact]
@@ -69,6 +82,10 @@ public class DatabaseCommandTests
             "Alias (PlayerOne)");
 
         Assert.Equal("GameA : https://example.com/patch", result);
+
+        await using var connection = await Db.OpenReadAsync();
+        using var command = new SQLiteCommand("SELECT Patch FROM UrlAndChannelPatchTable LIMIT 1;", connection);
+        Assert.True(SensitiveDataProtector.IsProtected((await command.ExecuteScalarAsync())?.ToString()));
     }
 
     [Fact]
@@ -149,7 +166,9 @@ public class DatabaseCommandTests
         using var scope = new TestDatabaseScope();
         var guildId = "guild-6";
 
-        for (var i = 0; i < 10; i++)
+        Assert.True(Declare.MaxThreadByGuild > 0);
+
+        for (var i = 0; i < Declare.MaxThreadByGuild - 1; i++)
         {
             await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(
                 guildId,
@@ -166,9 +185,9 @@ public class DatabaseCommandTests
 
         await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(
             guildId,
-            "channel-10",
+            $"channel-{Declare.MaxThreadByGuild - 1}",
             "https://example.com/room/zeta",
-            "room-10",
+            $"room-{Declare.MaxThreadByGuild - 1}",
             "tracker",
             silent: false,
             checkFrequency: "5m",
@@ -226,5 +245,45 @@ public class DatabaseCommandTests
         var result = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(guildId, channelId);
 
         Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task UpdatePollingPolicyFromWeb_ValidatesBoundsAndPersistsPolicy()
+    {
+        using var scope = new TestDatabaseScope();
+        const string guildId = "guild-policy";
+        const string channelId = "channel-policy";
+        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(
+            guildId,
+            channelId,
+            "https://example.com/room/policy",
+            "policy",
+            "tracker",
+            silent: false,
+            checkFrequency: "30m",
+            port: "0");
+
+        var rejected = await ChannelsAndUrlsCommands.UpdatePollingPolicyFromWeb(
+            "automatic",
+            "15m",
+            channelId,
+            guildId);
+        Assert.NotEmpty(rejected);
+
+        await ChannelsAndUrlsCommands.UpdatePollingPolicyFromWeb(
+            "fixed",
+            "1h",
+            channelId,
+            guildId);
+
+        await using var connection = await Db.OpenReadAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT PollingMode || ':' || MaximumCheckFrequency
+            FROM ChannelsAndUrlsTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        Assert.Equal("Fixed:1h", await command.ExecuteScalarAsync());
     }
 }

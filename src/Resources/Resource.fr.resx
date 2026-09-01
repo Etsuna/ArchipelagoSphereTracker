@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -339,146 +339,11 @@
   <data name="RACNoList" xml:space="preserve">
     <value>Il n’y a pas de liste.</value>
   </data>
-  <data name="SCDeleteAliasDescription" xml:space="preserve">
-    <value>Supprimer l’alias</value>
-  </data>
-  <data name="SCAddAliasDescription" xml:space="preserve">
-    <value>Ajouter un alias</value>
-  </data>
-  <data name="SCAddAliasSkipMentionDescription" xml:space="preserve">
-    <value>Définir si vous voulez ignorer les mentions inutiles (items filler)</value>
-  </data>
-  <data name="SCChooseAnAlias" xml:space="preserve">
-    <value>Choisissez un alias</value>
-  </data>
-  <data name="SCAddUrlDescription" xml:space="preserve">
-    <value>Ajoutez une URL et créez un fil de discussion.</value>
-  </data>
-  <data name="SCUrlToTrack" xml:space="preserve">
-    <value>L’URL à suivre</value>
-  </data>
-  <data name="SCThreadNameDescription" xml:space="preserve">
-    <value>Nom du fil de discussion à créer</value>
-  </data>
-  <data name="SCThreadTypeDescription" xml:space="preserve">
-    <value>Indiquez si le fil de discussion est public ou privé</value>
-  </data>
   <data name="SCThreadPublic" xml:space="preserve">
     <value>Public</value>
   </data>
   <data name="SCThreadPrivate" xml:space="preserve">
     <value>Privé</value>
-  </data>
-  <data name="SCSilentOption" xml:space="preserve">
-    <value>silencieux</value>
-  </data>
-  <data name="SCSilentDescription" xml:space="preserve">
-    <value>Envoyer un message uniquement lorsqu’un alias est défini</value>
-  </data>
-  <data name="SCThreadName" xml:space="preserve">
-    <value>nom-du-fil</value>
-  </data>
-  <data name="SCThreadType" xml:space="preserve">
-    <value>type-de-fil</value>
-  </data>
-  <data name="SCAddAliasSkipMention" xml:space="preserve">
-    <value>ignorer_mentions_items</value>
-  </data>
-  <data name="SCGetAliasesDescription" xml:space="preserve">
-    <value>Liste tous les alias</value>
-  </data>
-  <data name="SCDeleteUrlDescription" xml:space="preserve">
-    <value>Supprimer l’URL, nettoyer les alias et le récapitulatif</value>
-  </data>
-  <data name="SCStatusGameListDescription" xml:space="preserve">
-    <value>Statut pour tous les jeux</value>
-  </data>
-  <data name="SCRecapAllDescription" xml:space="preserve">
-    <value>Liste récapitulative des items pour tous les jeux</value>
-  </data>
-  <data name="SCInfoDescription" xml:space="preserve">
-    <value>Obtenez toutes les infos pour votre Archipelago</value>
-  </data>
-  <data name="SCGetPatchDescription" xml:space="preserve">
-    <value>Obtenir le patch pour l’alias</value>
-  </data>
-  <data name="SCRecapDescription" xml:space="preserve">
-    <value>Liste récapitulative des items pour un jeu spécifique</value>
-  </data>
-  <data name="RCRecapAndCleanDescription" xml:space="preserve">
-    <value>Lister et nettoyer la liste des items pour un jeu spécifique</value>
-  </data>
-  <data name="SCCleanDescription" xml:space="preserve">
-    <value>Nettoyer la liste des items pour un jeu spécifique</value>
-  </data>
-  <data name="SCCleanAllDescription" xml:space="preserve">
-    <value>Nettoyer tous les items récapitulatifs</value>
-  </data>
-  <data name="SCGetHintFromFinderDescription" xml:space="preserve">
-    <value>Obtenir un indice de la part du trouveur</value>
-  </data>
-  <data name="SCGetHintForReveiverDescription" xml:space="preserve">
-    <value>Obtenir un indice pour le receveur</value>
-  </data>
-  <data name="SCListItemDescription" xml:space="preserve">
-    <value>Lister tous les items pour l’alias</value>
-  </data>
-  <data name="SCListYamlsDescription" xml:space="preserve">
-    <value>Lister tous les fichiers YAML pour le canal</value>
-  </data>
-  <data name="SCListApworldDescription" xml:space="preserve">
-    <value>Lister tous les APWorlds</value>
-  </data>
-  <data name="SCApworldInfoDescription" xml:space="preserve">
-    <value>Lister les infos pour un APWorld spécifique</value>
-  </data>
-  <data name="SCApworldInfoChoiceDescription" xml:space="preserve">
-    <value>Choisissez un APWorld</value>
-  </data>
-  <data name="SCBackupYamlDescription" xml:space="preserve">
-    <value>Sauvegarder tous les YAMLs pour le canal</value>
-  </data>
-  <data name="SCBackupApworldDescription" xml:space="preserve">
-    <value>Sauvegarder tous les APWorlds pour le canal</value>
-  </data>
-  <data name="SCDownloadYamlTemplateDescription" xml:space="preserve">
-    <value>Télécharger un modèle YAML</value>
-  </data>
-  <data name="SCTemplateDescription" xml:space="preserve">
-    <value>Choisissez un fichier YAML à télécharger</value>
-  </data>
-  <data name="SCDeleteYamlDescription" xml:space="preserve">
-    <value>Supprimer un fichier YAML spécifique</value>
-  </data>
-  <data name="SCDeleteYamlChooseDescription" xml:space="preserve">
-    <value>Choisissez un fichier YAML à supprimer</value>
-  </data>
-  <data name="SCCleanYamlDescription" xml:space="preserve">
-    <value>Nettoyer tous les YAMLs dans le canal</value>
-  </data>
-  <data name="SCSendYamlDescription" xml:space="preserve">
-    <value>Envoyer ou remplacer un fichier YAML pour la génération</value>
-  </data>
-  <data name="SCSendYamlChooseDescription" xml:space="preserve">
-    <value>Téléverser un fichier YAML</value>
-  </data>
-  <data name="SCGenerateWithZipDescription" xml:space="preserve">
-    <value>Générer un multiworld à partir d’un fichier ZIP</value>
-  </data>
-  <data name="SCGenerateWithZipChooseDescription" xml:space="preserve">
-    <value>Téléverser un fichier ZIP contenant des fichiers YAML</value>
-  </data>
-  <data name="SCSendApworldDescription" xml:space="preserve">
-    <value>Envoyer ou remplacer un fichier APWorld</value>
-  </data>
-  <data name="SCSendApworldChooseDescription" xml:space="preserve">
-    <value>Téléverser un fichier APWorld</value>
-  </data>
-  <data name="SCGenerateDescription" xml:space="preserve">
-    <value>Générer un multiworld à partir des YAMLs existants</value>
-  </data>
-  <data name="SCTestGenerateDescription" xml:space="preserve">
-    <value>Tester la génération d’un multiworld à partir des YAMLs existants</value>
   </data>
   <data name="URLEmpty" xml:space="preserve">
     <value>URL vide non autorisée.</value>
@@ -492,14 +357,8 @@
   <data name="UrlPrivateThreadUserNotFound" xml:space="preserve">
     <value>Utilisateur introuvable pour le fil privé.</value>
   </data>
-  <data name="UrlGamePatch" xml:space="preserve">
-    <value>Nom : {0} | Téléchargement : {1}</value>
-  </data>
   <data name="URLBotReady" xml:space="preserve">
     <value>BOT prêt, GL&amp;HF!</value>
-  </data>
-  <data name="URLSet" xml:space="preserve">
-    <value>URL définie sur {0}. Messages configurés pour ce canal. Veuillez patienter pendant que le programme récupère tous les alias.</value>
   </data>
   <data name="URLAlreadySet" xml:space="preserve">
     <value>URL déjà définie pour ce canal. Supprimez l'URL avant d'en ajouter une nouvelle.</value>
@@ -738,21 +597,6 @@
   <data name="CheckPlayerMax" xml:space="preserve">
     <value>Joueurs minimum &gt; joueurs maximum. Impossible d’ajouter cet archipel. Le nombre maximum de joueurs est défini sur {0}.</value>
   </data>
-  <data name="Every" xml:space="preserve">
-    <value>Toutes les</value>
-  </data>
-  <data name="Hour" xml:space="preserve">
-    <value>heures</value>
-  </data>
-  <data name="EveryDay" xml:space="preserve">
-    <value>Tous les jours</value>
-  </data>
-  <data name="CheckFrequency" xml:space="preserve">
-    <value>frequence-check</value>
-  </data>
-  <data name="CheckFrequencyDesc" xml:space="preserve">
-    <value>Fréquence de vérification, 5m par défaut.</value>
-  </data>
   <data name="TDMSkippingCheck" xml:space="preserve">
     <value>Vérification ignorée pour: {0} ({1} minutes).</value>
   </data>
@@ -831,32 +675,11 @@
   <data name="DownloadAndInstall" xml:space="preserve">
     <value>Téléchargez et installez la version d'Archipelago {0} avant d'installer le bot avec le mode Archipelago.</value>
   </data>
-  <data name="UpdateAvailable" xml:space="preserve">
-    <value>Mise à jour disponible :</value>
-  </data>
-  <data name="DownloadUpdate" xml:space="preserve">
-    <value>Téléchargement de la mise à jour :</value>
-  </data>
   <data name="Allcheckdone" xml:space="preserve">
     <value>Tous les joueurs ont complété leurs checks. Suppression automatique des informations dans la base de données.</value>
   </data>
   <data name="Discord" xml:space="preserve">
     <value>N’hésitez pas à rejoindre le Discord en cas de question ou de bug : https://discord.gg/PJfWRKVyEW</value>
-  </data>
-  <data name="DiscordDesc" xml:space="preserve">
-    <value>Affiche le lien du Discord.</value>
-  </data>
-  <data name="SCChooseAnItem" xml:space="preserve">
-    <value>Choisissez un objet</value>
-  </data>
-  <data name="SCExcludedItemDesc" xml:space="preserve">
-    <value>Exclut les notifications pour cet item</value>
-  </data>
-  <data name="SCExcludedItemListDesc" xml:space="preserve">
-    <value>Affiche la liste de tes items exclus</value>
-  </data>
-  <data name="SCDeleteExcludedItemDesc" xml:space="preserve">
-    <value>Supprime l'objet de la liste d’exclusion</value>
   </data>
   <data name="ExcludeItemAdded" xml:space="preserve">
     <value>l'objet {0} ajouté à la liste d’exclusion de {1}.</value>
@@ -878,12 +701,6 @@
   </data>
   <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
     <value>La salle existe déjà dans un autre fil de discussion, supprimez d'abord le fil de discussion pour ajouter la même salle et attendez au moins une minute pour faire un autre ajout (le temps de nettoyer complètement les infos de la base de donnée).</value>
-  </data>
-  <data name="None" xml:space="preserve">
-    <value>Pas de filtre</value>
-  </data>
-  <data name="SCUpdateSilentOptionDescription" xml:space="preserve">
-    <value>Mise à jour de l'option "Silent".</value>
   </data>
   <data name="SilentModeEnabled" xml:space="preserve">
     <value>Mode silencieux activé.</value>
@@ -921,320 +738,20 @@
   <data name="WebPortalLink" xml:space="preserve">
     <value>🌌 Portail : {0}</value>
   </data>
-  <data name="SCPortalLinkDescription" xml:space="preserve">
-    <value>Obtenir le lien du portail web.</value>
-  </data>
   <data name="WebPortalDisabled" xml:space="preserve">
     <value>Le portail web est désactivé.</value>
-  </data>
-  <data name="SCPortalUrlDescription" xml:space="preserve">
-    <value>Obtenez la page des commandes du portail Web.</value>
   </data>
   <data name="WebPortalCommandsLink" xml:space="preserve">
     <value>🌌 Commandes du portail : {0}</value>
   </data>
-  <data name="WebAccess" xml:space="preserve">
-    <value>Accès</value>
-  </data>
-  <data name="WebAddExistingAliasInThread" xml:space="preserve">
-    <value>Ajouter un alias existant dans ce thread :</value>
-  </data>
-  <data name="WebAddSelectedAlias" xml:space="preserve">
-    <value>Ajouter l'alias sélectionné</value>
-  </data>
-  <data name="WebAddingAlias" xml:space="preserve">
-    <value>Ajout de l'alias...</value>
-  </data>
-  <data name="WebAliasAddedPrefix" xml:space="preserve">
-    <value>Alias ajouté :</value>
-  </data>
-  <data name="WebAliasDeletedPrefix" xml:space="preserve">
-    <value>Alias supprimé :</value>
-  </data>
-  <data name="WebAliasNotFound" xml:space="preserve">
-    <value>Alias introuvable.</value>
-  </data>
-  <data name="WebAutoAddMembersPublic" xml:space="preserve">
-    <value>Auto-ajouter les membres (public)</value>
-  </data>
-  <data name="WebAvailableLinksForGuild" xml:space="preserve">
-    <value>Liens disponibles pour ce Guild ID avec les noms de thread.</value>
-  </data>
-  <data name="WebCheckFrequency" xml:space="preserve">
-    <value>Fréquence de vérification</value>
-  </data>
-  <data name="WebCleanAllYamls" xml:space="preserve">
-    <value>Nettoyer tous les YAML</value>
-  </data>
-  <data name="WebCommandError" xml:space="preserve">
-    <value>Erreur lors de la commande.</value>
-  </data>
-  <data name="WebCommandExecuted" xml:space="preserve">
-    <value>Commande exécutée.</value>
-  </data>
-  <data name="WebCreateThread" xml:space="preserve">
-    <value>Créer le thread</value>
-  </data>
-  <data name="WebCreateThreadViaAddUrl" xml:space="preserve">
-    <value>Créer un thread via /add-url</value>
-  </data>
-  <data name="WebCurrentRecap" xml:space="preserve">
-    <value>Recap en cours</value>
-  </data>
-  <data name="WebDeleteAliasFromYourList" xml:space="preserve">
-    <value>Supprimer un alias de votre liste :</value>
-  </data>
-  <data name="WebDeleteRecap" xml:space="preserve">
-    <value>Supprimer le recap</value>
-  </data>
-  <data name="WebDeleteSelectedAlias" xml:space="preserve">
-    <value>Supprimer l'alias sélectionné</value>
-  </data>
-  <data name="WebDeleteThreadUrl" xml:space="preserve">
-    <value>Supprimer l'URL du thread</value>
-  </data>
-  <data name="WebDeleteYaml" xml:space="preserve">
-    <value>Supprimer le YAML</value>
-  </data>
-  <data name="WebDeletingAlias" xml:space="preserve">
-    <value>Suppression de l'alias...</value>
-  </data>
-  <data name="WebDeletingRecap" xml:space="preserve">
-    <value>Suppression du recap...</value>
-  </data>
-  <data name="WebDisabled" xml:space="preserve">
-    <value>Désactivé</value>
-  </data>
-  <data name="WebDiscordCommands" xml:space="preserve">
-    <value>Commandes Discord</value>
-  </data>
-  <data name="WebDownloadFile" xml:space="preserve">
-    <value>Télécharger le fichier</value>
-  </data>
-  <data name="WebDownloadTemplate" xml:space="preserve">
-    <value>Télécharger le template</value>
-  </data>
-  <data name="WebDownloadYaml" xml:space="preserve">
-    <value>Télécharger le YAML</value>
-  </data>
-  <data name="WebEnabled" xml:space="preserve">
-    <value>Activé</value>
-  </data>
-  <data name="WebErrorLoadingAliases" xml:space="preserve">
-    <value>Erreur lors du chargement des alias.</value>
-  </data>
-  <data name="WebErrorLoadingYamls" xml:space="preserve">
-    <value>Erreur de chargement des YAML</value>
-  </data>
-  <data name="WebEvery12Hours" xml:space="preserve">
-    <value>Toutes les 12 heures</value>
-  </data>
-  <data name="WebEvery12h" xml:space="preserve">
-    <value>Toutes les 12h</value>
-  </data>
-  <data name="WebEvery15Minutes" xml:space="preserve">
-    <value>Toutes les 15 minutes</value>
-  </data>
-  <data name="WebEvery18Hours" xml:space="preserve">
-    <value>Toutes les 18 heures</value>
-  </data>
-  <data name="WebEvery18h" xml:space="preserve">
-    <value>Toutes les 18h</value>
-  </data>
-  <data name="WebEvery1Hour" xml:space="preserve">
-    <value>Toutes les 1 heure</value>
-  </data>
-  <data name="WebEvery1h" xml:space="preserve">
-    <value>Toutes les 1h</value>
-  </data>
-  <data name="WebEvery30Minutes" xml:space="preserve">
-    <value>Toutes les 30 minutes</value>
-  </data>
-  <data name="WebEvery5Minutes" xml:space="preserve">
-    <value>Toutes les 5 minutes</value>
-  </data>
-  <data name="WebEvery6Hours" xml:space="preserve">
-    <value>Toutes les 6 heures</value>
-  </data>
-  <data name="WebEvery6h" xml:space="preserve">
-    <value>Toutes les 6h</value>
-  </data>
-  <data name="WebEveryDay" xml:space="preserve">
-    <value>Tous les jours</value>
-  </data>
-  <data name="WebFrequency" xml:space="preserve">
-    <value>Fréquence</value>
-  </data>
-  <data name="WebGameLabelPrefix" xml:space="preserve">
-    <value>Jeu : </value>
-  </data>
-  <data name="WebGameUnknown" xml:space="preserve">
-    <value>Jeu : inconnu</value>
-  </data>
   <data name="WebGenerate" xml:space="preserve">
     <value>Générer</value>
-  </data>
-  <data name="WebGenerateWithZip" xml:space="preserve">
-    <value>Générer avec ZIP</value>
   </data>
   <data name="WebGeneration" xml:space="preserve">
     <value>Génération</value>
   </data>
-  <data name="WebGuildIdMissingInUrl" xml:space="preserve">
-    <value>Guild ID introuvable dans l’URL.</value>
-  </data>
-  <data name="WebInfoUnavailableMissingIds" xml:space="preserve">
-    <value>Infos indisponibles : guildId/channelId introuvables.</value>
-  </data>
-  <data name="WebInvalidUrlMissingIds" xml:space="preserve">
-    <value>URL invalide : guildId/channelId introuvables.</value>
-  </data>
-  <data name="WebInvalidUrlOpenViaPortal" xml:space="preserve">
-    <value>URL invalide : guildId/channelId introuvables. Ouvre la page via /portal/{guildId}/{channelId}/commands.html</value>
-  </data>
-  <data name="WebLastUpdate" xml:space="preserve">
-    <value>Dernière mise à jour</value>
-  </data>
-  <data name="WebListYamls" xml:space="preserve">
-    <value>Lister les YAML</value>
-  </data>
-  <data name="WebLoadingAliases" xml:space="preserve">
-    <value>Chargement des alias…</value>
-  </data>
-  <data name="WebLoadingAstRoomPortals" xml:space="preserve">
-    <value>Chargement des AST Room Portals...</value>
-  </data>
-  <data name="WebLoadingInfo" xml:space="preserve">
-    <value>Chargement des infos…</value>
-  </data>
-  <data name="WebLoadingThreadAliases" xml:space="preserve">
-    <value>Chargement des alias du thread...</value>
-  </data>
-  <data name="WebLoadingYamls" xml:space="preserve">
-    <value>Chargement des YAML...</value>
-  </data>
-  <data name="WebLoadingYourAliases" xml:space="preserve">
-    <value>Chargement de vos alias...</value>
-  </data>
-  <data name="WebNo" xml:space="preserve">
-    <value>Non</value>
-  </data>
-  <data name="WebNoActiveHint" xml:space="preserve">
-    <value>Aucun hint actif.</value>
-  </data>
-  <data name="WebNoActiveRecapForUser" xml:space="preserve">
-    <value>Aucun recap actif pour cet utilisateur.</value>
-  </data>
-  <data name="WebNoAliasForThread" xml:space="preserve">
-    <value>Aucun alias trouvé pour ce thread.</value>
-  </data>
-  <data name="WebNoAliasInThread" xml:space="preserve">
-    <value>Aucun alias disponible dans ce thread</value>
-  </data>
-  <data name="WebNoAstRoomPortalForGuild" xml:space="preserve">
-    <value>Aucun AST Room Portal disponible pour ce Guild ID.</value>
-  </data>
-  <data name="WebNoHintAsFinder" xml:space="preserve">
-    <value>Aucun hint en tant que Finder.</value>
-  </data>
-  <data name="WebNoHintAsReceiver" xml:space="preserve">
-    <value>Aucun hint en tant que Receiver.</value>
-  </data>
-  <data name="WebNoInfoAvailable" xml:space="preserve">
-    <value>Aucune info disponible.</value>
-  </data>
-  <data name="WebNoPatchLinkForAlias" xml:space="preserve">
-    <value>Aucun lien de patch disponible pour cet alias.</value>
-  </data>
-  <data name="WebNoPendingItem" xml:space="preserve">
-    <value>Aucun item en attente.</value>
-  </data>
-  <data name="WebNoReceivedItems" xml:space="preserve">
-    <value>Aucun item reçu.</value>
-  </data>
-  <data name="WebNoReceivedItemsYet" xml:space="preserve">
-    <value>Aucun item reçu pour le moment.</value>
-  </data>
-  <data name="WebNoRegisteredAlias" xml:space="preserve">
-    <value>Vous n'avez aucun alias enregistré</value>
-  </data>
-  <data name="WebNoTemplateAvailable" xml:space="preserve">
-    <value>Aucun template disponible</value>
-  </data>
-  <data name="WebNoYamlAvailable" xml:space="preserve">
-    <value>Aucun YAML disponible</value>
-  </data>
-  <data name="WebNoYamlSelected" xml:space="preserve">
-    <value>Aucun YAML sélectionné.</value>
-  </data>
-  <data name="WebOpen" xml:space="preserve">
-    <value>Ouvrir</value>
-  </data>
-  <data name="WebPersonalPortal" xml:space="preserve">
-    <value>Portail personnel</value>
-  </data>
-  <data name="WebPortalUnavailable" xml:space="preserve">
-    <value>Portail indisponible.</value>
-  </data>
-  <data name="WebPrivate" xml:space="preserve">
-    <value>Privé</value>
-  </data>
-  <data name="WebProcessing" xml:space="preserve">
-    <value>Traitement en cours...</value>
-  </data>
-  <data name="WebProvideUserIdForPrivateThread" xml:space="preserve">
-    <value>Renseignez un user ID si vous ciblez un thread privé.</value>
-  </data>
-  <data name="WebQuickActions" xml:space="preserve">
-    <value>Actions rapides</value>
-  </data>
-  <data name="WebRecapDeletedFor" xml:space="preserve">
-    <value>Recap supprimé pour</value>
-  </data>
-  <data name="WebReceivedItems" xml:space="preserve">
-    <value>Items reçus</value>
-  </data>
-  <data name="WebRefreshData" xml:space="preserve">
-    <value>Rafraîchir les données</value>
-  </data>
-  <data name="WebSelectAlias" xml:space="preserve">
-    <value>Sélectionnez un alias</value>
-  </data>
-  <data name="WebSelectAliasForPatch" xml:space="preserve">
-    <value>Sélectionnez un alias pour voir le patch.</value>
-  </data>
-  <data name="WebSelectAliasToAdd" xml:space="preserve">
-    <value>Sélectionnez un alias à ajouter.</value>
-  </data>
-  <data name="WebSelectAliasToDelete" xml:space="preserve">
-    <value>Sélectionnez un alias à supprimer.</value>
-  </data>
-  <data name="WebSelectYaml" xml:space="preserve">
-    <value>Sélectionner un YAML</value>
-  </data>
-  <data name="WebSendApworld" xml:space="preserve">
-    <value>Envoyer l'APWorld</value>
-  </data>
-  <data name="WebSendYaml" xml:space="preserve">
-    <value>Envoyer le YAML</value>
-  </data>
-  <data name="WebShowGameStatus" xml:space="preserve">
-    <value>Afficher le statut des jeux</value>
-  </data>
-  <data name="WebShowInfo" xml:space="preserve">
-    <value>Afficher les infos</value>
-  </data>
   <data name="WebSilentMode" xml:space="preserve">
     <value>Mode silencieux</value>
-  </data>
-  <data name="WebSyncingDatabase" xml:space="preserve">
-    <value>Synchronisation avec la base de données...</value>
-  </data>
-  <data name="WebTestGeneration" xml:space="preserve">
-    <value>Test génération</value>
-  </data>
-  <data name="WebThreadCommandsSubtitle" xml:space="preserve">
-    <value>Commandes du thread</value>
   </data>
   <data name="WebThreadName" xml:space="preserve">
     <value>Nom du thread</value>
@@ -1242,76 +759,898 @@
   <data name="WebThreadType" xml:space="preserve">
     <value>Type de thread</value>
   </data>
-  <data name="WebUnableToAddAlias" xml:space="preserve">
-    <value>Impossible d'ajouter cet alias.</value>
-  </data>
-  <data name="WebUnableToDeleteAlias" xml:space="preserve">
-    <value>Impossible de supprimer cet alias.</value>
-  </data>
-  <data name="WebUnableToDeleteRecap" xml:space="preserve">
-    <value>Impossible de supprimer le recap.</value>
-  </data>
-  <data name="WebUnableToLoadAliases" xml:space="preserve">
-    <value>Impossible de charger les alias.</value>
-  </data>
-  <data name="WebUnableToLoadAstRoomPortals" xml:space="preserve">
-    <value>Impossible de charger les AST Room Portals.</value>
-  </data>
-  <data name="WebUnableToLoadInfo" xml:space="preserve">
-    <value>Impossible de charger les infos.</value>
-  </data>
-  <data name="WebUnableToLoadThreadAliases" xml:space="preserve">
-    <value>Impossible de charger les alias du thread</value>
-  </data>
-  <data name="WebUnableToLoadYourAliases" xml:space="preserve">
-    <value>Impossible de charger vos alias</value>
-  </data>
-  <data name="WebUnableToReachServer" xml:space="preserve">
-    <value>Impossible de joindre le serveur.</value>
-  </data>
-  <data name="WebUpdateFrequency" xml:space="preserve">
-    <value>Mettre à jour la fréquence</value>
-  </data>
-  <data name="WebUpdateSilentMode" xml:space="preserve">
-    <value>Mettre à jour le mode silencieux</value>
-  </data>
-  <data name="WebUsefulInfo" xml:space="preserve">
-    <value>Infos utiles</value>
-  </data>
-  <data name="WebUserIdOptionalPrivateThreads" xml:space="preserve">
-    <value>User ID (optionnel, utile pour threads privés)</value>
-  </data>
-  <data name="WebYamlFileToDelete" xml:space="preserve">
-    <value>Fichier YAML à supprimer</value>
-  </data>
-  <data name="WebYamlFileToDownload" xml:space="preserve">
-    <value>Fichier YAML à télécharger</value>
-  </data>
-  <data name="WebYes" xml:space="preserve">
-    <value>Oui</value>
-  </data>
-  <data name="WebYourAliases" xml:space="preserve">
-    <value>Vos alias</value>
-  </data>
-  <data name="WebNoAliasAvailable" xml:space="preserve">
-    <value>Aucun alias disponible</value>
-  </data>
-  <data name="WebAliasesUnavailable" xml:space="preserve">
-    <value>Alias indisponibles</value>
-  </data>
-  <data name="WebAPWorldList" xml:space="preserve">
-    <value>Lister les APWorld</value>
-  </data>
-  <data name="WebActiveHints" xml:space="preserve">
-    <value>Hints actifs</value>
-  </data>
-  <data name="WebUploaderUnYAML" xml:space="preserve">
-    <value>Uploader un YAML</value>
-  </data>
   <data name="ASTUserCommand" xml:space="preserve">
     <value>Utilisez /ast-user-portal pour gérer vos alias et vos recaps.</value>
   </data>
   <data name="ASTRoomCommand" xml:space="preserve">
     <value>Utilisez /ast-room-portal pour gérer votre room.</value>
+  </data>
+  <data name="AstCenterASTAdministration" xml:space="preserve">
+    <value>🛠️ Administration AST</value>
+  </data>
+  <data name="AstCenterASTCommandCenter" xml:space="preserve">
+    <value>Centre de commandes AST</value>
+  </data>
+  <data name="AstCenterASTHealth" xml:space="preserve">
+    <value>Santé AST</value>
+  </data>
+  <data name="AstCenterASTPrivateInterface" xml:space="preserve">
+    <value>AST · interface privée</value>
+  </data>
+  <data name="AstCenterActionUnavailableInThisContext" xml:space="preserve">
+    <value>Action indisponible dans ce contexte.</value>
+  </data>
+  <data name="AstCenterActionsRestrictedToThisRoomSManagers" xml:space="preserve">
+    <value>Actions réservées aux gestionnaires de cette room.</value>
+  </data>
+  <data name="AstCenterAddAnExclusionForSlot" xml:space="preserve">
+    <value>Ajouter une exclusion au slot…</value>
+  </data>
+  <data name="AstCenterAddOrRemoveExclusionsForYourOwnSlots" xml:space="preserve">
+    <value>Ajoutez ou retirez les exclusions de vos propres slots. </value>
+  </data>
+  <data name="AstCenterAdministration" xml:space="preserve">
+    <value>Administration</value>
+  </data>
+  <data name="AstCenterAdvanced" xml:space="preserve">
+    <value>Avancé</value>
+  </data>
+  <data name="AstCenterAdvancedRecaps" xml:space="preserve">
+    <value>🧹 Récaps avancés</value>
+  </data>
+  <data name="AstCenterAdvancedSettings" xml:space="preserve">
+    <value>⚙️ Réglages avancés</value>
+  </data>
+  <data name="AstCenterAll" xml:space="preserve">
+    <value>toutes</value>
+  </data>
+  <data name="AstCenterAllYAMLFilesAndGenerationDataForThisChannel" xml:space="preserve">
+    <value>Tous les YAML et les données de génération de ce salon seront supprimés.</value>
+  </data>
+  <data name="AstCenterAllYourRecaps" xml:space="preserve">
+    <value>tous vos récaps</value>
+  </data>
+  <data name="AstCenterAllYourRecapsWereCleared" xml:space="preserve">
+    <value>Tous vos récaps ont été vidés.</value>
+  </data>
+  <data name="AstCenterAnalysisSettingsUpdated" xml:space="preserve">
+    <value>Réglages d’analyse mis à jour.</value>
+  </data>
+  <data name="AstCenterAnalyze" xml:space="preserve">
+    <value>Analyser</value>
+  </data>
+  <data name="AstCenterAnalyzeSpoiler" xml:space="preserve">
+    <value>Analyser le spoiler</value>
+  </data>
+  <data name="AstCenterAssociateASlot" xml:space="preserve">
+    <value>Associer un slot…</value>
+  </data>
+  <data name="AstCenterAssociateASlot2" xml:space="preserve">
+    <value>Associer un slot</value>
+  </data>
+  <data name="AstCenterAssociateByName" xml:space="preserve">
+    <value>Associer par nom</value>
+  </data>
+  <data name="AstCenterAssociations" xml:space="preserve">
+    <value>Associations</value>
+  </data>
+  <data name="AstCenterAstMustBeUsedInADiscordServer" xml:space="preserve">
+    <value>`/ast` doit être utilisé dans un serveur Discord.</value>
+  </data>
+  <data name="AstCenterAutomatic15MinMax" xml:space="preserve">
+    <value>Automatique · 15 min max</value>
+  </data>
+  <data name="AstCenterAutomatic1HMax" xml:space="preserve">
+    <value>Automatique · 1 h max</value>
+  </data>
+  <data name="AstCenterAutomatic30MinMax" xml:space="preserve">
+    <value>Automatique · 30 min max</value>
+  </data>
+  <data name="AstCenterAutomatic6HMax" xml:space="preserve">
+    <value>Automatique · 6 h max</value>
+  </data>
+  <data name="AstCenterAvailableItemsPage" xml:space="preserve">
+    <value>{0} objets disponibles — page {1}/{2}.{3}</value>
+  </data>
+  <data name="AstCenterBack" xml:space="preserve">
+    <value>Retour</value>
+  </data>
+  <data name="AstCenterBackup" xml:space="preserve">
+    <value>Sauvegarder</value>
+  </data>
+  <data name="AstCenterCancel" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="AstCenterChooseARoom" xml:space="preserve">
+    <value>Choisir une room…</value>
+  </data>
+  <data name="AstCenterChooseASlot" xml:space="preserve">
+    <value>Choisir un slot…</value>
+  </data>
+  <data name="AstCenterChooseASlotToAnalyzeFirst" xml:space="preserve">
+    <value>Choisissez d’abord un slot à analyser.</value>
+  </data>
+  <data name="AstCenterChooseAnItem" xml:space="preserve">
+    <value>Choisir un objet…</value>
+  </data>
+  <data name="AstCenterChooseModeAndInterval" xml:space="preserve">
+    <value>Choisir le mode et la fréquence…</value>
+  </data>
+  <data name="AstCenterChooseOneOfMySlots" xml:space="preserve">
+    <value>Choisir un de mes slots…</value>
+  </data>
+  <data name="AstCenterChooseTheAreaYouWantToOpen" xml:space="preserve">
+    <value>Choisissez l’espace que vous souhaitez ouvrir.</value>
+  </data>
+  <data name="AstCenterCleanAll" xml:space="preserve">
+    <value>Tout nettoyer</value>
+  </data>
+  <data name="AstCenterCleanYAMLFiles" xml:space="preserve">
+    <value>Nettoyer les YAML</value>
+  </data>
+  <data name="AstCenterClearAll" xml:space="preserve">
+    <value>Tout vider</value>
+  </data>
+  <data name="AstCenterClearFilter" xml:space="preserve">
+    <value>Effacer le filtre</value>
+  </data>
+  <data name="AstCenterClearOneRecap" xml:space="preserve">
+    <value>Vider un récap…</value>
+  </data>
+  <data name="AstCenterClose" xml:space="preserve">
+    <value>Fermer</value>
+  </data>
+  <data name="AstCenterConfigure" xml:space="preserve">
+    <value>Configurer</value>
+  </data>
+  <data name="AstCenterConfigureAnalysis" xml:space="preserve">
+    <value>Configurer l’analyse</value>
+  </data>
+  <data name="AstCenterConfigureRoom" xml:space="preserve">
+    <value>Configurer une room</value>
+  </data>
+  <data name="AstCenterConfirm" xml:space="preserve">
+    <value>Confirmer</value>
+  </data>
+  <data name="AstCenterConfirmClearing" xml:space="preserve">
+    <value>Confirmer le nettoyage de {0} ?</value>
+  </data>
+  <data name="AstCenterConfirmDeletionOf" xml:space="preserve">
+    <value>Confirmer la suppression de **{0}** ?</value>
+  </data>
+  <data name="AstCenterConfirmRemoval" xml:space="preserve">
+    <value>Confirmer le retrait</value>
+  </data>
+  <data name="AstCenterConfirmation" xml:space="preserve">
+    <value>⚠️ Confirmation</value>
+  </data>
+  <data name="AstCenterConfirmationExpired" xml:space="preserve">
+    <value>Confirmation expirée.</value>
+  </data>
+  <data name="AstCenterDelete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="AstCenterDeleteAYAML" xml:space="preserve">
+    <value>Supprimer un YAML…</value>
+  </data>
+  <data name="AstCenterDeleteAll" xml:space="preserve">
+    <value>Tout supprimer</value>
+  </data>
+  <data name="AstCenterDeletePermanently" xml:space="preserve">
+    <value>Supprimer définitivement</value>
+  </data>
+  <data name="AstCenterDeleteRoom" xml:space="preserve">
+    <value>Supprimer la room</value>
+  </data>
+  <data name="AstCenterDeleteYAML" xml:space="preserve">
+    <value>Supprimer un YAML</value>
+  </data>
+  <data name="AstCenterDissociateASlot" xml:space="preserve">
+    <value>Dissocier un slot</value>
+  </data>
+  <data name="AstCenterDissociateByName" xml:space="preserve">
+    <value>Dissocier par nom</value>
+  </data>
+  <data name="AstCenterDissociateOneOfMySlots" xml:space="preserve">
+    <value>Dissocier un de mes slots…</value>
+  </data>
+  <data name="AstCenterDownloadATemplate" xml:space="preserve">
+    <value>Télécharger un modèle…</value>
+  </data>
+  <data name="AstCenterEnterASlotAndUseOnlyNonNegativeIntegers" xml:space="preserve">
+    <value>Indiquez un slot et utilisez uniquement des entiers positifs ou zéro pour les sphères.</value>
+  </data>
+  <data name="AstCenterEveryDeletionRequiresConfirmation" xml:space="preserve">
+    <value>Toutes les suppressions demandent une confirmation. </value>
+  </data>
+  <data name="AstCenterExactSlotName" xml:space="preserve">
+    <value>Nom exact du slot</value>
+  </data>
+  <data name="AstCenterFiller" xml:space="preserve">
+    <value>Filler</value>
+  </data>
+  <data name="AstCenterFillerTraps" xml:space="preserve">
+    <value>Filler + pièges</value>
+  </data>
+  <data name="AstCenterFilter" xml:space="preserve">
+    <value> Filtre : « {0} ».</value>
+  </data>
+  <data name="AstCenterFilter2" xml:space="preserve">
+    <value>Filtre : « {0} ». </value>
+  </data>
+  <data name="AstCenterFilterAll" xml:space="preserve">
+    <value>Tout filtrer</value>
+  </data>
+  <data name="AstCenterFilterUnnecessaryMentions" xml:space="preserve">
+    <value>Filtrer les mentions inutiles…</value>
+  </data>
+  <data name="AstCenterFirstBlockingSphere" xml:space="preserve">
+    <value>Première sphère bloquante</value>
+  </data>
+  <data name="AstCenterFixed12H" xml:space="preserve">
+    <value>Fixe · 12 h</value>
+  </data>
+  <data name="AstCenterFixed15Min" xml:space="preserve">
+    <value>Fixe · 15 min</value>
+  </data>
+  <data name="AstCenterFixed18H" xml:space="preserve">
+    <value>Fixe · 18 h</value>
+  </data>
+  <data name="AstCenterFixed1Day" xml:space="preserve">
+    <value>Fixe · 1 jour</value>
+  </data>
+  <data name="AstCenterFixed1H" xml:space="preserve">
+    <value>Fixe · 1 h</value>
+  </data>
+  <data name="AstCenterFixed30Min" xml:space="preserve">
+    <value>Fixe · 30 min</value>
+  </data>
+  <data name="AstCenterFixed5Min" xml:space="preserve">
+    <value>Fixe · 5 min</value>
+  </data>
+  <data name="AstCenterFixed6H" xml:space="preserve">
+    <value>Fixe · 6 h</value>
+  </data>
+  <data name="AstCenterFullOrPartialItemName" xml:space="preserve">
+    <value>Nom ou partie du nom de l’objet</value>
+  </data>
+  <data name="AstCenterFullOrPartialName" xml:space="preserve">
+    <value>Nom ou partie du nom</value>
+  </data>
+  <data name="AstCenterFullReport" xml:space="preserve">
+    <value>Rapport complet</value>
+  </data>
+  <data name="AstCenterGenerateFromTheChannelYAMLFilesOrTestThem" xml:space="preserve">
+    <value>Générez depuis les YAML du salon ou testez-les sans produire de sortie. Un ZIP envoyé avec `/ast file:` déclenche aussi la génération native.</value>
+  </data>
+  <data name="AstCenterGuildManagerAccess" xml:space="preserve">
+    <value>Accès gestionnaire du serveur.</value>
+  </data>
+  <data name="AstCenterHelp" xml:space="preserve">
+    <value>Aide</value>
+  </data>
+  <data name="AstCenterHelpAndLinks" xml:space="preserve">
+    <value>❓ Aide et liens</value>
+  </data>
+  <data name="AstCenterHideItems" xml:space="preserve">
+    <value>Masquer les objets</value>
+  </data>
+  <data name="AstCenterInformation" xml:space="preserve">
+    <value>Informations</value>
+  </data>
+  <data name="AstCenterInstanceOwnerAccess" xml:space="preserve">
+    <value>Accès propriétaire de l’instance.</value>
+  </data>
+  <data name="AstCenterInvalidFilter" xml:space="preserve">
+    <value>Filtre invalide.</value>
+  </data>
+  <data name="AstCenterInvalidPollingChoice" xml:space="preserve">
+    <value>Choix de polling invalide.</value>
+  </data>
+  <data name="AstCenterInvalidSearch" xml:space="preserve">
+    <value>Recherche invalide.</value>
+  </data>
+  <data name="AstCenterInvalidSelection" xml:space="preserve">
+    <value>Sélection invalide.</value>
+  </data>
+  <data name="AstCenterInvalidSetting" xml:space="preserve">
+    <value>Réglage invalide.</value>
+  </data>
+  <data name="AstCenterItemDisplay" xml:space="preserve">
+    <value>Affichage des objets…</value>
+  </data>
+  <data name="AstCenterList" xml:space="preserve">
+    <value>Lister</value>
+  </data>
+  <data name="AstCenterManage" xml:space="preserve">
+    <value>Gérer</value>
+  </data>
+  <data name="AstCenterManageRoom" xml:space="preserve">
+    <value>⚙️ Gérer la room</value>
+  </data>
+  <data name="AstCenterMaximumSphereBlankAll" xml:space="preserve">
+    <value>Sphère maximale (vide = toutes)</value>
+  </data>
+  <data name="AstCenterMentionFilterUpdated" xml:space="preserve">
+    <value>Filtre de mentions mis à jour.</value>
+  </data>
+  <data name="AstCenterMissingChecksScope" xml:space="preserve">
+    <value>Étendue des checks manquantes…</value>
+  </data>
+  <data name="AstCenterMore" xml:space="preserve">
+    <value>Plus…</value>
+  </data>
+  <data name="AstCenterMyAssociatedSlots" xml:space="preserve">
+    <value>**Mes slots associés**</value>
+  </data>
+  <data name="AstCenterMyExclusions" xml:space="preserve">
+    <value>Mes exclusions</value>
+  </data>
+  <data name="AstCenterMyExclusions2" xml:space="preserve">
+    <value>🚫 Mes exclusions</value>
+  </data>
+  <data name="AstCenterMyExclusions3" xml:space="preserve">
+    <value>**Mes exclusions**</value>
+  </data>
+  <data name="AstCenterMyItems" xml:space="preserve">
+    <value>Mes objets</value>
+  </data>
+  <data name="AstCenterMyItems2" xml:space="preserve">
+    <value>**Mes objets**</value>
+  </data>
+  <data name="AstCenterMyPatch" xml:space="preserve">
+    <value>Mon patch</value>
+  </data>
+  <data name="AstCenterMyPatch2" xml:space="preserve">
+    <value>🩹 Mon patch</value>
+  </data>
+  <data name="AstCenterMyPortal" xml:space="preserve">
+    <value>Mon portail</value>
+  </data>
+  <data name="AstCenterMyPrivatePortal" xml:space="preserve">
+    <value>Mon portail privé</value>
+  </data>
+  <data name="AstCenterMyRecap" xml:space="preserve">
+    <value>Mon récap</value>
+  </data>
+  <data name="AstCenterMySlots" xml:space="preserve">
+    <value>Mes slots</value>
+  </data>
+  <data name="AstCenterMySlots2" xml:space="preserve">
+    <value>👤 Mes slots</value>
+  </data>
+  <data name="AstCenterMySpace" xml:space="preserve">
+    <value>Mon espace</value>
+  </data>
+  <data name="AstCenterMySpace2" xml:space="preserve">
+    <value>👤 Mon espace</value>
+  </data>
+  <data name="AstCenterMyUnfoundHints" xml:space="preserve">
+    <value>**Mes hints non trouvés**</value>
+  </data>
+  <data name="AstCenterNativeDiscordAPWorldManagement" xml:space="preserve">
+    <value>Gestion Discord native des APWorld.</value>
+  </data>
+  <data name="AstCenterNavigation" xml:space="preserve">
+    <value>Navigation</value>
+  </data>
+  <data name="AstCenterNext" xml:space="preserve">
+    <value>Suivant</value>
+  </data>
+  <data name="AstCenterNoAccessibleRoomOnThisServer" xml:space="preserve">
+    <value>Aucune room accessible sur ce serveur.</value>
+  </data>
+  <data name="AstCenterNoAssociatedSlot" xml:space="preserve">
+    <value>Aucun slot associé.</value>
+  </data>
+  <data name="AstCenterNoAssociatedSlotOnThisPage" xml:space="preserve">
+    <value>Aucun slot associé sur cette page.</value>
+  </data>
+  <data name="AstCenterNoFilter" xml:space="preserve">
+    <value>Aucun filtre</value>
+  </data>
+  <data name="AstCenterNoPersonalExclusion" xml:space="preserve">
+    <value>Aucune exclusion personnelle.</value>
+  </data>
+  <data name="AstCenterNoRoomMatches" xml:space="preserve">
+    <value>Aucune room ne correspond à « {0} ».</value>
+  </data>
+  <data name="AstCenterNoRoomSelected" xml:space="preserve">
+    <value>Aucune room sélectionnée.</value>
+  </data>
+  <data name="AstCenterNoSlotIsAssociatedWithYourAccountInThis" xml:space="preserve">
+    <value>Aucun slot n’est associé à votre compte dans cette room.</value>
+  </data>
+  <data name="AstCenterNoUnfoundHintForYourSlots" xml:space="preserve">
+    <value>Aucun hint non trouvé pour vos slots.</value>
+  </data>
+  <data name="AstCenterNone" xml:space="preserve">
+    <value>aucun</value>
+  </data>
+  <data name="AstCenterNoneOfYourSlotsMatchThisFilter" xml:space="preserve">
+    <value>Aucun de vos slots ne correspond à ce filtre.</value>
+  </data>
+  <data name="AstCenterNormalBalancing" xml:space="preserve">
+    <value>Équilibrage normal</value>
+  </data>
+  <data name="AstCenterNormalNotifications" xml:space="preserve">
+    <value>Notifications normales</value>
+  </data>
+  <data name="AstCenterNotificationMode" xml:space="preserve">
+    <value>Mode de notification…</value>
+  </data>
+  <data name="AstCenterPageOf" xml:space="preserve">
+    <value>Page {0} sur {1}.</value>
+  </data>
+  <data name="AstCenterPaginatedResult" xml:space="preserve">
+    <value>Résultat paginé</value>
+  </data>
+  <data name="AstCenterPatchForAssociatedSlot" xml:space="preserve">
+    <value>Patch du slot associé **{0}**.</value>
+  </data>
+  <data name="AstCenterPause" xml:space="preserve">
+    <value>Suspendre</value>
+  </data>
+  <data name="AstCenterPortal" xml:space="preserve">
+    <value>Portail</value>
+  </data>
+  <data name="AstCenterPrevious" xml:space="preserve">
+    <value>Précédent</value>
+  </data>
+  <data name="AstCenterPreviouslyIssuedURLsForThisContextWillImmediatelyStop" xml:space="preserve">
+    <value>Les URL précédemment émises pour ce contexte cesseront immédiatement de fonctionner.</value>
+  </data>
+  <data name="AstCenterPrivateAdministrationPortal" xml:space="preserve">
+    <value>Portail privé d’administration</value>
+  </data>
+  <data name="AstCenterPrivateBackupReady" xml:space="preserve">
+    <value>Sauvegarde privée prête.</value>
+  </data>
+  <data name="AstCenterPrivateGenerationCompleted" xml:space="preserve">
+    <value>Génération privée terminée.</value>
+  </data>
+  <data name="AstCenterPrivateRoomPortal" xml:space="preserve">
+    <value>Portail privé de la room</value>
+  </data>
+  <data name="AstCenterPrivateYAMLTemplate" xml:space="preserve">
+    <value>Modèle YAML privé.</value>
+  </data>
+  <data name="AstCenterProgress" xml:space="preserve">
+    <value>Progression</value>
+  </data>
+  <data name="AstCenterProgressionBalancing" xml:space="preserve">
+    <value>Équilibrage de progression…</value>
+  </data>
+  <data name="AstCenterRecapCleared" xml:space="preserve">
+    <value>
+
+Récap vidé.</value>
+  </data>
+  <data name="AstCenterRecapForCleared" xml:space="preserve">
+    <value>Récap de **{0}** vidé.</value>
+  </data>
+  <data name="AstCenterRemoveAnExclusionFromSlot" xml:space="preserve">
+    <value>Retirer une exclusion du slot…</value>
+  </data>
+  <data name="AstCenterRemoveFromExclusions" xml:space="preserve">
+    <value>Retirer **{0}** des exclusions de **{1}** ?</value>
+  </data>
+  <data name="AstCenterRequired" xml:space="preserve">
+    <value>Requis</value>
+  </data>
+  <data name="AstCenterResetValidation" xml:space="preserve">
+    <value>Réinitialiser validation</value>
+  </data>
+  <data name="AstCenterResume" xml:space="preserve">
+    <value>Reprendre</value>
+  </data>
+  <data name="AstCenterRevokeLink" xml:space="preserve">
+    <value>Révoquer le lien</value>
+  </data>
+  <data name="AstCenterRevokePortal" xml:space="preserve">
+    <value>Révoquer portail</value>
+  </data>
+  <data name="AstCenterRevokePortal2" xml:space="preserve">
+    <value>Révoquer le portail</value>
+  </data>
+  <data name="AstCenterRoom" xml:space="preserve">
+    <value>Room</value>
+  </data>
+  <data name="AstCenterRoomPortal" xml:space="preserve">
+    <value>Portail de la room</value>
+  </data>
+  <data name="AstCenterRooms" xml:space="preserve">
+    <value>Rooms</value>
+  </data>
+  <data name="AstCenterSearch" xml:space="preserve">
+    <value>Rechercher</value>
+  </data>
+  <data name="AstCenterSearchForAnItem" xml:space="preserve">
+    <value>Rechercher un objet</value>
+  </data>
+  <data name="AstCenterSearchTheList" xml:space="preserve">
+    <value>Rechercher dans la liste</value>
+  </data>
+  <data name="AstCenterSelectionExpired" xml:space="preserve">
+    <value>Sélection expirée.</value>
+  </data>
+  <data name="AstCenterShowItems" xml:space="preserve">
+    <value>Afficher les objets</value>
+  </data>
+  <data name="AstCenterShowThenClear" xml:space="preserve">
+    <value>Afficher puis vider…</value>
+  </data>
+  <data name="AstCenterSkipBalancing" xml:space="preserve">
+    <value>Ignorer l’équilibrage</value>
+  </data>
+  <data name="AstCenterSlotToAnalyze" xml:space="preserve">
+    <value>Slot à analyser</value>
+  </data>
+  <data name="AstCenterSphereToValidateOptional" xml:space="preserve">
+    <value>Sphère à valider (facultatif)</value>
+  </data>
+  <data name="AstCenterSpoilerAnalysis" xml:space="preserve">
+    <value>🔎 Analyse du spoiler</value>
+  </data>
+  <data name="AstCenterSyncNow" xml:space="preserve">
+    <value>Synchroniser</value>
+  </data>
+  <data name="AstCenterTest" xml:space="preserve">
+    <value>Tester</value>
+  </data>
+  <data name="AstCenterTheBackupWasSentBelow" xml:space="preserve">
+    <value>La sauvegarde a été envoyée ci-dessous.</value>
+  </data>
+  <data name="AstCenterTheCommandCenterIsTemporarilyUnavailable" xml:space="preserve">
+    <value>Le centre de commandes est temporairement indisponible.</value>
+  </data>
+  <data name="AstCenterTheCompleteDiscordAssociationListIsManagerOnlyYour" xml:space="preserve">
+    <value>La liste complète des associations Discord est réservée aux gestionnaires. Vos associations seront disponibles dans « Mon espace ».</value>
+  </data>
+  <data name="AstCenterTheGenerationWasSentBelow" xml:space="preserve">
+    <value>La génération a été envoyée ci-dessous.</value>
+  </data>
+  <data name="AstCenterThePortalIsTemporarilyUnavailable" xml:space="preserve">
+    <value>Le portail est temporairement indisponible.</value>
+  </data>
+  <data name="AstCenterThePortalLinkWasRevoked" xml:space="preserve">
+    <value>Le lien du portail a été révoqué.</value>
+  </data>
+  <data name="AstCenterTheRoom" xml:space="preserve">
+    <value>La room</value>
+  </data>
+  <data name="AstCenterTheSettingsBelowExecuteDirectlyInDiscord" xml:space="preserve">
+    <value>Les réglages ci-dessous sont exécutés directement dans Discord.</value>
+  </data>
+  <data name="AstCenterTheTemplateWasSentBelow" xml:space="preserve">
+    <value>Le modèle a été envoyé ci-dessous.</value>
+  </data>
+  <data name="AstCenterTheWebPortalIsDisabled" xml:space="preserve">
+    <value>Le portail Web est désactivé.</value>
+  </data>
+  <data name="AstCenterThisFileTypeIsOnlyAvailableInArchipelagoMode" xml:space="preserve">
+    <value>Ce type de fichier est réservé au mode Archipelago. En mode Normal, `/ast file:` accepte uniquement les spoilers `.txt` et `.json`.</value>
+  </data>
+  <data name="AstCenterThisInterfaceExpired" xml:space="preserve">
+    <value>Cette interface a expiré.</value>
+  </data>
+  <data name="AstCenterThisInterfaceExpiredRunAstAgain" xml:space="preserve">
+    <value>Cette interface a expiré. Relancez `/ast`.</value>
+  </data>
+  <data name="AstCenterThisPageExpired" xml:space="preserve">
+    <value>Cette page a expiré.</value>
+  </data>
+  <data name="AstCenterThisRemovesRoomTrackingAndItsLocalDataIt" xml:space="preserve">
+    <value>Cette action supprime le suivi et les données locales de la room. Elle est irréversible.</value>
+  </data>
+  <data name="AstCenterThisRoomIsNoLongerTracked" xml:space="preserve">
+    <value>Cette room n’est plus suivie.</value>
+  </data>
+  <data name="AstCenterThisSearchExpired" xml:space="preserve">
+    <value>Cette recherche a expiré.</value>
+  </data>
+  <data name="AstCenterThisSettingIsAppliedDirectlyFromDiscord" xml:space="preserve">
+    <value>Ce réglage est appliqué directement par Discord.</value>
+  </data>
+  <data name="AstCenterThisSlotDoesNotExistInThisRoom" xml:space="preserve">
+    <value>Ce slot n’existe pas dans cette room.</value>
+  </data>
+  <data name="AstCenterThisSlotIsNotAssociatedWithYourAccount" xml:space="preserve">
+    <value>Ce slot n’est pas associé à votre compte.</value>
+  </data>
+  <data name="AstCenterThroughRequired" xml:space="preserve">
+    <value>Jusqu’aux requis</value>
+  </data>
+  <data name="AstCenterThroughUseful" xml:space="preserve">
+    <value>Jusqu’aux utiles</value>
+  </data>
+  <data name="AstCenterTraps" xml:space="preserve">
+    <value>Pièges</value>
+  </data>
+  <data name="AstCenterUnclassified" xml:space="preserve">
+    <value>Non classé</value>
+  </data>
+  <data name="AstCenterUnknownAction" xml:space="preserve">
+    <value>Action inconnue.</value>
+  </data>
+  <data name="AstCenterUnsupportedFormatUseAYamlZipApworldTxtOr" xml:space="preserve">
+    <value>Format non pris en charge. Utilisez un fichier `.yaml`, `.zip`, `.apworld`, `.txt` ou `.json`.</value>
+  </data>
+  <data name="AstCenterUseTheButtonsToNavigate" xml:space="preserve">
+    <value>Utilisez les boutons pour naviguer.
+
+{0}
+{1}</value>
+  </data>
+  <data name="AstCenterYAMLFileSForThisChannelActionsExecuteDirectly" xml:space="preserve">
+    <value>{0} fichier(s) YAML pour ce salon. {1} Les actions sont exécutées directement depuis Discord.</value>
+  </data>
+  <data name="AstCenterYouHaveAssociatedSlotsChooseTheAliasWhosePatch" xml:space="preserve">
+    <value>Vous avez {0} slots associés. Choisissez l’alias dont vous souhaitez récupérer le patch. {1}</value>
+  </data>
+  <data name="AstCenterYourPersonalDataAndPreferences" xml:space="preserve">
+    <value>Vos données et préférences personnelles.</value>
+  </data>
+  <data name="AstCenterYourPersonalInterfaceForThisRoom" xml:space="preserve">
+    <value>Interface personnelle de cette room.</value>
+  </data>
+  <data name="AstSetupASTSetupAssistantTargetChannelWebHostThreadNotificationsMinimum" xml:space="preserve">
+    <value>**Assistant de configuration AST**
+Salon cible : &lt;#{0}&gt;
+Hôte WebHost : `{1}`
+Thread : `{2}` ({3})
+Notifications : {4}
+Fréquence minimale : `{5}`
+
+{6}
+La session expire après 15 minutes d’inactivité.</value>
+  </data>
+  <data name="AstSetupArchipelagoRoomURL" xml:space="preserve">
+    <value>URL de la room Archipelago</value>
+  </data>
+  <data name="AstSetupChannelThatWillHostTheRoom" xml:space="preserve">
+    <value>Canal qui accueillera la room</value>
+  </data>
+  <data name="AstSetupConfigureRoom" xml:space="preserve">
+    <value>Configurer la room</value>
+  </data>
+  <data name="AstSetupConfigureTheURLAndThreadName" xml:space="preserve">
+    <value>🟡 Configurez l’URL et le nom du thread</value>
+  </data>
+  <data name="AstSetupInvalidFormat" xml:space="preserve">
+    <value>format invalide</value>
+  </data>
+  <data name="AstSetupMinimumFrequency" xml:space="preserve">
+    <value>Fréquence minimale</value>
+  </data>
+  <data name="AstSetupNormal" xml:space="preserve">
+    <value>normales</value>
+  </data>
+  <data name="AstSetupNormal2" xml:space="preserve">
+    <value>Normales</value>
+  </data>
+  <data name="AstSetupNotConfigured" xml:space="preserve">
+    <value>non configurée</value>
+  </data>
+  <data name="AstSetupNotConfigured2" xml:space="preserve">
+    <value>non configuré</value>
+  </data>
+  <data name="AstSetupNotifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="AstSetupOpenAstInTheTextChannelThatWillHost" xml:space="preserve">
+    <value>Ouvrez `/ast` dans le salon texte qui accueillera la nouvelle room.</value>
+  </data>
+  <data name="AstSetupPreview" xml:space="preserve">
+    <value>Aperçu</value>
+  </data>
+  <data name="AstSetupPrivate" xml:space="preserve">
+    <value>privé</value>
+  </data>
+  <data name="AstSetupPublic" xml:space="preserve">
+    <value>public</value>
+  </data>
+  <data name="AstSetupPublicAddMembers" xml:space="preserve">
+    <value>Public + ajouter les membres</value>
+  </data>
+  <data name="AstSetupPublicMembersAdded" xml:space="preserve">
+    <value>public, membres ajoutés</value>
+  </data>
+  <data name="AstSetupReadyToConfirm" xml:space="preserve">
+    <value>✅ Prêt à confirmer</value>
+  </data>
+  <data name="AstSetupSetupCancelled" xml:space="preserve">
+    <value>Configuration annulée.</value>
+  </data>
+  <data name="AstSetupSetupFailedPleaseRetryOrContactAnASTAdministrator" xml:space="preserve">
+    <value>❌ La configuration a échoué. Réessayez ou contactez un administrateur AST.</value>
+  </data>
+  <data name="AstSetupSilent" xml:space="preserve">
+    <value>silencieuses</value>
+  </data>
+  <data name="AstSetupSilent2" xml:space="preserve">
+    <value>Silencieuses</value>
+  </data>
+  <data name="AstSetupThisSessionExpiredOrDoesNotBelongToYou" xml:space="preserve">
+    <value>Cette session a expiré ou ne vous appartient pas. Relancez `/ast-setup`.</value>
+  </data>
+  <data name="AstSetupUseAstSetupInTheTextChannelThatWill" xml:space="preserve">
+    <value>Utilisez `/ast-setup` dans le salon texte qui accueillera la room.</value>
+  </data>
+  <data name="AstSetupValidatingTheRoomAndCreatingTheThread" xml:space="preserve">
+    <value>⏳ Validation de la room et création du thread…</value>
+  </data>
+  <data name="AuthorizationYouDoNotHavePermissionToPerformThisAction" xml:space="preserve">
+    <value>Vous n’avez pas les permissions requises pour cette action.</value>
+  </data>
+  <data name="BotTheCommandFailedPleaseRetryOrContactAnAST" xml:space="preserve">
+    <value>❌ La commande a échoué. Réessayez ou contactez un administrateur AST.</value>
+  </data>
+  <data name="BotThePortalLinkWasRevokedPreviousURLsAreNo" xml:space="preserve">
+    <value>Le lien du portail a été révoqué. Les anciennes URL ne sont plus valides.</value>
+  </data>
+  <data name="PollingInvalidPollingModeOrMaximumFrequency" xml:space="preserve">
+    <value>Mode ou fréquence maximale invalide.</value>
+  </data>
+  <data name="PollingTheMaximumFrequencyMustBeGreaterThanOrEqual" xml:space="preserve">
+    <value>La fréquence maximale doit être supérieure ou égale à la fréquence minimale configurée.</value>
+  </data>
+  <data name="PollingTrackingPolicyUpdatedModeMinimumMaximum" xml:space="preserve">
+    <value>Politique de suivi mise à jour : mode {0}, minimum {1}, maximum {2}.</value>
+  </data>
+  <data name="SlashOpenYourPrivateASTCommandCenter" xml:space="preserve">
+    <value>Ouvrir votre centre de commandes AST privé</value>
+  </data>
+  <data name="SlashSkipProgressionBalancingDuringGeneration" xml:space="preserve">
+    <value>Ignorer l’équilibrage lors d’une génération</value>
+  </data>
+  <data name="TrackingASTHealthRoomSActiveSlowedPausedInError" xml:space="preserve">
+    <value>📊 Santé AST — {0} room(s) : {1} active(s), {2} ralentie(s), {3} suspendue(s), {4} en erreur, {5} synchronisation(s) en cours.</value>
+  </data>
+  <data name="TrackingActive" xml:space="preserve">
+    <value>actif</value>
+  </data>
+  <data name="TrackingAging" xml:space="preserve">
+    <value>à surveiller</value>
+  </data>
+  <data name="TrackingAgo" xml:space="preserve">
+    <value>il y a {0}</value>
+  </data>
+  <data name="TrackingAsSoonAsPossible" xml:space="preserve">
+    <value>dès que possible</value>
+  </data>
+  <data name="TrackingAutomaticPollingMinimumMaximum" xml:space="preserve">
+    <value>Polling automatique : {0} (minimum {1}, maximum {2})</value>
+  </data>
+  <data name="TrackingAutomaticallySlowed" xml:space="preserve">
+    <value>ralenti automatiquement</value>
+  </data>
+  <data name="TrackingConsecutiveFailures" xml:space="preserve">
+    <value>Échecs consécutifs : {0} ({1})</value>
+  </data>
+  <data name="TrackingEstimatedFreshnessWebHostLatencyMs" xml:space="preserve">
+    <value>Fraîcheur estimée : {0} · latence WebHost : {1} ms</value>
+  </data>
+  <data name="TrackingFixedPolling" xml:space="preserve">
+    <value>Polling fixe : {0}</value>
+  </data>
+  <data name="TrackingFresh" xml:space="preserve">
+    <value>récente</value>
+  </data>
+  <data name="TrackingIn" xml:space="preserve">
+    <value>dans {0}</value>
+  </data>
+  <data name="TrackingInError" xml:space="preserve">
+    <value>en erreur</value>
+  </data>
+  <data name="TrackingLastDetectedActivity" xml:space="preserve">
+    <value>Dernière activité détectée : {0}</value>
+  </data>
+  <data name="TrackingLastSuccessfulSync" xml:space="preserve">
+    <value>Dernière synchronisation réussie : {0}</value>
+  </data>
+  <data name="TrackingManuallyPaused" xml:space="preserve">
+    <value>suspendu manuellement</value>
+  </data>
+  <data name="TrackingNever" xml:space="preserve">
+    <value>jamais</value>
+  </data>
+  <data name="TrackingNoTrackedRoomsOnThisServer" xml:space="preserve">
+    <value>Aucune room suivie sur ce serveur.</value>
+  </data>
+  <data name="TrackingNone" xml:space="preserve">
+    <value>aucune</value>
+  </data>
+  <data name="TrackingRoomNotFoundOrCentralSchedulerUnavailable" xml:space="preserve">
+    <value>Room introuvable ou ordonnanceur central indisponible.</value>
+  </data>
+  <data name="TrackingRoomTracking" xml:space="preserve">
+    <value>🩺 Suivi de la room : **{0}**</value>
+  </data>
+  <data name="TrackingStale" xml:space="preserve">
+    <value>ancienne</value>
+  </data>
+  <data name="TrackingSyncInProgress" xml:space="preserve">
+    <value>synchronisation en cours</value>
+  </data>
+  <data name="TrackingTheCentralSchedulerIsUnavailableStillStartingOrLegacy" xml:space="preserve">
+    <value>L’ordonnanceur central est indisponible (démarrage en cours ou mode historique actif).</value>
+  </data>
+  <data name="TrackingUnknown" xml:space="preserve">
+    <value>inconnue</value>
+  </data>
+  <data name="TrackingUnknownTrackingCommand" xml:space="preserve">
+    <value>Commande de suivi inconnue.</value>
+  </data>
+  <data name="TrackingWebHostCircuitProtectionActiveUntilUTC" xml:space="preserve">
+    <value>Protection WebHost active jusqu’à {0:yyyy-MM-dd HH:mm:ss} UTC.</value>
+  </data>
+  <data name="UrlArchipelagoRoomConfiguredAndTrackingStarted" xml:space="preserve">
+    <value>✅ Room Archipelago configurée et suivi démarré.</value>
+  </data>
+  <data name="UrlThisRoomTrackerIsUnavailable" xml:space="preserve">
+    <value>Le tracker de cette room est indisponible.</value>
+  </data>
+  <data name="AstCenterSpoilerAnalysisDescription" xml:space="preserve">
+    <value>Slot : **{0}**
+Sphère maximale : **{1}**
+Mode : **{2}**
+Objets : **{3}**
+
+{4}« Configurer » permet aussi de saisir directement un slot et de valider manuellement une sphère.</value>
+  </data>
+  <data name="AstCenterSpoilerItemsHidden" xml:space="preserve">
+    <value>masqués</value>
+  </data>
+  <data name="AstCenterSpoilerItemsVisible" xml:space="preserve">
+    <value>visibles</value>
+  </data>
+  <data name="AstCenterSpoilerModeFirstBlocker" xml:space="preserve">
+    <value>premier blocage</value>
+  </data>
+  <data name="AstCenterSpoilerModeFull" xml:space="preserve">
+    <value>complet</value>
+  </data>
+  <data name="SlashImportSpoilerLog" xml:space="preserve">
+    <value>Importer un spoiler log</value>
+  </data>
+  <data name="SlashImportYamlZipApworldOrSpoilerLog" xml:space="preserve">
+    <value>Importer un YAML, ZIP, APWorld ou spoiler log</value>
+  </data>
+  <data name="TrackingAlreadyPaused" xml:space="preserve">
+    <value>Le suivi de cette room est déjà suspendu.</value>
+  </data>
+  <data name="TrackingAlreadyRunning" xml:space="preserve">
+    <value>Le suivi de cette room est déjà actif.</value>
+  </data>
+  <data name="TrackingCommandCouldNotBeApplied" xml:space="preserve">
+    <value>La commande de suivi n’a pas pu être appliquée.</value>
+  </data>
+  <data name="TrackingForcedSyncRateLimited" xml:space="preserve">
+    <value>Synchronisation forcée limitée à une fois toutes les 30 secondes. Réessayez plus tard.</value>
+  </data>
+  <data name="TrackingNextRefresh" xml:space="preserve">
+    <value>Prochain rafraîchissement : {0}</value>
+  </data>
+  <data name="TrackingPauseAccepted" xml:space="preserve">
+    <value>⏸️ Suivi suspendu. Une synchronisation déjà en cours peut se terminer, mais aucun nouveau rafraîchissement ne sera lancé.</value>
+  </data>
+  <data name="TrackingPaused" xml:space="preserve">
+    <value>suspendu</value>
+  </data>
+  <data name="TrackingPrioritySyncQueued" xml:space="preserve">
+    <value>🔄 Synchronisation prioritaire mise en file.</value>
+  </data>
+  <data name="TrackingResumeAccepted" xml:space="preserve">
+    <value>▶️ Suivi repris. Une synchronisation a été placée en tête de file.</value>
+  </data>
+  <data name="TrackingRoomNotRegisteredInScheduler" xml:space="preserve">
+    <value>Cette room n’est pas enregistrée dans l’ordonnanceur.</value>
+  </data>
+  <data name="TrackingRoomPausedResumeFirst" xml:space="preserve">
+    <value>La room est suspendue. Utilisez d’abord `/ast-resume`.</value>
+  </data>
+  <data name="TrackingSyncAlreadyRunning" xml:space="preserve">
+    <value>Une synchronisation est déjà en cours pour cette room.</value>
   </data>
 </root>

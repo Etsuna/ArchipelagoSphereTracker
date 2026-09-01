@@ -24,6 +24,10 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    env:
+      AVALONIA_TELEMETRY_OPTOUT: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -32,6 +36,10 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+
+    - name: Test
+      shell: bash
+      run: dotnet test ArchipelagoSphereTracker.sln --configuration Release --verbosity normal
 
     - name: Compute VERSION from tag
       shell: bash

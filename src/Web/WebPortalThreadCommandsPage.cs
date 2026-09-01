@@ -230,6 +230,51 @@ public static class WebPortalThreadCommandsPage
     </section>
 
     <section class=""panel"">
+      <h2>{T("WebTrackingHealthAndControls")}</h2>
+      <form data-command=""ast-room-health"">
+        <button type=""submit"">{T("WebRoomHealth")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-health"">
+        <button type=""submit"">{T("WebOverallAstHealth")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-sync-now"">
+        <button type=""submit"">{T("WebSyncNow")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-pause"">
+        <button type=""submit"">{T("WebPauseTracking")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-resume"">
+        <button type=""submit"">{T("WebResumeTracking")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-polling"">
+        <label>{T("WebPollingMode")}
+          <select name=""mode"" required>
+            <option value=""automatic"">{T("WebPollingAutomatic")}</option>
+            <option value=""fixed"">{T("WebPollingFixedFrequency")}</option>
+          </select>
+        </label>
+        <label>{T("WebPollingMaximumInterval")}
+          <select name=""maximumFrequency"" required>
+            <option value=""15m"">15 minutes</option>
+            <option value=""30m"">30 minutes</option>
+            <option value=""1h"">1 hour</option>
+            <option value=""6h"">6 hours</option>
+            <option value=""12h"">12 hours</option>
+            <option value=""18h"">18 hours</option>
+            <option value=""1d"">1 day</option>
+          </select>
+        </label>
+        <button type=""submit"">{T("WebPollingUpdatePolicy")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
       <h2>Get patch</h2>
       <form id=""patch-form"">
         <label>Alias
@@ -286,10 +331,11 @@ public static class WebPortalThreadCommandsPage
 
 <script>
   const params = new URLSearchParams(window.location.search);
-  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/thread-commands\.html$/);
+  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/([a-f0-9]+)\/thread-commands\.html$/i);
 
   const guildId = params.get('guildId') || (m ? m[1] : '');
   const channelId = params.get('channelId') || (m ? m[2] : '');
+  const token = m ? m[3] : '';
 
   document.getElementById('channel-meta').textContent = channelId ? ('Channel ID: ' + channelId) : 'Channel ID: —';
 
@@ -297,9 +343,10 @@ public static class WebPortalThreadCommandsPage
   const idx = path.indexOf('/portal/');
   const basePath = idx >= 0 ? path.substring(0, idx) : '';
 
-  const apiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/execute';
-  const patchAliasesApi = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/patches';
-  const infoApi = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/info';
+  const securedApiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/' + token;
+  const apiBase = securedApiBase + '/thread-commands/execute';
+  const patchAliasesApi = securedApiBase + '/thread-commands/patches';
+  const infoApi = securedApiBase + '/info';
 
   const parsePayload = async (response) => {{
     const raw = await response.text();
