@@ -174,6 +174,25 @@ public sealed class AstCommandCenterTests
     }
 
     [Theory]
+    [InlineData(".yaml")]
+    [InlineData(".zip")]
+    [InlineData(".apworld")]
+    public void Archipelago_uploads_are_rejected_in_normal_mode(string extension)
+    {
+        Assert.False(AstCommandCenter.IsUploadExtensionAvailable(extension, archipelagoMode: false));
+        Assert.True(AstCommandCenter.IsUploadExtensionAvailable(extension, archipelagoMode: true));
+    }
+
+    [Theory]
+    [InlineData(".txt")]
+    [InlineData(".json")]
+    public void Spoiler_uploads_remain_available_in_both_modes(string extension)
+    {
+        Assert.True(AstCommandCenter.IsUploadExtensionAvailable(extension, archipelagoMode: false));
+        Assert.True(AstCommandCenter.IsUploadExtensionAvailable(extension, archipelagoMode: true));
+    }
+
+    [Theory]
     [InlineData("astui:0123456789abcdef0123456789abcdef:personal", true, "personal")]
     [InlineData("astui:short:personal", false, "")]
     [InlineData("foreign:0123456789abcdef0123456789abcdef:personal", false, "")]

@@ -510,6 +510,14 @@ public static class AstCommandCenter
         }
 
         var extension = Path.GetExtension(attachment.Filename).ToLowerInvariant();
+        if (!IsUploadExtensionAvailable(extension, Declare.IsArchipelagoMode))
+        {
+            await command.FollowupAsync(IsFrench
+                ? "Ce type de fichier est réservé au mode Archipelago. En mode Normal, `/ast file:` accepte uniquement les spoilers `.txt` et `.json`."
+                : "This file type is only available in Archipelago mode. In Normal mode, `/ast file:` only accepts `.txt` and `.json` spoiler logs.",
+                ephemeral: true).ConfigureAwait(false);
+            return;
+        }
         string result;
         switch (extension)
         {
@@ -543,6 +551,12 @@ public static class AstCommandCenter
         }
         if (!string.IsNullOrWhiteSpace(result))
             await command.FollowupAsync(Clamp(result), ephemeral: true).ConfigureAwait(false);
+    }
+
+    public static bool IsUploadExtensionAvailable(string? extension, bool archipelagoMode)
+    {
+        extension = extension?.Trim().ToLowerInvariant();
+        return archipelagoMode || extension is not (".yaml" or ".apworld" or ".zip");
     }
 
     public static async Task HandleButtonAsync(SocketMessageComponent component)

@@ -18,7 +18,10 @@ public class SlashCommandDefinitionsTests
         Assert.Equal("ast", command.Name);
         Assert.False(string.IsNullOrWhiteSpace(command.Description));
         AssertOption(command, "file", ApplicationCommandOptionType.Attachment);
-        AssertOption(command, "skip-prog-balancing", ApplicationCommandOptionType.Boolean);
+        if (archipelagoMode)
+            AssertOption(command, "skip-prog-balancing", ApplicationCommandOptionType.Boolean);
+        else
+            Assert.DoesNotContain(command.Options, option => option.Name == "skip-prog-balancing");
     }
 
     [Fact]

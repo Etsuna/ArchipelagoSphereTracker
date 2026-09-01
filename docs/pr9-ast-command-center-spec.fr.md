@@ -167,7 +167,7 @@ La matrice corrige une incohérence actuelle : les exclusions sont stockées ave
 
 ## 6. Import de fichiers
 
-Discord ne permet pas à un bouton ou à une modale de demander une pièce jointe. L’unique commande `/ast` conserve donc une option facultative `file`. Le type de fichier détermine l’action : YAML, ZIP de génération, APWorld ou spoiler log. Les permissions sont contrôlées avant traitement, puis les limites de taille, la quarantaine, l’extension et le contenu sont validés comme auparavant. Le résultat est une réponse éphémère ; aucun fichier sensible n’est demandé dans un message public. Le portail reste disponible séparément via ses boutons explicites, mais il n’est pas requis pour les imports Discord.
+Discord ne permet pas à un bouton ou à une modale de demander une pièce jointe. L’unique commande `/ast` conserve donc une option facultative `file`. En mode Normal, seuls les spoilers `.txt` et `.json` sont acceptés. En mode Archipelago, le type de fichier peut aussi router vers un YAML, un ZIP de génération ou un APWorld, et l’option `skip-prog-balancing` devient disponible. Les permissions sont contrôlées avant traitement, puis les limites de taille, la quarantaine, l’extension et le contenu sont validés comme auparavant. Le résultat est une réponse éphémère ; aucun fichier sensible n’est demandé dans un message public. Le portail reste disponible séparément via ses boutons explicites, mais il n’est pas requis pour les imports Discord.
 
 ## 7. Navigation et état de session
 

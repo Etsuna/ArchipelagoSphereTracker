@@ -99,7 +99,7 @@ Personal exclusions are deliberately reclassified: storage is already user-scope
 
 ## Private uploads
 
-Discord buttons and modals cannot request attachments, so the single `/ast` command keeps an optional `file` parameter. Its extension routes the upload to YAML, generation ZIP, APWorld or spoiler-log handling. Authorization runs before processing, and existing size, quarantine, extension and content validation remains mandatory. The response is ephemeral and no sensitive file is requested in a public message. Explicit Web-portal buttons remain available as a parallel system, but Discord imports do not depend on the portal.
+Discord buttons and modals cannot request attachments, so the single `/ast` command keeps an optional `file` parameter. Normal mode accepts only `.txt` and `.json` spoiler logs. Archipelago mode additionally routes YAML, generation ZIP and APWorld files, and exposes the `skip-prog-balancing` option. Authorization runs before processing, and existing size, quarantine, extension and content validation remains mandatory. The response is ephemeral and no sensitive file is requested in a public message. Explicit Web-portal buttons remain available as a parallel system, but Discord imports do not depend on the portal.
 
 ## Session and security model
 
