@@ -1,6 +1,6 @@
 # PR 9 — `/ast` command center specification
 
-> Status: functional specification approved before implementation.
+> Status: implemented on `codex/evolution`; real Discord validation remains required before merge.
 
 ## Goal
 

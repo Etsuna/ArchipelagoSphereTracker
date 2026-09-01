@@ -52,11 +52,11 @@ Le bot existe en **deux modes** :
 ### Communes (Normal + Archipelago)
 
 - Multi-serveurs Discord, multi-salons et multi-threads.
-- Assistant interactif `/ast-setup` pour choisir le canal, connecter la room, configurer le thread, les notifications et le polling, puis confirmer depuis un aperçu éphémère.
-- Gestion avancée de rooms avec `/add-url` et `/delete-url`.
+- Centre de commandes éphémère `/ast` : toute l’interface Discord (configuration, rooms, alias, récaps, exclusions, portails et administration) est regroupée derrière une seule commande slash.
+- Assistant interactif intégré à `/ast` pour connecter une room, configurer le thread, les notifications et le polling, puis confirmer depuis un aperçu éphémère.
 - Paramétrage de fréquence de polling (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
 - Polling adaptatif : après trois snapshots inchangés, l'intervalle ralentit progressivement jusqu'à une heure et revient immédiatement au minimum configuré dès qu'une activité est détectée.
-- Santé et contrôle du suivi avec `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause`, `/ast-resume` et `/ast-polling` (également disponibles dans le portail de room).
+- Santé et contrôle du suivi depuis `/ast` (également disponibles dans le portail de room).
 - Option silencieuse (`silent`) configurable à la création puis via commande.
 - Alias joueurs : ajout/suppression/liste.
 - Gestion des items affichés, items exclus et hints.
@@ -263,56 +263,15 @@ Permissions associées :
 
 ## Commandes Slash
 
-## Communes
+AST enregistre une seule commande publique : `/ast`.
 
-- Room tracking
-  - `/ast-setup`
-  - `/add-url`
-  - `/delete-url`
-  - `/update-frequency-check`
-  - `/update-silent-option`
-- Alias / joueurs
-  - `/get-aliases`
-  - `/add-alias`
-  - `/delete-alias`
-- Items / patch / hints
-  - `/get-patch`
-  - `/list-items`
-  - `/excluded-item`
-  - `/excluded-item-list`
-  - `/delete-excluded-item`
-  - `/hint-from-finder`
-  - `/hint-for-receiver`
-- Recap & nettoyage
-  - `/recap`
-  - `/recap-all`
-  - `/clean`
-  - `/clean-all`
-  - `/recap-and-clean`
-- Informations
-  - `/status-games-list`
-  - `/info`
-  - `/discord`
-  - `/apworlds-info`
-- Portail
-  - `/ast-user-portal`
-  - `/ast-room-portal`
-  - `/ast-portal`
+- `/ast` ouvre un centre de commandes personnel et éphémère, adapté au salon, à la room et aux permissions de l’utilisateur.
+- `/ast file:<fichier>` importe un YAML, un APWorld, un ZIP de génération ou un spoiler selon le mode et les permissions.
+- Les anciennes fonctions restent disponibles dans les écrans `Mon espace`, `La room`, `Gérer la room` et `Administration AST`.
+- Les grandes listes sont paginées ; les exclusions disposent en plus d’une recherche.
+- Les actions sensibles sont revérifiées côté serveur et inscrites dans le journal de sécurité.
 
-### Archipelago Mode uniquement
-
-- `/list-yamls`
-- `/list-apworld`
-- `/download-template`
-- `/send-yaml`
-- `/send-apworld`
-- `/delete-yaml`
-- `/clean-yamls`
-- `/backup-yamls`
-- `/backup-apworld`
-- `/test-generate`
-- `/generate`
-- `/generate-with-zip`
+Voir la [spécification du centre `/ast`](docs/pr9-ast-command-center-spec.fr.md) pour la correspondance complète des anciennes commandes.
 
 ---
 
@@ -536,11 +495,11 @@ AST supports **two modes**:
 ### Shared (Normal + Archipelago)
 
 - Multi-server, multi-channel, multi-thread support.
-- Interactive `/ast-setup` assistant to select the channel, connect the room, configure its thread, notifications, and polling, then confirm from an ephemeral preview.
-- Advanced room lifecycle management through `/add-url` and `/delete-url`.
+- Ephemeral `/ast` command center: all Discord workflows (setup, rooms, aliases, recaps, exclusions, portals, and administration) are grouped behind one slash command.
+- Interactive assistant embedded in `/ast` to connect a room, configure its thread, notifications, and polling, then confirm from an ephemeral preview.
 - Configurable polling frequency (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
 - Adaptive polling: after three unchanged snapshots, the interval progressively slows down up to one hour and immediately returns to the configured minimum when activity resumes.
-- Tracking health and controls through `/ast-health`, `/ast-room-health`, `/ast-sync-now`, `/ast-pause`, `/ast-resume`, and `/ast-polling` (also available in the room portal).
+- Tracking health and controls from `/ast` (also available in the room portal).
 - Silent option configurable at room creation and later updates.
 - Player alias management (add/remove/list).
 - Displayed/excluded items and hints management.
@@ -747,56 +706,15 @@ Permissions included:
 
 ## Slash commands
 
-### Shared
+AST registers a single public command: `/ast`.
 
-- Room tracking
-  - `/ast-setup`
-  - `/add-url`
-  - `/delete-url`
-  - `/update-frequency-check`
-  - `/update-silent-option`
-- Alias / players
-  - `/get-aliases`
-  - `/add-alias`
-  - `/delete-alias`
-- Items / patch / hints
-  - `/get-patch`
-  - `/list-items`
-  - `/excluded-item`
-  - `/excluded-item-list`
-  - `/delete-excluded-item`
-  - `/hint-from-finder`
-  - `/hint-for-receiver`
-- Recap & cleanup
-  - `/recap`
-  - `/recap-all`
-  - `/clean`
-  - `/clean-all`
-  - `/recap-and-clean`
-- Information
-  - `/status-games-list`
-  - `/info`
-  - `/discord`
-  - `/apworlds-info`
-- Portal
-  - `/ast-user-portal`
-  - `/ast-room-portal`
-  - `/ast-portal`
+- `/ast` opens a personal ephemeral command center adapted to the channel, room, and user permissions.
+- `/ast file:<file>` imports a YAML, APWorld, generation ZIP, or spoiler according to the current mode and permissions.
+- Existing capabilities remain available under `My space`, `The room`, `Manage room`, and `AST administration`.
+- Large lists are paginated; exclusions also provide search.
+- Sensitive actions are authorized again server-side and written to the security audit log.
 
-### Archipelago mode only
-
-- `/list-yamls`
-- `/list-apworld`
-- `/download-template`
-- `/send-yaml`
-- `/send-apworld`
-- `/delete-yaml`
-- `/clean-yamls`
-- `/backup-yamls`
-- `/backup-apworld`
-- `/test-generate`
-- `/generate`
-- `/generate-with-zip`
+See the [`/ast` command center specification](docs/pr9-ast-command-center-spec.en.md) for the complete legacy-command mapping.
 
 ---
 

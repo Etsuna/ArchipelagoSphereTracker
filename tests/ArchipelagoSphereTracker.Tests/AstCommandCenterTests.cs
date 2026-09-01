@@ -152,6 +152,27 @@ public sealed class AstCommandCenterTests
         Assert.Null(reset.ExclusionSearch);
     }
 
+    [Fact]
+    public void Selection_pagination_is_private_bounded_and_resets_on_navigation()
+    {
+        var store = new AstUiSessionStore();
+        var session = store.Start(10, 20, 30, null);
+
+        Assert.True(store.TryMoveSelectionPage(session.Id, 10, 20, 30, 1, 76, out var second));
+        Assert.Equal(1, second.SelectionPageIndex);
+        Assert.True(store.TryMoveSelectionPage(session.Id, 10, 20, 30, 99, 76, out var last));
+        Assert.Equal(3, last.SelectionPageIndex);
+        Assert.False(store.TryMoveSelectionPage(session.Id, 11, 20, 30, -1, 76, out _));
+        Assert.True(store.TrySetSelectionSearch(session.Id, 10, 20, 30, "  player  ", out var filtered));
+        Assert.Equal("player", filtered.SelectionSearch);
+        Assert.Equal(0, filtered.SelectionPageIndex);
+        Assert.False(store.TrySetSelectionSearch(session.Id, 11, 20, 30, "private", out _));
+
+        Assert.True(store.TryUpdateScreen(session.Id, 10, 20, 30, AstUiScreen.Yaml, out var reset));
+        Assert.Equal(0, reset.SelectionPageIndex);
+        Assert.Null(reset.SelectionSearch);
+    }
+
     [Theory]
     [InlineData("astui:0123456789abcdef0123456789abcdef:personal", true, "personal")]
     [InlineData("astui:short:personal", false, "")]

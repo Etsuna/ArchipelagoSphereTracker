@@ -1,6 +1,6 @@
 # PR 9 — Spécification du centre de commandes `/ast`
 
-> Statut : spécification fonctionnelle validée avant implémentation.
+> Statut : implémenté sur `codex/evolution` ; validation Discord en conditions réelles à effectuer avant fusion.
 
 ## 1. Objectif
 
