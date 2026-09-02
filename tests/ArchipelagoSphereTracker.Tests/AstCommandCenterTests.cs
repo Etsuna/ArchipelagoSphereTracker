@@ -192,6 +192,12 @@ public sealed class AstCommandCenterTests
         Assert.True(AstCommandCenter.IsUploadExtensionAvailable(extension, archipelagoMode: true));
     }
 
+    [Fact]
+    public void Spoiler_analysis_is_exposed_from_the_personal_ast_selection()
+    {
+        Assert.Equal("personal-spoiler", AstCommandCenter.LegacyCommandCoverage["analyze-spoiler-log"]);
+    }
+
     [Theory]
     [InlineData("astui:0123456789abcdef0123456789abcdef:personal", true, "personal")]
     [InlineData("astui:short:personal", false, "")]

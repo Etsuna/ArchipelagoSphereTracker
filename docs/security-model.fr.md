@@ -6,7 +6,7 @@ Ce document décrit les règles appliquées depuis la PR 2 de durcissement. Les 
 
 | Niveau | Autorise | Identités acceptées |
 |---|---|---|
-| Membre du serveur | consultation, récapitulatif personnel, alias personnel | membre Discord ayant encore accès au salon ou au thread |
+| Membre du serveur | consultation, récapitulatif personnel, alias personnel, upload et analyse du spoiler partagé de la room | membre Discord ayant encore accès au salon ou au thread |
 | Gestionnaire de room | configuration et suppression d'une room, portail du thread, consultation des patches | propriétaire du thread, permission `Manage Threads`, gestionnaire du serveur |
 | Gestionnaire du serveur | création de room, YAML, génération, portail global | propriétaire du serveur, administrateur, permission `Manage Server`, propriétaire de l'instance |
 | Propriétaire de l'instance | installation, sauvegarde et chargement des APWorld | utilisateur `AST_OWNER_USER_ID`; à défaut, propriétaire du serveur Discord |
@@ -17,7 +17,7 @@ Les commandes Discord et les requêtes Web utilisent la même matrice. Un token 
 
 - Les anciennes pages d'administration sans token répondent `404`.
 - Les API de lecture et d'écriture portent toutes le token utilisateur.
-- Les liens de téléchargement générés sont authentifiés et les archives sont conservées hors du dossier statique public pendant une heure.
+- Les liens de téléchargement générés sont authentifiés et les archives sont conservées hors du dossier statique public avec les données de la room. Elles sont supprimées lors de la suppression du thread ou de son URL.
 - Les réponses du portail utilisent `no-store`, `Referrer-Policy: no-referrer`, une CSP restrictive, `X-Frame-Options: DENY` et `nosniff`.
 - Les anciens chemins statiques `/portal/.../downloads/...` sont bloqués, y compris si des fichiers d'une version précédente sont encore présents sur disque.
 - SQLite ne conserve que le SHA-256 du token. Un nouveau lien remplace le précédent et expire après `PORTAL_TOKEN_LIFETIME_DAYS` jours.
@@ -28,11 +28,13 @@ Les URLs de portail doivent être traitées comme des mots de passe : ne pas les
 
 ## Fichiers et code APWorld
 
-Les noms de fichiers sont réduits à un nom simple et leur extension est vérifiée. La limite par défaut est de 64 Mio (`WEB_MAX_UPLOAD_BYTES`). Chaque téléversement est d'abord écrit sous un nom opaque dans une quarantaine hors des dossiers actifs, contrôlé, puis déplacé atomiquement vers sa destination. Un fichier refusé ne remplace donc jamais la version active. Les résidus de quarantaine et les anciens spoilers sont nettoyés selon `UPLOAD_QUARANTINE_RETENTION_MINUTES` et `SPOILER_LOG_RETENTION_DAYS`.
+Les noms de fichiers sont réduits à un nom simple et leur extension est vérifiée. La limite par défaut est de 64 Mio (`WEB_MAX_UPLOAD_BYTES`). Chaque téléversement est d'abord écrit sous un nom opaque dans une quarantaine hors des dossiers actifs, contrôlé, puis déplacé atomiquement vers sa destination. Un fichier refusé ne remplace donc jamais la version active. Les résidus temporaires de quarantaine sont nettoyés selon `UPLOAD_QUARANTINE_RETENTION_MINUTES`. Le spoiler actif et les YAML d'une room n'expirent pas : ils sont supprimés avec l'URL ou le thread.
 
 Les ZIP de génération sont limités à 500 entrées et 256 Mio décompressés, et seules des entrées YAML non imbriquées sont acceptées. Les archives APWorld doivent être lisibles, respecter les mêmes limites et ne contenir aucun chemin absolu ou traversée de répertoire. Les YAML et spoilers texte doivent être du texte UTF-8 non vide sans octet nul; un spoiler `.json` doit contenir un objet ou un tableau JSON valide. Voir [quarantaine et validation des téléversements](upload-quarantine-security.fr.md).
 
 Un APWorld contient du code exécuté par l'outillage Archipelago local. Son chargement est donc réservé au propriétaire de l'instance ; la validation d'extension ne transforme pas un APWorld non fiable en fichier sûr.
+
+Le dossier global `extern/Archipelago/custom_worlds` est exclu de tous les nettoyages de room et de guilde. Les custom worlds ne sont supprimés que par une action manuelle dédiée.
 
 ## Sorties réseau et SSRF
 

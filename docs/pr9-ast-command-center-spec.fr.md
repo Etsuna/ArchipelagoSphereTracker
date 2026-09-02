@@ -135,8 +135,8 @@ Les fonctions YAML, génération et APWorld ne sont visibles que lorsque `Declar
 | `hint-from-finder` | Mon espace → Mes hints → Trouvés par mon slot | sélecteur + pagination | GuildMember |
 | `hint-for-receiver` | Mon espace → Mes hints → Reçus par mon slot | sélecteur + pagination | GuildMember |
 | `list-items` | Mon espace → Mes objets | sélecteur + filtres + pagination | GuildMember |
-| `analyze-spoiler-log` | Gérer la room → Spoiler → Analyser | assistant : slot, sphère, mode, masquage et validation | RoomManager |
-| `send-spoiler-log` | `/ast file:<spoiler.txt>` | pièce jointe privée contrôlée par Discord | RoomManager |
+| `analyze-spoiler-log` | Portail utilisateur → Spoiler partagé → Analyser | assistant : slot, sphère, mode, masquage et validation | GuildMember |
+| `send-spoiler-log` | Portail utilisateur ou `/ast file:<spoiler.txt>` | spoiler commun à la room, pièce jointe privée contrôlée | GuildMember |
 | `apworlds-info` | Aide et liens → APWorlds | vue directe | GuildMember |
 | `discord` | Aide et liens → Communauté Discord | lien direct | GuildMember |
 | `excluded-item` | Mon espace → Mes exclusions → Ajouter | sélecteur slot puis objet | GuildMember sur ses propres données |

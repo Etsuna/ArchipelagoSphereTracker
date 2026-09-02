@@ -77,6 +77,11 @@ public class WebPortalSecurityMarkupTests
             Assert.Contains("apiBase + '/exclusion/' + action", html);
             Assert.Contains("apiBase + '/recap/delete-all'", html);
             Assert.Contains("apiBase + '/revoke'", html);
+            Assert.Contains("executeSpoilerAction(spoilerUploadForm, '/spoiler/upload')", html);
+            Assert.Contains("executeSpoilerAction(spoilerAnalysisForm, '/spoiler/analyze')", html);
+            Assert.Contains("apiBase + '/spoiler/status'", html);
+            Assert.Contains("id=\"spoiler-analysis-form\"", html);
+            Assert.Contains("class=\"action-group compact-upload\"", html);
             Assert.DoesNotContain("data.append('userId'", html);
         }
         finally

@@ -12,8 +12,6 @@ public static class SpoilerLogClass
         var folder = GetSpoilerFolder(channelId);
         if (!Directory.Exists(folder)) return null;
 
-        CleanupExpiredSpoilerLogs(channelId);
-
         return Directory.EnumerateFiles(folder)
             .Where(file => file.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(File.GetLastWriteTimeUtc)
@@ -92,54 +90,4 @@ public static class SpoilerLogClass
         return string.Format(Resource.SpoilerLogReceived, safeName);
     }
 
-    public static int CleanupExpiredSpoilerLogs(
-        string channelId,
-        DateTimeOffset? now = null,
-        TimeSpan? retention = null,
-        string? folderPath = null)
-    {
-        var folder = folderPath ?? GetSpoilerFolder(channelId);
-        if (!Directory.Exists(folder)) return 0;
-
-        var cutoff = (now ?? DateTimeOffset.UtcNow) -
-                     (retention ?? TimeSpan.FromDays(Declare.SpoilerLogRetentionDays));
-        string[] files;
-        try
-        {
-            files = Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly);
-        }
-        catch (IOException)
-        {
-            return 0;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return 0;
-        }
-
-        var removed = 0;
-        foreach (var file in files)
-        {
-            if (!file.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) &&
-                !file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            try
-            {
-                if (File.GetLastWriteTimeUtc(file) >= cutoff.UtcDateTime)
-                    continue;
-                File.Delete(file);
-                removed++;
-            }
-            catch (IOException)
-            {
-            }
-            catch (UnauthorizedAccessException)
-            {
-            }
-        }
-        return removed;
-    }
 }

@@ -25,12 +25,11 @@ Ces contrôles limitent les fichiers mal formés, les traversées de chemin et l
 ```dotenv
 WEB_MAX_UPLOAD_BYTES=67108864
 UPLOAD_QUARANTINE_RETENTION_MINUTES=60
-SPOILER_LOG_RETENTION_DAYS=30
 ```
 
-Les intervalles acceptés sont respectivement 5–1440 minutes et 1–365 jours. Aucun changement de schéma SQLite n'est requis.
+L'intervalle accepté est de 5 à 1440 minutes. Le spoiler actif et les YAML n'expirent pas ; ils sont supprimés avec la room. Aucun changement de schéma SQLite n'est requis.
 
-Pour revenir au comportement précédent, restaurer les appels directs de copie dans les quatre gestionnaires de fichiers et retirer le nettoyage au démarrage. Les deux nouvelles variables peuvent rester définies sans effet dans une ancienne version.
+Pour revenir au comportement précédent, restaurer les appels directs de copie dans les quatre gestionnaires de fichiers et retirer le nettoyage de quarantaine au démarrage.
 
 ## Vérification
 

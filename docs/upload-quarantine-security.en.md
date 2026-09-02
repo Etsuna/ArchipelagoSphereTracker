@@ -25,12 +25,11 @@ These checks limit malformed files, path traversal, and ZIP bombs. They are neit
 ```dotenv
 WEB_MAX_UPLOAD_BYTES=67108864
 UPLOAD_QUARANTINE_RETENTION_MINUTES=60
-SPOILER_LOG_RETENTION_DAYS=30
 ```
 
-Accepted ranges are 5–1440 minutes and 1–365 days respectively. No SQLite schema change is required.
+The accepted range is 5–1440 minutes. The active spoiler and YAML files do not expire; they are deleted with the room. No SQLite schema change is required.
 
-To roll back, restore direct-copy calls in the four file handlers and remove startup cleanup. The two new variables may remain defined with no effect on an older release.
+To roll back, restore direct-copy calls in the four file handlers and remove quarantine cleanup at startup.
 
 ## Verification
 

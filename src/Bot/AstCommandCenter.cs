@@ -428,7 +428,7 @@ public static class AstCommandCenter
             ["hint-from-finder"] = "personal-hints",
             ["hint-for-receiver"] = "personal-hints",
             ["list-items"] = "personal-items",
-            ["analyze-spoiler-log"] = "manage-spoiler",
+            ["analyze-spoiler-log"] = "personal-spoiler",
             ["send-spoiler-log"] = "ast-file",
             ["apworlds-info"] = "help",
             ["ast-user-portal"] = "personal-portal",
@@ -532,7 +532,7 @@ public static class AstCommandCenter
                     () => GenerationClass.GenerateWithZip(command, channelIdText)).ConfigureAwait(false);
                 break;
             case ".txt" or ".json" when
-                AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization) &&
+                AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization) &&
                 command.Channel is IThreadChannel &&
                 await IsTrackedRoomAsync(guildId, channelId).ConfigureAwait(false):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.SpoilerUpload,
@@ -880,7 +880,7 @@ public static class AstCommandCenter
 
             if (action is "spoiler-analyze" or "spoiler-reset-validation")
             {
-                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization) ||
+                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization) ||
                     session.RoomChannelId is not { } spoilerRoom || string.IsNullOrWhiteSpace(session.SpoilerAlias))
                 {
                     await SetErrorAsync(component, string.IsNullOrWhiteSpace(session.SpoilerAlias)
@@ -1123,10 +1123,10 @@ public static class AstCommandCenter
                 await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
                 return;
             }
-            var managerAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+            var memberAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
                 guildId.ToString(CultureInfo.InvariantCulture), spoilerRoom.ToString(CultureInfo.InvariantCulture),
                 component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
-            if (managerAuthorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, managerAuthorization))
+            if (memberAuthorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, memberAuthorization))
             {
                 await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
                 return;
@@ -1359,9 +1359,7 @@ public static class AstCommandCenter
         var authorization = await AstAuthorizationService.CreateDiscordContextAsync(
             guildId.ToString(CultureInfo.InvariantCulture), authorizationChannelId.ToString(CultureInfo.InvariantCulture),
             modal.User.Id, modal.User as IGuildUser).ConfigureAwait(false);
-        var requiredLevel = action == "spoiler-configure"
-            ? AstAuthorizationLevel.RoomManager
-            : AstAuthorizationLevel.GuildMember;
+        var requiredLevel = AstAuthorizationLevel.GuildMember;
         if (authorization == null || !AstAuthorizationService.IsAllowed(requiredLevel, authorization) ||
             action == "selection-search" && !CanOpen(session.Screen, authorization, session.RoomChannelId != null))
         {
@@ -1630,13 +1628,14 @@ public static class AstCommandCenter
         return Screen(session,
             Resource.AstCenterMySpace2,
             Resource.AstCenterYourPersonalDataAndPreferences,
-            [(Resource.AstCenterMySlots, "personal-slots"),
+            [(Resource.AstCenterMyPortal, "personal-portal"),
+             (Resource.AstCenterMySlots, "personal-slots"),
              (Resource.AstCenterMyItems, "personal-items"),
              ("Hints", "personal-hints"),
              (Resource.AstCenterMyRecap, "personal-recap"),
              (Resource.AstCenterMyPatch, "personal-patch"),
              (Resource.AstCenterMyExclusions, "personal-exclusions"),
-             (Resource.AstCenterMyPortal, "personal-portal"),
+             (Resource.AstCenterAnalyzeSpoiler, "personal-spoiler"),
              (Resource.AstCenterRevokePortal, "personal-portal-revoke-request"),
              (Resource.AstCenterAdvanced, "personal-advanced")]);
     }
@@ -1670,9 +1669,9 @@ public static class AstCommandCenter
         if (session.PendingAction == "revoke-admin-portal") return PortalRevokeConfirmation(session);
         var actions = new List<(string, string)>
         {
+            (Resource.AstCenterPortal, "admin-portal"),
             (Resource.AstCenterConfigureRoom, "admin-setup"),
             (Resource.AstCenterASTHealth, "guild-health"),
-            (Resource.AstCenterPortal, "admin-portal"),
             (Resource.AstCenterRevokePortal, "admin-portal-revoke-request")
         };
         if (Declare.IsArchipelagoMode)
@@ -1738,8 +1737,7 @@ public static class AstCommandCenter
             .AddOption(Resource.AstCenterNormalNotifications, "false")
             .AddOption(Resource.WebSilentMode, "true");
         var components = new ComponentBuilder()
-            .WithButton(Resource.AstCenterAnalyzeSpoiler, Id(session, "manage-spoiler"), ButtonStyle.Primary, row: 0)
-            .WithButton(Resource.AstCenterRoomPortal, Id(session, "room-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.AstCenterRoomPortal, Id(session, "room-portal"), ButtonStyle.Primary, row: 0)
             .WithButton(Resource.AstCenterRevokePortal, Id(session, "room-portal-revoke-request"), ButtonStyle.Secondary, row: 0)
             .WithButton(Resource.AstCenterDeleteRoom, Id(session, "delete-room-request"), ButtonStyle.Danger, row: 0)
             .WithButton(Resource.AstCenterBack, Id(session, "manage"), ButtonStyle.Primary, row: 0)
@@ -1762,7 +1760,7 @@ public static class AstCommandCenter
             .WithButton(Resource.AstCenterAnalyze, Id(session, "spoiler-analyze"), ButtonStyle.Success, row: 0)
             .WithButton(Resource.AstCenterConfigure, Id(session, "spoiler-configure"), ButtonStyle.Primary, row: 0)
             .WithButton(Resource.AstCenterResetValidation, Id(session, "spoiler-reset-validation"), ButtonStyle.Danger, row: 0)
-            .WithButton(Resource.AstCenterBack, Id(session, "manage-more"), ButtonStyle.Secondary, row: 0);
+            .WithButton(Resource.AstCenterBack, Id(session, "personal"), ButtonStyle.Secondary, row: 0);
         if (aliases.Length > 0)
         {
             var aliasMenu = new SelectMenuBuilder().WithCustomId(Id(session, "spoiler-alias"))
@@ -1799,6 +1797,11 @@ public static class AstCommandCenter
             spoilerMode,
             itemDisplay,
             PageLabel(session, aliases.Length));
+        var spoilerPath = SpoilerLogClass.GetLatestSpoilerPath(channelId);
+        description += spoilerPath == null
+            ? $"\n\n{Resource.WebNoSpoilerLogImported}"
+            : $"\n\n{string.Format(Resource.WebSpoilerLogAlreadyImported, Safe(Path.GetFileName(spoilerPath)))}";
+        description += $"\n{Resource.AstCenterSpoilerImportHint}";
         return new AstUiView(null, BaseEmbed(Resource.AstCenterSpoilerAnalysis, description).Build(), components.Build());
     }
 
@@ -1829,10 +1832,10 @@ public static class AstCommandCenter
         var templates = YamlClass.GetTemplateFileNames()
             .Where(file => MatchesSelectionSearch(session, file)).ToArray();
         var components = new ComponentBuilder()
-            .WithButton(Resource.AstCenterList, Id(session, "yaml-list"), ButtonStyle.Primary, row: 0)
+            .WithButton(Resource.AstCenterPortal, Id(session, "admin-portal"), ButtonStyle.Primary, row: 0)
+            .WithButton(Resource.AstCenterList, Id(session, "yaml-list"), ButtonStyle.Secondary, row: 0)
             .WithButton(Resource.AstCenterBackup, Id(session, "yaml-backup"), ButtonStyle.Success, row: 0)
             .WithButton(Resource.AstCenterCleanAll, Id(session, "yaml-clean-request"), ButtonStyle.Danger, row: 0)
-            .WithButton(Resource.AstCenterPortal, Id(session, "admin-portal"), ButtonStyle.Secondary, row: 0)
             .WithButton(Resource.AstCenterBack, Id(session, "admin"), ButtonStyle.Secondary, row: 0);
         var yamlPage = PageValues(yamls, session.SelectionPageIndex);
         if (yamlPage.Count > 0)
@@ -1863,9 +1866,9 @@ public static class AstCommandCenter
             .AddOption(Resource.AstCenterNormalBalancing, "false", isDefault: !session.GenerationSkipProgBalancing)
             .AddOption(Resource.AstCenterSkipBalancing, "true", isDefault: session.GenerationSkipProgBalancing);
         var components = new ComponentBuilder()
+            .WithButton(Resource.AstCenterPortal, Id(session, "admin-portal"), ButtonStyle.Primary, row: 0)
             .WithButton(Resource.WebGenerate, Id(session, "generation-run"), ButtonStyle.Success, row: 0)
-            .WithButton(Resource.AstCenterTest, Id(session, "generation-test"), ButtonStyle.Primary, row: 0)
-            .WithButton(Resource.AstCenterPortal, Id(session, "admin-portal"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.AstCenterTest, Id(session, "generation-test"), ButtonStyle.Secondary, row: 0)
             .WithButton(Resource.AstCenterBack, Id(session, "admin"), ButtonStyle.Secondary, row: 0)
             .WithSelectMenu(skip, row: 1)
             .Build();
@@ -2216,11 +2219,21 @@ public static class AstCommandCenter
         IEnumerable<(string Label, string Action)> actions)
     {
         var components = new ComponentBuilder();
-        foreach (var (label, action) in actions.Take(20))
-            components.WithButton(label, Id(session, action), ButtonStyle.Secondary);
+        foreach (var (label, action) in actions
+                     .OrderByDescending(entry => IsPortalLinkAction(entry.Action))
+                     .Take(20))
+        {
+            components.WithButton(
+                label,
+                Id(session, action),
+                IsPortalLinkAction(action) ? ButtonStyle.Primary : ButtonStyle.Secondary);
+        }
         components.WithButton(Resource.AstCenterBack, Id(session, "home"), ButtonStyle.Primary, emote: new Emoji("↩️"));
         return new AstUiView(null, BaseEmbed(title, Clamp(description, 4000)).Build(), components.Build());
     }
+
+    private static bool IsPortalLinkAction(string action)
+        => action is "personal-portal" or "room-portal" or "admin-portal";
 
     private static async Task<string?> ExecuteImmediateActionAsync(
         string action,
@@ -2438,6 +2451,7 @@ public static class AstCommandCenter
             "personal-patch" => AstUiScreen.Patch,
             "personal-advanced" => AstUiScreen.Advanced,
             "personal-exclusions" => AstUiScreen.Exclusions,
+            "personal-spoiler" => AstUiScreen.SpoilerAnalysis,
             "manage-spoiler" => AstUiScreen.SpoilerAnalysis,
             _ => (AstUiScreen)(-1)
         };
@@ -2457,7 +2471,7 @@ public static class AstCommandCenter
             AstUiScreen.Patch => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Advanced => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Exclusions => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
-            AstUiScreen.SpoilerAnalysis => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
+            AstUiScreen.SpoilerAnalysis => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             _ => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization)
         };
 

@@ -1001,10 +1001,10 @@
     <value>Administration</value>
   </data>
   <data name="AstCenterAdvanced" xml:space="preserve">
-    <value>Advanced</value>
+    <value>Recap management</value>
   </data>
   <data name="AstCenterAdvancedRecaps" xml:space="preserve">
-    <value>🧹 Advanced recaps</value>
+    <value>🧹 Recap management</value>
   </data>
   <data name="AstCenterAdvancedSettings" xml:space="preserve">
     <value>⚙️ Advanced settings</value>
@@ -1496,7 +1496,7 @@ Recap cleared.</value>
     <value>Slot to analyze</value>
   </data>
   <data name="AstCenterSphereToValidateOptional" xml:space="preserve">
-    <value>Sphere to validate (optional)</value>
+    <value>Validate through the entered sphere</value>
   </data>
   <data name="AstCenterSpoilerAnalysis" xml:space="preserve">
     <value>🔎 Spoiler analysis</value>
@@ -2737,5 +2737,21 @@ Items: **{3}**
   <data name="SpoilerLogTooLarge" xml:space="preserve">
     <value>The spoiler file is too large.</value>
     <comment>The spoiler file is too large.</comment>
+  </data>
+  <data name="WebCheckingSpoilerLog" xml:space="preserve">
+    <value>Checking for an imported spoiler log...</value>
+    <comment>Checking for an imported spoiler log...</comment>
+  </data>
+  <data name="WebNoSpoilerLogImported" xml:space="preserve">
+    <value>No spoiler log is currently imported for this room.</value>
+    <comment>No spoiler log is currently imported for this room.</comment>
+  </data>
+  <data name="WebSpoilerLogAlreadyImported" xml:space="preserve">
+    <value>A spoiler log is already imported for this room: {0}</value>
+    <comment>A spoiler log is already imported for this room: {0}</comment>
+  </data>
+  <data name="AstCenterSpoilerImportHint" xml:space="preserve">
+    <value>To import or replace the shared spoiler, run `/ast` again with the `file` option.</value>
+    <comment>To import or replace the shared spoiler, run `/ast` again with the `file` option.</comment>
   </data>
 </root>

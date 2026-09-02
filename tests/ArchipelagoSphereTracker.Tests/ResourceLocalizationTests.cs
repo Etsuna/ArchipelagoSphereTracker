@@ -45,6 +45,21 @@ public sealed class ResourceLocalizationTests
         Assert.Empty(referencedKeys.Except(english.Keys, StringComparer.Ordinal));
     }
 
+    [Theory]
+    [InlineData("AstCenterConfigureAnalysis")]
+    [InlineData("AstCenterSlotToAnalyze")]
+    [InlineData("AstCenterMaximumSphereBlankAll")]
+    [InlineData("AstCenterSphereToValidateOptional")]
+    public void SpoilerConfigurationModalLabelsRespectDiscordLengthLimit(string key)
+    {
+        var root = FindRepositoryRoot();
+        var english = LoadResources(Path.Combine(root, "src", "Resources", "Resource.resx"));
+        var french = LoadResources(Path.Combine(root, "src", "Resources", "Resource.fr.resx"));
+
+        Assert.InRange(english[key].Length, 1, 45);
+        Assert.InRange(french[key].Length, 1, 45);
+    }
+
     [Fact]
     public void SourceDoesNotSelectLocalizedMessagesWithLanguageConditionals()
     {

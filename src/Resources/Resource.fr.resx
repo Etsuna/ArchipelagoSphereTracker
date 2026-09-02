@@ -787,10 +787,10 @@
     <value>Administration</value>
   </data>
   <data name="AstCenterAdvanced" xml:space="preserve">
-    <value>Avancé</value>
+    <value>Gestion du récap</value>
   </data>
   <data name="AstCenterAdvancedRecaps" xml:space="preserve">
-    <value>🧹 Récaps avancés</value>
+    <value>🧹 Gestion du récap</value>
   </data>
   <data name="AstCenterAdvancedSettings" xml:space="preserve">
     <value>⚙️ Réglages avancés</value>
@@ -1281,7 +1281,7 @@ Récap vidé.</value>
     <value>Slot à analyser</value>
   </data>
   <data name="AstCenterSphereToValidateOptional" xml:space="preserve">
-    <value>Sphère à valider (facultatif)</value>
+    <value>Valider jusqu’à la sphère indiquée</value>
   </data>
   <data name="AstCenterSpoilerAnalysis" xml:space="preserve">
     <value>🔎 Analyse du spoiler</value>
@@ -2303,5 +2303,17 @@ Objets : **{3}**
   </data>
   <data name="SpoilerLogTooLarge" xml:space="preserve">
     <value>Le fichier spoiler est trop volumineux.</value>
+  </data>
+  <data name="WebCheckingSpoilerLog" xml:space="preserve">
+    <value>Recherche d’un spoiler log déjà importé…</value>
+  </data>
+  <data name="WebNoSpoilerLogImported" xml:space="preserve">
+    <value>Aucun spoiler log n’est actuellement importé pour cette room.</value>
+  </data>
+  <data name="WebSpoilerLogAlreadyImported" xml:space="preserve">
+    <value>Un spoiler log est déjà importé pour cette room : {0}</value>
+  </data>
+  <data name="AstCenterSpoilerImportHint" xml:space="preserve">
+    <value>Pour importer ou remplacer le spoiler partagé, relancez `/ast` avec l’option `file`.</value>
   </data>
 </root>

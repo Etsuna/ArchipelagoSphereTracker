@@ -143,35 +143,64 @@ public class FileUploadSecurityTests
     }
 
     [Fact]
-    public void CleanupExpiredSpoilerLogs_Removes_only_expired_supported_files()
+    public void GetLatestSpoilerPath_DoesNotExpireAnOldRoomLog()
     {
         var root = Path.Combine(Path.GetTempPath(), $"ast-spoilers-{System.Guid.NewGuid():N}");
+        var previousBasePath = Declare.BasePath;
         try
         {
-            Directory.CreateDirectory(root);
-            var expired = Path.Combine(root, "old.txt");
-            var current = Path.Combine(root, "current.json");
-            var unrelated = Path.Combine(root, "keep.zip");
-            File.WriteAllText(expired, "old");
-            File.WriteAllText(current, "{}");
-            File.WriteAllText(unrelated, "keep");
-            var now = new System.DateTimeOffset(2026, 8, 31, 12, 0, 0, System.TimeSpan.Zero);
-            File.SetLastWriteTimeUtc(expired, now.AddDays(-31).UtcDateTime);
-            File.SetLastWriteTimeUtc(current, now.AddDays(-1).UtcDateTime);
+            Declare.BasePath = root;
+            var spoilerFolder = SpoilerLogClass.GetSpoilerFolder("room");
+            Directory.CreateDirectory(spoilerFolder);
+            var oldSpoiler = Path.Combine(spoilerFolder, "old.txt");
+            File.WriteAllText(oldSpoiler, "old spoiler");
+            File.SetLastWriteTimeUtc(oldSpoiler, System.DateTime.UtcNow.AddYears(-2));
 
-            var removed = SpoilerLogClass.CleanupExpiredSpoilerLogs(
-                "unused-in-test",
-                now,
-                System.TimeSpan.FromDays(30),
-                root);
-
-            Assert.Equal(1, removed);
-            Assert.False(File.Exists(expired));
-            Assert.True(File.Exists(current));
-            Assert.True(File.Exists(unrelated));
+            Assert.Equal(oldSpoiler, SpoilerLogClass.GetLatestSpoilerPath("room"));
+            Assert.True(File.Exists(oldSpoiler));
         }
         finally
         {
+            Declare.BasePath = previousBasePath;
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void RoomDeletion_RemovesRoomFilesAndKeepsCustomWorlds()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"ast-room-cleanup-{System.Guid.NewGuid():N}");
+        var previousPlayersPath = Declare.PlayersPath;
+        var previousOutputPath = Declare.OutputPath;
+        var previousDownloadPath = Declare.WebPortalDownloadPath;
+        var previousCustomPath = Declare.CustomPath;
+        try
+        {
+            Declare.PlayersPath = Path.Combine(root, "Players");
+            Declare.OutputPath = Path.Combine(root, "output");
+            Declare.WebPortalDownloadPath = Path.Combine(root, "portal-downloads");
+            Declare.CustomPath = Path.Combine(root, "custom_worlds");
+
+            Directory.CreateDirectory(Path.Combine(Declare.PlayersPath, "123", "yaml"));
+            Directory.CreateDirectory(Path.Combine(Declare.PlayersPath, "123", "spoiler"));
+            Directory.CreateDirectory(Path.Combine(Declare.OutputPath, "123"));
+            Directory.CreateDirectory(Path.Combine(Declare.WebPortalDownloadPath, "456", "123", "789"));
+            Directory.CreateDirectory(Declare.CustomPath);
+            File.WriteAllText(Path.Combine(Declare.CustomPath, "kept.apworld"), "keep");
+
+            RoomFileStorage.DeleteChannelData("456", "123");
+
+            Assert.False(Directory.Exists(Path.Combine(Declare.PlayersPath, "123")));
+            Assert.False(Directory.Exists(Path.Combine(Declare.OutputPath, "123")));
+            Assert.False(Directory.Exists(Path.Combine(Declare.WebPortalDownloadPath, "456", "123")));
+            Assert.True(File.Exists(Path.Combine(Declare.CustomPath, "kept.apworld")));
+        }
+        finally
+        {
+            Declare.PlayersPath = previousPlayersPath;
+            Declare.OutputPath = previousOutputPath;
+            Declare.WebPortalDownloadPath = previousDownloadPath;
+            Declare.CustomPath = previousCustomPath;
             if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
         }
     }

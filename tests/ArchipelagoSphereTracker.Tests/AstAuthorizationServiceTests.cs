@@ -58,6 +58,8 @@ public class AstAuthorizationServiceTests
     [Theory]
     [InlineData("delete-url", true, AstAuthorizationLevel.RoomManager)]
     [InlineData("status-games-list", true, AstAuthorizationLevel.GuildMember)]
+    [InlineData("send-spoiler-log", true, AstAuthorizationLevel.GuildMember)]
+    [InlineData("analyze-spoiler-log", true, AstAuthorizationLevel.GuildMember)]
     [InlineData("ast-room-health", true, AstAuthorizationLevel.GuildMember)]
     [InlineData("ast-sync-now", true, AstAuthorizationLevel.RoomManager)]
     [InlineData("ast-pause", true, AstAuthorizationLevel.RoomManager)]
