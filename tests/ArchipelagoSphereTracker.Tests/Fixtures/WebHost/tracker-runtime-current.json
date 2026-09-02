@@ -1,0 +1,38 @@
+{
+  "player_items_received": [
+    {
+      "player": 1,
+      "items": [
+        [100, 200, 2, 1],
+        [101, 201, 1, 0]
+      ],
+      "future_player_field": "ignored"
+    }
+  ],
+  "hints": [
+    {
+      "player": 1,
+      "hints": [
+        [2, 1, 200, 100, false, ""],
+        [2, 1, 201, 101, true, "Entrance"]
+      ]
+    }
+  ],
+  "activity_timers": [
+    { "player": 1, "time": "00:05:00" },
+    { "player": 2, "time": null }
+  ],
+  "player_checks_done": [
+    { "player": 1, "locations": [11, 12, 13] },
+    { "player": 2, "locations": [21] }
+  ],
+  "aliases": [
+    { "player": 1, "alias": null },
+    { "player": 2, "alias": "Bobby" }
+  ],
+  "player_status": [
+    { "player": 1, "status": 20 },
+    { "player": 2, "status": 30 }
+  ],
+  "unknown_root_collection": [1, 2, 3]
+}

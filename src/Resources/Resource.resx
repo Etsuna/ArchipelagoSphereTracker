@@ -413,38 +413,6 @@
     <value>There is no list.</value>
     <comment>There is no list.</comment>
   </data>
-  <data name="SCDeleteAliasDescription" xml:space="preserve">
-    <value>Delete Alias</value>
-    <comment>Delete Alias</comment>
-  </data>
-  <data name="SCAddAliasDescription" xml:space="preserve">
-    <value>Add Alias</value>
-    <comment>Add Alias</comment>
-  </data>
-  <data name="SCAddAliasSkipMentionDescription" xml:space="preserve">
-    <value>Set if you want to skip useless mention (filler Items)</value>
-    <comment>Set if you want to skip useless mention (filler Items)</comment>
-  </data>
-  <data name="SCChooseAnAlias" xml:space="preserve">
-    <value>Choose an alias</value>
-    <comment>Choose an alias</comment>
-  </data>
-  <data name="SCAddUrlDescription" xml:space="preserve">
-    <value>Add a URL and create a thread.</value>
-    <comment>Add a URL and create a thread.</comment>
-  </data>
-  <data name="SCUrlToTrack" xml:space="preserve">
-    <value>The URL to track</value>
-    <comment>The URL to track</comment>
-  </data>
-  <data name="SCThreadNameDescription" xml:space="preserve">
-    <value>Name of the thread to create</value>
-    <comment>Name of the thread to create</comment>
-  </data>
-  <data name="SCThreadTypeDescription" xml:space="preserve">
-    <value>Specify if the thread is public or private</value>
-    <comment>Specify if the thread is public or private</comment>
-  </data>
   <data name="SCThreadPublic" xml:space="preserve">
     <value>Public</value>
     <comment>Public</comment>
@@ -452,154 +420,6 @@
   <data name="SCThreadPrivate" xml:space="preserve">
     <value>Private</value>
     <comment>Private</comment>
-  </data>
-  <data name="SCSilentOption" xml:space="preserve">
-    <value>silent</value>
-    <comment>silent</comment>
-  </data>
-  <data name="SCSilentDescription" xml:space="preserve">
-    <value>Only send message when an alias is set</value>
-    <comment>Only send message when an alias is set</comment>
-  </data>
-  <data name="SCThreadName" xml:space="preserve">
-    <value>thread-name</value>
-    <comment>thread-name</comment>
-  </data>
-  <data name="SCThreadType" xml:space="preserve">
-    <value>thread-type</value>
-    <comment>thread-type</comment>
-  </data>
-  <data name="SCAddAliasSkipMention" xml:space="preserve">
-    <value>skip_mention_items</value>
-    <comment>skip_mention_items</comment>
-  </data>
-  <data name="SCGetAliasesDescription" xml:space="preserve">
-    <value>List all Aliases</value>
-    <comment>List all Aliases</comment>
-  </data>
-  <data name="SCDeleteUrlDescription" xml:space="preserve">
-    <value>Delete Url, clean Aliases and Recap</value>
-    <comment>Delete Url, clean Aliases and Recap</comment>
-  </data>
-  <data name="SCStatusGameListDescription" xml:space="preserve">
-    <value>Status for all games</value>
-    <comment>Status for all games</comment>
-  </data>
-  <data name="SCRecapAllDescription" xml:space="preserve">
-    <value>Recap list of items for all games</value>
-    <comment>Recap list of items for all games</comment>
-  </data>
-  <data name="SCInfoDescription" xml:space="preserve">
-    <value>Get all infos for your Archipelago</value>
-    <comment>Get all infos for your Archipelago</comment>
-  </data>
-  <data name="SCGetPatchDescription" xml:space="preserve">
-    <value>Get patch for alias</value>
-    <comment>Get patch for alias</comment>
-  </data>
-  <data name="SCRecapDescription" xml:space="preserve">
-    <value>Recap list of items for a specific game</value>
-    <comment>Recap list of items for a specific game</comment>
-  </data>
-  <data name="RCRecapAndCleanDescription" xml:space="preserve">
-    <value>Recap and clean list of items for a specific game</value>
-    <comment>Recap and clean list of items for a specific game</comment>
-  </data>
-  <data name="SCCleanDescription" xml:space="preserve">
-    <value>Clean list of items for a specific game</value>
-    <comment>Clean list of items for a specific game</comment>
-  </data>
-  <data name="SCCleanAllDescription" xml:space="preserve">
-    <value>Clean all recap items</value>
-    <comment>Clean all recap items</comment>
-  </data>
-  <data name="SCGetHintFromFinderDescription" xml:space="preserve">
-    <value>Get a hint from finder</value>
-    <comment>Get a hint from finder</comment>
-  </data>
-  <data name="SCGetHintForReveiverDescription" xml:space="preserve">
-    <value>Get a hint for receiver</value>
-    <comment>Get a hint for receiver</comment>
-  </data>
-  <data name="SCListItemDescription" xml:space="preserve">
-    <value>List all items for alias</value>
-    <comment>List all items for alias</comment>
-  </data>
-  <data name="SCListYamlsDescription" xml:space="preserve">
-    <value>List all YAML files for the channel</value>
-    <comment>List all YAML files for the channel</comment>
-  </data>
-  <data name="SCListApworldDescription" xml:space="preserve">
-    <value>List all APWorlds</value>
-    <comment>List all APWorlds</comment>
-  </data>
-  <data name="SCApworldInfoDescription" xml:space="preserve">
-    <value>List info for specific APWorld</value>
-    <comment>List info for specific APWorld</comment>
-  </data>
-  <data name="SCApworldInfoChoiceDescription" xml:space="preserve">
-    <value>Choose an APWorld</value>
-    <comment>Choose an APWorld</comment>
-  </data>
-  <data name="SCBackupYamlDescription" xml:space="preserve">
-    <value>Backup all YAMLs for the channel</value>
-    <comment>Backup all YAMLs for the channel</comment>
-  </data>
-  <data name="SCBackupApworldDescription" xml:space="preserve">
-    <value>Backup all APWorlds for the channel</value>
-    <comment>Backup all APWorlds for the channel</comment>
-  </data>
-  <data name="SCDownloadYamlTemplateDescription" xml:space="preserve">
-    <value>Download a YAML template</value>
-    <comment>Download a YAML template</comment>
-  </data>
-  <data name="SCTemplateDescription" xml:space="preserve">
-    <value>Choose a YAML file to download</value>
-    <comment>Choose a YAML file to download</comment>
-  </data>
-  <data name="SCDeleteYamlDescription" xml:space="preserve">
-    <value>Delete a specific YAML file</value>
-    <comment>Delete a specific YAML file</comment>
-  </data>
-  <data name="SCDeleteYamlChooseDescription" xml:space="preserve">
-    <value>Choose a YAML file to delete</value>
-    <comment>Choose a YAML file to delete</comment>
-  </data>
-  <data name="SCCleanYamlDescription" xml:space="preserve">
-    <value>Clean all YAMLs in the channel</value>
-    <comment>Clean all YAMLs in the channel</comment>
-  </data>
-  <data name="SCSendYamlDescription" xml:space="preserve">
-    <value>Send or replace a YAML file for generation</value>
-    <comment>Send or replace a YAML file for generation</comment>
-  </data>
-  <data name="SCSendYamlChooseDescription" xml:space="preserve">
-    <value>Upload a YAML file</value>
-    <comment>Upload a YAML file</comment>
-  </data>
-  <data name="SCGenerateWithZipDescription" xml:space="preserve">
-    <value>Generate multiworld from a ZIP</value>
-    <comment>Generate multiworld from a ZIP</comment>
-  </data>
-  <data name="SCGenerateWithZipChooseDescription" xml:space="preserve">
-    <value>Upload a ZIP containing YAMLs</value>
-    <comment>Upload a ZIP containing YAMLs</comment>
-  </data>
-  <data name="SCSendApworldDescription" xml:space="preserve">
-    <value>Send or replace an APWorld file</value>
-    <comment>Send or replace an APWorld file</comment>
-  </data>
-  <data name="SCSendApworldChooseDescription" xml:space="preserve">
-    <value>Upload an APWorld file</value>
-    <comment>Upload an APWorld file</comment>
-  </data>
-  <data name="SCGenerateDescription" xml:space="preserve">
-    <value>Generate multiworld from existing YAMLs</value>
-    <comment>Generate multiworld from existing YAMLs</comment>
-  </data>
-  <data name="SCTestGenerateDescription" xml:space="preserve">
-    <value>Test generation of multiworld from existing YAMLs</value>
-    <comment>Test generation of multiworld from existing YAMLs</comment>
   </data>
   <data name="URLEmpty" xml:space="preserve">
     <value>Empty URL not allowed.</value>
@@ -617,17 +437,9 @@
     <value>User not found for the private thread.</value>
     <comment>User not found for the private thread.</comment>
   </data>
-  <data name="UrlGamePatch" xml:space="preserve">
-    <value>Name: {0} | Download: {1}</value>
-    <comment>Name: {gameAlias} | Download: {downloadLink}</comment>
-  </data>
   <data name="URLBotReady" xml:space="preserve">
     <value>BOT Ready, GL&amp;HF!</value>
     <comment>BOT Ready!</comment>
-  </data>
-  <data name="URLSet" xml:space="preserve">
-    <value>URL set to {0}. Messages configured for this channel. Please wait while the program retrieves all aliases.</value>
-    <comment>URL set to {newUrl}. Messages configured for this channel. Please wait while the program retrieves all aliases.</comment>
   </data>
   <data name="URLAlreadySet" xml:space="preserve">
     <value>URL already set for this channel. Remove the URL before adding a new one.</value>
@@ -945,26 +757,6 @@
     <value>Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}.</value>
     <comment>Players Min &gt; Players Max. Impossible to add this archipelago. Max players is set to {0}.</comment>
   </data>
-  <data name="Every" xml:space="preserve">
-    <value>Every</value>
-    <comment>Every</comment>
-  </data>
-  <data name="Hour" xml:space="preserve">
-    <value>hour</value>
-    <comment>hour</comment>
-  </data>
-  <data name="EveryDay" xml:space="preserve">
-    <value>Every day</value>
-    <comment>Every day</comment>
-  </data>
-  <data name="CheckFrequency" xml:space="preserve">
-    <value>check-frequency</value>
-    <comment>check-frequency</comment>
-  </data>
-  <data name="CheckFrequencyDesc" xml:space="preserve">
-    <value>Check frequency, default 5m.</value>
-    <comment>Check frequency, default 5m.</comment>
-  </data>
   <data name="TDMSkippingCheck" xml:space="preserve">
     <value>Check skipped for: {0} ({1} minutes).</value>
     <comment>Check skipped for: {channelCheck.Name} ({checkFrequencyTs.TotalMinutes} minutes). </comment>
@@ -1069,14 +861,6 @@
     <value>Download and Install Archipelago version {0} before to install the bot in Archipelago Mode.</value>
     <comment>Download and Install Archipelago version {Version} before to install the bot in Archipelago Mode.</comment>
   </data>
-  <data name="UpdateAvailable" xml:space="preserve">
-    <value>Update available:</value>
-    <comment>Update available:</comment>
-  </data>
-  <data name="DownloadUpdate" xml:space="preserve">
-    <value>Downloading the update:</value>
-    <comment>Downloading the update:</comment>
-  </data>
   <data name="Allcheckdone" xml:space="preserve">
     <value>All players have completed their checks. Automatic deletion of the information from the database.</value>
     <comment>All players have completed their checks. Automatic deletion of the information from the database.</comment>
@@ -1084,26 +868,6 @@
   <data name="Discord" xml:space="preserve">
     <value>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/PJfWRKVyEW</value>
     <comment>Feel free to join the Discord if you have any questions or find a bug: https://discord.gg/PJfWRKVyEW</comment>
-  </data>
-  <data name="DiscordDesc" xml:space="preserve">
-    <value>Shows the Discord link.</value>
-    <comment>Shows the Discord link.</comment>
-  </data>
-  <data name="SCChooseAnItem" xml:space="preserve">
-    <value>Choose an item</value>
-    <comment>Choose an item</comment>
-  </data>
-  <data name="SCExcludedItemDesc" xml:space="preserve">
-    <value>Excludes notifications for this item</value>
-    <comment>Excludes notifications for this item</comment>
-  </data>
-  <data name="SCExcludedItemListDesc" xml:space="preserve">
-    <value>Displays your excluded items list</value>
-    <comment>Displays your excluded items list</comment>
-  </data>
-  <data name="SCDeleteExcludedItemDesc" xml:space="preserve">
-    <value>Deletes the item from the exclusion list</value>
-    <comment>Deletes the item from the exclusion list</comment>
   </data>
   <data name="ExcludeItemAdded" xml:space="preserve">
     <value>Item {0} added to the exclusion list from {1}.</value>
@@ -1132,14 +896,6 @@
   <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
     <value>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</value>
     <comment>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</comment>
-  </data>
-  <data name="None" xml:space="preserve">
-    <value>No filter</value>
-    <comment>No filter</comment>
-  </data>
-  <data name="SCUpdateSilentOptionDescription" xml:space="preserve">
-    <value>Updated the “Silent” option.</value>
-    <comment>Updated the “Silent” option.</comment>
   </data>
   <data name="SilentModeEnabled" xml:space="preserve">
     <value>Silent Mode Enabled.</value>
@@ -1189,21 +945,1174 @@
     <value>🌌 Portal: {0}</value>
     <comment>Web portal link for the user's recap page.</comment>
   </data>
-  <data name="SCPortalLinkDescription" xml:space="preserve">
-    <value>Get your web portal link.</value>
-    <comment>Slash command description for portal-link.</comment>
-  </data>
   <data name="WebPortalDisabled" xml:space="preserve">
     <value>Web portal is disabled.</value>
     <comment>Message shown when the web portal is disabled.</comment>
   </data>
-  <data name="SCPortalUrlDescription" xml:space="preserve">
-    <value>Get the web portal commands page.</value>
-    <comment>Slash command description for portal-url.</comment>
-  </data>
   <data name="WebPortalCommandsLink" xml:space="preserve">
     <value>🌌 Portal commands: {0}</value>
     <comment>Web portal link for the guild commands page.</comment>
+  </data>
+  <data name="WebGenerate" xml:space="preserve">
+    <value>Generate</value>
+    <comment>Generate</comment>
+  </data>
+  <data name="WebGeneration" xml:space="preserve">
+    <value>Generation</value>
+    <comment>Generation</comment>
+  </data>
+  <data name="WebSilentMode" xml:space="preserve">
+    <value>Silent mode</value>
+    <comment>Silent mode</comment>
+  </data>
+  <data name="WebThreadName" xml:space="preserve">
+    <value>Thread name</value>
+    <comment>Thread name</comment>
+  </data>
+  <data name="WebThreadType" xml:space="preserve">
+    <value>Thread type</value>
+    <comment>Thread type</comment>
+  </data>
+  <data name="AstCenterASTAdministration" xml:space="preserve">
+    <value>🛠️ AST administration</value>
+  </data>
+  <data name="AstCenterASTCommandCenter" xml:space="preserve">
+    <value>AST command center</value>
+  </data>
+  <data name="AstCenterASTHealth" xml:space="preserve">
+    <value>AST health</value>
+  </data>
+  <data name="AstCenterASTPrivateInterface" xml:space="preserve">
+    <value>AST · private interface</value>
+  </data>
+  <data name="AstCenterActionUnavailableInThisContext" xml:space="preserve">
+    <value>Action unavailable in this context.</value>
+  </data>
+  <data name="AstCenterActionsRestrictedToThisRoomSManagers" xml:space="preserve">
+    <value>Actions restricted to this room's managers.</value>
+  </data>
+  <data name="AstCenterAddAnExclusionForSlot" xml:space="preserve">
+    <value>Add an exclusion for slot…</value>
+  </data>
+  <data name="AstCenterAddOrRemoveExclusionsForYourOwnSlots" xml:space="preserve">
+    <value>Add or remove exclusions for your own slots. </value>
+  </data>
+  <data name="AstCenterAdministration" xml:space="preserve">
+    <value>Administration</value>
+  </data>
+  <data name="AstCenterAdvanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="AstCenterAdvancedRecaps" xml:space="preserve">
+    <value>🧹 Advanced recaps</value>
+  </data>
+  <data name="AstCenterAdvancedSettings" xml:space="preserve">
+    <value>⚙️ Advanced settings</value>
+  </data>
+  <data name="AstCenterAll" xml:space="preserve">
+    <value>all</value>
+  </data>
+  <data name="AstCenterAllYAMLFilesAndGenerationDataForThisChannel" xml:space="preserve">
+    <value>All YAML files and generation data for this channel will be deleted.</value>
+  </data>
+  <data name="AstCenterAllYourRecaps" xml:space="preserve">
+    <value>all your recaps</value>
+  </data>
+  <data name="AstCenterAllYourRecapsWereCleared" xml:space="preserve">
+    <value>All your recaps were cleared.</value>
+  </data>
+  <data name="AstCenterAnalysisSettingsUpdated" xml:space="preserve">
+    <value>Analysis settings updated.</value>
+  </data>
+  <data name="AstCenterAnalyze" xml:space="preserve">
+    <value>Analyze</value>
+  </data>
+  <data name="AstCenterAnalyzeSpoiler" xml:space="preserve">
+    <value>Analyze spoiler</value>
+  </data>
+  <data name="AstCenterAssociateASlot" xml:space="preserve">
+    <value>Associate a slot…</value>
+  </data>
+  <data name="AstCenterAssociateASlot2" xml:space="preserve">
+    <value>Associate a slot</value>
+  </data>
+  <data name="AstCenterAssociateByName" xml:space="preserve">
+    <value>Associate by name</value>
+  </data>
+  <data name="AstCenterAssociations" xml:space="preserve">
+    <value>Associations</value>
+  </data>
+  <data name="AstCenterAstMustBeUsedInADiscordServer" xml:space="preserve">
+    <value>`/ast` must be used in a Discord server.</value>
+  </data>
+  <data name="AstCenterAutomatic15MinMax" xml:space="preserve">
+    <value>Automatic · 15 min max</value>
+  </data>
+  <data name="AstCenterAutomatic1HMax" xml:space="preserve">
+    <value>Automatic · 1 h max</value>
+  </data>
+  <data name="AstCenterAutomatic30MinMax" xml:space="preserve">
+    <value>Automatic · 30 min max</value>
+  </data>
+  <data name="AstCenterAutomatic6HMax" xml:space="preserve">
+    <value>Automatic · 6 h max</value>
+  </data>
+  <data name="AstCenterAvailableItemsPage" xml:space="preserve">
+    <value>{0} available items — page {1}/{2}.{3}</value>
+  </data>
+  <data name="AstCenterBack" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="AstCenterBackup" xml:space="preserve">
+    <value>Backup</value>
+  </data>
+  <data name="AstCenterCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="AstCenterChooseARoom" xml:space="preserve">
+    <value>Choose a room…</value>
+  </data>
+  <data name="AstCenterChooseASlot" xml:space="preserve">
+    <value>Choose a slot…</value>
+  </data>
+  <data name="AstCenterChooseASlotToAnalyzeFirst" xml:space="preserve">
+    <value>Choose a slot to analyze first.</value>
+  </data>
+  <data name="AstCenterChooseAnItem" xml:space="preserve">
+    <value>Choose an item…</value>
+  </data>
+  <data name="AstCenterChooseModeAndInterval" xml:space="preserve">
+    <value>Choose mode and interval…</value>
+  </data>
+  <data name="AstCenterChooseOneOfMySlots" xml:space="preserve">
+    <value>Choose one of my slots…</value>
+  </data>
+  <data name="AstCenterChooseTheAreaYouWantToOpen" xml:space="preserve">
+    <value>Choose the area you want to open.</value>
+  </data>
+  <data name="AstCenterCleanAll" xml:space="preserve">
+    <value>Clean all</value>
+  </data>
+  <data name="AstCenterCleanYAMLFiles" xml:space="preserve">
+    <value>Clean YAML files</value>
+  </data>
+  <data name="AstCenterClearAll" xml:space="preserve">
+    <value>Clear all</value>
+  </data>
+  <data name="AstCenterClearFilter" xml:space="preserve">
+    <value>Clear filter</value>
+  </data>
+  <data name="AstCenterClearOneRecap" xml:space="preserve">
+    <value>Clear one recap…</value>
+  </data>
+  <data name="AstCenterClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="AstCenterConfigure" xml:space="preserve">
+    <value>Configure</value>
+  </data>
+  <data name="AstCenterConfigureAnalysis" xml:space="preserve">
+    <value>Configure analysis</value>
+  </data>
+  <data name="AstCenterConfigureRoom" xml:space="preserve">
+    <value>Configure room</value>
+  </data>
+  <data name="AstCenterConfirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="AstCenterConfirmClearing" xml:space="preserve">
+    <value>Confirm clearing {0}?</value>
+  </data>
+  <data name="AstCenterConfirmDeletionOf" xml:space="preserve">
+    <value>Confirm deletion of **{0}**?</value>
+    <comment>@MutedRule(PunctuationTail)</comment>
+  </data>
+  <data name="AstCenterConfirmRemoval" xml:space="preserve">
+    <value>Confirm removal</value>
+  </data>
+  <data name="AstCenterConfirmation" xml:space="preserve">
+    <value>⚠️ Confirmation</value>
+  </data>
+  <data name="AstCenterConfirmationExpired" xml:space="preserve">
+    <value>Confirmation expired.</value>
+  </data>
+  <data name="AstCenterDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="AstCenterDeleteAYAML" xml:space="preserve">
+    <value>Delete a YAML…</value>
+  </data>
+  <data name="AstCenterDeleteAll" xml:space="preserve">
+    <value>Delete all</value>
+  </data>
+  <data name="AstCenterDeletePermanently" xml:space="preserve">
+    <value>Delete permanently</value>
+  </data>
+  <data name="AstCenterDeleteRoom" xml:space="preserve">
+    <value>Delete room</value>
+  </data>
+  <data name="AstCenterDeleteYAML" xml:space="preserve">
+    <value>Delete YAML</value>
+  </data>
+  <data name="AstCenterDissociateASlot" xml:space="preserve">
+    <value>Dissociate a slot</value>
+  </data>
+  <data name="AstCenterDissociateByName" xml:space="preserve">
+    <value>Dissociate by name</value>
+  </data>
+  <data name="AstCenterDissociateOneOfMySlots" xml:space="preserve">
+    <value>Dissociate one of my slots…</value>
+  </data>
+  <data name="AstCenterDownloadATemplate" xml:space="preserve">
+    <value>Download a template…</value>
+  </data>
+  <data name="AstCenterEnterASlotAndUseOnlyNonNegativeIntegers" xml:space="preserve">
+    <value>Enter a slot and use only non-negative integers for spheres.</value>
+  </data>
+  <data name="AstCenterEveryDeletionRequiresConfirmation" xml:space="preserve">
+    <value>Every deletion requires confirmation. </value>
+  </data>
+  <data name="AstCenterExactSlotName" xml:space="preserve">
+    <value>Exact slot name</value>
+  </data>
+  <data name="AstCenterFiller" xml:space="preserve">
+    <value>Filler</value>
+  </data>
+  <data name="AstCenterFillerTraps" xml:space="preserve">
+    <value>Filler + traps</value>
+  </data>
+  <data name="AstCenterFilter" xml:space="preserve">
+    <value> Filter: “{0}”.</value>
+  </data>
+  <data name="AstCenterFilter2" xml:space="preserve">
+    <value>Filter: “{0}”. </value>
+  </data>
+  <data name="AstCenterFilterAll" xml:space="preserve">
+    <value>Filter all</value>
+  </data>
+  <data name="AstCenterFilterUnnecessaryMentions" xml:space="preserve">
+    <value>Filter unnecessary mentions…</value>
+  </data>
+  <data name="AstCenterFirstBlockingSphere" xml:space="preserve">
+    <value>First blocking sphere</value>
+  </data>
+  <data name="AstCenterFixed12H" xml:space="preserve">
+    <value>Fixed · 12 h</value>
+  </data>
+  <data name="AstCenterFixed15Min" xml:space="preserve">
+    <value>Fixed · 15 min</value>
+  </data>
+  <data name="AstCenterFixed18H" xml:space="preserve">
+    <value>Fixed · 18 h</value>
+  </data>
+  <data name="AstCenterFixed1Day" xml:space="preserve">
+    <value>Fixed · 1 day</value>
+  </data>
+  <data name="AstCenterFixed1H" xml:space="preserve">
+    <value>Fixed · 1 h</value>
+  </data>
+  <data name="AstCenterFixed30Min" xml:space="preserve">
+    <value>Fixed · 30 min</value>
+  </data>
+  <data name="AstCenterFixed5Min" xml:space="preserve">
+    <value>Fixed · 5 min</value>
+  </data>
+  <data name="AstCenterFixed6H" xml:space="preserve">
+    <value>Fixed · 6 h</value>
+  </data>
+  <data name="AstCenterFullOrPartialItemName" xml:space="preserve">
+    <value>Full or partial item name</value>
+  </data>
+  <data name="AstCenterFullOrPartialName" xml:space="preserve">
+    <value>Full or partial name</value>
+  </data>
+  <data name="AstCenterFullReport" xml:space="preserve">
+    <value>Full report</value>
+  </data>
+  <data name="AstCenterGenerateFromTheChannelYAMLFilesOrTestThem" xml:space="preserve">
+    <value>Generate from the channel YAML files or test them without output. A ZIP sent with `/ast file:` also starts native generation.</value>
+  </data>
+  <data name="AstCenterGuildManagerAccess" xml:space="preserve">
+    <value>Guild-manager access.</value>
+  </data>
+  <data name="AstCenterHelp" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="AstCenterHelpAndLinks" xml:space="preserve">
+    <value>❓ Help and links</value>
+  </data>
+  <data name="AstCenterHideItems" xml:space="preserve">
+    <value>Hide items</value>
+  </data>
+  <data name="AstCenterInformation" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="AstCenterInstanceOwnerAccess" xml:space="preserve">
+    <value>Instance-owner access.</value>
+  </data>
+  <data name="AstCenterInvalidFilter" xml:space="preserve">
+    <value>Invalid filter.</value>
+  </data>
+  <data name="AstCenterInvalidPollingChoice" xml:space="preserve">
+    <value>Invalid polling choice.</value>
+  </data>
+  <data name="AstCenterInvalidSearch" xml:space="preserve">
+    <value>Invalid search.</value>
+  </data>
+  <data name="AstCenterInvalidSelection" xml:space="preserve">
+    <value>Invalid selection.</value>
+  </data>
+  <data name="AstCenterInvalidSetting" xml:space="preserve">
+    <value>Invalid setting.</value>
+  </data>
+  <data name="AstCenterItemDisplay" xml:space="preserve">
+    <value>Item display…</value>
+  </data>
+  <data name="AstCenterList" xml:space="preserve">
+    <value>List</value>
+  </data>
+  <data name="AstCenterManage" xml:space="preserve">
+    <value>Manage</value>
+  </data>
+  <data name="AstCenterManageRoom" xml:space="preserve">
+    <value>⚙️ Manage room</value>
+  </data>
+  <data name="AstCenterMaximumSphereBlankAll" xml:space="preserve">
+    <value>Maximum sphere (blank = all)</value>
+  </data>
+  <data name="AstCenterMentionFilterUpdated" xml:space="preserve">
+    <value>Mention filter updated.</value>
+  </data>
+  <data name="AstCenterMissingChecksScope" xml:space="preserve">
+    <value>Missing checks scope…</value>
+  </data>
+  <data name="AstCenterMore" xml:space="preserve">
+    <value>More…</value>
+  </data>
+  <data name="AstCenterMyAssociatedSlots" xml:space="preserve">
+    <value>**My associated slots**</value>
+  </data>
+  <data name="AstCenterMyExclusions" xml:space="preserve">
+    <value>My exclusions</value>
+  </data>
+  <data name="AstCenterMyExclusions2" xml:space="preserve">
+    <value>🚫 My exclusions</value>
+  </data>
+  <data name="AstCenterMyExclusions3" xml:space="preserve">
+    <value>**My exclusions**</value>
+  </data>
+  <data name="AstCenterMyItems" xml:space="preserve">
+    <value>My items</value>
+  </data>
+  <data name="AstCenterMyItems2" xml:space="preserve">
+    <value>**My items**</value>
+  </data>
+  <data name="AstCenterMyPatch" xml:space="preserve">
+    <value>My patch</value>
+  </data>
+  <data name="AstCenterMyPatch2" xml:space="preserve">
+    <value>🩹 My patch</value>
+  </data>
+  <data name="AstCenterMyPortal" xml:space="preserve">
+    <value>My portal</value>
+  </data>
+  <data name="AstCenterMyPrivatePortal" xml:space="preserve">
+    <value>My private portal</value>
+  </data>
+  <data name="AstCenterMyRecap" xml:space="preserve">
+    <value>My recap</value>
+  </data>
+  <data name="AstCenterMySlots" xml:space="preserve">
+    <value>My slots</value>
+  </data>
+  <data name="AstCenterMySlots2" xml:space="preserve">
+    <value>👤 My slots</value>
+  </data>
+  <data name="AstCenterMySpace" xml:space="preserve">
+    <value>My space</value>
+  </data>
+  <data name="AstCenterMySpace2" xml:space="preserve">
+    <value>👤 My space</value>
+  </data>
+  <data name="AstCenterMyUnfoundHints" xml:space="preserve">
+    <value>**My unfound hints**</value>
+  </data>
+  <data name="AstCenterNativeDiscordAPWorldManagement" xml:space="preserve">
+    <value>Native Discord APWorld management.</value>
+  </data>
+  <data name="AstCenterNavigation" xml:space="preserve">
+    <value>Navigation</value>
+  </data>
+  <data name="AstCenterNext" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="AstCenterNoAccessibleRoomOnThisServer" xml:space="preserve">
+    <value>No accessible room on this server.</value>
+  </data>
+  <data name="AstCenterNoAssociatedSlot" xml:space="preserve">
+    <value>No associated slot.</value>
+  </data>
+  <data name="AstCenterNoAssociatedSlotOnThisPage" xml:space="preserve">
+    <value>No associated slot on this page.</value>
+  </data>
+  <data name="AstCenterNoFilter" xml:space="preserve">
+    <value>No filter</value>
+  </data>
+  <data name="AstCenterNoPersonalExclusion" xml:space="preserve">
+    <value>No personal exclusion.</value>
+  </data>
+  <data name="AstCenterNoRoomMatches" xml:space="preserve">
+    <value>No room matches “{0}”.</value>
+  </data>
+  <data name="AstCenterNoRoomSelected" xml:space="preserve">
+    <value>No room selected.</value>
+  </data>
+  <data name="AstCenterNoSlotIsAssociatedWithYourAccountInThis" xml:space="preserve">
+    <value>No slot is associated with your account in this room.</value>
+  </data>
+  <data name="AstCenterNoUnfoundHintForYourSlots" xml:space="preserve">
+    <value>No unfound hint for your slots.</value>
+  </data>
+  <data name="AstCenterNone" xml:space="preserve">
+    <value>none</value>
+  </data>
+  <data name="AstCenterNoneOfYourSlotsMatchThisFilter" xml:space="preserve">
+    <value>None of your slots match this filter.</value>
+  </data>
+  <data name="AstCenterNormalBalancing" xml:space="preserve">
+    <value>Normal balancing</value>
+  </data>
+  <data name="AstCenterNormalNotifications" xml:space="preserve">
+    <value>Normal notifications</value>
+  </data>
+  <data name="AstCenterNotificationMode" xml:space="preserve">
+    <value>Notification mode…</value>
+  </data>
+  <data name="AstCenterPageOf" xml:space="preserve">
+    <value>Page {0} of {1}.</value>
+  </data>
+  <data name="AstCenterPaginatedResult" xml:space="preserve">
+    <value>Paginated result</value>
+  </data>
+  <data name="AstCenterPatchForAssociatedSlot" xml:space="preserve">
+    <value>Patch for associated slot **{0}**.</value>
+  </data>
+  <data name="AstCenterPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="AstCenterPortal" xml:space="preserve">
+    <value>Portal</value>
+  </data>
+  <data name="AstCenterPrevious" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="AstCenterPreviouslyIssuedURLsForThisContextWillImmediatelyStop" xml:space="preserve">
+    <value>Previously issued URLs for this context will immediately stop working.</value>
+  </data>
+  <data name="AstCenterPrivateAdministrationPortal" xml:space="preserve">
+    <value>Private administration portal</value>
+  </data>
+  <data name="AstCenterPrivateBackupReady" xml:space="preserve">
+    <value>Private backup ready.</value>
+  </data>
+  <data name="AstCenterPrivateGenerationCompleted" xml:space="preserve">
+    <value>Private generation completed.</value>
+  </data>
+  <data name="AstCenterPrivateRoomPortal" xml:space="preserve">
+    <value>Private room portal</value>
+  </data>
+  <data name="AstCenterPrivateYAMLTemplate" xml:space="preserve">
+    <value>Private YAML template.</value>
+  </data>
+  <data name="AstCenterProgress" xml:space="preserve">
+    <value>Progress</value>
+  </data>
+  <data name="AstCenterProgressionBalancing" xml:space="preserve">
+    <value>Progression balancing…</value>
+  </data>
+  <data name="AstCenterRecapCleared" xml:space="preserve">
+    <value>
+
+Recap cleared.</value>
+  </data>
+  <data name="AstCenterRecapForCleared" xml:space="preserve">
+    <value>Recap for **{0}** cleared.</value>
+  </data>
+  <data name="AstCenterRemoveAnExclusionFromSlot" xml:space="preserve">
+    <value>Remove an exclusion from slot…</value>
+  </data>
+  <data name="AstCenterRemoveFromExclusions" xml:space="preserve">
+    <value>Remove **{0}** from **{1}** exclusions?</value>
+  </data>
+  <data name="AstCenterRequired" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="AstCenterResetValidation" xml:space="preserve">
+    <value>Reset validation</value>
+  </data>
+  <data name="AstCenterResume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="AstCenterRevokeLink" xml:space="preserve">
+    <value>Revoke link</value>
+  </data>
+  <data name="AstCenterRevokePortal" xml:space="preserve">
+    <value>Revoke portal</value>
+  </data>
+  <data name="AstCenterRevokePortal2" xml:space="preserve">
+    <value>Revoke portal</value>
+  </data>
+  <data name="AstCenterRoom" xml:space="preserve">
+    <value>Room</value>
+  </data>
+  <data name="AstCenterRoomPortal" xml:space="preserve">
+    <value>Room portal</value>
+  </data>
+  <data name="AstCenterRooms" xml:space="preserve">
+    <value>Rooms</value>
+  </data>
+  <data name="AstCenterSearch" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="AstCenterSearchForAnItem" xml:space="preserve">
+    <value>Search for an item</value>
+  </data>
+  <data name="AstCenterSearchTheList" xml:space="preserve">
+    <value>Search the list</value>
+  </data>
+  <data name="AstCenterSelectionExpired" xml:space="preserve">
+    <value>Selection expired.</value>
+  </data>
+  <data name="AstCenterShowItems" xml:space="preserve">
+    <value>Show items</value>
+  </data>
+  <data name="AstCenterShowThenClear" xml:space="preserve">
+    <value>Show then clear…</value>
+  </data>
+  <data name="AstCenterSkipBalancing" xml:space="preserve">
+    <value>Skip balancing</value>
+  </data>
+  <data name="AstCenterSlotToAnalyze" xml:space="preserve">
+    <value>Slot to analyze</value>
+  </data>
+  <data name="AstCenterSphereToValidateOptional" xml:space="preserve">
+    <value>Sphere to validate (optional)</value>
+  </data>
+  <data name="AstCenterSpoilerAnalysis" xml:space="preserve">
+    <value>🔎 Spoiler analysis</value>
+  </data>
+  <data name="AstCenterSyncNow" xml:space="preserve">
+    <value>Sync now</value>
+  </data>
+  <data name="AstCenterTest" xml:space="preserve">
+    <value>Test</value>
+  </data>
+  <data name="AstCenterTheBackupWasSentBelow" xml:space="preserve">
+    <value>The backup was sent below.</value>
+  </data>
+  <data name="AstCenterTheCommandCenterIsTemporarilyUnavailable" xml:space="preserve">
+    <value>The command center is temporarily unavailable.</value>
+  </data>
+  <data name="AstCenterTheCompleteDiscordAssociationListIsManagerOnlyYour" xml:space="preserve">
+    <value>The complete Discord association list is manager-only. Your associations will be available under My space.</value>
+  </data>
+  <data name="AstCenterTheGenerationWasSentBelow" xml:space="preserve">
+    <value>The generation was sent below.</value>
+  </data>
+  <data name="AstCenterThePortalIsTemporarilyUnavailable" xml:space="preserve">
+    <value>The portal is temporarily unavailable.</value>
+  </data>
+  <data name="AstCenterThePortalLinkWasRevoked" xml:space="preserve">
+    <value>The portal link was revoked.</value>
+  </data>
+  <data name="AstCenterTheRoom" xml:space="preserve">
+    <value>The room</value>
+  </data>
+  <data name="AstCenterTheSettingsBelowExecuteDirectlyInDiscord" xml:space="preserve">
+    <value>The settings below execute directly in Discord.</value>
+  </data>
+  <data name="AstCenterTheTemplateWasSentBelow" xml:space="preserve">
+    <value>The template was sent below.</value>
+  </data>
+  <data name="AstCenterTheWebPortalIsDisabled" xml:space="preserve">
+    <value>The Web portal is disabled.</value>
+  </data>
+  <data name="AstCenterThisFileTypeIsOnlyAvailableInArchipelagoMode" xml:space="preserve">
+    <value>This file type is only available in Archipelago mode. In Normal mode, `/ast file:` only accepts `.txt` and `.json` spoiler logs.</value>
+  </data>
+  <data name="AstCenterThisInterfaceExpired" xml:space="preserve">
+    <value>This interface expired.</value>
+  </data>
+  <data name="AstCenterThisInterfaceExpiredRunAstAgain" xml:space="preserve">
+    <value>This interface expired. Run `/ast` again.</value>
+  </data>
+  <data name="AstCenterThisPageExpired" xml:space="preserve">
+    <value>This page expired.</value>
+  </data>
+  <data name="AstCenterThisRemovesRoomTrackingAndItsLocalDataIt" xml:space="preserve">
+    <value>This removes room tracking and its local data. It cannot be undone.</value>
+  </data>
+  <data name="AstCenterThisRoomIsNoLongerTracked" xml:space="preserve">
+    <value>This room is no longer tracked.</value>
+  </data>
+  <data name="AstCenterThisSearchExpired" xml:space="preserve">
+    <value>This search expired.</value>
+  </data>
+  <data name="AstCenterThisSettingIsAppliedDirectlyFromDiscord" xml:space="preserve">
+    <value>This setting is applied directly from Discord.</value>
+  </data>
+  <data name="AstCenterThisSlotDoesNotExistInThisRoom" xml:space="preserve">
+    <value>This slot does not exist in this room.</value>
+  </data>
+  <data name="AstCenterThisSlotIsNotAssociatedWithYourAccount" xml:space="preserve">
+    <value>This slot is not associated with your account.</value>
+  </data>
+  <data name="AstCenterThroughRequired" xml:space="preserve">
+    <value>Through required</value>
+  </data>
+  <data name="AstCenterThroughUseful" xml:space="preserve">
+    <value>Through useful</value>
+  </data>
+  <data name="AstCenterTraps" xml:space="preserve">
+    <value>Traps</value>
+  </data>
+  <data name="AstCenterUnclassified" xml:space="preserve">
+    <value>Unclassified</value>
+  </data>
+  <data name="AstCenterUnknownAction" xml:space="preserve">
+    <value>Unknown action.</value>
+  </data>
+  <data name="AstCenterUnsupportedFormatUseAYamlZipApworldTxtOr" xml:space="preserve">
+    <value>Unsupported format. Use a `.yaml`, `.zip`, `.apworld`, `.txt`, or `.json` file.</value>
+  </data>
+  <data name="AstCenterUseTheButtonsToNavigate" xml:space="preserve">
+    <value>Use the buttons to navigate.
+
+{0}
+{1}</value>
+  </data>
+  <data name="AstCenterYAMLFileSForThisChannelActionsExecuteDirectly" xml:space="preserve">
+    <value>{0} YAML file(s) for this channel. {1} Actions execute directly from Discord.</value>
+  </data>
+  <data name="AstCenterYouHaveAssociatedSlotsChooseTheAliasWhosePatch" xml:space="preserve">
+    <value>You have {0} associated slots. Choose the alias whose patch you want to retrieve. {1}</value>
+  </data>
+  <data name="AstCenterYourPersonalDataAndPreferences" xml:space="preserve">
+    <value>Your personal data and preferences.</value>
+  </data>
+  <data name="AstCenterYourPersonalInterfaceForThisRoom" xml:space="preserve">
+    <value>Your personal interface for this room.</value>
+  </data>
+  <data name="AstSetupASTSetupAssistantTargetChannelWebHostThreadNotificationsMinimum" xml:space="preserve">
+    <value>**AST setup assistant**
+Target channel: &lt;#{0}&gt;
+WebHost: `{1}`
+Thread: `{2}` ({3})
+Notifications: {4}
+Minimum frequency: `{5}`
+
+{6}
+The session expires after 15 minutes of inactivity.</value>
+  </data>
+  <data name="AstSetupArchipelagoRoomURL" xml:space="preserve">
+    <value>Archipelago room URL</value>
+  </data>
+  <data name="AstSetupChannelThatWillHostTheRoom" xml:space="preserve">
+    <value>Channel that will host the room</value>
+  </data>
+  <data name="AstSetupConfigureRoom" xml:space="preserve">
+    <value>Configure room</value>
+  </data>
+  <data name="AstSetupConfigureTheURLAndThreadName" xml:space="preserve">
+    <value>🟡 Configure the URL and thread name</value>
+  </data>
+  <data name="AstSetupInvalidFormat" xml:space="preserve">
+    <value>invalid format</value>
+  </data>
+  <data name="AstSetupMinimumFrequency" xml:space="preserve">
+    <value>Minimum frequency</value>
+  </data>
+  <data name="AstSetupNormal" xml:space="preserve">
+    <value>normal</value>
+  </data>
+  <data name="AstSetupNormal2" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="AstSetupNotConfigured" xml:space="preserve">
+    <value>not configured</value>
+  </data>
+  <data name="AstSetupNotConfigured2" xml:space="preserve">
+    <value>not configured</value>
+  </data>
+  <data name="AstSetupNotifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="AstSetupOpenAstInTheTextChannelThatWillHost" xml:space="preserve">
+    <value>Open `/ast` in the text channel that will host the new room.</value>
+  </data>
+  <data name="AstSetupPreview" xml:space="preserve">
+    <value>Preview</value>
+  </data>
+  <data name="AstSetupPrivate" xml:space="preserve">
+    <value>private</value>
+  </data>
+  <data name="AstSetupPublic" xml:space="preserve">
+    <value>public</value>
+  </data>
+  <data name="AstSetupPublicAddMembers" xml:space="preserve">
+    <value>Public + add members</value>
+  </data>
+  <data name="AstSetupPublicMembersAdded" xml:space="preserve">
+    <value>public, members added</value>
+  </data>
+  <data name="AstSetupReadyToConfirm" xml:space="preserve">
+    <value>✅ Ready to confirm</value>
+  </data>
+  <data name="AstSetupSetupCancelled" xml:space="preserve">
+    <value>Setup cancelled.</value>
+  </data>
+  <data name="AstSetupSetupFailedPleaseRetryOrContactAnASTAdministrator" xml:space="preserve">
+    <value>❌ Setup failed. Please retry or contact an AST administrator.</value>
+  </data>
+  <data name="AstSetupSilent" xml:space="preserve">
+    <value>silent</value>
+  </data>
+  <data name="AstSetupSilent2" xml:space="preserve">
+    <value>Silent</value>
+  </data>
+  <data name="AstSetupThisSessionExpiredOrDoesNotBelongToYou" xml:space="preserve">
+    <value>This session expired or does not belong to you. Run `/ast-setup` again.</value>
+  </data>
+  <data name="AstSetupUseAstSetupInTheTextChannelThatWill" xml:space="preserve">
+    <value>Use `/ast-setup` in the text channel that will host the room.</value>
+  </data>
+  <data name="AstSetupValidatingTheRoomAndCreatingTheThread" xml:space="preserve">
+    <value>⏳ Validating the room and creating the thread…</value>
+  </data>
+  <data name="AuthorizationYouDoNotHavePermissionToPerformThisAction" xml:space="preserve">
+    <value>You do not have permission to perform this action.</value>
+  </data>
+  <data name="BotTheCommandFailedPleaseRetryOrContactAnAST" xml:space="preserve">
+    <value>❌ The command failed. Please retry or contact an AST administrator.</value>
+  </data>
+  <data name="BotThePortalLinkWasRevokedPreviousURLsAreNo" xml:space="preserve">
+    <value>The portal link was revoked. Previous URLs are no longer valid.</value>
+  </data>
+  <data name="PollingInvalidPollingModeOrMaximumFrequency" xml:space="preserve">
+    <value>Invalid polling mode or maximum frequency.</value>
+  </data>
+  <data name="PollingTheMaximumFrequencyMustBeGreaterThanOrEqual" xml:space="preserve">
+    <value>The maximum frequency must be greater than or equal to the configured minimum frequency.</value>
+  </data>
+  <data name="PollingTrackingPolicyUpdatedModeMinimumMaximum" xml:space="preserve">
+    <value>Tracking policy updated: {0} mode, {1} minimum, {2} maximum.</value>
+  </data>
+  <data name="SlashOpenYourPrivateASTCommandCenter" xml:space="preserve">
+    <value>Open your private AST command center</value>
+  </data>
+  <data name="SlashSkipProgressionBalancingDuringGeneration" xml:space="preserve">
+    <value>Skip progression balancing during generation</value>
+  </data>
+  <data name="TrackingASTHealthRoomSActiveSlowedPausedInError" xml:space="preserve">
+    <value>📊 AST health — {0} room(s): {1} active, {2} slowed, {3} paused, {4} in error, {5} sync(s) running.</value>
+  </data>
+  <data name="TrackingActive" xml:space="preserve">
+    <value>active</value>
+  </data>
+  <data name="TrackingAging" xml:space="preserve">
+    <value>aging</value>
+  </data>
+  <data name="TrackingAgo" xml:space="preserve">
+    <value>{0} ago</value>
+  </data>
+  <data name="TrackingAsSoonAsPossible" xml:space="preserve">
+    <value>as soon as possible</value>
+  </data>
+  <data name="TrackingAutomaticPollingMinimumMaximum" xml:space="preserve">
+    <value>Automatic polling: {0} ({1} minimum, {2} maximum)</value>
+  </data>
+  <data name="TrackingAutomaticallySlowed" xml:space="preserve">
+    <value>automatically slowed</value>
+  </data>
+  <data name="TrackingConsecutiveFailures" xml:space="preserve">
+    <value>Consecutive failures: {0} ({1})</value>
+  </data>
+  <data name="TrackingEstimatedFreshnessWebHostLatencyMs" xml:space="preserve">
+    <value>Estimated freshness: {0} · WebHost latency: {1} ms</value>
+  </data>
+  <data name="TrackingFixedPolling" xml:space="preserve">
+    <value>Fixed polling: {0}</value>
+  </data>
+  <data name="TrackingFresh" xml:space="preserve">
+    <value>fresh</value>
+  </data>
+  <data name="TrackingIn" xml:space="preserve">
+    <value>in {0}</value>
+  </data>
+  <data name="TrackingInError" xml:space="preserve">
+    <value>in error</value>
+  </data>
+  <data name="TrackingLastDetectedActivity" xml:space="preserve">
+    <value>Last detected activity: {0}</value>
+  </data>
+  <data name="TrackingLastSuccessfulSync" xml:space="preserve">
+    <value>Last successful sync: {0}</value>
+  </data>
+  <data name="TrackingManuallyPaused" xml:space="preserve">
+    <value>manually paused</value>
+  </data>
+  <data name="TrackingNever" xml:space="preserve">
+    <value>never</value>
+  </data>
+  <data name="TrackingNoTrackedRoomsOnThisServer" xml:space="preserve">
+    <value>No tracked rooms on this server.</value>
+  </data>
+  <data name="TrackingNone" xml:space="preserve">
+    <value>none</value>
+  </data>
+  <data name="TrackingRoomNotFoundOrCentralSchedulerUnavailable" xml:space="preserve">
+    <value>Room not found or central scheduler unavailable.</value>
+  </data>
+  <data name="TrackingRoomTracking" xml:space="preserve">
+    <value>🩺 Room tracking: **{0}**</value>
+  </data>
+  <data name="TrackingStale" xml:space="preserve">
+    <value>stale</value>
+  </data>
+  <data name="TrackingSyncInProgress" xml:space="preserve">
+    <value>sync in progress</value>
+  </data>
+  <data name="TrackingTheCentralSchedulerIsUnavailableStillStartingOrLegacy" xml:space="preserve">
+    <value>The central scheduler is unavailable (still starting or legacy mode is active).</value>
+  </data>
+  <data name="TrackingUnknown" xml:space="preserve">
+    <value>unknown</value>
+  </data>
+  <data name="TrackingUnknownTrackingCommand" xml:space="preserve">
+    <value>Unknown tracking command.</value>
+  </data>
+  <data name="TrackingWebHostCircuitProtectionActiveUntilUTC" xml:space="preserve">
+    <value>WebHost circuit protection active until {0:yyyy-MM-dd HH:mm:ss} UTC.</value>
+  </data>
+  <data name="UrlArchipelagoRoomConfiguredAndTrackingStarted" xml:space="preserve">
+    <value>✅ Archipelago room configured and tracking started.</value>
+  </data>
+  <data name="UrlThisRoomTrackerIsUnavailable" xml:space="preserve">
+    <value>This room tracker is unavailable.</value>
+  </data>
+  <data name="AstCenterSpoilerAnalysisDescription" xml:space="preserve">
+    <value>Slot: **{0}**
+Maximum sphere: **{1}**
+Mode: **{2}**
+Items: **{3}**
+
+{4}Configure also lets you enter a slot directly and manually validate a sphere.</value>
+  </data>
+  <data name="AstCenterSpoilerItemsHidden" xml:space="preserve">
+    <value>hidden</value>
+  </data>
+  <data name="AstCenterSpoilerItemsVisible" xml:space="preserve">
+    <value>visible</value>
+  </data>
+  <data name="AstCenterSpoilerModeFirstBlocker" xml:space="preserve">
+    <value>first blocker</value>
+  </data>
+  <data name="AstCenterSpoilerModeFull" xml:space="preserve">
+    <value>full</value>
+  </data>
+  <data name="SlashImportSpoilerLog" xml:space="preserve">
+    <value>Import a spoiler log</value>
+  </data>
+  <data name="SlashImportYamlZipApworldOrSpoilerLog" xml:space="preserve">
+    <value>Import a YAML, ZIP, APWorld or spoiler log</value>
+  </data>
+  <data name="TrackingAlreadyPaused" xml:space="preserve">
+    <value>Tracking for this room is already paused.</value>
+  </data>
+  <data name="TrackingAlreadyRunning" xml:space="preserve">
+    <value>Tracking for this room is already active.</value>
+  </data>
+  <data name="TrackingCommandCouldNotBeApplied" xml:space="preserve">
+    <value>The tracking command could not be applied.</value>
+  </data>
+  <data name="TrackingForcedSyncRateLimited" xml:space="preserve">
+    <value>Forced sync is limited to once every 30 seconds. Try again later.</value>
+  </data>
+  <data name="TrackingNextRefresh" xml:space="preserve">
+    <value>Next refresh: {0}</value>
+  </data>
+  <data name="TrackingPauseAccepted" xml:space="preserve">
+    <value>⏸️ Tracking paused. A sync already in progress may finish, but no new refresh will start.</value>
+  </data>
+  <data name="TrackingPaused" xml:space="preserve">
+    <value>paused</value>
+  </data>
+  <data name="TrackingPrioritySyncQueued" xml:space="preserve">
+    <value>🔄 Priority sync queued.</value>
+  </data>
+  <data name="TrackingResumeAccepted" xml:space="preserve">
+    <value>▶️ Tracking resumed. A sync was placed at the front of the queue.</value>
+  </data>
+  <data name="TrackingRoomNotRegisteredInScheduler" xml:space="preserve">
+    <value>This room is not registered in the scheduler.</value>
+  </data>
+  <data name="TrackingRoomPausedResumeFirst" xml:space="preserve">
+    <value>The room is paused. Use `/ast-resume` first.</value>
+  </data>
+  <data name="TrackingSyncAlreadyRunning" xml:space="preserve">
+    <value>A sync is already running for this room.</value>
+  </data>
+  <data name="SCDeleteAliasDescription" xml:space="preserve">
+    <value>Delete Alias</value>
+    <comment>Delete Alias</comment>
+  </data>
+  <data name="SCAddAliasDescription" xml:space="preserve">
+    <value>Add Alias</value>
+    <comment>Add Alias</comment>
+  </data>
+  <data name="SCAddAliasSkipMentionDescription" xml:space="preserve">
+    <value>Set if you want to skip useless mention (filler Items)</value>
+    <comment>Set if you want to skip useless mention (filler Items)</comment>
+  </data>
+  <data name="SCChooseAnAlias" xml:space="preserve">
+    <value>Choose an alias</value>
+    <comment>Choose an alias</comment>
+  </data>
+  <data name="SCAddUrlDescription" xml:space="preserve">
+    <value>Add a URL and create a thread.</value>
+    <comment>Add a URL and create a thread.</comment>
+  </data>
+  <data name="SCUrlToTrack" xml:space="preserve">
+    <value>The URL to track</value>
+    <comment>The URL to track</comment>
+  </data>
+  <data name="SCThreadNameDescription" xml:space="preserve">
+    <value>Name of the thread to create</value>
+    <comment>Name of the thread to create</comment>
+  </data>
+  <data name="SCThreadTypeDescription" xml:space="preserve">
+    <value>Specify if the thread is public or private</value>
+    <comment>Specify if the thread is public or private</comment>
+  </data>
+  <data name="SCSilentOption" xml:space="preserve">
+    <value>silent</value>
+    <comment>silent</comment>
+  </data>
+  <data name="SCSilentDescription" xml:space="preserve">
+    <value>Only send message when an alias is set</value>
+    <comment>Only send message when an alias is set</comment>
+  </data>
+  <data name="SCThreadName" xml:space="preserve">
+    <value>thread-name</value>
+    <comment>thread-name</comment>
+  </data>
+  <data name="SCThreadType" xml:space="preserve">
+    <value>thread-type</value>
+    <comment>thread-type</comment>
+  </data>
+  <data name="SCAddAliasSkipMention" xml:space="preserve">
+    <value>skip_mention_items</value>
+    <comment>skip_mention_items</comment>
+  </data>
+  <data name="SCGetAliasesDescription" xml:space="preserve">
+    <value>List all Aliases</value>
+    <comment>List all Aliases</comment>
+  </data>
+  <data name="SCDeleteUrlDescription" xml:space="preserve">
+    <value>Delete Url, clean Aliases and Recap</value>
+    <comment>Delete Url, clean Aliases and Recap</comment>
+  </data>
+  <data name="SCStatusGameListDescription" xml:space="preserve">
+    <value>Status for all games</value>
+    <comment>Status for all games</comment>
+  </data>
+  <data name="SCRecapAllDescription" xml:space="preserve">
+    <value>Recap list of items for all games</value>
+    <comment>Recap list of items for all games</comment>
+  </data>
+  <data name="SCInfoDescription" xml:space="preserve">
+    <value>Get all infos for your Archipelago</value>
+    <comment>Get all infos for your Archipelago</comment>
+  </data>
+  <data name="SCGetPatchDescription" xml:space="preserve">
+    <value>Get patch for alias</value>
+    <comment>Get patch for alias</comment>
+  </data>
+  <data name="SCRecapDescription" xml:space="preserve">
+    <value>Recap list of items for a specific game</value>
+    <comment>Recap list of items for a specific game</comment>
+  </data>
+  <data name="RCRecapAndCleanDescription" xml:space="preserve">
+    <value>Recap and clean list of items for a specific game</value>
+    <comment>Recap and clean list of items for a specific game</comment>
+  </data>
+  <data name="SCCleanDescription" xml:space="preserve">
+    <value>Clean list of items for a specific game</value>
+    <comment>Clean list of items for a specific game</comment>
+  </data>
+  <data name="SCCleanAllDescription" xml:space="preserve">
+    <value>Clean all recap items</value>
+    <comment>Clean all recap items</comment>
+  </data>
+  <data name="SCGetHintFromFinderDescription" xml:space="preserve">
+    <value>Get a hint from finder</value>
+    <comment>Get a hint from finder</comment>
+  </data>
+  <data name="SCGetHintForReveiverDescription" xml:space="preserve">
+    <value>Get a hint for receiver</value>
+    <comment>Get a hint for receiver</comment>
+  </data>
+  <data name="SCListItemDescription" xml:space="preserve">
+    <value>List all items for alias</value>
+    <comment>List all items for alias</comment>
+  </data>
+  <data name="SCListYamlsDescription" xml:space="preserve">
+    <value>List all YAML files for the channel</value>
+    <comment>List all YAML files for the channel</comment>
+  </data>
+  <data name="SCListApworldDescription" xml:space="preserve">
+    <value>List all APWorlds</value>
+    <comment>List all APWorlds</comment>
+  </data>
+  <data name="SCApworldInfoDescription" xml:space="preserve">
+    <value>List info for specific APWorld</value>
+    <comment>List info for specific APWorld</comment>
+  </data>
+  <data name="SCApworldInfoChoiceDescription" xml:space="preserve">
+    <value>Choose an APWorld</value>
+    <comment>Choose an APWorld</comment>
+  </data>
+  <data name="SCBackupYamlDescription" xml:space="preserve">
+    <value>Backup all YAMLs for the channel</value>
+    <comment>Backup all YAMLs for the channel</comment>
+  </data>
+  <data name="SCBackupApworldDescription" xml:space="preserve">
+    <value>Backup all APWorlds for the channel</value>
+    <comment>Backup all APWorlds for the channel</comment>
+  </data>
+  <data name="SCDownloadYamlTemplateDescription" xml:space="preserve">
+    <value>Download a YAML template</value>
+    <comment>Download a YAML template</comment>
+  </data>
+  <data name="SCTemplateDescription" xml:space="preserve">
+    <value>Choose a YAML file to download</value>
+    <comment>Choose a YAML file to download</comment>
+  </data>
+  <data name="SCDeleteYamlDescription" xml:space="preserve">
+    <value>Delete a specific YAML file</value>
+    <comment>Delete a specific YAML file</comment>
+  </data>
+  <data name="SCDeleteYamlChooseDescription" xml:space="preserve">
+    <value>Choose a YAML file to delete</value>
+    <comment>Choose a YAML file to delete</comment>
+  </data>
+  <data name="SCCleanYamlDescription" xml:space="preserve">
+    <value>Clean all YAMLs in the channel</value>
+    <comment>Clean all YAMLs in the channel</comment>
+  </data>
+  <data name="SCSendYamlDescription" xml:space="preserve">
+    <value>Send or replace a YAML file for generation</value>
+    <comment>Send or replace a YAML file for generation</comment>
+  </data>
+  <data name="SCSendYamlChooseDescription" xml:space="preserve">
+    <value>Upload a YAML file</value>
+    <comment>Upload a YAML file</comment>
+  </data>
+  <data name="SCGenerateWithZipDescription" xml:space="preserve">
+    <value>Generate multiworld from a ZIP</value>
+    <comment>Generate multiworld from a ZIP</comment>
+  </data>
+  <data name="SCGenerateWithZipChooseDescription" xml:space="preserve">
+    <value>Upload a ZIP containing YAMLs</value>
+    <comment>Upload a ZIP containing YAMLs</comment>
+  </data>
+  <data name="SCSendApworldDescription" xml:space="preserve">
+    <value>Send or replace an APWorld file</value>
+    <comment>Send or replace an APWorld file</comment>
+  </data>
+  <data name="SCSendApworldChooseDescription" xml:space="preserve">
+    <value>Upload an APWorld file</value>
+    <comment>Upload an APWorld file</comment>
+  </data>
+  <data name="SCGenerateDescription" xml:space="preserve">
+    <value>Generate multiworld from existing YAMLs</value>
+    <comment>Generate multiworld from existing YAMLs</comment>
+  </data>
+  <data name="SCTestGenerateDescription" xml:space="preserve">
+    <value>Test generation of multiworld from existing YAMLs</value>
+    <comment>Test generation of multiworld from existing YAMLs</comment>
+  </data>
+  <data name="UrlGamePatch" xml:space="preserve">
+    <value>Name: {0} | Download: {1}</value>
+    <comment>Name: {gameAlias} | Download: {downloadLink}</comment>
+  </data>
+  <data name="URLSet" xml:space="preserve">
+    <value>URL set to {0}. Messages configured for this channel. Please wait while the program retrieves all aliases.</value>
+    <comment>URL set to {newUrl}. Messages configured for this channel. Please wait while the program retrieves all aliases.</comment>
+  </data>
+  <data name="Every" xml:space="preserve">
+    <value>Every</value>
+    <comment>Every</comment>
+  </data>
+  <data name="Hour" xml:space="preserve">
+    <value>hour</value>
+    <comment>hour</comment>
+  </data>
+  <data name="EveryDay" xml:space="preserve">
+    <value>Every day</value>
+    <comment>Every day</comment>
+  </data>
+  <data name="CheckFrequency" xml:space="preserve">
+    <value>check-frequency</value>
+    <comment>check-frequency</comment>
+  </data>
+  <data name="CheckFrequencyDesc" xml:space="preserve">
+    <value>Check frequency, default 5m.</value>
+    <comment>Check frequency, default 5m.</comment>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>Update available:</value>
+    <comment>Update available:</comment>
+  </data>
+  <data name="DownloadUpdate" xml:space="preserve">
+    <value>Downloading the update:</value>
+    <comment>Downloading the update:</comment>
+  </data>
+  <data name="DiscordDesc" xml:space="preserve">
+    <value>Shows the Discord link.</value>
+    <comment>Shows the Discord link.</comment>
+  </data>
+  <data name="SCChooseAnItem" xml:space="preserve">
+    <value>Choose an item</value>
+    <comment>Choose an item</comment>
+  </data>
+  <data name="SCExcludedItemDesc" xml:space="preserve">
+    <value>Excludes notifications for this item</value>
+    <comment>Excludes notifications for this item</comment>
+  </data>
+  <data name="SCExcludedItemListDesc" xml:space="preserve">
+    <value>Displays your excluded items list</value>
+    <comment>Displays your excluded items list</comment>
+  </data>
+  <data name="SCDeleteExcludedItemDesc" xml:space="preserve">
+    <value>Deletes the item from the exclusion list</value>
+    <comment>Deletes the item from the exclusion list</comment>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>No filter</value>
+    <comment>No filter</comment>
+  </data>
+  <data name="SCUpdateSilentOptionDescription" xml:space="preserve">
+    <value>Updated the “Silent” option.</value>
+    <comment>Updated the “Silent” option.</comment>
+  </data>
+  <data name="SCPortalLinkDescription" xml:space="preserve">
+    <value>Get your web portal link.</value>
+    <comment>Slash command description for portal-link.</comment>
+  </data>
+  <data name="SCPortalUrlDescription" xml:space="preserve">
+    <value>Get the web portal commands page.</value>
+    <comment>Slash command description for portal-url.</comment>
   </data>
   <data name="WebAccess" xml:space="preserve">
     <value>Access</value>
@@ -1389,17 +2298,9 @@
     <value>Game: unknown</value>
     <comment>Game: unknown</comment>
   </data>
-  <data name="WebGenerate" xml:space="preserve">
-    <value>Generate</value>
-    <comment>Generate</comment>
-  </data>
   <data name="WebGenerateWithZip" xml:space="preserve">
     <value>Generate with ZIP</value>
     <comment>Generate with ZIP</comment>
-  </data>
-  <data name="WebGeneration" xml:space="preserve">
-    <value>Generation</value>
-    <comment>Generation</comment>
   </data>
   <data name="WebGuildIdMissingInUrl" xml:space="preserve">
     <value>Guild ID not found in URL.</value>
@@ -1593,10 +2494,6 @@
     <value>Show info</value>
     <comment>Show info</comment>
   </data>
-  <data name="WebSilentMode" xml:space="preserve">
-    <value>Silent mode</value>
-    <comment>Silent mode</comment>
-  </data>
   <data name="WebSyncingDatabase" xml:space="preserve">
     <value>Synchronizing with database...</value>
     <comment>Synchronizing with database...</comment>
@@ -1608,14 +2505,6 @@
   <data name="WebThreadCommandsSubtitle" xml:space="preserve">
     <value>Thread commands</value>
     <comment>Thread commands</comment>
-  </data>
-  <data name="WebThreadName" xml:space="preserve">
-    <value>Thread name</value>
-    <comment>Thread name</comment>
-  </data>
-  <data name="WebThreadType" xml:space="preserve">
-    <value>Thread type</value>
-    <comment>Thread type</comment>
   </data>
   <data name="WebUnableToAddAlias" xml:space="preserve">
     <value>Unable to add this alias.</value>
@@ -1701,16 +2590,152 @@
     <value>Active Hints</value>
     <comment>Active Hints</comment>
   </data>
+  <data name="WebCompanionCopyFailed" xml:space="preserve">
+    <value>Unable to copy the companion link.</value>
+    <comment>Unable to copy the companion link.</comment>
+  </data>
+  <data name="WebCompanionDescription" xml:space="preserve">
+    <value>Open AST Companion for this portal.</value>
+    <comment>Open AST Companion for this portal.</comment>
+  </data>
+  <data name="WebCompanionLinkCopied" xml:space="preserve">
+    <value>Companion link copied.</value>
+    <comment>Companion link copied.</comment>
+  </data>
+  <data name="WebCompanionNeedsAlias" xml:space="preserve">
+    <value>Add an alias before opening AST Companion.</value>
+    <comment>Add an alias before opening AST Companion.</comment>
+  </data>
+  <data name="WebCompanionOpening" xml:space="preserve">
+    <value>Opening AST Companion...</value>
+    <comment>Opening AST Companion...</comment>
+  </data>
+  <data name="WebCompanionReady" xml:space="preserve">
+    <value>AST Companion is ready.</value>
+    <comment>AST Companion is ready.</comment>
+  </data>
+  <data name="WebCopyCompanionLink" xml:space="preserve">
+    <value>Copy companion link</value>
+    <comment>Copy companion link</comment>
+  </data>
+  <data name="WebOpenCompanion" xml:space="preserve">
+    <value>Open AST Companion</value>
+    <comment>Open AST Companion</comment>
+  </data>
+  <data name="WebOverallAstHealth" xml:space="preserve">
+    <value>Overall AST health</value>
+    <comment>Overall AST health</comment>
+  </data>
+  <data name="WebPauseTracking" xml:space="preserve">
+    <value>Pause tracking</value>
+    <comment>Pause tracking</comment>
+  </data>
+  <data name="WebPollingAutomatic" xml:space="preserve">
+    <value>Automatic</value>
+    <comment>Automatic</comment>
+  </data>
+  <data name="WebPollingFixedFrequency" xml:space="preserve">
+    <value>Fixed frequency</value>
+    <comment>Fixed frequency</comment>
+  </data>
+  <data name="WebPollingMaximumInterval" xml:space="preserve">
+    <value>Maximum interval</value>
+    <comment>Maximum interval</comment>
+  </data>
+  <data name="WebPollingMode" xml:space="preserve">
+    <value>Polling mode</value>
+    <comment>Polling mode</comment>
+  </data>
+  <data name="WebPollingUpdatePolicy" xml:space="preserve">
+    <value>Update polling policy</value>
+    <comment>Update polling policy</comment>
+  </data>
+  <data name="WebResumeTracking" xml:space="preserve">
+    <value>Resume tracking</value>
+    <comment>Resume tracking</comment>
+  </data>
+  <data name="WebRoomHealth" xml:space="preserve">
+    <value>Room health</value>
+    <comment>Room health</comment>
+  </data>
+  <data name="WebSyncNow" xml:space="preserve">
+    <value>Sync now</value>
+    <comment>Sync now</comment>
+  </data>
+  <data name="WebTrackingHealthAndControls" xml:space="preserve">
+    <value>Tracking health and controls</value>
+    <comment>Tracking health and controls</comment>
+  </data>
   <data name="WebUploaderUnYAML" xml:space="preserve">
     <value>Upload a YAML</value>
     <comment>Upload a YAML</comment>
   </data>
-  <data name="ASTUserCommand" xml:space="preserve">
-    <value>Use /ast-user-portal to manage your aliases and recaps.</value>
-    <comment>Use /ast-user-portal to manage your aliases and recaps.</comment>
+  <data name="WebAuditLog" xml:space="preserve">
+    <value>Security audit log</value>
+    <comment>Security audit log</comment>
   </data>
-  <data name="ASTRoomCommand" xml:space="preserve">
-    <value>Use /ast-room-portal to manage your room.</value>
-    <comment>Use /ast-room-portal to manage your room.</comment>
+  <data name="WebConfirmClearAllRecaps" xml:space="preserve">
+    <value>Clear all your recaps? This action cannot be undone.</value>
+    <comment>Clear all your recaps? This action cannot be undone.</comment>
+  </data>
+  <data name="WebConfirmDangerousAction" xml:space="preserve">
+    <value>Confirm this sensitive action?</value>
+    <comment>Confirm this sensitive action?</comment>
+  </data>
+  <data name="WebConfirmDeleteExclusion" xml:space="preserve">
+    <value>Remove this item from your exclusions?</value>
+    <comment>Remove this item from your exclusions?</comment>
+  </data>
+  <data name="WebConfirmDeleteRecap" xml:space="preserve">
+    <value>Clear this recap?</value>
+    <comment>Clear this recap?</comment>
+  </data>
+  <data name="WebConfirmRevokePortal" xml:space="preserve">
+    <value>Revoke this portal link? This page will stop working immediately.</value>
+    <comment>Revoke this portal link? This page will stop working immediately.</comment>
+  </data>
+  <data name="WebNoAuditEntries" xml:space="preserve">
+    <value>No audit entry available.</value>
+    <comment>No audit entry available.</comment>
+  </data>
+  <data name="WebNoAvailableItem" xml:space="preserve">
+    <value>No item available for this slot.</value>
+    <comment>No item available for this slot.</comment>
+  </data>
+  <data name="WebProgressionBalancing" xml:space="preserve">
+    <value>Progression balancing</value>
+    <comment>Progression balancing</comment>
+  </data>
+  <data name="WebRefreshAudit" xml:space="preserve">
+    <value>Refresh audit log</value>
+    <comment>Refresh audit log</comment>
+  </data>
+  <data name="WebSelectAliasAndItem" xml:space="preserve">
+    <value>Select a slot and an item first.</value>
+    <comment>Select a slot and an item first.</comment>
+  </data>
+  <data name="SpoilerLogDownloadFailed" xml:space="preserve">
+    <value>Unable to download the spoiler log.</value>
+    <comment>Unable to download the spoiler log.</comment>
+  </data>
+  <data name="SpoilerLogInvalidContent" xml:space="preserve">
+    <value>The spoiler log content is invalid.</value>
+    <comment>The spoiler log content is invalid.</comment>
+  </data>
+  <data name="SpoilerLogInvalidFile" xml:space="preserve">
+    <value>Invalid or oversized spoiler file. Upload a .txt or .json file.</value>
+    <comment>Invalid or oversized spoiler file. Upload a .txt or .json file.</comment>
+  </data>
+  <data name="SpoilerLogNotFoundForRoom" xml:space="preserve">
+    <value>No spoiler log was found for this room. Upload one, then run the analysis again.</value>
+    <comment>No spoiler log was found for this room. Upload one, then run the analysis again.</comment>
+  </data>
+  <data name="SpoilerLogReceived" xml:space="preserve">
+    <value>Spoiler log received: {0}</value>
+    <comment>Spoiler log received: {0}</comment>
+  </data>
+  <data name="SpoilerLogTooLarge" xml:space="preserve">
+    <value>The spoiler file is too large.</value>
+    <comment>The spoiler file is too large.</comment>
   </data>
 </root>

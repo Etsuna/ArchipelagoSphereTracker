@@ -1,5 +1,8 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
+using ArchipelagoSphereTracker.Tracking.Persistence;
+using ArchipelagoSphereTracker.Tracking.Scheduling;
+using ArchipelagoSphereTracker.Tracking.V2;
 using Discord;
 using Discord.WebSocket;
 using Sprache;
@@ -29,8 +32,125 @@ public static class TrackingDataManager
 
     private static readonly ConcurrentDictionary<ulong, int> MissingChannelPassCount = new ConcurrentDictionary<ulong, int>();
     private const int MaxChecksBeforeDelete = 1 * 60;
+    private static readonly object SchedulerLifecycleLock = new();
+    private static CentralRoomScheduler? _centralScheduler;
+    private static Task? _trackingTask;
 
     public static void StartTracking()
+    {
+        if (Declare.UseLegacyTrackingScheduler)
+        {
+            lock (SchedulerLifecycleLock)
+            {
+                if (_trackingTask is { IsCompleted: false })
+                    return;
+                StartLegacyTracking();
+            }
+            return;
+        }
+
+        lock (SchedulerLifecycleLock)
+        {
+            if (_trackingTask is { IsCompleted: false })
+                return;
+
+            Declare.Cts?.Cancel();
+            Declare.Cts?.Dispose();
+            Declare.Cts = new CancellationTokenSource();
+            var token = Declare.Cts.Token;
+            _centralScheduler = new CentralRoomScheduler(
+                new SqliteRoomScheduleStore(),
+                ProcessScheduledRoomAsync,
+                new CentralRoomSchedulerOptions
+                {
+                    GlobalConcurrency = Declare.TrackingGlobalConcurrency,
+                    PerOriginConcurrency = Declare.TrackingOriginConcurrency
+                },
+                metrics: CentralSchedulerMetrics.Instance);
+            _trackingTask = Task.Run(async () =>
+            {
+                try
+                {
+                    await _centralScheduler.RunAsync(token).ConfigureAwait(false);
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine($"[TDM][Scheduler] Stopped unexpectedly ({exception.GetType().Name}).");
+                }
+            }, CancellationToken.None);
+        }
+    }
+
+    public static async Task StopTrackingAsync()
+    {
+        Task? task;
+        lock (SchedulerLifecycleLock)
+        {
+            Declare.Cts?.Cancel();
+            task = _trackingTask;
+        }
+
+        if (task != null)
+        {
+            try
+            {
+                await task.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+    }
+
+    public static Task<bool> PromoteRoomAsync(
+        string guildId,
+        string channelId,
+        CancellationToken cancellationToken = default)
+    {
+        CentralRoomScheduler? scheduler;
+        lock (SchedulerLifecycleLock)
+            scheduler = Declare.UseLegacyTrackingScheduler ? null : _centralScheduler;
+        return scheduler?.PromoteAsync(guildId, channelId, cancellationToken)
+               ?? Task.FromResult(false);
+    }
+
+    public static Task<TrackingControlOutcome> PauseRoomAsync(
+        string guildId,
+        string channelId,
+        CancellationToken cancellationToken = default)
+        => GetCentralScheduler()?.PauseAsync(guildId, channelId, cancellationToken)
+           ?? Task.FromResult(TrackingControlOutcome.Unavailable);
+
+    public static Task<TrackingControlOutcome> ResumeRoomAsync(
+        string guildId,
+        string channelId,
+        CancellationToken cancellationToken = default)
+        => GetCentralScheduler()?.ResumeAsync(guildId, channelId, cancellationToken)
+           ?? Task.FromResult(TrackingControlOutcome.Unavailable);
+
+    public static Task<TrackingControlOutcome> ForceSyncRoomAsync(
+        string guildId,
+        string channelId,
+        CancellationToken cancellationToken = default)
+        => GetCentralScheduler()?.ForceSyncAsync(guildId, channelId, cancellationToken)
+           ?? Task.FromResult(TrackingControlOutcome.Unavailable);
+
+    public static RoomHealthSnapshot? GetRoomHealth(string guildId, string channelId)
+        => GetCentralScheduler()?.GetHealth(guildId, channelId);
+
+    public static IReadOnlyList<RoomHealthSnapshot>? GetGuildHealth(string guildId)
+        => GetCentralScheduler()?.GetGuildHealth(guildId);
+
+    public static Task ReloadTrackingConfigurationAsync(CancellationToken cancellationToken = default)
+        => GetCentralScheduler()?.ReloadConfigurationAsync(cancellationToken) ?? Task.CompletedTask;
+
+    private static CentralRoomScheduler? GetCentralScheduler()
+    {
+        lock (SchedulerLifecycleLock)
+            return Declare.UseLegacyTrackingScheduler ? null : _centralScheduler;
+    }
+
+    private static void StartLegacyTracking()
     {
         const int MaxGuildsParallel = 10;
         const int MaxChannelsParallel = 1;
@@ -41,7 +161,7 @@ public static class TrackingDataManager
         Declare.Cts = new CancellationTokenSource();
         var token = Declare.Cts.Token;
 
-        Task.Run(async () =>
+        _trackingTask = Task.Run(async () =>
         {
             try
             {
@@ -282,7 +402,7 @@ public static class TrackingDataManager
                                             }
                                             else
                                             {
-                                                Console.WriteLine($"[TDM] Impossible de récupérer les informations de la salle pour {nameForLog} ({cfg.BaseUrl} / {cfg.Room}).");
+                                                Console.WriteLine($"[TDM] Impossible de récupérer les informations de la salle pour {nameForLog}.");
                                             }
 
                                             await GetTableDataAsync(guild, channel, cfg.BaseUrl, cfg.Tracker, cfg.Silent, ctChan);
@@ -294,7 +414,7 @@ public static class TrackingDataManager
                                         }
                                         catch (Exception ex)
                                         {
-                                            Console.WriteLine($"[TDM] Channel processing error for guild {guild} / channel {channel}: {ex}");
+                                            Console.WriteLine($"[TDM] Channel processing error for guild {guild} / channel {channel} ({ex.GetType().Name}).");
                                         }
                                         finally
                                         {
@@ -308,7 +428,7 @@ public static class TrackingDataManager
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine($"[TDM] Guild processing error for {guild}: {ex}");
+                                    Console.WriteLine($"[TDM] Guild processing error for {guild} ({ex.GetType().Name}).");
                                 }
                             });
 
@@ -323,7 +443,7 @@ public static class TrackingDataManager
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[TDM] Tracking loop error: {ex}");
+                        Console.WriteLine($"[TDM] Tracking loop error ({ex.GetType().Name}).");
                         var delay = TimeSpan.FromSeconds(Math.Min(backoffSeconds, 60));
                         backoffSeconds = Math.Min(backoffSeconds * 2, 60);
                         await Task.Delay(delay, token);
@@ -336,62 +456,258 @@ public static class TrackingDataManager
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[TDM] Tracking task crashed: {ex}");
+                Console.WriteLine($"[TDM] Tracking task crashed ({ex.GetType().Name}).");
             }
         }, token);
     }
 
+    private static async Task<RoomPollResult> ProcessScheduledRoomAsync(
+        ScheduledRoomDefinition scheduled,
+        CancellationToken cancellationToken)
+    {
+        if (Declare.Client.ConnectionState != ConnectionState.Connected)
+            return RoomPollResult.Failed(PollFailureKind.Network, TimeSpan.FromSeconds(5));
+        if (Declare.AddedChannelId.Contains(scheduled.ChannelId))
+            return RoomPollResult.Failed(PollFailureKind.PartialResponse, TimeSpan.FromSeconds(30));
+        if (!ulong.TryParse(scheduled.GuildId, out var guildId) ||
+            !ulong.TryParse(scheduled.ChannelId, out var channelId))
+        {
+            return RoomPollResult.Removed();
+        }
+
+        try
+        {
+            var guild = Declare.Client.GetGuild(guildId);
+            if (guild == null)
+            {
+                var restGuild = await Declare.Client.Rest.GetGuildAsync(guildId).ConfigureAwait(false);
+                if (restGuild == null)
+                {
+                    await DatabaseCommands.DeleteChannelDataByGuildIdAsync(scheduled.GuildId).ConfigureAwait(false);
+                    WebPortalPages.DeleteGuildPages(scheduled.GuildId);
+                    RateLimitGuards.RemoveGuildSendGate(guildId);
+                    return RoomPollResult.Removed();
+                }
+
+                return RoomPollResult.Failed(PollFailureKind.PartialResponse, TimeSpan.FromMinutes(1));
+            }
+
+            var guildChannel = guild.GetChannel(channelId) as SocketGuildChannel;
+            var thread = guild.ThreadChannels.FirstOrDefault(candidate => candidate.Id == channelId);
+            if (guildChannel == null && thread == null)
+            {
+                var restChannel = await Declare.Client.Rest.GetChannelAsync(channelId).ConfigureAwait(false);
+                if (restChannel == null)
+                {
+                    await DeleteScheduledChannelAsync(scheduled.GuildId, scheduled.ChannelId).ConfigureAwait(false);
+                    MissingChannelPassCount.TryRemove(channelId, out _);
+                    return RoomPollResult.Removed();
+                }
+
+                var misses = MissingChannelPassCount.AddOrUpdate(channelId, 1, (_, old) => old + 1);
+                if (misses >= MaxChecksBeforeDelete)
+                {
+                    await DeleteScheduledChannelAsync(scheduled.GuildId, scheduled.ChannelId).ConfigureAwait(false);
+                    MissingChannelPassCount.TryRemove(channelId, out _);
+                    return RoomPollResult.Removed();
+                }
+
+                return RoomPollResult.Failed(PollFailureKind.PartialResponse, TimeSpan.FromMinutes(1));
+            }
+
+            MissingChannelPassCount.TryRemove(channelId, out _);
+            if (thread != null && !await KeepThreadAsync(scheduled, guildId, thread, cancellationToken).ConfigureAwait(false))
+                return RoomPollResult.Removed();
+
+            var roomInfo = await UrlClass.RoomInfo(
+                scheduled.BaseUrl,
+                scheduled.Room,
+                cancellationToken).ConfigureAwait(false);
+            if (roomInfo != null && scheduled.Port != roomInfo.LastPort.ToString(CultureInfo.InvariantCulture))
+            {
+                var port = roomInfo.LastPort.ToString(CultureInfo.InvariantCulture);
+                await ChannelsAndUrlsCommands.UpdateChannelPortAsync(
+                    scheduled.GuildId,
+                    scheduled.ChannelId,
+                    port).ConfigureAwait(false);
+                if (ChannelConfigCache.TryGet(scheduled.GuildId, scheduled.ChannelId, out var cached))
+                    ChannelConfigCache.Upsert(scheduled.GuildId, scheduled.ChannelId, cached with { Port = port });
+
+                var gate = RateLimitGuards.GetGuildSendGate(guildId);
+                await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    await BotCommands.SendMessageAsync(
+                        $"@everyone, {string.Format(Resource.NewPort, port)}",
+                        scheduled.ChannelId).ConfigureAwait(false);
+                }
+                finally
+                {
+                    gate.Release();
+                }
+            }
+
+            return await GetTableDataResultAsync(
+                scheduled.GuildId,
+                scheduled.ChannelId,
+                scheduled.BaseUrl,
+                scheduled.Tracker,
+                scheduled.Silent,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine(
+                $"[TDM][Scheduler] Room {scheduled.GuildId}/{scheduled.ChannelId} failed ({exception.GetType().Name}).");
+            return RoomPollResult.Failed(PollFailureKind.Unexpected);
+        }
+    }
+
+    private static async Task<bool> KeepThreadAsync(
+        ScheduledRoomDefinition scheduled,
+        ulong guildId,
+        SocketThreadChannel thread,
+        CancellationToken cancellationToken)
+    {
+        var lastActivity = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(
+            scheduled.GuildId,
+            scheduled.ChannelId).ConfigureAwait(false)
+            ?? SnowflakeUtils.FromSnowflake(thread.Id);
+        var daysSince = (DateTimeOffset.UtcNow - lastActivity).TotalDays;
+
+        if (daysSince < 7)
+        {
+            if (Declare.WarnedThreads.Remove(scheduled.ChannelId))
+            {
+                await SendScheduledMessageAsync(
+                    guildId,
+                    scheduled.ChannelId,
+                    string.Format(Resource.TDMNewMessageOnThread, thread.Name),
+                    cancellationToken).ConfigureAwait(false);
+            }
+            return true;
+        }
+
+        if (daysSince < 14)
+        {
+            if (Declare.WarnedThreads.Add(scheduled.ChannelId))
+            {
+                var deletionDate = lastActivity.AddDays(14);
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Paris");
+                var localDeletionDate = TimeZoneInfo.ConvertTime(deletionDate, timeZone);
+                var formatted = localDeletionDate.ToString(
+                    "dddd d MMMM yyyy à HH'h'mm",
+                    CultureInfo.GetCultureInfo($"{Declare.Language}-{Declare.Language.ToUpperInvariant()}"));
+                await SendScheduledMessageAsync(
+                    guildId,
+                    scheduled.ChannelId,
+                    string.Format(Resource.TDMNoMessage7Days, formatted, thread.Name),
+                    cancellationToken).ConfigureAwait(false);
+            }
+            return true;
+        }
+
+        await SendScheduledMessageAsync(
+            guildId,
+            scheduled.ChannelId,
+            string.Format(Resource.TDMNoActivity, thread.Name),
+            cancellationToken).ConfigureAwait(false);
+        await DeleteScheduledChannelAsync(scheduled.GuildId, scheduled.ChannelId).ConfigureAwait(false);
+        Declare.WarnedThreads.Remove(scheduled.ChannelId);
+        return false;
+    }
+
+    private static async Task SendScheduledMessageAsync(
+        ulong guildId,
+        string channelId,
+        string message,
+        CancellationToken cancellationToken)
+    {
+        var gate = RateLimitGuards.GetGuildSendGate(guildId);
+        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await BotCommands.SendMessageAsync(message, channelId).ConfigureAwait(false);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    private static async Task DeleteScheduledChannelAsync(string guildId, string channelId)
+    {
+        await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId).ConfigureAwait(false);
+        WebPortalPages.DeleteChannelPages(guildId, channelId);
+        ChannelConfigCache.Remove(guildId, channelId);
+    }
+
     internal static readonly HttpClient Http = HttpClientFactory.CreateJsonClient();
+    internal static readonly ResilientWebHostClient WebHostClient = new(
+        Http,
+        new WebHostClientOptions
+        {
+            GlobalConcurrency = Declare.TrackingGlobalConcurrency,
+            PerOriginConcurrency = Declare.TrackingOriginConcurrency
+        });
 
     public static Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, bool isAddUrl)
         => GetTableDataAsync(guild, channel, baseUrl, tracker, silent, CancellationToken.None, isAddUrl);
 
-    private static readonly TimeSpan MinSpacingPerHost = TimeSpan.FromSeconds(1);
-
     public static async Task GetTableDataAsync(string guild, string channel, string baseUrl, string tracker, bool silent, CancellationToken ctChan, bool isAddUrl = false)
+    {
+        _ = await GetTableDataResultAsync(
+                guild,
+                channel,
+                baseUrl,
+                tracker,
+                silent,
+                ctChan,
+                isAddUrl)
+            .ConfigureAwait(false);
+    }
+
+    internal static async Task<RoomPollResult> GetTableDataResultAsync(
+        string guild,
+        string channel,
+        string baseUrl,
+        string tracker,
+        bool silent,
+        CancellationToken ctChan,
+        bool isAddUrl = false)
     {
         var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
 
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctChan);
-        cts.CancelAfter(TimeSpan.FromSeconds(180));
+        if (!Uri.TryCreate(baseUrl.TrimEnd('/') + "/", UriKind.Absolute, out var rootUri) ||
+            !Uri.TryCreate(rootUri, $"api/tracker/{tracker}", out var runtimeUri))
+        {
+            return RoomPollResult.Failed(PollFailureKind.Network);
+        }
 
-        var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
-        var urlStatic = $"{baseUrl.TrimEnd('/')}/api/static_tracker/{tracker}";
+        var runtime = await WebHostClient.FetchJsonAsync(
+            runtimeUri,
+            WebHostEndpointKind.RuntimeTracker,
+            ctChan).ConfigureAwait(false);
+        if (!runtime.Success)
+            return runtime.PollResult;
+        var json = runtime.Json!;
 
-        string? json = null;
         string? jsonStatic = null;
-
-        try
+        if (isAddUrl)
         {
-            json = await HttpThrottle.GetStringThrottledAsync(
-                Http, url, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
-
-            if (isAddUrl)
-            {
-                jsonStatic = await HttpThrottle.GetStringThrottledAsync(
-                    Http, urlStatic, MinSpacingPerHost, cts.Token, log: Console.WriteLine);
-            }
+            var staticUri = new Uri(rootUri, $"api/static_tracker/{tracker}");
+            var staticResult = await WebHostClient.FetchJsonAsync(
+                staticUri,
+                WebHostEndpointKind.StaticTracker,
+                ctChan).ConfigureAwait(false);
+            if (!staticResult.Success)
+                return staticResult.PollResult;
+            jsonStatic = staticResult.Json;
         }
-        catch (OperationCanceledException ex)
-        {
-            if (!ctChan.IsCancellationRequested)
-                Console.WriteLine($"[TDM] Timeout en récupérant {baseUrl} : {ex}");
-            else
-                Console.WriteLine($"[TDM] Annulé par le caller pour {baseUrl} : {ex}");
-
-            return;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[TDM] Erreur HTTP en récupérant {baseUrl} : {ex}");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(json))
-            return;
-
-        if (isAddUrl && string.IsNullOrWhiteSpace(jsonStatic))
-            return;
 
         IReadOnlyDictionary<int, int> totalsBySlot;
         if (isAddUrl)
@@ -412,10 +728,28 @@ public static class TrackingDataManager
             totalsBySlot = map;
         }
 
+        NormalizedRoomSnapshot? normalizedSnapshot = null;
+        try
+        {
+            normalizedSnapshot = LegacySnapshotAdapter.FromWebHostResponse(
+                ctx,
+                json,
+                totalsBySlot,
+                DateTimeOffset.UtcNow);
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine($"[TDM][Adaptive] Snapshot hash unavailable ({exception.GetType().Name}).");
+        }
+
+        if (Declare.EnableTrackingV2 && normalizedSnapshot != null)
+            await TryPersistTrackingV2Async(normalizedSnapshot, channel, ctChan).ConfigureAwait(false);
+
         var items = TrackerStreamParser.ParseItems(ctx, json);
         var hints = TrackerStreamParser.ParseHints(ctx, json);
         var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, totalsBySlot);
-        if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0) return;
+        if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0)
+            return RoomPollResult.Ok(normalizedSnapshot?.ContentHash);
 
         if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
         if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
@@ -441,7 +775,34 @@ public static class TrackingDataManager
                 await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
                 WebPortalPages.DeleteChannelPages(guild, channel);
                 ChannelConfigCache.Remove(guild, channel);
+                return RoomPollResult.Removed();
             }
+        }
+
+        return RoomPollResult.Ok(normalizedSnapshot?.ContentHash);
+    }
+
+    private static async Task TryPersistTrackingV2Async(
+        NormalizedRoomSnapshot snapshot,
+        string destinationChannelId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var store = new TrackingV2Store();
+            await store.ApplySnapshotAsync(
+                snapshot,
+                [TrackingDestination.DiscordChannel(destinationChannelId)],
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            // Tracking V2 is a shadow write: a failure must not alter the legacy pipeline.
+            Console.WriteLine($"[TDM][V2] Shadow persistence failed ({exception.GetType().Name}).");
         }
     }
 

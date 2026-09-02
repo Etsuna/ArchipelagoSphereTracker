@@ -1,3 +1,4 @@
+using ArchipelagoSphereTracker.src.Resources;
 using Discord.WebSocket;
 using System.Security.Cryptography;
 using System.Text;
@@ -26,9 +27,6 @@ public static class SpoilerAnalysisClass
         string guildId,
         string? alias)
     {
-        var spoilerPath = SpoilerLogClass.GetLatestSpoilerPath(channelId);
-        string? receiver = alias;
-
         int? sphereLimit = null;
         var sphereRaw = command.Data.Options.FirstOrDefault(o => o.Name == "sphere")?.Value;
         if (sphereRaw != null && int.TryParse(sphereRaw.ToString(), out var parsedSphere))
@@ -54,9 +52,33 @@ public static class SpoilerAnalysisClass
             command.Data.Options.FirstOrDefault(o => o.Name == "reset-validation")?.Value as bool?
             ?? false;
 
+        return await AnalyzeSpoilerLogAsync(
+            channelId,
+            guildId,
+            alias,
+            sphereLimit,
+            showAllMissing,
+            hideItems,
+            sphereToValidate,
+            resetValidation).ConfigureAwait(false);
+    }
+
+    public static async Task<string> AnalyzeSpoilerLogAsync(
+        string channelId,
+        string guildId,
+        string? alias,
+        int? sphereLimit = null,
+        bool showAllMissing = false,
+        bool hideItems = true,
+        int? sphereToValidate = null,
+        bool resetValidation = false)
+    {
+        var spoilerPath = SpoilerLogClass.GetLatestSpoilerPath(channelId);
+        var receiver = alias;
+
         if (string.IsNullOrWhiteSpace(spoilerPath) || !File.Exists(spoilerPath))
         {
-            return "Aucun spoiler log trouvé pour ce thread. Utilise `/send-spoiler-log file:<spoiler.txt>` puis relance l'analyse.";
+            return Resource.SpoilerLogNotFoundForRoom;
         }
 
         var checks = ParsePlaythrough(spoilerPath);

@@ -5,11 +5,24 @@ using System.Text.RegularExpressions;
 
 public class HelperClass
 {
-    public static async Task<string> GetPatch(SocketSlashCommand command, string channelId, string guildId)
+    public static async Task<string> GetPatch(SocketSlashCommand command, Discord.IGuildUser? guildUser, string channelId, string guildId)
     {
-        var userId = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
+        var alias = command.Data.Options.ElementAtOrDefault(0)?.Value as string;
+        if (string.IsNullOrWhiteSpace(alias))
+            return Resource.HelperNoId;
 
-        return await GetPatchByAlias(userId, channelId, guildId);
+        var owners = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
+        var authorization = await AstAuthorizationService.CreateDiscordContextAsync(
+            guildId,
+            channelId,
+            command.User.Id,
+            guildUser);
+        var canManageRoom = authorization != null &&
+                            AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization);
+        if (!owners.Contains(command.User.Id.ToString(), StringComparer.Ordinal) && !canManageRoom)
+            return AstAuthorizationService.DeniedMessage;
+
+        return await GetPatchByAlias(alias, channelId, guildId);
     }
 
     public static async Task<string> GetPatchByAlias(string? userId, string channelId, string guildId)

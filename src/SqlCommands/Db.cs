@@ -66,4 +66,42 @@ public static class Db
         }
         finally { WriteGate.Release(); }
     }
+
+    public static async Task<T> WriteAsync<T>(
+        Func<SQLiteConnection, Task<T>> work,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(work);
+
+        await WriteGate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var conn = await OpenWriteAsync();
+            using (var begin = conn.CreateCommand())
+            {
+                begin.CommandText = "BEGIN IMMEDIATE;";
+                await begin.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            try
+            {
+                var result = await work(conn);
+                using var commit = conn.CreateCommand();
+                commit.CommandText = "COMMIT;";
+                await commit.ExecuteNonQueryAsync(cancellationToken);
+                return result;
+            }
+            catch
+            {
+                using var rollback = conn.CreateCommand();
+                rollback.CommandText = "ROLLBACK;";
+                await rollback.ExecuteNonQueryAsync(CancellationToken.None);
+                throw;
+            }
+        }
+        finally
+        {
+            WriteGate.Release();
+        }
+    }
 }

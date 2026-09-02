@@ -230,6 +230,89 @@ public static class WebPortalThreadCommandsPage
     </section>
 
     <section class=""panel"">
+      <h2>{T("WebTrackingHealthAndControls")}</h2>
+      <form data-command=""ast-room-health"">
+        <button type=""submit"">{T("WebRoomHealth")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-sync-now"">
+        <button type=""submit"">{T("WebSyncNow")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-pause"">
+        <button type=""submit"">{T("WebPauseTracking")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-resume"">
+        <button type=""submit"">{T("WebResumeTracking")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""ast-polling"">
+        <label>{T("WebPollingMode")}
+          <select name=""mode"" required>
+            <option value=""automatic"">{T("WebPollingAutomatic")}</option>
+            <option value=""fixed"">{T("WebPollingFixedFrequency")}</option>
+          </select>
+        </label>
+        <label>{T("WebPollingMaximumInterval")}
+          <select name=""maximumFrequency"" required>
+            <option value=""15m"">{T("WebEvery15Minutes")}</option>
+            <option value=""30m"">{T("WebEvery30Minutes")}</option>
+            <option value=""1h"">{T("WebEvery1Hour")}</option>
+            <option value=""6h"">{T("WebEvery6Hours")}</option>
+            <option value=""12h"">{T("WebEvery12Hours")}</option>
+            <option value=""18h"">{T("WebEvery18Hours")}</option>
+            <option value=""1d"">{T("WebEveryDay")}</option>
+          </select>
+        </label>
+        <button type=""submit"">{T("WebPollingUpdatePolicy")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>{T("AstCenterSpoilerAnalysis")}</h2>
+      <form data-command=""send-spoiler-log"">
+        <label>{T("SlashImportSpoilerLog")}
+          <input type=""file"" name=""file"" accept="".txt,.json"" required />
+        </label>
+        <button type=""submit"">{T("SlashImportSpoilerLog")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+      <form data-command=""analyze-spoiler-log"">
+        <label>{T("AstCenterChooseASlot")}
+          <select id=""spoiler-alias-select"" name=""alias""></select>
+        </label>
+        <label>{T("AstCenterMaximumSphereBlankAll")}
+          <input type=""number"" name=""sphere"" min=""0"" />
+        </label>
+        <label>{T("AstCenterItemDisplay")}
+          <select name=""missingMode"">
+            <option value=""first"">{T("AstCenterFirstBlockingSphere")}</option>
+            <option value=""full"">{T("AstCenterFullReport")}</option>
+          </select>
+        </label>
+        <label>{T("AstCenterHideItems")}
+          <select name=""hideItems"">
+            <option value=""true"">{T("WebYes")}</option>
+            <option value=""false"">{T("WebNo")}</option>
+          </select>
+        </label>
+        <label>{T("AstCenterSphereToValidateOptional")}
+          <input type=""number"" name=""validateSphere"" min=""0"" />
+        </label>
+        <label>{T("AstCenterResetValidation")}
+          <select name=""resetValidation"">
+            <option value=""false"">{T("WebNo")}</option>
+            <option value=""true"">{T("WebYes")}</option>
+          </select>
+        </label>
+        <button type=""submit"">{T("AstCenterAnalyze")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
       <h2>Get patch</h2>
       <form id=""patch-form"">
         <label>Alias
@@ -282,14 +365,29 @@ public static class WebPortalThreadCommandsPage
         <div class=""result"" data-result></div>
       </form>
     </section>
+
+    <section class=""panel"">
+      <h2>{T("AstCenterAssociations")}</h2>
+      <form data-command=""get-aliases"">
+        <button type=""submit"">{T("AstCenterList")}</button>
+        <div class=""result"" data-result></div>
+      </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>{T("AstCenterRevokePortal")}</h2>
+      <button type=""button"" id=""revoke-portal-button"">{T("AstCenterRevokeLink")}</button>
+      <div class=""result"" id=""revoke-portal-result""></div>
+    </section>
   </main>
 
 <script>
   const params = new URLSearchParams(window.location.search);
-  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/thread-commands\.html$/);
+  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/([a-f0-9]+)\/thread-commands\.html$/i);
 
   const guildId = params.get('guildId') || (m ? m[1] : '');
   const channelId = params.get('channelId') || (m ? m[2] : '');
+  const token = m ? m[3] : '';
 
   document.getElementById('channel-meta').textContent = channelId ? ('Channel ID: ' + channelId) : 'Channel ID: —';
 
@@ -297,9 +395,10 @@ public static class WebPortalThreadCommandsPage
   const idx = path.indexOf('/portal/');
   const basePath = idx >= 0 ? path.substring(0, idx) : '';
 
-  const apiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/execute';
-  const patchAliasesApi = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/thread-commands/patches';
-  const infoApi = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/info';
+  const securedApiBase = window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/' + token;
+  const apiBase = securedApiBase + '/thread-commands/execute';
+  const patchAliasesApi = securedApiBase + '/thread-commands/patches';
+  const infoApi = securedApiBase + '/info';
 
   const parsePayload = async (response) => {{
     const raw = await response.text();
@@ -335,6 +434,9 @@ public static class WebPortalThreadCommandsPage
 
   const patchAliasSelect = document.getElementById('patch-alias-select');
   const patchLinkResult = document.getElementById('patch-link-result');
+  const spoilerAliasSelect = document.getElementById('spoiler-alias-select');
+  const revokePortalButton = document.getElementById('revoke-portal-button');
+  const revokePortalResult = document.getElementById('revoke-portal-result');
   const heroInfo = document.getElementById('hero-info');
   const patchAliasData = new Map();
 
@@ -389,12 +491,16 @@ public static class WebPortalThreadCommandsPage
     if (!guildId || !channelId) {{
       patchAliasSelect.innerHTML = '<option value="""">' + {Js("WebAliasesUnavailable")} + '</option>';
       patchAliasSelect.disabled = true;
+      spoilerAliasSelect.innerHTML = '<option value="""">' + {Js("WebAliasesUnavailable")} + '</option>';
+      spoilerAliasSelect.disabled = true;
       patchLinkResult.textContent = {Js("WebInvalidUrlMissingIds")};
       return;
     }}
 
     patchAliasSelect.disabled = true;
     patchAliasSelect.innerHTML = '<option value="""">{T("WebLoadingAliases")}</option>';
+    spoilerAliasSelect.disabled = true;
+    spoilerAliasSelect.innerHTML = '<option value="""">{T("WebLoadingAliases")}</option>';
 
     try {{
       const response = await fetch(patchAliasesApi);
@@ -403,6 +509,7 @@ public static class WebPortalThreadCommandsPage
       if (!response.ok) {{
         const msg = extractMessage(payload, {Js("WebErrorLoadingAliases")});
         patchAliasSelect.innerHTML = '<option value="""">' + {Js("WebAliasesUnavailable")} + '</option>';
+        spoilerAliasSelect.innerHTML = '<option value="""">' + {Js("WebAliasesUnavailable")} + '</option>';
         patchLinkResult.textContent = msg;
         return;
       }}
@@ -412,22 +519,28 @@ public static class WebPortalThreadCommandsPage
 
       if (aliases.length === 0) {{
         patchAliasSelect.innerHTML = '<option value="""">' + {Js("WebNoAliasAvailable")} + '</option>';
+        spoilerAliasSelect.innerHTML = '<option value="""">' + {Js("WebNoAliasAvailable")} + '</option>';
         patchLinkResult.textContent = {Js("WebNoAliasForThread")};
         return;
       }}
 
       const options = ['<option value="""">' + {Js("WebSelectAlias")} + '</option>'];
+      const spoilerOptions = ['<option value="""">' + {Js("AstCenterAll")} + '</option>'];
       aliases.forEach((entry) => {{
         if (!entry || !entry.alias) return;
         patchAliasData.set(entry.alias, {{ gameName: entry.gameName || '', patch: entry.patch || '' }});
         options.push('<option value=""' + escapeHtml(entry.alias) + '"">' + escapeHtml(entry.alias) + '</option>');
+        spoilerOptions.push('<option value=""' + escapeHtml(entry.alias) + '"">' + escapeHtml(entry.alias) + '</option>');
       }});
 
       patchAliasSelect.innerHTML = options.join('');
       patchAliasSelect.disabled = false;
+      spoilerAliasSelect.innerHTML = spoilerOptions.join('');
+      spoilerAliasSelect.disabled = false;
       patchLinkResult.textContent = {Js("WebSelectAliasForPatch")};
     }} catch {{
       patchAliasSelect.innerHTML = '<option value="""">' + {Js("WebAliasesUnavailable")} + '</option>';
+      spoilerAliasSelect.innerHTML = '<option value="""">' + {Js("WebAliasesUnavailable")} + '</option>';
       patchLinkResult.textContent = {Js("WebUnableToLoadAliases")};
     }}
  }};
@@ -463,6 +576,23 @@ public static class WebPortalThreadCommandsPage
   loadPatchAliases();
   loadHeroInfo();
 
+  revokePortalButton.addEventListener('click', async () => {{
+    if (!window.confirm({Js("WebConfirmRevokePortal")})) return;
+    revokePortalResult.textContent = {Js("WebProcessing")};
+    try {{
+      const response = await fetch(securedApiBase + '/revoke', {{ method: 'POST' }});
+      const payload = await parsePayload(response);
+      revokePortalResult.textContent = extractMessage(
+        payload,
+        response.ok ? {Js("AstCenterThePortalLinkWasRevoked")} : {Js("WebCommandError")});
+      if (response.ok) {{
+        document.querySelectorAll('button, select, input').forEach(element => {{ element.disabled = true; }});
+      }}
+    }} catch {{
+      revokePortalResult.textContent = {Js("WebUnableToReachServer")};
+    }}
+  }});
+
   document.querySelectorAll('form[data-command]').forEach((form) => {{
     form.addEventListener('submit', async (event) => {{
       event.preventDefault();
@@ -472,6 +602,11 @@ public static class WebPortalThreadCommandsPage
         showResult(result, {Js("WebInvalidUrlMissingIds")}, form.dataset.command);
         return;
      }}
+
+      if (['ast-pause', 'delete-url'].includes(form.dataset.command) &&
+          !window.confirm({Js("WebConfirmDangerousAction")})) {{
+        return;
+      }}
 
       const data = new FormData(form);
       data.set('command', form.dataset.command);

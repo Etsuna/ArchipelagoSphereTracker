@@ -105,6 +105,12 @@ public static class WebPortalCommandsPage
     <section class=""panel"">
       <h2>{T("WebGeneration")}</h2>
       <form data-command=""generate"">
+        <label>{T("WebProgressionBalancing")}
+          <select name=""skipProgBalancing"">
+            <option value=""false"">{T("AstCenterNormalBalancing")}</option>
+            <option value=""true"">{T("AstCenterSkipBalancing")}</option>
+          </select>
+        </label>
         <button type=""submit"">{T("WebGenerate")}</button>
         <div class=""result"" data-result></div>
       </form>
@@ -117,6 +123,12 @@ public static class WebPortalCommandsPage
       <form data-command=""generate-with-zip"">
         <label>ZIP de YAML
           <input type=""file"" name=""file"" accept="".zip"" required />
+        </label>
+        <label>{T("WebProgressionBalancing")}
+          <select name=""skipProgBalancing"">
+            <option value=""false"">{T("AstCenterNormalBalancing")}</option>
+            <option value=""true"">{T("AstCenterSkipBalancing")}</option>
+          </select>
         </label>
         <button type=""submit"">{T("WebGenerateWithZip")}</button>
         <div class=""result"" data-result></div>
@@ -338,14 +350,6 @@ public static class WebPortalCommandsPage
 
   <main>
     <section class=""panel"">
-      <h2>Configuration</h2>
-      <p class=""mode"">{T("WebProvideUserIdForPrivateThread")}</p>
-      <label>{T("WebUserIdOptionalPrivateThreads")}
-        <input id=""user-id"" placeholder=""123456789012345678"" />
-      </label>
-    </section>
-
-    <section class=""panel"">
       <h2>AST Room Portals (Guild)</h2>
       <p class=""mode"">{T("WebAvailableLinksForGuild")}</p>
       <ul id=""room-links"" class=""room-links-list"">
@@ -356,7 +360,6 @@ public static class WebPortalCommandsPage
     <section class=""panel"">
       <h2>{T("WebCreateThreadViaAddUrl")}</h2>
       <form data-command=""add-url"">
-        <input type=""hidden"" name=""userId"" />
         <label>URL Archipelago
           <input name=""url"" placeholder=""https://archipelago.gg/room/XXXX"" required />
         </label>
@@ -400,6 +403,10 @@ public static class WebPortalCommandsPage
 
     <section class=""panel"">
       <h2>{T("WebUsefulInfo")}</h2>
+      <form data-command=""ast-health"">
+        <button type=""submit"">{T("WebOverallAstHealth")}</button>
+        <div class=""result"" data-result></div>
+      </form>
       <form data-command=""apworlds-info"">
         <button type=""submit"">APWorlds info</button>
         <div class=""result"" data-result></div>
@@ -408,6 +415,18 @@ public static class WebPortalCommandsPage
         <button type=""submit"">Discord</button>
         <div class=""result"" data-result></div>
       </form>
+    </section>
+
+    <section class=""panel"">
+      <h2>{T("WebAuditLog")}</h2>
+      <button type=""button"" id=""refresh-audit-button"">{T("WebRefreshAudit")}</button>
+      <ul id=""audit-entries"" class=""room-links-list""></ul>
+    </section>
+
+    <section class=""panel"">
+      <h2>{T("AstCenterRevokePortal")}</h2>
+      <button type=""button"" id=""revoke-portal-button"">{T("AstCenterRevokeLink")}</button>
+      <div class=""result"" id=""revoke-portal-result""></div>
     </section>
 
     {archipelagoSections}
@@ -421,11 +440,12 @@ public static class WebPortalCommandsPage
     window.__astPortalCommandsInitialized = true;
 
 
-  // Attend /portal/{{guildId}}/{{channelId}}/commands.html (ids numériques)
-  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/commands\.html$/);
+  // Attend /portal/{{guildId}}/{{channelId}}/{{token}}/commands.html
+  const m = window.location.pathname.match(/\/portal\/(\d+)\/(\d+)\/([a-f0-9]+)\/commands\.html$/i);
 
   const guildId = params.get('guildId') || (m ? m[1] : '');
   const channelId = params.get('channelId') || (m ? m[2] : '');
+  const token = m ? m[3] : '';
 
   const meta = document.getElementById('channel-meta');
   meta.textContent = channelId ? ('Channel ID: ' + channelId) : 'Channel ID: —';
@@ -443,6 +463,8 @@ public static class WebPortalCommandsPage
     guildId +
     '/' +
     channelId +
+    '/' +
+    token +
     '/commands/execute';
 
   const yamlsApi =
@@ -452,18 +474,32 @@ public static class WebPortalCommandsPage
     guildId +
     '/' +
     channelId +
+    '/' +
+    token +
     '/commands/yamls';
 
-  const userInput = document.getElementById('user-id');
   const yamlSelects = document.querySelectorAll('[data-yaml-select]');
   const roomLinksRoot = document.getElementById('room-links');
+  const auditEntriesRoot = document.getElementById('audit-entries');
+  const refreshAuditButton = document.getElementById('refresh-audit-button');
+  const revokePortalButton = document.getElementById('revoke-portal-button');
+  const revokePortalResult = document.getElementById('revoke-portal-result');
 
   const roomLinksApi =
     window.location.origin +
     basePath +
     '/api/portal/' +
     guildId +
+    '/' +
+    channelId +
+    '/' +
+    token +
     '/room-links';
+
+  const auditApi =
+    window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/' + token + '/audit';
+  const revokeApi =
+    window.location.origin + basePath + '/api/portal/' + guildId + '/' + channelId + '/' + token + '/revoke';
 
   // Corrige les URL de download renvoyées par l’API (ex: /portal/... -> /AST/portal/...)
   const normalizeDownloadUrl = (u) => {{
@@ -599,6 +635,54 @@ public static class WebPortalCommandsPage
     }}
   }};
 
+  const loadAuditEntries = async () => {{
+    if (!auditEntriesRoot) return;
+    auditEntriesRoot.innerHTML = '<li>' + {Js("WebProcessing")} + '</li>';
+    try {{
+      const response = await fetch(auditApi + '?limit=100');
+      const payload = await parsePayload(response);
+      const entries = response.ok && payload && Array.isArray(payload.entries) ? payload.entries : [];
+      auditEntriesRoot.innerHTML = '';
+      if (entries.length === 0) {{
+        auditEntriesRoot.innerHTML = '<li>' + {Js("WebNoAuditEntries")} + '</li>';
+        return;
+      }}
+
+      entries.forEach(entry => {{
+        const item = document.createElement('li');
+        const occurredAt = entry.occurredAtUtc || entry.OccurredAtUtc;
+        const source = entry.source || entry.Source || '';
+        const action = entry.action || entry.Action || '';
+        const outcome = entry.outcome || entry.Outcome || '';
+        const targetChannel = entry.channelId || entry.ChannelId || '—';
+        item.textContent = new Date(occurredAt).toLocaleString() + ' · ' + source + ' · ' + action + ' · ' + outcome + ' · #' + targetChannel;
+        auditEntriesRoot.appendChild(item);
+      }});
+    }} catch {{
+      auditEntriesRoot.innerHTML = '<li>' + {Js("WebUnableToReachServer")} + '</li>';
+    }}
+  }};
+
+  const revokePortal = async () => {{
+    if (!window.confirm({Js("WebConfirmRevokePortal")})) return;
+    revokePortalResult.textContent = {Js("WebProcessing")};
+    try {{
+      const response = await fetch(revokeApi, {{ method: 'POST' }});
+      const payload = await parsePayload(response);
+      revokePortalResult.textContent = extractMessage(
+        payload,
+        response.ok ? {Js("AstCenterThePortalLinkWasRevoked")} : {Js("WebCommandError")});
+      if (response.ok) {{
+        document.querySelectorAll('button, select, input').forEach(element => {{ element.disabled = true; }});
+      }}
+    }} catch {{
+      revokePortalResult.textContent = {Js("WebUnableToReachServer")};
+    }}
+  }};
+
+  refreshAuditButton.addEventListener('click', loadAuditEntries);
+  revokePortalButton.addEventListener('click', revokePortal);
+
 
   document.querySelectorAll('form[data-command]').forEach((form) => {{
     form.addEventListener('submit', async (event) => {{
@@ -614,6 +698,11 @@ public static class WebPortalCommandsPage
         return;
       }}
 
+      if (['delete-yaml', 'clean-yamls'].includes(form.dataset.command) &&
+          !window.confirm({Js("WebConfirmDangerousAction")})) {{
+        return;
+      }}
+
       const data = new FormData(form);
       data.set('command', form.dataset.command);
 
@@ -623,13 +712,6 @@ public static class WebPortalCommandsPage
           showResult(result, '{T("WebNoYamlSelected")}', null);
           return;
         }}
-      }}
-
-      // Ne pas envoyer userId vide
-      if (form.dataset.command === 'add-url') {{
-        const v = userInput.value.trim();
-        if (v) data.set('userId', v);
-        else data.delete('userId');
       }}
 
       showResult(result, '{T("WebProcessing")}', null);
@@ -668,6 +750,7 @@ public static class WebPortalCommandsPage
 
     loadRoomLinks();
     loadYamlOptions();
+    loadAuditEntries();
   }}
 </script>
 </body>

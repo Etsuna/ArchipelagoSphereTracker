@@ -11,6 +11,7 @@ public static class WebPortalUserPage
         var safeGuildId = WebUtility.HtmlEncode(guildId);
         var safeChannelId = WebUtility.HtmlEncode(channelId);
         var safeToken = WebUtility.HtmlEncode(token);
+        var safeApworldInfoUrl = WebUtility.HtmlEncode(Declare.ApworldInfoSheet);
 
         return $@"<!doctype html>
 <html lang=""{Declare.Language}"">
@@ -202,6 +203,13 @@ public static class WebPortalUserPage
 
     .button:hover {{ transform: translateY(-1px); box-shadow: var(--glow); }}
 
+    .button:disabled {{
+      cursor: not-allowed;
+      opacity: 0.45;
+      transform: none;
+      box-shadow: none;
+    }}
+
     .button.danger {{
       background: rgba(255, 107, 122, 0.15);
       border-color: rgba(255, 107, 122, 0.5);
@@ -223,6 +231,23 @@ public static class WebPortalUserPage
     .action-group label {{
       font-size: 13px;
       color: var(--muted);
+    }}
+
+    .companion-group {{
+      grid-column: 1 / -1;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }}
+
+    .companion-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }}
+
+    .companion-help {{
+      color: var(--muted);
+      font-size: 12px;
     }}
 
     .action-group select {{
@@ -322,6 +347,7 @@ public static class WebPortalUserPage
     <section class=""panel"">
       <h2>🔭 {T("WebQuickActions")}</h2>
       <button class=""button"" id=""refresh"">{T("WebRefreshData")}</button>
+      <button class=""button danger"" id=""revoke-portal-button"">{T("AstCenterRevokePortal")}</button>
       <div id=""status"" class=""status""></div>
     </section>
    
@@ -348,12 +374,55 @@ public static class WebPortalUserPage
           <select id=""delete-alias-select""></select>
           <button class=""button danger"" id=""delete-alias-button"">{T("WebDeleteSelectedAlias")}</button>
         </div>
+        <div class=""action-group companion-group"">
+          <label>{T("WebCompanionDescription")}</label>
+          <div class=""companion-actions"">
+            <button class=""button"" id=""open-companion-button"" disabled>{T("WebOpenCompanion")}</button>
+            <button class=""button"" id=""copy-companion-link-button"">{T("WebCopyCompanionLink")}</button>
+          </div>
+          <span class=""companion-help"" id=""companion-help"">{T("WebCompanionNeedsAlias")}</span>
+        </div>
+      </div>
+    </details>
+
+    <details class=""panel"" open>
+      <summary><h2>📊 {T("AstCenterProgress")}</h2></summary>
+      <div id=""game-status-root"" class=""grid panel-content""></div>
+    </details>
+
+    <details class=""panel"" close>
+      <summary><h2>🩹 {T("AstCenterMyPatch")}</h2></summary>
+      <div class=""action-group panel-content"">
+        <label for=""personal-patch-alias-select"">{T("WebSelectAliasForPatch")}</label>
+        <select id=""personal-patch-alias-select""></select>
+        <div class=""result"" id=""personal-patch-result""></div>
+      </div>
+    </details>
+
+    <details class=""panel"" close>
+      <summary><h2>🚫 {T("AstCenterMyExclusions")}</h2></summary>
+      <div class=""actions-grid panel-content"">
+        <div class=""action-group"">
+          <label for=""exclusion-alias-select"">{T("AstCenterChooseASlot")}</label>
+          <select id=""exclusion-alias-select""></select>
+          <label for=""available-exclusion-item-select"">{T("AstCenterChooseAnItem")}</label>
+          <select id=""available-exclusion-item-select""></select>
+          <button class=""button"" id=""add-exclusion-button"">{T("AstCenterAddAnExclusionForSlot")}</button>
+        </div>
+        <div class=""action-group"">
+          <label for=""excluded-item-select"">{T("AstCenterMyExclusions")}</label>
+          <select id=""excluded-item-select""></select>
+          <button class=""button danger"" id=""delete-exclusion-button"">{T("AstCenterRemoveAnExclusionFromSlot")}</button>
+        </div>
       </div>
     </details>
 
     <details class=""panel"" open>
       <summary><h2>📜 {T("WebCurrentRecap")}</h2></summary>
-      <div id=""recap-root"" class=""grid panel-content""></div>
+      <div class=""panel-content"">
+        <button class=""button danger"" id=""clear-all-recaps-button"">{T("AstCenterClearAll")}</button>
+        <div id=""recap-root"" class=""grid""></div>
+      </div>
     </details>
 
     <details class=""panel"" open>
@@ -364,6 +433,14 @@ public static class WebPortalUserPage
     <details class=""panel"" close>
       <summary><h2>🎁 {T("WebReceivedItems")}</h2></summary>
       <div id=""items-root"" class=""grid panel-content""></div>
+    </details>
+
+    <details class=""panel"" close>
+      <summary><h2>{T("AstCenterHelpAndLinks")}</h2></summary>
+      <div class=""panel-content"">
+        <a href=""{safeApworldInfoUrl}"" target=""_blank"" rel=""noopener noreferrer"">APWorlds</a>
+        <a href=""https://discord.gg/PJfWRKVyEW"" target=""_blank"" rel=""noopener noreferrer"">Discord</a>
+      </div>
     </details>
   </main>
 
@@ -376,6 +453,7 @@ public static class WebPortalUserPage
 
     const status = document.getElementById('status');
     const recapRoot = document.getElementById('recap-root');
+    const gameStatusRoot = document.getElementById('game-status-root');
     const itemsRoot = document.getElementById('items-root');
     const hintsRoot = document.getElementById('hints-root');
     const addAliasSelect = document.getElementById('add-alias-select');
@@ -383,13 +461,29 @@ public static class WebPortalUserPage
     const deleteAliasSelect = document.getElementById('delete-alias-select');
     const addAliasButton = document.getElementById('add-alias-button');
     const deleteAliasButton = document.getElementById('delete-alias-button');
+    const openCompanionButton = document.getElementById('open-companion-button');
+    const copyCompanionLinkButton = document.getElementById('copy-companion-link-button');
+    const companionHelp = document.getElementById('companion-help');
     const heroInfo = document.getElementById('hero-info');
+    const personalPatchAliasSelect = document.getElementById('personal-patch-alias-select');
+    const personalPatchResult = document.getElementById('personal-patch-result');
+    const exclusionAliasSelect = document.getElementById('exclusion-alias-select');
+    const availableExclusionItemSelect = document.getElementById('available-exclusion-item-select');
+    const excludedItemSelect = document.getElementById('excluded-item-select');
+    const addExclusionButton = document.getElementById('add-exclusion-button');
+    const deleteExclusionButton = document.getElementById('delete-exclusion-button');
+    const clearAllRecapsButton = document.getElementById('clear-all-recaps-button');
+    const revokePortalButton = document.getElementById('revoke-portal-button');
+    const personalPatchData = new Map();
+    const exclusionData = new Map();
+    let companionPortalName = '';
 
     const path = window.location.pathname; // ex: /AST/portal/g/c/token/
     const idx = path.indexOf('/portal/');
     const basePath = idx >= 0 ? path.substring(0, idx) : '';
     const apiBase = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/' + ctx.channelId + '/' + ctx.token;
-    const infoApi = window.location.origin + basePath + '/api/portal/' + ctx.guildId + '/' + ctx.channelId + '/info';
+    const infoApi = apiBase + '/info';
+    const roomLinksApi = apiBase + '/room-links';
 
     const escapeHtml = (value) => {{
       const div = document.createElement('div');
@@ -399,6 +493,28 @@ public static class WebPortalUserPage
 
     const setStatus = (message) => {{
       status.textContent = message;
+    }};
+
+    const currentPortalUrl = () => window.location.href.split('#')[0];
+
+    const getValidPatchUrl = (value) => {{
+      if (!value) return null;
+      try {{
+        const candidate = new URL(value.trim());
+        return candidate.protocol === 'http:' || candidate.protocol === 'https:'
+          ? candidate.toString()
+          : null;
+      }} catch {{
+        return null;
+      }}
+    }};
+
+    const setCompanionAvailability = (aliases) => {{
+      const available = Array.isArray(aliases) && aliases.length > 0;
+      openCompanionButton.disabled = !available;
+      companionHelp.textContent = available
+        ? {Js("WebCompanionReady")}
+        : {Js("WebCompanionNeedsAlias")};
     }};
 
     const linkifyText = (message) => {{
@@ -437,6 +553,35 @@ public static class WebPortalUserPage
       card.appendChild(header);
       card.appendChild(content);
       return card;
+    }};
+
+    const renderGameStatuses = (gameStatuses) => {{
+      gameStatusRoot.innerHTML = '';
+      if (!Array.isArray(gameStatuses) || gameStatuses.length === 0) {{
+        gameStatusRoot.innerHTML = '<p class=""empty"">' + {Js("WebNoInfoAvailable")} + '</p>';
+        return;
+      }}
+
+      gameStatuses.forEach(statusEntry => {{
+        const content = document.createElement('div');
+        const game = document.createElement('div');
+        game.className = 'meta';
+        game.textContent = statusEntry.game || '';
+        content.appendChild(game);
+
+        const progress = document.createElement('strong');
+        progress.textContent = (statusEntry.checks || '0') + ' / ' + (statusEntry.total || '0');
+        content.appendChild(progress);
+
+        if (statusEntry.lastActivity) {{
+          const activity = document.createElement('div');
+          activity.className = 'meta';
+          activity.textContent = statusEntry.lastActivity;
+          content.appendChild(activity);
+        }}
+
+        gameStatusRoot.appendChild(createAliasCard(statusEntry.name || '?', content));
+      }});
     }};
 
     const renderRecaps = (recaps) => {{
@@ -628,6 +773,7 @@ public static class WebPortalUserPage
     }};
 
     const deleteRecap = async (alias) => {{
+      if (!window.confirm({Js("WebConfirmDeleteRecap")})) return;
       setStatus({Js("WebDeletingRecap")});
       const formData = new FormData();
       formData.append('alias', alias);
@@ -642,6 +788,156 @@ public static class WebPortalUserPage
         await loadData();
       }} else {{
         setStatus({Js("WebUnableToDeleteRecap")});
+      }}
+    }};
+
+    const clearAllRecaps = async () => {{
+      if (!window.confirm({Js("WebConfirmClearAllRecaps")})) return;
+      setStatus({Js("WebDeletingRecap")});
+      const response = await fetch(apiBase + '/recap/delete-all', {{ method: 'POST' }});
+      const payload = await response.json().catch(() => ({{}}));
+      setStatus(payload.message || (response.ok ? {Js("WebCommandExecuted")} : {Js("WebUnableToDeleteRecap")}));
+      if (response.ok) await loadData();
+    }};
+
+    const renderPersonalPatch = () => {{
+      const entry = personalPatchData.get(personalPatchAliasSelect.value);
+      if (!entry) {{
+        personalPatchResult.textContent = {Js("WebSelectAliasForPatch")};
+        return;
+      }}
+
+      const gameLabel = entry.gameName
+        ? ({Js("WebGameLabelPrefix")} + entry.gameName)
+        : {Js("WebGameUnknown")};
+      const patchUrl = getValidPatchUrl(entry.patch);
+      if (!patchUrl) {{
+        personalPatchResult.textContent = gameLabel + '\n' + {Js("WebNoPatchLinkForAlias")};
+        return;
+      }}
+
+      personalPatchResult.innerHTML = gameLabel + '<br><a href=""' + escapeHtml(patchUrl) + '"" target=""_blank"" rel=""noopener noreferrer"">' + escapeHtml(patchUrl) + '</a>';
+    }};
+
+    const loadPersonalPatches = async () => {{
+      personalPatchAliasSelect.disabled = true;
+      personalPatchAliasSelect.innerHTML = '<option value="""">' + {Js("WebLoadingAliases")} + '</option>';
+      try {{
+        const response = await fetch(apiBase + '/patches');
+        const payload = await response.json().catch(() => ({{}}));
+        const aliases = response.ok && Array.isArray(payload.aliases) ? payload.aliases : [];
+        personalPatchData.clear();
+        aliases.forEach(entry => {{
+          if (entry && entry.alias) personalPatchData.set(entry.alias, entry);
+        }});
+        fillSelect(
+          personalPatchAliasSelect,
+          Array.from(personalPatchData.keys()),
+          {Js("AstCenterNoAssociatedSlot")},
+          {Js("WebSelectAlias")});
+        personalPatchAliasSelect.disabled = aliases.length === 0;
+        renderPersonalPatch();
+      }} catch {{
+        fillSelect(personalPatchAliasSelect, [], {Js("WebUnableToLoadAliases")}, {Js("WebSelectAlias")});
+        personalPatchResult.textContent = {Js("WebUnableToLoadAliases")};
+      }}
+    }};
+
+    const fillItemSelect = (select, values, emptyLabel, placeholder) => {{
+      const safeValues = Array.isArray(values) ? values : [];
+      if (safeValues.length === 0) {{
+        select.innerHTML = '<option value="""">' + emptyLabel + '</option>';
+        select.disabled = true;
+        return;
+      }}
+
+      select.innerHTML = ['<option value="""">' + placeholder + '</option>']
+        .concat(safeValues.map(value => '<option value=""' + escapeHtml(value) + '"">' + escapeHtml(value) + '</option>'))
+        .join('');
+      select.disabled = false;
+    }};
+
+    const renderExcludedItems = () => {{
+      const entry = exclusionData.get(exclusionAliasSelect.value);
+      fillItemSelect(
+        excludedItemSelect,
+        entry ? entry.items : [],
+        {Js("AstCenterNoPersonalExclusion")},
+        {Js("AstCenterChooseAnItem")});
+    }};
+
+    const loadAvailableExclusionItems = async () => {{
+      const alias = exclusionAliasSelect.value;
+      if (!alias) {{
+        fillItemSelect(availableExclusionItemSelect, [], {Js("AstCenterNoAssociatedSlot")}, {Js("AstCenterChooseAnItem")});
+        renderExcludedItems();
+        return;
+      }}
+
+      availableExclusionItemSelect.disabled = true;
+      availableExclusionItemSelect.innerHTML = '<option value="""">' + {Js("WebProcessing")} + '</option>';
+      try {{
+        const response = await fetch(apiBase + '/exclusions/items?alias=' + encodeURIComponent(alias));
+        const payload = await response.json().catch(() => ({{}}));
+        fillItemSelect(
+          availableExclusionItemSelect,
+          response.ok ? payload.items : [],
+          {Js("WebNoAvailableItem")},
+          {Js("AstCenterChooseAnItem")});
+      }} catch {{
+        fillItemSelect(availableExclusionItemSelect, [], {Js("WebNoAvailableItem")}, {Js("AstCenterChooseAnItem")});
+      }}
+      renderExcludedItems();
+    }};
+
+    const loadExclusions = async () => {{
+      exclusionAliasSelect.disabled = true;
+      exclusionAliasSelect.innerHTML = '<option value="""">' + {Js("WebLoadingYourAliases")} + '</option>';
+      try {{
+        const response = await fetch(apiBase + '/exclusions');
+        const payload = await response.json().catch(() => ({{}}));
+        const aliases = response.ok && Array.isArray(payload.aliases) ? payload.aliases : [];
+        exclusionData.clear();
+        aliases.forEach(entry => {{
+          if (entry && entry.alias) exclusionData.set(entry.alias, entry);
+        }});
+        fillSelect(
+          exclusionAliasSelect,
+          Array.from(exclusionData.keys()),
+          {Js("AstCenterNoAssociatedSlot")},
+          {Js("AstCenterChooseASlot")});
+        exclusionAliasSelect.disabled = aliases.length === 0;
+        await loadAvailableExclusionItems();
+      }} catch {{
+        fillSelect(exclusionAliasSelect, [], {Js("WebUnableToLoadYourAliases")}, {Js("AstCenterChooseASlot")});
+      }}
+    }};
+
+    const mutateExclusion = async (action) => {{
+      const alias = exclusionAliasSelect.value;
+      const item = action === 'add' ? availableExclusionItemSelect.value : excludedItemSelect.value;
+      if (!alias || !item) {{
+        setStatus({Js("WebSelectAliasAndItem")});
+        return;
+      }}
+      if (action === 'delete' && !window.confirm({Js("WebConfirmDeleteExclusion")})) return;
+
+      const data = new FormData();
+      data.append('alias', alias);
+      data.append('item', item);
+      const response = await fetch(apiBase + '/exclusion/' + action, {{ method: 'POST', body: data }});
+      const payload = await response.json().catch(() => ({{}}));
+      setStatus(payload.message || (response.ok ? {Js("WebCommandExecuted")} : {Js("WebCommandError")}));
+      if (response.ok) await loadExclusions();
+    }};
+
+    const revokePortal = async () => {{
+      if (!window.confirm({Js("WebConfirmRevokePortal")})) return;
+      const response = await fetch(apiBase + '/revoke', {{ method: 'POST' }});
+      const payload = await response.json().catch(() => ({{}}));
+      setStatus(payload.message || (response.ok ? {Js("AstCenterThePortalLinkWasRevoked")} : {Js("WebCommandError")}));
+      if (response.ok) {{
+        document.querySelectorAll('button, select').forEach(element => {{ element.disabled = true; }});
       }}
     }};
 
@@ -677,13 +973,47 @@ public static class WebPortalUserPage
 
         if (userRes.ok) {{
           const payload = await userRes.json();
-          fillSelect(deleteAliasSelect, payload.aliases || [], {Js("WebNoRegisteredAlias")}, {Js("WebSelectAlias")});
+          const userAliases = payload.aliases || [];
+          fillSelect(deleteAliasSelect, userAliases, {Js("WebNoRegisteredAlias")}, {Js("WebSelectAlias")});
+          setCompanionAvailability(userAliases);
         }} else {{
           fillSelect(deleteAliasSelect, [], {Js("WebUnableToLoadYourAliases")}, {Js("WebSelectAlias")});
+          setCompanionAvailability([]);
         }}
       }} catch (e) {{
         fillSelect(addAliasSelect, [], {Js("WebUnableToLoadThreadAliases")}, {Js("WebSelectAlias")});
         fillSelect(deleteAliasSelect, [], {Js("WebUnableToLoadYourAliases")}, {Js("WebSelectAlias")});
+        setCompanionAvailability([]);
+      }}
+    }};
+
+    const loadPortalThreadName = async () => {{
+      try {{
+        const response = await fetch(roomLinksApi);
+        if (!response.ok) return;
+        const payload = await response.json();
+        const link = (payload.links || []).find(item => String(item.channelId) === String(ctx.channelId));
+        companionPortalName = link && link.threadName ? link.threadName : '';
+      }} catch {{
+        companionPortalName = '';
+      }}
+    }};
+
+    const openInCompanion = async () => {{
+      if (openCompanionButton.disabled) return;
+      if (!companionPortalName) await loadPortalThreadName();
+      const namePart = companionPortalName ? '&name=' + encodeURIComponent(companionPortalName) : '';
+      const deepLink = 'ast-companion://connect?portal=' + encodeURIComponent(currentPortalUrl()) + namePart;
+      setStatus({Js("WebCompanionOpening")});
+      window.location.href = deepLink;
+    }};
+
+    const copyCompanionLink = async () => {{
+      try {{
+        await navigator.clipboard.writeText(currentPortalUrl());
+        setStatus({Js("WebCompanionLinkCopied")});
+      }} catch {{
+        setStatus({Js("WebCompanionCopyFailed")});
       }}
     }};
 
@@ -743,17 +1073,27 @@ public static class WebPortalUserPage
       }}
 
       const data = await res.json();
+      renderGameStatuses(data.gameStatuses || []);
       renderRecaps(data.recaps || []);
       renderItems(data.receivedItems || []);
       renderHints(data.hints || []);
-      await loadAliasLists();
+      await Promise.all([loadAliasLists(), loadPersonalPatches(), loadExclusions()]);
       setStatus({Js("WebLastUpdate")} + ': ' + new Date(data.lastUpdated).toLocaleString());
     }};
 
     document.getElementById('refresh').addEventListener('click', loadData);
     addAliasButton.addEventListener('click', addAliasFromPortal);
     deleteAliasButton.addEventListener('click', deleteAliasFromPortal);
+    openCompanionButton.addEventListener('click', openInCompanion);
+    copyCompanionLinkButton.addEventListener('click', copyCompanionLink);
+    personalPatchAliasSelect.addEventListener('change', renderPersonalPatch);
+    exclusionAliasSelect.addEventListener('change', loadAvailableExclusionItems);
+    addExclusionButton.addEventListener('click', () => mutateExclusion('add'));
+    deleteExclusionButton.addEventListener('click', () => mutateExclusion('delete'));
+    clearAllRecapsButton.addEventListener('click', clearAllRecaps);
+    revokePortalButton.addEventListener('click', revokePortal);
     loadHeroInfo();
+    loadPortalThreadName();
     loadData();
   </script>
 </body>

@@ -11,16 +11,28 @@ public class Declare
     public static string ReleaseVersion = Version;
 #endif
     public static string BotVersion = GetLocalSemVer();
-    public static string BddVersion = "5.0.5";
+    public static string BddVersion = "5.0.11";
 
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool ExportMetrics = (Environment.GetEnvironmentVariable("EXPORT_METRICS") ?? "false").Trim().ToLower() == "true";
     public static readonly string MetricsPort = Environment.GetEnvironmentVariable("METRICS_PORT") ?? string.Empty;
     public static readonly string UserIdForBigAsync = Environment.GetEnvironmentVariable("USER_ID_FOR_BIG_ASYNC") ?? string.Empty;
     public static readonly string AllowDiscordGuildId = Environment.GetEnvironmentVariable("ALLOW_DISCORD") ?? string.Empty;
+    public static readonly string InstanceOwnerUserId = Environment.GetEnvironmentVariable("AST_OWNER_USER_ID") ?? string.Empty;
+    public static readonly HashSet<string> AllowedArchipelagoHosts = ParseHostAllowList(
+        Environment.GetEnvironmentVariable("ARCHIPELAGO_ALLOWED_HOSTS"));
     public static readonly bool EnableWebPortal = (Environment.GetEnvironmentVariable("ENABLE_WEB_PORTAL") ?? "true").Trim().ToLower() == "true";
     public static readonly string WebPortalPort = Environment.GetEnvironmentVariable("WEB_PORT") ?? "5199";
     public static readonly string WebPortalBaseUrl = Environment.GetEnvironmentVariable("WEB_BASE_URL") ?? string.Empty;
+    public static readonly long WebPortalMaxUploadBytes = ParsePositiveLongEnvironmentVariable("WEB_MAX_UPLOAD_BYTES", 64L * 1024 * 1024);
+    public static readonly int PortalTokenLifetimeDays = ParseBoundedIntEnvironmentVariable("PORTAL_TOKEN_LIFETIME_DAYS", 30, 1, 365);
+    public static readonly int AuditRetentionDays = ParseBoundedIntEnvironmentVariable("AUDIT_RETENTION_DAYS", 90, 1, 3650);
+    public static readonly int UploadQuarantineRetentionMinutes = ParseBoundedIntEnvironmentVariable("UPLOAD_QUARANTINE_RETENTION_MINUTES", 60, 5, 1440);
+    public static readonly int SpoilerLogRetentionDays = ParseBoundedIntEnvironmentVariable("SPOILER_LOG_RETENTION_DAYS", 30, 1, 365);
+    public static readonly bool EnableTrackingV2 = (Environment.GetEnvironmentVariable("ENABLE_TRACKING_V2") ?? "false").Trim().ToLower() == "true";
+    public static readonly bool UseLegacyTrackingScheduler = (Environment.GetEnvironmentVariable("USE_LEGACY_TRACKING_SCHEDULER") ?? "false").Trim().ToLower() == "true";
+    public static readonly int TrackingGlobalConcurrency = ParseBoundedIntEnvironmentVariable("TRACKING_GLOBAL_CONCURRENCY", 10, 1, 100);
+    public static readonly int TrackingOriginConcurrency = ParseBoundedIntEnvironmentVariable("TRACKING_ORIGIN_CONCURRENCY", 2, 1, 20);
 
 
     public static readonly string Language = (Environment.GetEnvironmentVariable("LANGUAGE") ?? "en").ToLowerInvariant();
@@ -52,6 +64,9 @@ public class Declare
     public static string BddPath = Path.Combine(BasePath, "AST.db");
     public static string ExternalFolder = Path.Combine(BasePath, "extern");
     public static string WebPortalPath = Path.Combine(ExternalFolder, "portal");
+    public static string WebPortalDownloadPath = Path.Combine(ExternalFolder, "portal-downloads");
+    public static string DatabaseBackupPath = Path.Combine(ExternalFolder, "database-backups");
+    public static string UploadQuarantinePath = Path.Combine(ExternalFolder, "upload-quarantine");
 
     public static string VersionFile = Path.Combine(ExternalFolder, "versionFile.txt");
     public static string ExtractPath = Path.Combine(ExternalFolder, "Archipelago");
@@ -80,4 +95,26 @@ public class Declare
 
     private static string Normalize(string v)
         => v.Trim().TrimStart('v', 'V').Split('+', '-', ' ').FirstOrDefault() ?? "0.0.0";
+
+    private static long ParsePositiveLongEnvironmentVariable(string name, long fallback)
+    {
+        var rawValue = Environment.GetEnvironmentVariable(name);
+        return long.TryParse(rawValue, out var value) && value > 0 ? value : fallback;
+    }
+
+    private static HashSet<string> ParseHostAllowList(string? value)
+    {
+        return value?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static int ParseBoundedIntEnvironmentVariable(string name, int fallback, int minimum, int maximum)
+    {
+        var rawValue = Environment.GetEnvironmentVariable(name);
+        return int.TryParse(rawValue, out var value) && value >= minimum && value <= maximum
+            ? value
+            : fallback;
+    }
 }

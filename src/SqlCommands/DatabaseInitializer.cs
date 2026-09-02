@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS ChannelsAndUrlsTable (
     Room           TEXT NOT NULL,
     Tracker        TEXT NOT NULL,
     CheckFrequency TEXT NOT NULL,
+    PollingMode TEXT NOT NULL DEFAULT 'Automatic'
+        CHECK (PollingMode IN ('Automatic', 'Fixed')),
+    MaximumCheckFrequency TEXT NOT NULL DEFAULT '1h',
     LastCheck      TEXT,
     Silent         BOOLEAN,
     Port           TEXT
@@ -73,9 +76,108 @@ CREATE TABLE IF NOT EXISTS PortalAccessTable (
     GuildId   TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
     UserId    TEXT NOT NULL,
-    Token     TEXT NOT NULL,
+    TokenHash TEXT NOT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    ExpiresAtUtc TEXT NOT NULL,
+    RevokedAtUtc TEXT,
     UNIQUE (GuildId, ChannelId, UserId),
-    UNIQUE (Token)
+    UNIQUE (TokenHash)
+);
+
+CREATE TABLE IF NOT EXISTS SecurityAuditLogTable (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    OccurredAtUtc TEXT NOT NULL,
+    CorrelationId TEXT NOT NULL,
+    Source TEXT NOT NULL,
+    ActorUserId TEXT NOT NULL,
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT,
+    Action TEXT NOT NULL,
+    Outcome TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS DataProtectionMetadata (
+    Id INTEGER PRIMARY KEY CHECK (Id = 1),
+    KeyCheck TEXT NOT NULL
+);
+
+-- ==========================
+-- Tracking V2 event ledger/outbox
+-- ==========================
+CREATE TABLE IF NOT EXISTS TrackedRooms (
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    UpdatedAtUtc TEXT NOT NULL,
+    LastSuccessfulSyncUtc TEXT,
+    CurrentSnapshotHash TEXT,
+    IsBaselineInitialized INTEGER NOT NULL DEFAULT 0 CHECK (IsBaselineInitialized IN (0, 1)),
+    PRIMARY KEY (GuildId, ChannelId)
+);
+
+CREATE TABLE IF NOT EXISTS RoomSnapshots (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    ContentHash TEXT NOT NULL,
+    CapturedAtUtc TEXT NOT NULL,
+    LastSuccessfulSyncUtc TEXT,
+    CompleteSections INTEGER NOT NULL,
+    TrackingState TEXT NOT NULL CHECK (TrackingState IN ('Healthy', 'Error')),
+    PayloadJson TEXT NOT NULL,
+    FOREIGN KEY (GuildId, ChannelId)
+        REFERENCES TrackedRooms(GuildId, ChannelId) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS TrackingEvents (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    EventKey TEXT NOT NULL UNIQUE,
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    EventType TEXT NOT NULL,
+    OccurredAtUtc TEXT NOT NULL,
+    PayloadJson TEXT NOT NULL,
+    SnapshotId INTEGER NOT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    FOREIGN KEY (SnapshotId) REFERENCES RoomSnapshots(Id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS EventDeliveries (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    EventId INTEGER NOT NULL,
+    DestinationType TEXT NOT NULL,
+    DestinationId TEXT NOT NULL,
+    Status TEXT NOT NULL CHECK (Status IN ('Pending', 'Delivering', 'Delivered', 'Failed')),
+    AttemptCount INTEGER NOT NULL DEFAULT 0,
+    NextAttemptAtUtc TEXT NOT NULL,
+    LeaseUntilUtc TEXT,
+    LastAttemptAtUtc TEXT,
+    DeliveredAtUtc TEXT,
+    LastErrorCode TEXT,
+    ExternalReceiptId TEXT,
+    UNIQUE (EventId, DestinationType, DestinationId),
+    FOREIGN KEY (EventId) REFERENCES TrackingEvents(Id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS RoomPollState (
+    GuildId TEXT NOT NULL,
+    ChannelId TEXT NOT NULL,
+    NextPollAtUtc TEXT NOT NULL,
+    LastAttemptAtUtc TEXT,
+    LastSuccessAtUtc TEXT,
+    ConsecutiveFailures INTEGER NOT NULL DEFAULT 0,
+    LastFailureKind TEXT NOT NULL DEFAULT 'None',
+    BreakerOpenUntilUtc TEXT,
+    LastLatencyMilliseconds REAL NOT NULL DEFAULT 0,
+    IsPaused INTEGER NOT NULL DEFAULT 0 CHECK (IsPaused IN (0, 1)),
+    PausedAtUtc TEXT,
+    LastForcedSyncAtUtc TEXT,
+    LastContentHash TEXT,
+    UnchangedSuccessCount INTEGER NOT NULL DEFAULT 0,
+    EffectiveIntervalSeconds REAL NOT NULL DEFAULT 0,
+    LastChangeAtUtc TEXT,
+    UpdatedAtUtc TEXT NOT NULL,
+    PRIMARY KEY (GuildId, ChannelId)
 );
 
 -- ==========================
@@ -268,6 +370,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_url_patch
   ON UrlAndChannelPatchTable(ChannelsAndUrlsTableId, Alias);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
   ON DisplayedItemTable(GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_channels_guild_channel
+  ON ChannelsAndUrlsTable(GuildId, ChannelId);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_hintstatus_unique
+  ON HintStatusTable(
+      GuildId,
+      ChannelId,
+      IFNULL(Finder, ''),
+      IFNULL(Receiver, ''),
+      IFNULL(Item, ''),
+      IFNULL(Location, ''),
+      IFNULL(Game, ''),
+      IFNULL(Entrance, '')
+  );
 CREATE UNIQUE INDEX IF NOT EXISTS IX_LastItemsCheck_Guild_Channel
 ON LastItemsCheckTable (GuildId, ChannelId);
 
@@ -299,6 +414,20 @@ CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcur
   ON ReceiverAliasesTable(GuildId, ChannelId, UserId, Receiver);
 CREATE INDEX IF NOT EXISTS idx_receiveraliases_gcr
   ON ReceiverAliasesTable(GuildId, ChannelId, Receiver);
+
+CREATE INDEX IF NOT EXISTS idx_securityaudit_guild_time
+  ON SecurityAuditLogTable(GuildId, OccurredAtUtc DESC);
+CREATE INDEX IF NOT EXISTS idx_securityaudit_time
+  ON SecurityAuditLogTable(OccurredAtUtc);
+
+CREATE INDEX IF NOT EXISTS idx_roomsnapshots_room_time
+  ON RoomSnapshots(GuildId, ChannelId, Id DESC);
+CREATE INDEX IF NOT EXISTS idx_trackingevents_room_time
+  ON TrackingEvents(GuildId, ChannelId, Id DESC);
+CREATE INDEX IF NOT EXISTS idx_eventdeliveries_due
+  ON EventDeliveries(Status, NextAttemptAtUtc, LeaseUntilUtc, Id);
+CREATE INDEX IF NOT EXISTS idx_roompollstate_due
+  ON RoomPollState(NextPollAtUtc, GuildId, ChannelId);
 
 -- HintStatusTable: mêmes patterns que DisplayedItemTable
 CREATE INDEX IF NOT EXISTS idx_hintstatus_gcr_item

@@ -81,6 +81,7 @@ StyleCopReport.xml
 *.obj
 *.bin
 *.env
+/AST.data-protection.key
 *.iobj
 *.pch
 *.pdb
