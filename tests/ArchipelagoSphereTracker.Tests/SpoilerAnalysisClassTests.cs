@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Xunit;
 
 public class SpoilerAnalysisClassTests
@@ -162,12 +163,14 @@ public class SpoilerAnalysisClassTests
     }
 
     [Fact]
-    public void BuildReport_ManualValidation_IgnoresOnlyLocalChecksThroughValidatedSphere()
+    public void BuildReport_ManualValidation_AdvancesReceiverToNextSphereAndDeduplicatesChecks()
     {
         var checks = new List<SpoilerAnalysisClass.Check>
         {
+            new(2, "outbound-s2", "Selected", "Other Item", "Other"),
             new(3, "local-s3", "Selected", "Local Item", "Selected"),
             new(3, "external-s3", "Other", "External Item", "Selected"),
+            new(4, "local-s4", "Selected", "Later Local Item", "Selected"),
             new(4, "local-s4", "Selected", "Later Local Item", "Selected")
         };
 
@@ -183,7 +186,66 @@ public class SpoilerAnalysisClassTests
 
         Assert.Contains("jusqu’à S3", report);
         Assert.DoesNotContain("local-s3", report);
-        Assert.Contains("external-s3", report);
+        Assert.DoesNotContain("external-s3", report);
+        Assert.Contains("Sphère actuellement bloquante : 4", report);
         Assert.Contains("local-s4", report);
+        Assert.Equal(1, report.Split("local-s4", StringSplitOptions.None).Length - 1);
+        Assert.Contains("outbound-s2", report);
+    }
+
+    [Fact]
+    public async Task AnalyzeSpoilerLogAsync_NewValidatedSphereReplacesStoredValue()
+    {
+        using var scope = new TestDatabaseScope();
+        var previousBasePath = Declare.BasePath;
+        try
+        {
+            Declare.BasePath = scope.BaseDirectory;
+            var spoilerFolder = SpoilerLogClass.GetSpoilerFolder("channel");
+            Directory.CreateDirectory(spoilerFolder);
+            await File.WriteAllTextAsync(Path.Combine(spoilerFolder, "spoiler.txt"), """
+                Playthrough:
+                1: {
+                  loc-1 (Other): item-1 (Selected)
+                }
+                2: {
+                  loc-2 (Other): item-2 (Selected)
+                }
+                3: {
+                  loc-3 (Other): item-3 (Selected)
+                }
+                4: {
+                  loc-4 (Other): item-4 (Selected)
+                }
+                5: {
+                  loc-5 (Other): item-5 (Selected)
+                }
+                Paths:
+                """);
+
+            await SpoilerAnalysisClass.AnalyzeSpoilerLogAsync(
+                "channel", "guild", "Selected", sphereToValidate: 5);
+            var report = await SpoilerAnalysisClass.AnalyzeSpoilerLogAsync(
+                "channel", "guild", "Selected", sphereToValidate: 2);
+
+            Assert.Equal(
+                1,
+                await TestDatabaseScope.CountRowsAsync(
+                    "SpoilerSphereValidationTable", "guild", "channel"));
+
+            await using var connection = await Db.OpenReadAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                SELECT ValidatedSphere
+                FROM SpoilerSphereValidationTable
+                WHERE GuildId = 'guild' AND ChannelId = 'channel';
+                """;
+            Assert.Equal(2L, (long)(await command.ExecuteScalarAsync())!);
+            Assert.Contains("Sphère actuellement bloquante : 3", report);
+        }
+        finally
+        {
+            Declare.BasePath = previousBasePath;
+        }
     }
 }

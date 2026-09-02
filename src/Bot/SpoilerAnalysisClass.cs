@@ -84,6 +84,16 @@ public static class SpoilerAnalysisClass
         var checks = ParsePlaythrough(spoilerPath);
         var spoilerFingerprint = ComputeSpoilerFingerprint(spoilerPath);
 
+        if ((sphereToValidate.HasValue || resetValidation) && string.IsNullOrWhiteSpace(receiver))
+        {
+            return Resource.AstCenterChooseASlotToAnalyzeFirst;
+        }
+
+        if (sphereToValidate < 0)
+        {
+            return Resource.AstCenterEnterASlotAndUseOnlyNonNegativeIntegers;
+        }
+
         if (!string.IsNullOrWhiteSpace(receiver))
         {
             if (resetValidation)
@@ -304,6 +314,8 @@ public static class SpoilerAnalysisClass
     {
         var scopedChecks = checks
             .Where(c => !sphereLimit.HasValue || c.Sphere <= sphereLimit.Value)
+            .GroupBy(FoundKey, StringComparer.Ordinal)
+            .Select(group => group.OrderBy(check => check.Sphere).First())
             .OrderBy(c => c.Sphere)
             .ThenBy(c => c.Receiver)
             .ThenBy(c => c.Finder)
@@ -350,7 +362,7 @@ public static class SpoilerAnalysisClass
         {
             if (manuallyValidatedSphere.HasValue && !string.IsNullOrWhiteSpace(onlyReceiver))
             {
-                return $"Sphères locales validées manuellement pour {onlyReceiver} : jusqu’à S{manuallyValidatedSphere}\n\n"
+                return $"Sphères validées manuellement pour {onlyReceiver} : jusqu’à S{manuallyValidatedSphere}\n\n"
                     + "Aucun item manquant dans le Playthrough avec les paramètres actuels.";
             }
 
@@ -384,7 +396,7 @@ public static class SpoilerAnalysisClass
 
         if (manuallyValidatedSphere.HasValue && !string.IsNullOrWhiteSpace(onlyReceiver))
         {
-            sb.AppendLine($"Sphères locales validées manuellement pour {onlyReceiver} : jusqu’à S{manuallyValidatedSphere}");
+            sb.AppendLine($"Sphères validées manuellement pour {onlyReceiver} : jusqu’à S{manuallyValidatedSphere}");
             sb.AppendLine();
         }
 
@@ -482,7 +494,6 @@ public static class SpoilerAnalysisClass
         => validatedSphere.HasValue
            && !string.IsNullOrWhiteSpace(alias)
            && check.Sphere <= validatedSphere.Value
-           && string.Equals(check.Finder, alias, StringComparison.OrdinalIgnoreCase)
            && string.Equals(check.Receiver, alias, StringComparison.OrdinalIgnoreCase);
 
     private static string ComputeSpoilerFingerprint(string spoilerPath)
@@ -519,7 +530,7 @@ public static class SpoilerAnalysisClass
                 (GuildId, ChannelId, SpoilerFingerprint, Alias, ValidatedSphere)
             VALUES (@GuildId, @ChannelId, @Fingerprint, @Alias, @Sphere)
             ON CONFLICT(GuildId, ChannelId, SpoilerFingerprint, Alias)
-            DO UPDATE SET ValidatedSphere = MAX(ValidatedSphere, excluded.ValidatedSphere);";
+            DO UPDATE SET ValidatedSphere = excluded.ValidatedSphere;";
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
         command.Parameters.AddWithValue("@Fingerprint", fingerprint);

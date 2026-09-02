@@ -328,14 +328,6 @@ public class UrlClass
             ChannelConfigCache.Remove(guildId, channelId);
             Declare.WarnedThreads.Remove(channelId);
             WebPortalPages.DeleteChannelPages(guildId, channelId);
-
-            var playersPath = Path.Combine(Declare.PlayersPath, channelId);
-            if (Directory.Exists(playersPath))
-                Directory.Delete(playersPath, true);
-
-            var outputPath = Path.Combine(Declare.OutputPath, channelId);
-            if (Directory.Exists(outputPath))
-                Directory.Delete(outputPath, true);
         }
 
         var message = Resource.URLDeleted;

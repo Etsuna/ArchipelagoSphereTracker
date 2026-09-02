@@ -347,6 +347,7 @@ public static class DatabaseCommands
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });
 
+            RoomFileStorage.DeleteChannelData(guildId, channelId);
             Console.WriteLine(Resource.DeleteChannelDataAsyncDeleteSuccessful);
         }
         catch (Exception ex)
@@ -363,6 +364,8 @@ public static class DatabaseCommands
         try
         {
             Console.WriteLine($"Try to delete data for GuildId: {guildId}");
+
+            var channelIds = await GetAllChannelsAsync(guildId, "ChannelsAndUrlsTable");
 
             await Db.WriteAsync(async conn =>
             {
@@ -478,6 +481,7 @@ public static class DatabaseCommands
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });
 
+            RoomFileStorage.DeleteGuildData(guildId, channelIds);
             Console.WriteLine(Resource.DeleteChannelDataByGuildIdAsyncDeletionGuildIdSuccessful);
         }
         catch (Exception ex)

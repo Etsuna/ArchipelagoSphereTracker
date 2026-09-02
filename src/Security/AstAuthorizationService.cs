@@ -47,8 +47,6 @@ public static class AstAuthorizationService
             return commandName switch
             {
                 "delete-url" or
-                "analyze-spoiler-log" or
-                "send-spoiler-log" or
                 "ast-room-portal" or
                 "update-frequency-check" or
                 "ast-sync-now" or

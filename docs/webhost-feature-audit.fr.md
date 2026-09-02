@@ -14,6 +14,7 @@ Cet audit compare la matrice des 47 anciennes commandes de `docs/pr9-ast-command
 | Exclusions | liste personnelle, ajout depuis le datapackage du slot, suppression personnelle |
 | Informations et aide | informations de room, liens APWorlds et Discord |
 | Portail | ouverture dans AST Companion, copie du lien et révocation du lien actif |
+| Spoiler partagé | upload `.txt`/`.json` et analyse du spoiler commun à la room, accessibles à tous ses membres |
 
 ## Portail de room — `RoomManager`
 
@@ -45,6 +46,7 @@ La santé globale AST a été retirée de cette page : elle relève de `GuildMan
 - Toutes les nouvelles routes restent liées au token, au serveur, au salon et à l'utilisateur Discord résolu côté serveur.
 - Les exclusions et patchs personnels sont filtrés côté serveur ; un identifiant utilisateur fourni par le navigateur n'est jamais accepté.
 - Les uploads spoiler utilisent la quarantaine, la limite de taille et la validation de contenu existantes.
+- Le spoiler actif, les YAML et les téléchargements générés n'expirent plus. Ils sont nettoyés avec les données de la room lors de la suppression de son thread ou de son URL ; les custom worlds globaux ne sont jamais inclus.
 - Les téléchargements de modèles YAML sont désormais protégés par le token du portail.
 - Les actions destructrices demandent une confirmation dans l'interface et sont inscrites dans le journal d'audit lorsqu'elles modifient des données.
 - Les libellés ajoutés existent en anglais et en français, et un test vérifie que toute clé dynamique du WebHost existe dans les ressources.

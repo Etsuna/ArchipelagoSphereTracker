@@ -6491,5 +6491,29 @@ namespace ArchipelagoSphereTracker.src.Resources {
                 return ResourceManager.GetString("SpoilerLogTooLarge", resourceCulture);
             }
         }
+
+        internal static string WebCheckingSpoilerLog {
+            get {
+                return ResourceManager.GetString("WebCheckingSpoilerLog", resourceCulture);
+            }
+        }
+
+        internal static string WebNoSpoilerLogImported {
+            get {
+                return ResourceManager.GetString("WebNoSpoilerLogImported", resourceCulture);
+            }
+        }
+
+        internal static string WebSpoilerLogAlreadyImported {
+            get {
+                return ResourceManager.GetString("WebSpoilerLogAlreadyImported", resourceCulture);
+            }
+        }
+
+        internal static string AstCenterSpoilerImportHint {
+            get {
+                return ResourceManager.GetString("AstCenterSpoilerImportHint", resourceCulture);
+            }
+        }
     }
 }

@@ -14,10 +14,6 @@ public static class WebPortalServer
 {
     
 
-    private static readonly TimeSpan DownloadRetention = TimeSpan.FromHours(1);
-    private static readonly TimeSpan DownloadCleanupInterval = TimeSpan.FromMinutes(5);
-    private static CancellationTokenSource? _cleanupCts;
-    private static Task? _cleanupTask;
     private static WebApplication? _app;
     private static Task? _runTask;
 
@@ -252,6 +248,107 @@ public static class WebPortalServer
                 .ToList();
 
             return Results.Ok(new { aliases = uniqueAliases });
+        });
+
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/spoiler/status", async (
+            string guildId,
+            string channelId,
+            string token) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var spoilerPath = SpoilerLogClass.GetLatestSpoilerPath(channelId);
+            return Results.Ok(new
+            {
+                exists = spoilerPath != null,
+                fileName = spoilerPath == null ? null : Path.GetFileName(spoilerPath),
+                lastModifiedUtc = spoilerPath == null ? (DateTime?)null : File.GetLastWriteTimeUtc(spoilerPath)
+            });
+        });
+
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/spoiler/upload", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var form = await request.ReadFormAsync();
+            var file = form.Files.FirstOrDefault();
+            if (file == null)
+                return Results.BadRequest(new { message = "spoiler file is required." });
+            if (file.Length <= 0 ||
+                file.Length > Declare.WebPortalMaxUploadBytes ||
+                !FileUploadSecurity.TryGetSafeFileName(file.FileName, [".txt", ".json"], out _))
+            {
+                return Results.BadRequest(new { message = "Invalid or oversized spoiler file." });
+            }
+
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditLog.ForCommand("send-spoiler-log"));
+            await using var stream = file.OpenReadStream();
+            var message = await SpoilerLogClass.SendSpoilerLogFromStreamAsync(
+                channelId,
+                file.FileName,
+                stream);
+            audit.Succeed();
+            return Results.Ok(new { message });
+        });
+
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/spoiler/analyze", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var form = await request.ReadFormAsync();
+            if (!TryParseOptionalNonNegativeInt(form["sphere"].FirstOrDefault(), out var sphereLimit) ||
+                !TryParseOptionalNonNegativeInt(form["validateSphere"].FirstOrDefault(), out var sphereToValidate))
+            {
+                return Results.BadRequest(new { message = Resource.AstCenterEnterASlotAndUseOnlyNonNegativeIntegers });
+            }
+
+            var requestedAlias = form["alias"].FirstOrDefault();
+            string? canonicalAlias = null;
+            if (!string.IsNullOrWhiteSpace(requestedAlias))
+            {
+                var roomAliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId);
+                canonicalAlias = roomAliases.FirstOrDefault(alias =>
+                    string.Equals(alias, requestedAlias, StringComparison.OrdinalIgnoreCase));
+                if (canonicalAlias == null)
+                    return Results.BadRequest(new { message = string.Format(Resource.AliasNotFound, requestedAlias) });
+            }
+
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditLog.ForCommand("analyze-spoiler-log"));
+            var message = await SpoilerAnalysisClass.AnalyzeSpoilerLogAsync(
+                channelId,
+                guildId,
+                canonicalAlias,
+                sphereLimit,
+                string.Equals(form["missingMode"].FirstOrDefault(), "full", StringComparison.OrdinalIgnoreCase),
+                !string.Equals(form["hideItems"].FirstOrDefault(), "false", StringComparison.OrdinalIgnoreCase),
+                sphereToValidate,
+                string.Equals(form["resetValidation"].FirstOrDefault(), "true", StringComparison.OrdinalIgnoreCase));
+            audit.Succeed();
+            return Results.Ok(new { message });
         });
 
         app.MapGet("/api/portal/{guildId}/{channelId}/{token}/aliases/user", async (string guildId, string channelId, string token) =>
@@ -1178,8 +1275,6 @@ public static class WebPortalServer
 
         app.MapPost("/telemetry.php", () => Results.NoContent());
 
-        StartDownloadCleanupWorker();
-
         _runTask = app.RunAsync();
         Console.WriteLine($"[Portal] Web portal running on port {port}. Culture={culture.Name}");
     }
@@ -1189,8 +1284,6 @@ public static class WebPortalServer
         var app = _app;
         if (app == null)
             return;
-
-        await StopDownloadCleanupWorkerAsync();
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         await app.StopAsync(cts.Token);
@@ -1384,81 +1477,6 @@ public static class WebPortalServer
             "0" => "Filler",
             _ => "Unknown"
         };
-    }
-
-    private static void StartDownloadCleanupWorker()
-    {
-        if (!Declare.IsArchipelagoMode)
-            return;
-
-        _cleanupCts?.Cancel();
-        _cleanupCts = new CancellationTokenSource();
-        _cleanupTask = Task.Run(() => RunDownloadCleanupAsync(_cleanupCts.Token));
-    }
-
-    private static async Task StopDownloadCleanupWorkerAsync()
-    {
-        var cleanupCts = _cleanupCts;
-        var cleanupTask = _cleanupTask;
-
-        _cleanupCts = null;
-        _cleanupTask = null;
-
-        if (cleanupCts == null)
-            return;
-
-        cleanupCts.Cancel();
-
-        if (cleanupTask != null)
-        {
-            try
-            {
-                await cleanupTask;
-            }
-            catch (OperationCanceledException)
-            {
-            }
-        }
-
-        cleanupCts.Dispose();
-    }
-
-    private static async Task RunDownloadCleanupAsync(CancellationToken cancellationToken)
-    {
-        CleanupExpiredDownloadsForAllGuilds();
-
-        using var timer = new PeriodicTimer(DownloadCleanupInterval);
-        while (await timer.WaitForNextTickAsync(cancellationToken))
-        {
-            CleanupExpiredDownloadsForAllGuilds();
-        }
-    }
-
-    private static void CleanupExpiredDownloadsForAllGuilds()
-    {
-        CleanupExpiredDownloads(Declare.WebPortalDownloadPath);
-    }
-
-    private static void CleanupExpiredDownloads(string downloadRoot)
-    {
-        if (!Directory.Exists(downloadRoot))
-            return;
-
-        var expirationThreshold = DateTime.UtcNow - DownloadRetention;
-
-        foreach (var filePath in Directory.EnumerateFiles(downloadRoot, "*", SearchOption.AllDirectories))
-        {
-            try
-            {
-                var lastWriteTime = File.GetLastWriteTimeUtc(filePath);
-                if (lastWriteTime <= expirationThreshold)
-                    File.Delete(filePath);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Portal] Failed to delete expired download '{filePath}': {ex.Message}");
-            }
-        }
     }
 
     private static string EnsureRobotsTxtFile()

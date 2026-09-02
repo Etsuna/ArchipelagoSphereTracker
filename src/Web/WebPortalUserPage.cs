@@ -250,7 +250,8 @@ public static class WebPortalUserPage
       font-size: 12px;
     }}
 
-    .action-group select {{
+    .action-group select,
+    .action-group input {{
       width: 100%;
       border-radius: 10px;
       padding: 8px 10px;
@@ -258,6 +259,25 @@ public static class WebPortalUserPage
       background: rgba(11, 15, 31, 0.85);
       color: var(--text);
     }}
+
+    .result {{
+      color: var(--accent-2);
+      font-size: 13px;
+      white-space: pre-wrap;
+    }}
+
+    .compact-upload {{
+      align-self: start;
+      align-content: start;
+    }}
+
+    .compact-upload .button {{
+      justify-self: start;
+      width: auto;
+      padding: 8px 18px;
+    }}
+
+    .spoiler-status {{ grid-column: 1 / -1; }}
 
     .list {{
       list-style: none;
@@ -390,6 +410,44 @@ public static class WebPortalUserPage
       <div id=""game-status-root"" class=""grid panel-content""></div>
     </details>
 
+    <details class=""panel"" open>
+      <summary><h2>🔎 {T("AstCenterSpoilerAnalysis")}</h2></summary>
+      <div class=""actions-grid panel-content"">
+        <div class=""result spoiler-status"" id=""spoiler-log-status"">{T("WebCheckingSpoilerLog")}</div>
+        <form class=""action-group compact-upload"" id=""spoiler-upload-form"">
+          <label>{T("SlashImportSpoilerLog")}</label>
+          <input type=""file"" name=""file"" accept="".txt,.json"" required />
+          <button class=""button"" type=""submit"">{T("SlashImportSpoilerLog")}</button>
+          <div class=""result"" data-result></div>
+        </form>
+        <form class=""action-group"" id=""spoiler-analysis-form"">
+          <label for=""spoiler-alias-select"">{T("AstCenterChooseASlot")}</label>
+          <select id=""spoiler-alias-select"" name=""alias""></select>
+          <label>{T("AstCenterMaximumSphereBlankAll")}</label>
+          <input type=""number"" name=""sphere"" min=""0"" />
+          <label>{T("AstCenterItemDisplay")}</label>
+          <select name=""missingMode"">
+            <option value=""first"">{T("AstCenterFirstBlockingSphere")}</option>
+            <option value=""full"">{T("AstCenterFullReport")}</option>
+          </select>
+          <label>{T("AstCenterHideItems")}</label>
+          <select name=""hideItems"">
+            <option value=""true"">{T("WebYes")}</option>
+            <option value=""false"">{T("WebNo")}</option>
+          </select>
+          <label>{T("AstCenterSphereToValidateOptional")}</label>
+          <input type=""number"" name=""validateSphere"" min=""0"" />
+          <label>{T("AstCenterResetValidation")}</label>
+          <select name=""resetValidation"">
+            <option value=""false"">{T("WebNo")}</option>
+            <option value=""true"">{T("WebYes")}</option>
+          </select>
+          <button class=""button"" type=""submit"">{T("AstCenterAnalyze")}</button>
+          <div class=""result"" data-result></div>
+        </form>
+      </div>
+    </details>
+
     <details class=""panel"" close>
       <summary><h2>🩹 {T("AstCenterMyPatch")}</h2></summary>
       <div class=""action-group panel-content"">
@@ -474,6 +532,10 @@ public static class WebPortalUserPage
     const deleteExclusionButton = document.getElementById('delete-exclusion-button');
     const clearAllRecapsButton = document.getElementById('clear-all-recaps-button');
     const revokePortalButton = document.getElementById('revoke-portal-button');
+    const spoilerAliasSelect = document.getElementById('spoiler-alias-select');
+    const spoilerUploadForm = document.getElementById('spoiler-upload-form');
+    const spoilerAnalysisForm = document.getElementById('spoiler-analysis-form');
+    const spoilerLogStatus = document.getElementById('spoiler-log-status');
     const personalPatchData = new Map();
     const exclusionData = new Map();
     let companionPortalName = '';
@@ -954,6 +1016,52 @@ public static class WebPortalUserPage
       select.innerHTML = options.join('');
     }};
 
+    const fillSpoilerAliases = (aliases) => {{
+      const options = ['<option value="""">' + {Js("AstCenterAll")} + '</option>'];
+      (aliases || []).forEach(alias => {{
+        options.push('<option value=""' + escapeHtml(alias) + '"">' + escapeHtml(alias) + '</option>');
+      }});
+      spoilerAliasSelect.innerHTML = options.join('');
+      spoilerAliasSelect.disabled = false;
+    }};
+
+    const loadSpoilerStatus = async () => {{
+      spoilerLogStatus.textContent = {Js("WebCheckingSpoilerLog")};
+      try {{
+        const response = await fetch(apiBase + '/spoiler/status');
+        const payload = await response.json().catch(() => ({{}}));
+        if (response.ok && payload.exists) {{
+          spoilerLogStatus.textContent = {Js("WebSpoilerLogAlreadyImported")}.replace('{{0}}', payload.fileName || '?');
+        }} else if (response.ok) {{
+          spoilerLogStatus.textContent = {Js("WebNoSpoilerLogImported")};
+        }} else {{
+          spoilerLogStatus.textContent = payload.message || {Js("WebCommandError")};
+        }}
+      }} catch {{
+        spoilerLogStatus.textContent = {Js("WebCommandError")};
+      }}
+    }};
+
+    const executeSpoilerAction = async (form, endpoint) => {{
+      const result = form.querySelector('[data-result]');
+      const button = form.querySelector('button[type=""submit""]');
+      button.disabled = true;
+      result.textContent = {Js("WebProcessing")};
+      try {{
+        const response = await fetch(apiBase + endpoint, {{ method: 'POST', body: new FormData(form) }});
+        const payload = await response.json().catch(() => ({{}}));
+        result.textContent = payload.message || (response.ok ? {Js("WebCommandExecuted")} : {Js("WebCommandError")});
+        if (response.ok && endpoint === '/spoiler/upload') {{
+          form.reset();
+          await loadSpoilerStatus();
+        }}
+      }} catch {{
+        result.textContent = {Js("WebCommandError")};
+      }} finally {{
+        button.disabled = false;
+      }}
+    }};
+
     const loadAliasLists = async () => {{
       addAliasSelect.innerHTML = '<option value="""">' + {Js("WebLoadingThreadAliases")} + '</option>';
       deleteAliasSelect.innerHTML = '<option value="""">' + {Js("WebLoadingYourAliases")} + '</option>';
@@ -966,9 +1074,12 @@ public static class WebPortalUserPage
 
         if (allRes.ok) {{
           const payload = await allRes.json();
-          fillSelect(addAliasSelect, payload.aliases || [], {Js("WebNoAliasInThread")}, {Js("WebSelectAlias")});
+          const aliases = payload.aliases || [];
+          fillSelect(addAliasSelect, aliases, {Js("WebNoAliasInThread")}, {Js("WebSelectAlias")});
+          fillSpoilerAliases(aliases);
         }} else {{
           fillSelect(addAliasSelect, [], {Js("WebUnableToLoadThreadAliases")}, {Js("WebSelectAlias")});
+          fillSpoilerAliases([]);
         }}
 
         if (userRes.ok) {{
@@ -983,6 +1094,7 @@ public static class WebPortalUserPage
       }} catch (e) {{
         fillSelect(addAliasSelect, [], {Js("WebUnableToLoadThreadAliases")}, {Js("WebSelectAlias")});
         fillSelect(deleteAliasSelect, [], {Js("WebUnableToLoadYourAliases")}, {Js("WebSelectAlias")});
+        fillSpoilerAliases([]);
         setCompanionAvailability([]);
       }}
     }};
@@ -1077,7 +1189,7 @@ public static class WebPortalUserPage
       renderRecaps(data.recaps || []);
       renderItems(data.receivedItems || []);
       renderHints(data.hints || []);
-      await Promise.all([loadAliasLists(), loadPersonalPatches(), loadExclusions()]);
+      await Promise.all([loadAliasLists(), loadPersonalPatches(), loadExclusions(), loadSpoilerStatus()]);
       setStatus({Js("WebLastUpdate")} + ': ' + new Date(data.lastUpdated).toLocaleString());
     }};
 
@@ -1092,6 +1204,14 @@ public static class WebPortalUserPage
     deleteExclusionButton.addEventListener('click', () => mutateExclusion('delete'));
     clearAllRecapsButton.addEventListener('click', clearAllRecaps);
     revokePortalButton.addEventListener('click', revokePortal);
+    spoilerUploadForm.addEventListener('submit', event => {{
+      event.preventDefault();
+      executeSpoilerAction(spoilerUploadForm, '/spoiler/upload');
+    }});
+    spoilerAnalysisForm.addEventListener('submit', event => {{
+      event.preventDefault();
+      executeSpoilerAction(spoilerAnalysisForm, '/spoiler/analyze');
+    }});
     loadHeroInfo();
     loadPortalThreadName();
     loadData();
