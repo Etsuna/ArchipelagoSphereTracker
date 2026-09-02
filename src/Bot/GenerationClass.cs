@@ -253,7 +253,11 @@ public class GenerationClass : Declare
         return message;
     }
 
-    public static async Task<GenerationResult> GenerateWithZipFromStreamAsync(string channelId, string fileName, Stream content)
+    public static async Task<GenerationResult> GenerateWithZipFromStreamAsync(
+        string channelId,
+        string fileName,
+        Stream content,
+        bool skipProgBalancing = false)
     {
         if (!FileUploadSecurity.TryGetSafeFileName(fileName, ".zip", out var safeFileName))
         {
@@ -304,6 +308,10 @@ public class GenerationClass : Declare
 
         var launcherPath = GetLauncherPath();
         var arguments = $"--player_files_path \"{playersFolder}\" --outputpath \"{outputFolder}\"";
+        if (skipProgBalancing)
+        {
+            arguments += " --skip_prog_balancing";
+        }
         var startInfo = CreateProcessStartInfo(launcherPath, arguments);
 
         return await RunGenerationProcessForWebAsync(startInfo, outputFolder);

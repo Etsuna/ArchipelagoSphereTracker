@@ -30,6 +30,22 @@ public sealed class ResourceLocalizationTests
     }
 
     [Fact]
+    public void WebPortalDynamicResourceKeysExist()
+    {
+        var root = FindRepositoryRoot();
+        var english = LoadResources(Path.Combine(root, "src", "Resources", "Resource.resx"));
+        var webRoot = Path.Combine(root, "src", "Web");
+        var referencedKeys = Directory.EnumerateFiles(webRoot, "*.cs", SearchOption.TopDirectoryOnly)
+            .SelectMany(path => Regex.Matches(
+                File.ReadAllText(path),
+                @"(?:T|Js)\(""(?<key>[A-Za-z_][A-Za-z0-9_]*)""\)"))
+            .Select(match => match.Groups["key"].Value)
+            .ToHashSet(StringComparer.Ordinal);
+
+        Assert.Empty(referencedKeys.Except(english.Keys, StringComparer.Ordinal));
+    }
+
+    [Fact]
     public void SourceDoesNotSelectLocalizedMessagesWithLanguageConditionals()
     {
         var sourceRoot = Path.Combine(FindRepositoryRoot(), "src");

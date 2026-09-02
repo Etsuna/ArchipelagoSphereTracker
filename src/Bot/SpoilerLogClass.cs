@@ -1,5 +1,6 @@
 using Discord;
 using Discord.WebSocket;
+using ArchipelagoSphereTracker.src.Resources;
 
 public static class SpoilerLogClass
 {
@@ -30,34 +31,53 @@ public static class SpoilerLogClass
                 [".txt", ".json"],
                 out var safeName))
         {
-            return "Fichier spoiler invalide ou trop volumineux. Envoie un fichier .txt ou .json.";
+            return Resource.SpoilerLogInvalidFile;
         }
-
-        var folder = GetSpoilerFolder(channelId);
-        var path = Path.Combine(folder, safeName);
 
         using var response = await Declare.HttpClient.GetAsync(
             attachment.Url,
             HttpCompletionOption.ResponseHeadersRead);
         if (!response.IsSuccessStatusCode)
         {
-            return "Téléchargement du spoiler log impossible.";
+            return Resource.SpoilerLogDownloadFailed;
         }
         if (response.Content.Headers.ContentLength is { } contentLength &&
             contentLength > Declare.WebPortalMaxUploadBytes)
         {
-            return "Fichier spoiler trop volumineux.";
+            return Resource.SpoilerLogTooLarge;
         }
+
+        return await SendSpoilerLogFromStreamAsync(
+            channelId,
+            safeName,
+            await response.Content.ReadAsStreamAsync()).ConfigureAwait(false);
+    }
+
+    public static async Task<string> SendSpoilerLogFromStreamAsync(
+        string channelId,
+        string fileName,
+        Stream content)
+    {
+        if (!FileUploadSecurity.TryGetSafeFileName(
+                fileName,
+                [".txt", ".json"],
+                out var safeName))
+        {
+            return Resource.SpoilerLogInvalidFile;
+        }
+
+        var folder = GetSpoilerFolder(channelId);
+        var path = Path.Combine(folder, safeName);
 
         var isJson = safeName.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
         var accepted = await FileUploadSecurity.CopyValidatedToFileWithLimitAsync(
-            await response.Content.ReadAsStreamAsync(),
+            content,
             path,
             Declare.WebPortalMaxUploadBytes,
             quarantinePath => FileUploadSecurity.IsValidSpoilerFile(quarantinePath, isJson));
         if (!accepted)
         {
-            return "Contenu du spoiler log invalide.";
+            return Resource.SpoilerLogInvalidContent;
         }
 
         foreach (var existingFile in Directory.EnumerateFiles(folder)
@@ -69,7 +89,7 @@ public static class SpoilerLogClass
             File.Delete(existingFile);
         }
 
-        return $"Spoiler log reçu: {safeName}";
+        return string.Format(Resource.SpoilerLogReceived, safeName);
     }
 
     public static int CleanupExpiredSpoilerLogs(

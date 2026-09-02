@@ -56,7 +56,7 @@ public static class SecurityAuditLog
             "add-url" or "ast-setup" => SecurityAuditAction.RoomAdd,
             "delete-url" => SecurityAuditAction.RoomDelete,
             "update-frequency-check" or "update-silent-option" or "excluded-item" or "delete-excluded-item" or
-                "ast-sync-now" or "ast-pause" or "ast-resume" or "ast-polling"
+                "ast-sync-now" or "ast-pause" or "ast-resume" or "ast-polling" or "analyze-spoiler-log"
                 => SecurityAuditAction.RoomSettingsUpdate,
             "ast-user-portal" or "ast-room-portal" or "ast-portal" => SecurityAuditAction.PortalAccessIssue,
             "add-alias" => SecurityAuditAction.AliasAdd,
@@ -67,7 +67,7 @@ public static class SecurityAuditLog
             "delete-yaml" => SecurityAuditAction.YamlDelete,
             "clean-yamls" => SecurityAuditAction.YamlCleanup,
             "backup-yamls" => SecurityAuditAction.YamlBackup,
-            "download-yaml" => SecurityAuditAction.YamlDownload,
+            "download-yaml" or "download-template" => SecurityAuditAction.YamlDownload,
             "send-apworld" => SecurityAuditAction.ApworldUpload,
             "backup-apworld" => SecurityAuditAction.ApworldBackup,
             "generate" or "test-generate" or "generate-with-zip" => SecurityAuditAction.Generation,

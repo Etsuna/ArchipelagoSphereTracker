@@ -1,3 +1,4 @@
+using ArchipelagoSphereTracker.src.Resources;
 using Discord.WebSocket;
 using System.Security.Cryptography;
 using System.Text;
@@ -77,7 +78,7 @@ public static class SpoilerAnalysisClass
 
         if (string.IsNullOrWhiteSpace(spoilerPath) || !File.Exists(spoilerPath))
         {
-            return "Aucun spoiler log trouvé pour cette room. Utilise `/ast file:<spoiler.txt>` puis relance l'analyse.";
+            return Resource.SpoilerLogNotFoundForRoom;
         }
 
         var checks = ParsePlaythrough(spoilerPath);

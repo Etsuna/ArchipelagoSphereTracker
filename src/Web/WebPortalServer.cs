@@ -148,6 +148,7 @@ public static class WebPortalServer
 
             var aliases = await RecapListCommands.GetAliasesForUserAsync(guildId, channelId, userId);
             var recapMap = await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId);
+            var gameStatuses = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guildId, channelId);
 
             var recaps = recapMap
                 .Select(kvp => new PortalRecap(
@@ -176,6 +177,7 @@ public static class WebPortalServer
                 channelId,
                 userId,
                 DateTimeOffset.UtcNow,
+                gameStatuses,
                 recaps,
                 receivedItems,
                 hints
@@ -200,8 +202,35 @@ public static class WebPortalServer
             if (string.IsNullOrWhiteSpace(alias))
                 return Results.BadRequest(new { message = "alias is required" });
 
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditAction.DataCleanup);
             await RecapListCommands.DeleteRecapListAsync(guildId, channelId, userId, alias);
-            return Results.Ok(new { message = "ok" });
+            audit.Succeed();
+            return Results.Ok(new { message = string.Format(Resource.AstCenterRecapForCleared, alias) });
+        });
+
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/recap/delete-all", async (
+            string guildId,
+            string channelId,
+            string token) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditAction.DataCleanup);
+            await RecapListCommands.DeleteAliasAndItemsForUserIdAsync(guildId, channelId, actor.UserId);
+            audit.Succeed();
+            return Results.Ok(new { message = Resource.AstCenterAllYourRecapsWereCleared });
         });
 
         app.MapGet("/api/portal/{guildId}/{channelId}/{token}/aliases", async (string guildId, string channelId, string token) =>
@@ -316,8 +345,190 @@ public static class WebPortalServer
             return Results.Ok(new { message = "ok" });
         });
 
-        app.MapGet("/extern/Archipelago/Players/Templates/{templateName}", (string templateName) =>
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/patches", async (
+            string guildId,
+            string channelId,
+            string token) =>
         {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditAction.PatchAccess);
+            var ownedAliases = (await RecapListCommands.GetAliasesForUserAsync(guildId, channelId, actor.UserId))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var patches = (await ChannelsAndUrlsCommands.GetPatchesForChannelAsync(guildId, channelId))
+                .Where(entry => ownedAliases.Contains(entry.Alias))
+                .Select(entry => new PortalPatchAlias(entry.Alias, entry.GameName, entry.Patch))
+                .ToList();
+
+            audit.Succeed();
+            return Results.Ok(new { aliases = patches });
+        });
+
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/exclusions", async (
+            string guildId,
+            string channelId,
+            string token) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var aliases = await RecapListCommands.GetAliasesForUserAsync(guildId, channelId, actor.UserId);
+            var exclusions = new List<PortalAliasExclusions>();
+            foreach (var alias in aliases.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                exclusions.Add(new PortalAliasExclusions(
+                    alias,
+                    await ExcludedItemsCommands.GetExcludedItemsForUserByAliasAsync(
+                        guildId,
+                        channelId,
+                        actor.UserId,
+                        alias)));
+            }
+
+            return Results.Ok(new { aliases = exclusions });
+        });
+
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/exclusions/items", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var alias = request.Query["alias"].FirstOrDefault();
+            var ownedAlias = await ResolveOwnedAliasAsync(guildId, channelId, actor.UserId, alias);
+            if (ownedAlias == null)
+                return Results.NotFound(new { message = string.Format(Resource.AliasNotFound, alias) });
+
+            var items = await ExcludedItemsCommands.GetItemNamesForAliasAsync(guildId, channelId, ownedAlias);
+            return Results.Ok(new { alias = ownedAlias, items });
+        });
+
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/exclusion/add", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var form = await request.ReadFormAsync();
+            var requestedAlias = form["alias"].FirstOrDefault();
+            var ownedAlias = await ResolveOwnedAliasAsync(
+                guildId,
+                channelId,
+                actor.UserId,
+                requestedAlias);
+            var item = form["item"].FirstOrDefault();
+            if (ownedAlias == null)
+                return Results.BadRequest(new { message = string.Format(Resource.AliasNotFound, requestedAlias) });
+            if (string.IsNullOrWhiteSpace(item))
+                return Results.BadRequest(new { message = Resource.WebSelectAliasAndItem });
+
+            var availableItems = await ExcludedItemsCommands.GetItemNamesForAliasAsync(guildId, channelId, ownedAlias);
+            var canonicalItem = availableItems.FirstOrDefault(candidate =>
+                string.Equals(candidate, item, StringComparison.OrdinalIgnoreCase));
+            if (canonicalItem == null)
+                return Results.BadRequest(new { message = string.Format(Resource.ExcludeItemNotFound, item, ownedAlias) });
+
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditAction.RoomSettingsUpdate);
+            var message = await ExcludedItemsCommands.AddExcludedItemForUserAsync(
+                guildId,
+                channelId,
+                actor.UserId,
+                ownedAlias,
+                canonicalItem);
+            audit.Succeed();
+            return Results.Ok(new { message });
+        });
+
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/exclusion/delete", async (
+            string guildId,
+            string channelId,
+            string token,
+            HttpRequest request) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            var form = await request.ReadFormAsync();
+            var requestedAlias = form["alias"].FirstOrDefault();
+            var ownedAlias = await ResolveOwnedAliasAsync(
+                guildId,
+                channelId,
+                actor.UserId,
+                requestedAlias);
+            var item = form["item"].FirstOrDefault();
+            if (ownedAlias == null)
+                return Results.BadRequest(new { message = string.Format(Resource.AliasNotFound, requestedAlias) });
+            if (string.IsNullOrWhiteSpace(item))
+                return Results.BadRequest(new { message = Resource.WebSelectAliasAndItem });
+
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditAction.RoomSettingsUpdate);
+            var message = await ExcludedItemsCommands.DeleteExcludedItemForUserAsync(
+                guildId,
+                channelId,
+                actor.UserId,
+                ownedAlias,
+                item);
+            audit.Succeed();
+            return Results.Ok(new { message });
+        });
+
+        app.MapPost("/api/portal/{guildId}/{channelId}/{token}/revoke", async (
+            string guildId,
+            string channelId,
+            string token) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid token." });
+
+            await using var audit = await SecurityAuditScope.StartAsync(
+                SecurityAuditSource.Web,
+                actor.UserId,
+                guildId,
+                channelId,
+                SecurityAuditAction.PortalAccessRevoke);
+            await PortalAccessCommands.RevokePortalTokenAsync(guildId, channelId, actor.UserId);
+            audit.Succeed();
+            return Results.Ok(new { message = Resource.AstCenterThePortalLinkWasRevoked });
+        });
+
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/commands/templates/{templateName}", async (
+            string guildId,
+            string channelId,
+            string token,
+            string templateName) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildManager);
+            if (actor == null)
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+
             if (!Declare.IsArchipelagoMode)
                 return Results.BadRequest(new { message = "Archipelago mode is disabled." });
 
@@ -534,6 +745,12 @@ public static class WebPortalServer
             if (string.IsNullOrWhiteSpace(command) || string.IsNullOrWhiteSpace(channelId))
                 return Results.BadRequest(new { message = "command and channelId are required." });
 
+            if (command == "ast-health" &&
+                !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, actor.Authorization))
+            {
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
+            }
+
             await using var audit = await SecurityAuditScope.StartAsync(
                 SecurityAuditSource.Web,
                 actor.UserId,
@@ -544,6 +761,9 @@ public static class WebPortalServer
 
             switch (command)
             {
+                case "get-aliases":
+                    message = await AliasClass.GetAlias(channelId, guildId);
+                    break;
                 case "info":
                     message = await HelperClass.Info(channelId, guildId);
                     break;
@@ -566,6 +786,58 @@ public static class WebPortalServer
                         channelId,
                         guildId);
                     break;
+                case "send-spoiler-log":
+                    {
+                        var file = form.Files.FirstOrDefault();
+                        if (file == null)
+                            return Results.BadRequest(new { message = "spoiler file is required." });
+                        if (file.Length <= 0 ||
+                            file.Length > Declare.WebPortalMaxUploadBytes ||
+                            !FileUploadSecurity.TryGetSafeFileName(
+                                file.FileName,
+                                [".txt", ".json"],
+                                out _))
+                        {
+                            return Results.BadRequest(new { message = "Invalid or oversized spoiler file." });
+                        }
+
+                        await using var stream = file.OpenReadStream();
+                        message = await SpoilerLogClass.SendSpoilerLogFromStreamAsync(
+                            channelId,
+                            file.FileName,
+                            stream);
+                        break;
+                    }
+                case "analyze-spoiler-log":
+                    {
+                        if (!TryParseOptionalNonNegativeInt(form["sphere"].FirstOrDefault(), out var sphereLimit) ||
+                            !TryParseOptionalNonNegativeInt(form["validateSphere"].FirstOrDefault(), out var sphereToValidate))
+                        {
+                            return Results.BadRequest(new { message = Resource.AstCenterEnterASlotAndUseOnlyNonNegativeIntegers });
+                        }
+
+                        var requestedAlias = form["alias"].FirstOrDefault();
+                        string? canonicalAlias = null;
+                        if (!string.IsNullOrWhiteSpace(requestedAlias))
+                        {
+                            var roomAliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId);
+                            canonicalAlias = roomAliases.FirstOrDefault(alias =>
+                                string.Equals(alias, requestedAlias, StringComparison.OrdinalIgnoreCase));
+                            if (canonicalAlias == null)
+                                return Results.BadRequest(new { message = string.Format(Resource.AliasNotFound, requestedAlias) });
+                        }
+
+                        message = await SpoilerAnalysisClass.AnalyzeSpoilerLogAsync(
+                            channelId,
+                            guildId,
+                            canonicalAlias,
+                            sphereLimit,
+                            string.Equals(form["missingMode"].FirstOrDefault(), "full", StringComparison.OrdinalIgnoreCase),
+                            !string.Equals(form["hideItems"].FirstOrDefault(), "false", StringComparison.OrdinalIgnoreCase),
+                            sphereToValidate,
+                            string.Equals(form["resetValidation"].FirstOrDefault(), "true", StringComparison.OrdinalIgnoreCase));
+                        break;
+                    }
                 case "get-patch":
                     {
                         var alias = form["alias"].FirstOrDefault();
@@ -694,6 +966,10 @@ public static class WebPortalServer
 
             switch (command)
             {
+                case "ast-health":
+                    message = TrackingControlCommands.GetGuildHealth(guildId);
+                    break;
+
                 case "add-url":
                     {
                         var url = form["url"].FirstOrDefault() ?? string.Empty;
@@ -801,7 +1077,7 @@ public static class WebPortalServer
                         }
 
                         message = string.Empty;
-                        downloadUrl = "extern/Archipelago/Players/Templates/" + Uri.EscapeDataString(safeTemplate);
+                        downloadUrl = $"{prefix}/api/portal/{guildId}/{channelId}/{token}/commands/templates/{Uri.EscapeDataString(safeTemplate)}";
                         break;
                     }
 
@@ -838,7 +1114,11 @@ public static class WebPortalServer
 
                 case "generate":
                     {
-                        var result = await GenerationClass.GenerateAsyncForWeb(channelId);
+                        var skipProgBalancing = string.Equals(
+                            form["skipProgBalancing"].FirstOrDefault(),
+                            "true",
+                            StringComparison.OrdinalIgnoreCase);
+                        var result = await GenerationClass.GenerateAsyncForWeb(channelId, skipProgBalancing);
                         message = result.Message;
                         if (!string.IsNullOrWhiteSpace(result.ZipPath))
                         {
@@ -863,7 +1143,15 @@ public static class WebPortalServer
                             return Results.BadRequest(new { message = "Invalid or oversized ZIP file." });
 
                         await using var stream = file.OpenReadStream();
-                        var result = await GenerationClass.GenerateWithZipFromStreamAsync(channelId, file.FileName, stream);
+                        var skipProgBalancing = string.Equals(
+                            form["skipProgBalancing"].FirstOrDefault(),
+                            "true",
+                            StringComparison.OrdinalIgnoreCase);
+                        var result = await GenerationClass.GenerateWithZipFromStreamAsync(
+                            channelId,
+                            file.FileName,
+                            stream,
+                            skipProgBalancing);
                         message = result.Message;
 
                         if (!string.IsNullOrWhiteSpace(result.ZipPath))
@@ -916,6 +1204,7 @@ public static class WebPortalServer
         string ChannelId,
         string UserId,
         DateTimeOffset LastUpdated,
+        List<GameStatus> GameStatuses,
         List<PortalRecap> Recaps,
         List<PortalAliasItems> ReceivedItems,
         List<PortalAliasHints> Hints);
@@ -931,7 +1220,22 @@ public static class WebPortalServer
     private record PortalAliasHints(string Alias, List<PortalHintItem> AsReceiver, List<PortalHintItem> AsFinder);
     private record PortalHintItem(string Finder, string Receiver, string Item, string Location, string Game);
     private record PortalPatchAlias(string Alias, string GameName, string Patch);
+    private record PortalAliasExclusions(string Alias, List<string> Items);
     private record PortalThreadLink(string ChannelId, string ThreadName, string Url);
+
+    private static async Task<string?> ResolveOwnedAliasAsync(
+        string guildId,
+        string channelId,
+        string userId,
+        string? requestedAlias)
+    {
+        if (string.IsNullOrWhiteSpace(requestedAlias))
+            return null;
+
+        var aliases = await RecapListCommands.GetAliasesForUserAsync(guildId, channelId, userId);
+        return aliases.FirstOrDefault(alias =>
+            string.Equals(alias, requestedAlias, StringComparison.OrdinalIgnoreCase));
+    }
 
     private static async Task<AstPortalActor?> AuthorizePortalAsync(
         string guildId,
@@ -988,6 +1292,19 @@ public static class WebPortalServer
         return !string.IsNullOrWhiteSpace(safeFileName) &&
                string.Equals(submittedName, safeFileName, StringComparison.Ordinal) &&
                safeFileName.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+    }
+
+    private static bool TryParseOptionalNonNegativeInt(string? value, out int? result)
+    {
+        result = null;
+        if (string.IsNullOrWhiteSpace(value))
+            return true;
+
+        if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) || parsed < 0)
+            return false;
+
+        result = parsed;
+        return true;
     }
 
     private static string ProtectedDownloadUrl(

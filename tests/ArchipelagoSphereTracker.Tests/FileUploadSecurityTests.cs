@@ -177,6 +177,35 @@ public class FileUploadSecurityTests
     }
 
     [Fact]
+    public async System.Threading.Tasks.Task SpoilerLogStreamUpload_ValidatesAndReplacesTheActiveFile()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"ast-spoiler-upload-{System.Guid.NewGuid():N}");
+        var previousBasePath = Declare.BasePath;
+        var previousQuarantinePath = Declare.UploadQuarantinePath;
+        try
+        {
+            Declare.BasePath = root;
+            Declare.UploadQuarantinePath = Path.Combine(root, "quarantine");
+            var spoilerFolder = SpoilerLogClass.GetSpoilerFolder("room");
+            Directory.CreateDirectory(spoilerFolder);
+            await File.WriteAllTextAsync(Path.Combine(spoilerFolder, "old.txt"), "old spoiler");
+            await using var source = new MemoryStream(Encoding.UTF8.GetBytes("0: {\n  Test (Finder): Item (Receiver)\n}\n"));
+
+            var message = await SpoilerLogClass.SendSpoilerLogFromStreamAsync("room", "new.txt", source);
+
+            Assert.Contains("new.txt", message);
+            Assert.True(File.Exists(Path.Combine(spoilerFolder, "new.txt")));
+            Assert.False(File.Exists(Path.Combine(spoilerFolder, "old.txt")));
+        }
+        finally
+        {
+            Declare.BasePath = previousBasePath;
+            Declare.UploadQuarantinePath = previousQuarantinePath;
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Content_validators_reject_binary_text_invalid_json_and_archive_traversal()
     {
         var root = Path.Combine(Path.GetTempPath(), $"ast-validation-{System.Guid.NewGuid():N}");
