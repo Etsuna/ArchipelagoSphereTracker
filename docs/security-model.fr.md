@@ -48,6 +48,6 @@ Les journaux HTTP n'affichent plus les identifiants de room, de tracker ni les U
 
 Les actions sensibles sont inscrites dans `SecurityAuditLogTable` avec date UTC, corrélation, source, auteur Discord, serveur, salon, action et résultat. Aucun argument de commande, token, URL, alias ou nom de fichier n'est enregistré. La rétention est contrôlée par `AUDIT_RETENTION_DAYS`; l'API `/api/portal/{guild}/{channel}/{token}/audit` est réservée aux gestionnaires du serveur.
 
-## Chiffrement au repos
+## Stockage SQLite
 
-Depuis la migration SQLite `5.0.11`, les identifiants de room, de tracker et les liens de patch sont protégés par des enveloppes AES-256-GCM contextualisées. AST utilise `AST_DATA_PROTECTION_KEY` ou génère `AST.data-protection.key` à côté de la base. Un marqueur chiffré bloque le démarrage si la clé ne correspond plus. Voir [protection des secrets au repos](data-protection-at-rest.fr.md).
+Depuis la migration SQLite `5.0.12`, les identifiants de room, de tracker et les liens de patch sont stockés en clair dans SQLite. Ils sont considérés comme des données de configuration partageables et AST ne requiert plus de clé de chiffrement. Les tokens du portail restent hachés et le token Discord reste fourni par l'environnement. Voir [stockage des identifiants](data-protection-at-rest.fr.md).

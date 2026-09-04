@@ -81,7 +81,9 @@ StyleCopReport.xml
 *.obj
 *.bin
 *.env
+# Legacy 5.0.11 migration and rollback secrets
 /AST.data-protection.key
+*data-protection-recovery.private.pem
 *.iobj
 *.pch
 *.pdb

@@ -503,7 +503,7 @@ La découverte des routes Web anonymes impose une PR de confinement avant la sé
 ## 15. Backlog après les cinq premières PR
 
 1. PR 6 : polling adaptatif et commandes santé/pause/reprise/sync forcée.
-2. PR 7 : audit de sécurité complet, chiffrement au repos, uploads/quarantaine/rétention.
+2. PR 7 : audit de sécurité complet, uploads/quarantaine/rétention. Le chiffrement au repos envisagé ici a été retiré en 5.0.12.
 3. PR 8 : assistant `/ast-setup` fondé sur la nouvelle autorisation.
 4. PR 9 : centre de contrôle Discord persistant et templates de messages.
 5. PR 10 : préférences personnelles, claims de slots et historique.

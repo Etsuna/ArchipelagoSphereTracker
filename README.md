@@ -171,10 +171,6 @@ WEB_BASE_URL=https://your-domain.example
 # Recommandé : utilisateur Discord propriétaire de l'instance AST
 AST_OWNER_USER_ID=123456789012345678
 
-# Recommandé en conteneur/multi-instance : clé Base64 de 32 octets
-# Ne jamais la modifier après chiffrement de la base
-AST_DATA_PROTECTION_KEY=REPLACE_WITH_A_BASE64_32_BYTE_KEY
-
 # Optionnel (défaut : 67108864, soit 64 Mio)
 WEB_MAX_UPLOAD_BYTES=67108864
 
@@ -221,7 +217,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_PORT` est le port d’écoute HTTP du portail (`0.0.0.0:<port>`).
 - `WEB_BASE_URL` est utile si AST est exposé derrière un domaine/proxy.
 - `AST_OWNER_USER_ID` réserve les opérations globales APWorld à cet utilisateur. Sans valeur, le propriétaire de chaque serveur Discord est utilisé comme solution de repli.
-- `AST_DATA_PROTECTION_KEY` protège par AES-256-GCM les identifiants WebHost et liens de patch stockés dans SQLite. Sans valeur, AST crée `AST.data-protection.key` à côté de `AST.db`; sauvegardez cette clé séparément et ne la commitez jamais.
+- Depuis la migration SQLite `5.0.12`, les identifiants de room, trackers et liens de patch sont stockés directement en clair. Aucune clé de chiffrement n'est requise. Voir [le stockage SQLite des identifiants](docs/data-protection-at-rest.fr.md).
 - `WEB_MAX_UPLOAD_BYTES` limite la taille des fichiers Web et Discord acceptés.
 - `UPLOAD_QUARANTINE_RETENTION_MINUTES` fixe le délai de nettoyage des téléversements interrompus placés en quarantaine.
 - `SPOILER_LOG_RETENTION_DAYS` fixe la rétention des fichiers spoiler `.txt` et `.json`.
@@ -614,10 +610,6 @@ WEB_BASE_URL=https://your-domain.example
 # Recommended: Discord user who owns this AST instance
 AST_OWNER_USER_ID=123456789012345678
 
-# Recommended for containers/multiple instances: Base64-encoded 32-byte key
-# Never change it after the database has been encrypted
-AST_DATA_PROTECTION_KEY=REPLACE_WITH_A_BASE64_32_BYTE_KEY
-
 # Optional (default: 67108864, i.e. 64 MiB)
 WEB_MAX_UPLOAD_BYTES=67108864
 
@@ -664,7 +656,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `WEB_PORT` defines the portal HTTP bind port (`0.0.0.0:<port>`).
 - `WEB_BASE_URL` is useful behind a domain/reverse proxy.
 - `AST_OWNER_USER_ID` reserves global APWorld operations for that user. If unset, each Discord guild owner is used as the fallback.
-- `AST_DATA_PROTECTION_KEY` protects WebHost identifiers and patch links stored in SQLite with AES-256-GCM. When unset, AST creates `AST.data-protection.key` next to `AST.db`; back this key up separately and never commit it.
+- Since SQLite migration `5.0.12`, room identifiers, trackers, and patch links are stored directly as plaintext. No encryption key is required. See [SQLite identifier storage](docs/data-protection-at-rest.en.md).
 - `WEB_MAX_UPLOAD_BYTES` limits accepted Web and Discord file sizes.
 - `UPLOAD_QUARANTINE_RETENTION_MINUTES` controls cleanup of interrupted uploads left in quarantine.
 - `SPOILER_LOG_RETENTION_DAYS` controls retention of `.txt` and `.json` spoiler files.

@@ -48,8 +48,8 @@ public class DatabaseCommandTests
         command.Parameters.AddWithValue("@ChannelId", channelId);
         using var reader = await command.ExecuteReaderAsync();
         Assert.True(await reader.ReadAsync());
-        Assert.True(SensitiveDataProtector.IsProtected(reader["Room"]?.ToString()));
-        Assert.True(SensitiveDataProtector.IsProtected(reader["Tracker"]?.ToString()));
+        Assert.Equal("alpha", reader["Room"]?.ToString());
+        Assert.Equal("tracker-1", reader["Tracker"]?.ToString());
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class DatabaseCommandTests
 
         await using var connection = await Db.OpenReadAsync();
         using var command = new SQLiteCommand("SELECT Patch FROM UrlAndChannelPatchTable LIMIT 1;", connection);
-        Assert.True(SensitiveDataProtector.IsProtected((await command.ExecuteScalarAsync())?.ToString()));
+        Assert.Equal("https://example.com/patch", (await command.ExecuteScalarAsync())?.ToString());
     }
 
     [Fact]

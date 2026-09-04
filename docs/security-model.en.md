@@ -32,6 +32,6 @@ Portal URLs must be treated like passwords. Requesting a new link rotates the to
 
 Sensitive actions are stored in `SecurityAuditLogTable` with UTC time, correlation ID, source, Discord actor, guild, channel, action, and outcome. Command arguments, tokens, URLs, aliases, and filenames are never recorded. Retention is controlled by `AUDIT_RETENTION_DAYS`; `/api/portal/{guild}/{channel}/{token}/audit` is restricted to guild managers.
 
-## Encryption at rest
+## SQLite storage
 
-Since SQLite migration `5.0.11`, room identifiers, tracker identifiers, and patch links are protected by purpose-bound AES-256-GCM envelopes. AST uses `AST_DATA_PROTECTION_KEY` or generates `AST.data-protection.key` next to the database. An encrypted key check prevents startup when the key no longer matches. See [data protection at rest](data-protection-at-rest.en.md).
+Since SQLite migration `5.0.12`, room identifiers, tracker identifiers, and patch links are stored as plaintext in SQLite. They are treated as shareable configuration data and AST no longer requires an encryption key. Portal tokens remain hashed and the Discord token remains supplied through the environment. See [identifier storage](data-protection-at-rest.en.md).

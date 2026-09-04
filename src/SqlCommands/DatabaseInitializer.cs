@@ -96,11 +96,6 @@ CREATE TABLE IF NOT EXISTS SecurityAuditLogTable (
     Outcome TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS DataProtectionMetadata (
-    Id INTEGER PRIMARY KEY CHECK (Id = 1),
-    KeyCheck TEXT NOT NULL
-);
-
 -- ==========================
 -- Tracking V2 event ledger/outbox
 -- ==========================

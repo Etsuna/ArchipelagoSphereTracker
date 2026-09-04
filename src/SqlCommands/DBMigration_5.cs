@@ -757,89 +757,25 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
         }
     }
 
-    public static async Task Migrate_5_0_11(CancellationToken ct = default)
+    public static Task Migrate_5_0_11(CancellationToken ct = default)
     {
-        Console.WriteLine("Migrating to DB version 5.0.11: encrypted WebHost identifiers and patch links.");
+        Console.WriteLine("Migrating to DB version 5.0.11: plaintext WebHost identifiers and patch links.");
+        return Task.CompletedTask;
+    }
+
+    public static async Task Migrate_5_0_12(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.12: removing data-at-rest encryption.");
 
         await Db.WriteGate.WaitAsync(ct);
         try
         {
             await using var conn = await Db.OpenWriteAsync();
             using var transaction = conn.BeginTransaction();
+            LegacyDataProtectionMigrationResult result;
             try
             {
-                await SensitiveDataProtectionStore.EnsureReadyAsync(conn, transaction, ct);
-
-                var channels = new List<(long Id, string Room, string Tracker)>();
-                using (var readChannels = conn.CreateCommand())
-                {
-                    readChannels.Transaction = transaction;
-                    readChannels.CommandText = "SELECT Id, Room, Tracker FROM ChannelsAndUrlsTable;";
-                    using var reader = await readChannels.ExecuteReaderAsync(ct);
-                    while (await reader.ReadAsync(ct))
-                    {
-                        channels.Add((
-                            Convert.ToInt64(reader["Id"]),
-                            reader["Room"]?.ToString() ?? string.Empty,
-                            reader["Tracker"]?.ToString() ?? string.Empty));
-                    }
-                }
-
-                using (var update = conn.CreateCommand())
-                {
-                    update.Transaction = transaction;
-                    update.CommandText = @"
-                        UPDATE ChannelsAndUrlsTable
-                        SET Room = @Room, Tracker = @Tracker
-                        WHERE Id = @Id;";
-                    var roomParameter = update.Parameters.Add("@Room", System.Data.DbType.String);
-                    var trackerParameter = update.Parameters.Add("@Tracker", System.Data.DbType.String);
-                    var idParameter = update.Parameters.Add("@Id", System.Data.DbType.Int64);
-                    update.Prepare();
-                    foreach (var channel in channels)
-                    {
-                        roomParameter.Value = SensitiveDataProtector.Protect(
-                            channel.Room,
-                            SensitiveDataPurposes.Room);
-                        trackerParameter.Value = SensitiveDataProtector.Protect(
-                            channel.Tracker,
-                            SensitiveDataPurposes.Tracker);
-                        idParameter.Value = channel.Id;
-                        await update.ExecuteNonQueryAsync(ct);
-                    }
-                }
-
-                var patches = new List<(long Id, string Patch)>();
-                using (var readPatches = conn.CreateCommand())
-                {
-                    readPatches.Transaction = transaction;
-                    readPatches.CommandText = "SELECT Id, Patch FROM UrlAndChannelPatchTable;";
-                    using var reader = await readPatches.ExecuteReaderAsync(ct);
-                    while (await reader.ReadAsync(ct))
-                    {
-                        patches.Add((
-                            Convert.ToInt64(reader["Id"]),
-                            reader["Patch"]?.ToString() ?? string.Empty));
-                    }
-                }
-
-                using (var update = conn.CreateCommand())
-                {
-                    update.Transaction = transaction;
-                    update.CommandText = "UPDATE UrlAndChannelPatchTable SET Patch = @Patch WHERE Id = @Id;";
-                    var patchParameter = update.Parameters.Add("@Patch", System.Data.DbType.String);
-                    var idParameter = update.Parameters.Add("@Id", System.Data.DbType.Int64);
-                    update.Prepare();
-                    foreach (var patch in patches)
-                    {
-                        patchParameter.Value = SensitiveDataProtector.Protect(
-                            patch.Patch,
-                            SensitiveDataPurposes.Patch);
-                        idParameter.Value = patch.Id;
-                        await update.ExecuteNonQueryAsync(ct);
-                    }
-                }
-
+                result = await LegacyDataProtectionMigration.DecryptAsync(conn, transaction, ct);
                 transaction.Commit();
             }
             catch
@@ -851,12 +787,20 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
             using var checkpoint = conn.CreateCommand();
             checkpoint.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
             await checkpoint.ExecuteNonQueryAsync(ct);
+
+            Console.WriteLine(
+                $"Legacy data-at-rest encryption removed: {result.ChannelCount} channel rows and " +
+                $"{result.PatchCount} patch rows converted to plaintext.");
+            Console.WriteLine(
+                "The old AST_DATA_PROTECTION_KEY, AST.data-protection.key and recovery PEM files " +
+                "are no longer required after the migrated database has been checked.");
         }
         finally
         {
             Db.WriteGate.Release();
         }
     }
+
 
     private static async Task<HashSet<string>> GetColumnsAsync(
         System.Data.Common.DbConnection connection,
