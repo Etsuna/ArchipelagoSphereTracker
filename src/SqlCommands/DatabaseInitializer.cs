@@ -97,6 +97,21 @@ CREATE TABLE IF NOT EXISTS SecurityAuditLogTable (
 );
 
 -- ==========================
+-- AST guild-scoped delegated managers
+-- ==========================
+CREATE TABLE IF NOT EXISTS AstRoleBindingsTable (
+    GuildId TEXT NOT NULL,
+    UserId TEXT NOT NULL,
+    Role TEXT NOT NULL CHECK (Role IN ('GuildManager')),
+    GrantedByUserId TEXT NOT NULL,
+    GrantedAtUtc TEXT NOT NULL,
+    PRIMARY KEY (GuildId, UserId, Role)
+);
+
+CREATE INDEX IF NOT EXISTS IX_AstRoleBindings_Guild_Role
+ON AstRoleBindingsTable (GuildId, Role);
+
+-- ==========================
 -- Tracking V2 event ledger/outbox
 -- ==========================
 CREATE TABLE IF NOT EXISTS TrackedRooms (

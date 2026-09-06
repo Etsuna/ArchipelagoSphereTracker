@@ -216,7 +216,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `ENABLE_WEB_PORTAL=false` désactive totalement le serveur web interne.
 - `WEB_PORT` est le port d’écoute HTTP du portail (`0.0.0.0:<port>`).
 - `WEB_BASE_URL` est utile si AST est exposé derrière un domaine/proxy.
-- `AST_OWNER_USER_ID` réserve les opérations globales APWorld à cet utilisateur. Sans valeur, le propriétaire de chaque serveur Discord est utilisé comme solution de repli.
+- `AST_OWNER_USER_ID` désigne le super-administrateur facultatif de l'instance. Il peut administrer et nettoyer tous les serveurs/salons enregistrés depuis `Instance AST` dans `/ast`. Sans valeur, aucun utilisateur ne reçoit ce pouvoir global ; les administrateurs Discord gardent la gestion complète de leur propre serveur.
 - Depuis la migration SQLite `5.0.12`, les identifiants de room, trackers et liens de patch sont stockés directement en clair. Aucune clé de chiffrement n'est requise. Voir [le stockage SQLite des identifiants](docs/data-protection-at-rest.fr.md).
 - `WEB_MAX_UPLOAD_BYTES` limite la taille des fichiers Web et Discord acceptés.
 - `UPLOAD_QUARANTINE_RETENTION_MINUTES` fixe le délai de nettoyage des téléversements interrompus placés en quarantaine.
@@ -266,6 +266,7 @@ AST enregistre une seule commande publique : `/ast`.
 - Les anciennes fonctions restent disponibles dans les écrans `Mon espace`, `La room`, `Gérer la room` et `Administration AST`.
 - Les grandes listes sont paginées ; les exclusions disposent en plus d’une recherche.
 - Les actions sensibles sont revérifiées côté serveur et inscrites dans le journal de sécurité.
+- Les propriétaires, administrateurs et membres ayant `Gérer le serveur` peuvent déléguer la gestion AST à un membre sans lui donner de rôle administrateur Discord. Le responsable délégué ne peut pas redéléguer ce droit.
 
 Voir la [spécification du centre `/ast`](docs/pr9-ast-command-center-spec.fr.md) pour la correspondance complète des anciennes commandes.
 
@@ -655,7 +656,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `ENABLE_WEB_PORTAL=false` disables the web server entirely.
 - `WEB_PORT` defines the portal HTTP bind port (`0.0.0.0:<port>`).
 - `WEB_BASE_URL` is useful behind a domain/reverse proxy.
-- `AST_OWNER_USER_ID` reserves global APWorld operations for that user. If unset, each Discord guild owner is used as the fallback.
+- `AST_OWNER_USER_ID` designates the optional instance super-administrator. That user can manage and clean every stored guild/channel from `AST instance` in `/ast`. When unset, nobody receives global authority; Discord administrators retain full control of their own guild.
 - Since SQLite migration `5.0.12`, room identifiers, trackers, and patch links are stored directly as plaintext. No encryption key is required. See [SQLite identifier storage](docs/data-protection-at-rest.en.md).
 - `WEB_MAX_UPLOAD_BYTES` limits accepted Web and Discord file sizes.
 - `UPLOAD_QUARANTINE_RETENTION_MINUTES` controls cleanup of interrupted uploads left in quarantine.
@@ -705,6 +706,7 @@ AST registers a single public command: `/ast`.
 - Existing capabilities remain available under `My space`, `The room`, `Manage room`, and `AST administration`.
 - Large lists are paginated; exclusions also provide search.
 - Sensitive actions are authorized again server-side and written to the security audit log.
+- Guild owners, administrators, and members with `Manage Server` can delegate AST management to a member without granting a Discord administrator role. A delegated manager cannot delegate that permission again.
 
 See the [`/ast` command center specification](docs/pr9-ast-command-center-spec.en.md) for the complete legacy-command mapping.
 

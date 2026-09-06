@@ -48,6 +48,12 @@ public static class ChannelConfigCache
             .Select(k => k.Split(':', 2)[1])
             .Distinct();
 
+    public static void RemoveGuild(string guildId)
+    {
+        foreach (var channelId in GetChannelIdsForGuild(guildId).ToArray())
+            Remove(guildId, channelId);
+    }
+
 
     public static void Clear()
     {

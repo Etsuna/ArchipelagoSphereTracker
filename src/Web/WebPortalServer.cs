@@ -1039,7 +1039,7 @@ public static class WebPortalServer
                 return Results.BadRequest(new { message = "command and channelId are required." });
 
             if ((command is "list-apworld" or "backup-apworld" or "send-apworld") &&
-                !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, actor.Authorization))
+                !AstAuthorizationService.CanManageArchipelagoAssets(actor.Authorization))
             {
                 return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
             }

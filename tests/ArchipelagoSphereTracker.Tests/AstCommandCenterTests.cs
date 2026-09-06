@@ -69,6 +69,24 @@ public sealed class AstCommandCenterTests
     }
 
     [Fact]
+    public void Instance_targets_are_private_validated_and_reset_hierarchically()
+    {
+        var store = new AstUiSessionStore();
+        var session = store.Start(10, 20, 30, null);
+
+        Assert.True(store.TrySelectInstanceGuild(session.Id, 10, 20, 30, "100", out var guild));
+        Assert.Equal("100", guild.InstanceTargetGuildId);
+        Assert.True(store.TrySelectInstanceRoom(session.Id, 10, 20, 30, "200", out var room));
+        Assert.Equal("200", room.InstanceTargetChannelId);
+        Assert.False(store.TrySelectInstanceRoom(session.Id, 11, 20, 30, "201", out _));
+        Assert.False(store.TrySelectInstanceGuild(session.Id, 10, 20, 30, "invalid", out _));
+
+        Assert.True(store.TrySelectInstanceGuild(session.Id, 10, 20, 30, null, out var reset));
+        Assert.Null(reset.InstanceTargetGuildId);
+        Assert.Null(reset.InstanceTargetChannelId);
+    }
+
+    [Fact]
     public void Spoiler_options_are_private_validated_and_can_clear_sphere_limit()
     {
         var store = new AstUiSessionStore();

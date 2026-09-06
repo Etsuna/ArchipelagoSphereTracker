@@ -11,6 +11,8 @@ public enum AstUiScreen
     Room,
     Manage,
     Administration,
+    AccessManagement,
+    InstanceAdministration,
     Help,
     Polling,
     ManageMore,
@@ -46,7 +48,9 @@ public sealed record AstUiSession(
     int SelectionPageIndex = 0,
     string? SelectionSearch = null,
     int ExclusionPageIndex = 0,
-    string? ExclusionSearch = null);
+    string? ExclusionSearch = null,
+    string? InstanceTargetGuildId = null,
+    string? InstanceTargetChannelId = null);
 
 public sealed class AstUiSessionStore
 {
@@ -150,6 +154,65 @@ public sealed class AstUiSessionStore
             {
                 RoomChannelId = roomChannelId,
                 Screen = AstUiScreen.Home,
+                SelectionPageIndex = 0,
+                SelectionSearch = null,
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
+            if (_sessions.TryUpdate(id, updated, current))
+            {
+                session = updated;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool TrySelectInstanceGuild(
+        string id,
+        ulong ownerUserId,
+        ulong guildId,
+        ulong sourceChannelId,
+        string? targetGuildId,
+        out AstUiSession session)
+    {
+        session = default!;
+        if (targetGuildId != null && !ulong.TryParse(targetGuildId, out _)) return false;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with
+            {
+                InstanceTargetGuildId = targetGuildId,
+                InstanceTargetChannelId = null,
+                PendingAction = null,
+                SelectionPageIndex = 0,
+                SelectionSearch = null,
+                ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
+            };
+            if (_sessions.TryUpdate(id, updated, current))
+            {
+                session = updated;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool TrySelectInstanceRoom(
+        string id,
+        ulong ownerUserId,
+        ulong guildId,
+        ulong sourceChannelId,
+        string? targetChannelId,
+        out AstUiSession session)
+    {
+        session = default!;
+        if (targetChannelId != null && !ulong.TryParse(targetChannelId, out _)) return false;
+        while (TryGetAuthorized(id, ownerUserId, guildId, sourceChannelId, out var current))
+        {
+            var updated = current with
+            {
+                InstanceTargetChannelId = targetChannelId,
+                PendingAction = null,
                 SelectionPageIndex = 0,
                 SelectionSearch = null,
                 ExpiresAtUtc = _timeProvider.GetUtcNow().Add(_lifetime)
@@ -523,7 +586,7 @@ public static class AstCommandCenter
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.YamlUpload,
                     () => YamlClass.SendYaml(command, channelIdText)).ConfigureAwait(false);
                 break;
-            case ".apworld" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization):
+            case ".apworld" when AstAuthorizationService.CanManageArchipelagoAssets(authorization):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.ApworldUpload,
                     () => ApworldClass.SendApworld(command)).ConfigureAwait(false);
                 break;
@@ -602,6 +665,145 @@ public static class AstCommandCenter
             if (authorization == null)
             {
                 await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+
+            if (action is "instance-back-guilds" or "instance-back-rooms" or
+                "instance-delete-guild-request" or "instance-delete-room-request" or
+                "instance-confirm-delete" or "instance-cancel-delete" or
+                "instance-sync" or "instance-pause" or "instance-resume")
+            {
+                if (!authorization.IsInstanceOwner)
+                {
+                    await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                    return;
+                }
+
+                if (action == "instance-back-guilds")
+                {
+                    Sessions.TrySelectInstanceGuild(session.Id, component.User.Id, guildId, sourceChannelId, null, out session);
+                    await SetViewAsync(component, await RenderInstanceAdministrationAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+                    return;
+                }
+                if (action == "instance-back-rooms")
+                {
+                    Sessions.TrySelectInstanceRoom(session.Id, component.User.Id, guildId, sourceChannelId, null, out session);
+                    await SetViewAsync(component, await RenderInstanceAdministrationAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+                    return;
+                }
+                if (action == "instance-cancel-delete")
+                {
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
+                    await SetViewAsync(component, await RenderInstanceAdministrationAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+                    return;
+                }
+
+                if (session.InstanceTargetGuildId == null || !ulong.TryParse(session.InstanceTargetGuildId, out var targetGuildId))
+                {
+                    await SetErrorAsync(component, Resource.AstCenterSelectionExpired).ConfigureAwait(false);
+                    return;
+                }
+                var targetRooms = await InstanceAdministrationCommands.GetRoomsAsync(session.InstanceTargetGuildId).ConfigureAwait(false);
+                if (targetRooms.Count == 0)
+                {
+                    await SetErrorAsync(component, Localize("Ce serveur n’est plus enregistré dans la base.", "This guild is no longer stored in the database.")).ConfigureAwait(false);
+                    return;
+                }
+
+                if (action == "instance-delete-guild-request")
+                {
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "instance-delete-guild", null, out session);
+                    await SetViewAsync(component, await RenderInstanceAdministrationAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+                    return;
+                }
+                if (action == "instance-delete-room-request")
+                {
+                    if (session.InstanceTargetChannelId == null)
+                    {
+                        await SetErrorAsync(component, Resource.AstCenterSelectionExpired).ConfigureAwait(false);
+                        return;
+                    }
+                    Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "instance-delete-room", null, out session);
+                    await SetViewAsync(component, await RenderInstanceAdministrationAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+                    return;
+                }
+
+                if (action == "instance-confirm-delete")
+                {
+                    if (session.PendingAction == "instance-delete-guild")
+                    {
+                        var auditChannelId = targetRooms.Select(room => ulong.TryParse(room.ChannelId, out var id) ? id : 0UL)
+                            .FirstOrDefault(id => id > 0);
+                        await AuditedAsync(component.User.Id, targetGuildId, auditChannelId, SecurityAuditAction.InstanceCleanup,
+                            () => DatabaseCommands.DeleteChannelDataByGuildIdAsync(session.InstanceTargetGuildId)).ConfigureAwait(false);
+                        ChannelConfigCache.RemoveGuild(session.InstanceTargetGuildId);
+                        TrackingDataManager.RateLimitGuards.RemoveGuildSendGate(targetGuildId);
+                        WebPortalPages.DeleteGuildPages(session.InstanceTargetGuildId);
+                        Sessions.TrySelectInstanceGuild(session.Id, component.User.Id, guildId, sourceChannelId, null, out session);
+                        var refreshed = await RenderInstanceAdministrationAsync(session).ConfigureAwait(false);
+                        await component.ModifyOriginalResponseAsync(properties =>
+                        {
+                            properties.Content = Localize("Les données AST du serveur ont été supprimées.", "The guild's AST data has been deleted.");
+                            properties.Embed = refreshed.Embed;
+                            properties.Components = refreshed.Components;
+                        }).ConfigureAwait(false);
+                        return;
+                    }
+
+                    if (session.PendingAction == "instance-delete-room" &&
+                        session.InstanceTargetChannelId != null &&
+                        ulong.TryParse(session.InstanceTargetChannelId, out var deleteChannelId) &&
+                        targetRooms.Any(room => room.ChannelId == session.InstanceTargetChannelId))
+                    {
+                        var targetChannelText = session.InstanceTargetChannelId;
+                        await AuditedAsync(component.User.Id, targetGuildId, deleteChannelId, SecurityAuditAction.InstanceCleanup,
+                            () => DatabaseCommands.DeleteChannelDataAsync(session.InstanceTargetGuildId, targetChannelText)).ConfigureAwait(false);
+                        ChannelConfigCache.Remove(session.InstanceTargetGuildId, targetChannelText);
+                        Declare.WarnedThreads.Remove(targetChannelText);
+                        WebPortalPages.DeleteChannelPages(session.InstanceTargetGuildId, targetChannelText);
+                        if (targetRooms.Count == 1)
+                            Sessions.TrySelectInstanceGuild(session.Id, component.User.Id, guildId, sourceChannelId, null, out session);
+                        else
+                            Sessions.TrySelectInstanceRoom(session.Id, component.User.Id, guildId, sourceChannelId, null, out session);
+                        var refreshed = await RenderInstanceAdministrationAsync(session).ConfigureAwait(false);
+                        await component.ModifyOriginalResponseAsync(properties =>
+                        {
+                            properties.Content = Localize("Les données AST du salon ont été supprimées.", "The channel's AST data has been deleted.");
+                            properties.Embed = refreshed.Embed;
+                            properties.Components = refreshed.Components;
+                        }).ConfigureAwait(false);
+                        return;
+                    }
+
+                    await SetErrorAsync(component, Resource.AstCenterConfirmationExpired).ConfigureAwait(false);
+                    return;
+                }
+
+                if (session.InstanceTargetChannelId == null ||
+                    !ulong.TryParse(session.InstanceTargetChannelId, out var targetChannelId) ||
+                    !targetRooms.Any(room => room.ChannelId == session.InstanceTargetChannelId))
+                {
+                    await SetErrorAsync(component, Resource.AstCenterSelectionExpired).ConfigureAwait(false);
+                    return;
+                }
+                var controlCommand = action switch
+                {
+                    "instance-sync" => "ast-sync-now",
+                    "instance-pause" => "ast-pause",
+                    "instance-resume" => "ast-resume",
+                    _ => string.Empty
+                };
+                var controlResult = await AuditedAsync(component.User.Id, targetGuildId, targetChannelId,
+                    SecurityAuditAction.RoomSettingsUpdate,
+                    () => TrackingControlCommands.ExecuteRoomAsync(
+                        controlCommand, session.InstanceTargetGuildId, session.InstanceTargetChannelId)).ConfigureAwait(false);
+                var controlView = await RenderInstanceAdministrationAsync(session).ConfigureAwait(false);
+                await component.ModifyOriginalResponseAsync(properties =>
+                {
+                    properties.Content = controlResult;
+                    properties.Embed = controlView.Embed;
+                    properties.Components = controlView.Components;
+                }).ConfigureAwait(false);
                 return;
             }
 
@@ -904,7 +1106,7 @@ public static class AstCommandCenter
             {
                 var allowed = action == "yaml-backup"
                     ? AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization)
-                    : AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization);
+                    : AstAuthorizationService.CanManageArchipelagoAssets(authorization);
                 if (!allowed)
                 {
                     await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
@@ -1053,7 +1255,7 @@ public static class AstCommandCenter
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "patch-alias" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide" or "yaml-delete-select" or "yaml-template-download" or "generation-skip"))
+            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "patch-alias" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide" or "yaml-delete-select" or "yaml-template-download" or "generation-skip" or "access-grant" or "access-revoke" or "instance-guild" or "instance-room"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
             component.Data.Values.FirstOrDefault() is not { } selected ||
@@ -1064,6 +1266,87 @@ public static class AstCommandCenter
         }
 
         await component.DeferAsync(ephemeral: true);
+        if (action is "access-grant" or "access-revoke")
+        {
+            var accessAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildId.ToString(CultureInfo.InvariantCulture), sourceChannelId.ToString(CultureInfo.InvariantCulture),
+                component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+            if (accessAuthorization == null || !AstAuthorizationService.CanManageGuildRoleBindings(accessAuthorization) ||
+                !ulong.TryParse(selected, out var selectedUserId))
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+
+            var guild = Declare.Client.GetGuild(guildId);
+            IGuildUser? targetUser = guild?.GetUser(selectedUserId);
+            targetUser ??= component.Data.Members?.FirstOrDefault(member => member.Id == selectedUserId);
+            if (action == "access-grant" && (targetUser == null || targetUser.IsBot))
+            {
+                await SetErrorAsync(component, Localize("Ce compte n’est pas un membre humain de ce serveur.", "This account is not a human member of this guild.")).ConfigureAwait(false);
+                return;
+            }
+
+            if (action == "access-grant" &&
+                (targetUser!.GuildPermissions.Administrator || targetUser.GuildPermissions.ManageGuild || guild!.OwnerId == selectedUserId))
+            {
+                await SetErrorAsync(component, Localize("Ce membre possède déjà les droits de gestion via Discord.", "This member already has management access through Discord.")).ConfigureAwait(false);
+                return;
+            }
+
+            var targetUserText = selectedUserId.ToString(CultureInfo.InvariantCulture);
+            if (action == "access-grant")
+            {
+                await AuditedAsync(session, sourceChannelId, SecurityAuditAction.GuildManagerGrant,
+                    () => AstRoleBindingsCommands.GrantGuildManagerAsync(
+                        guildId.ToString(CultureInfo.InvariantCulture), targetUserText,
+                        component.User.Id.ToString(CultureInfo.InvariantCulture))).ConfigureAwait(false);
+            }
+            else
+            {
+                await AuditedAsync(session, sourceChannelId, SecurityAuditAction.GuildManagerRevoke,
+                    () => AstRoleBindingsCommands.RevokeGuildManagerAsync(
+                        guildId.ToString(CultureInfo.InvariantCulture), targetUserText)).ConfigureAwait(false);
+            }
+
+            var accessView = await RenderAccessManagementAsync(session, accessAuthorization).ConfigureAwait(false);
+            await component.ModifyOriginalResponseAsync(properties =>
+            {
+                properties.Content = action == "access-grant"
+                    ? string.Format(Localize("<@{0}> peut maintenant gérer AST sur ce serveur.", "<@{0}> can now manage AST in this guild."), targetUserText)
+                    : string.Format(Localize("Les droits AST délégués de <@{0}> ont été révoqués.", "The delegated AST access for <@{0}> has been revoked."), targetUserText);
+                properties.Embed = accessView.Embed;
+                properties.Components = accessView.Components;
+            }).ConfigureAwait(false);
+            return;
+        }
+
+        if (action is "instance-guild" or "instance-room")
+        {
+            var ownerAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildId.ToString(CultureInfo.InvariantCulture), sourceChannelId.ToString(CultureInfo.InvariantCulture),
+                component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+            if (ownerAuthorization is not { IsInstanceOwner: true })
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+
+            var valid = action == "instance-guild"
+                ? (await InstanceAdministrationCommands.GetGuildsAsync().ConfigureAwait(false)).Any(item => item.GuildId == selected) &&
+                  Sessions.TrySelectInstanceGuild(session.Id, component.User.Id, guildId, sourceChannelId, selected, out session)
+                : session.InstanceTargetGuildId != null &&
+                  (await InstanceAdministrationCommands.GetRoomsAsync(session.InstanceTargetGuildId).ConfigureAwait(false)).Any(item => item.ChannelId == selected) &&
+                  Sessions.TrySelectInstanceRoom(session.Id, component.User.Id, guildId, sourceChannelId, selected, out session);
+            if (!valid)
+            {
+                await SetErrorAsync(component, Resource.AstCenterInvalidSelection).ConfigureAwait(false);
+                return;
+            }
+            await SetViewAsync(component, await RenderInstanceAdministrationAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+            return;
+        }
+
         if (action == "generation-skip")
         {
             var generationAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
@@ -1523,6 +1806,8 @@ public static class AstCommandCenter
             AstUiScreen.Room => await RenderRoomAsync(session, roomName).ConfigureAwait(false),
             AstUiScreen.Manage => RenderManage(session),
             AstUiScreen.Administration => RenderAdministration(session, authorization),
+            AstUiScreen.AccessManagement => await RenderAccessManagementAsync(session, authorization).ConfigureAwait(false),
+            AstUiScreen.InstanceAdministration => await RenderInstanceAdministrationAsync(session).ConfigureAwait(false),
             AstUiScreen.Help => RenderHelp(session),
             AstUiScreen.Polling => RenderPolling(session),
             AstUiScreen.ManageMore => RenderManageMore(session),
@@ -1556,6 +1841,8 @@ public static class AstCommandCenter
         }
         if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
             components.WithButton(Resource.AstCenterAdministration, Id(session, "admin"), ButtonStyle.Secondary, emote: new Emoji("🛠️"));
+        if (authorization.IsInstanceOwner)
+            components.WithButton(Localize("Instance AST", "AST instance"), Id(session, "instance-admin"), ButtonStyle.Secondary, emote: new Emoji("🧭"));
         components.WithButton(Resource.AstCenterHelp, Id(session, "help"), ButtonStyle.Secondary, emote: new Emoji("❓"));
         if (session.RoomChannelId == null)
         {
@@ -1674,11 +1961,13 @@ public static class AstCommandCenter
             (Resource.AstCenterASTHealth, "guild-health"),
             (Resource.AstCenterRevokePortal, "admin-portal-revoke-request")
         };
+        if (AstAuthorizationService.CanManageGuildRoleBindings(authorization))
+            actions.Add((Localize("Responsables AST", "AST managers"), "admin-access"));
         if (Declare.IsArchipelagoMode)
         {
             actions.Add(("YAML", "admin-yaml"));
             actions.Add((Resource.WebGeneration, "admin-generation"));
-            if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization))
+            if (AstAuthorizationService.CanManageArchipelagoAssets(authorization))
                 actions.Add(("APWorld", "admin-apworld"));
         }
         return Screen(session,
@@ -1688,6 +1977,188 @@ public static class AstCommandCenter
                 : (Resource.AstCenterGuildManagerAccess),
             actions);
     }
+
+    private static async Task<AstUiView> RenderAccessManagementAsync(
+        AstUiSession session,
+        AstAuthorizationContext authorization)
+    {
+        if (!AstAuthorizationService.CanManageGuildRoleBindings(authorization))
+            return Screen(session, Localize("Accès AST", "AST access"), AstAuthorizationService.DeniedMessage, []);
+
+        var guildId = session.GuildId.ToString(CultureInfo.InvariantCulture);
+        var bindings = await AstRoleBindingsCommands.GetGuildManagersAsync(guildId).ConfigureAwait(false);
+        var filteredBindings = bindings
+            .Where(binding => MatchesSelectionSearch(session, binding.UserId, GetGuildMemberDisplayName(session.GuildId, binding.UserId)))
+            .ToArray();
+        var page = PageValues(filteredBindings, session.SelectionPageIndex);
+        var description = bindings.Count == 0
+            ? Localize(
+                "Aucun responsable AST délégué. Les administrateurs Discord conservent automatiquement tous les droits de gestion.",
+                "No delegated AST manager. Discord administrators automatically retain all management permissions.")
+            : page.Count == 0
+                ? Localize("Aucun responsable ne correspond au filtre.", "No manager matches the filter.")
+                : Localize("Responsables AST délégués :\n", "Delegated AST managers:\n") + string.Join("\n", page.Select(binding =>
+                    string.Format(Localize("• <@{0}> — accordé par <@{1}>", "• <@{0}> — granted by <@{1}>"), binding.UserId, binding.GrantedByUserId)));
+
+        var grant = new SelectMenuBuilder()
+            .WithCustomId(Id(session, "access-grant"))
+            .WithPlaceholder(Localize("Choisir un membre à autoriser", "Choose a member to authorize"))
+            .WithType(ComponentType.UserSelect)
+            .WithMinValues(1)
+            .WithMaxValues(1);
+        var components = new ComponentBuilder().WithSelectMenu(grant, row: 0);
+        if (page.Count > 0)
+        {
+            var revoke = new SelectMenuBuilder()
+                .WithCustomId(Id(session, "access-revoke"))
+                .WithPlaceholder(Localize("Choisir un responsable à révoquer", "Choose a manager to revoke"))
+                .WithMinValues(1)
+                .WithMaxValues(1);
+            foreach (var binding in page)
+                revoke.AddOption(ClampSelectLabel(GetGuildMemberDisplayName(session.GuildId, binding.UserId)), binding.UserId);
+            components.WithSelectMenu(revoke, row: 1);
+        }
+        if (bindings.Count > 0)
+            AddSelectionNavigation(components, session, filteredBindings.Length, row: 2);
+        components.WithButton(Resource.AstCenterBack, Id(session, "admin"), ButtonStyle.Primary, emote: new Emoji("↩️"), row: 3);
+        var embed = BaseEmbed(Localize("🔐 Responsables AST", "🔐 AST managers"), Clamp(description, 4000));
+        AddPageField(embed, session, filteredBindings.Length);
+        return new AstUiView(null, embed.Build(), components.Build());
+    }
+
+    private static async Task<AstUiView> RenderInstanceAdministrationAsync(AstUiSession session)
+    {
+        if (session.PendingAction is "instance-delete-room" or "instance-delete-guild")
+        {
+            var target = session.PendingAction == "instance-delete-guild"
+                ? string.Format(Localize("le serveur `{0}` et toutes ses données AST", "guild `{0}` and all its AST data"), Safe(session.InstanceTargetGuildId ?? "?"))
+                : string.Format(Localize("le salon `{0}` et toutes ses données AST", "channel `{0}` and all its AST data"), Safe(session.InstanceTargetChannelId ?? "?"));
+            var confirmation = new ComponentBuilder()
+                .WithButton(Localize("Supprimer définitivement", "Delete permanently"), Id(session, "instance-confirm-delete"), ButtonStyle.Danger)
+                .WithButton(Resource.AstCenterCancel, Id(session, "instance-cancel-delete"), ButtonStyle.Secondary)
+                .Build();
+            return new AstUiView(null, BaseEmbed(Localize("⚠️ Nettoyage de l’instance", "⚠️ Instance cleanup"),
+                string.Format(Localize("Confirmer la suppression de {0} ? Cette opération est irréversible.", "Confirm deletion of {0}? This operation cannot be undone."), target)).Build(), confirmation);
+        }
+
+        var guilds = await InstanceAdministrationCommands.GetGuildsAsync().ConfigureAwait(false);
+        if (session.InstanceTargetGuildId == null)
+        {
+            var filtered = guilds.Where(item => MatchesSelectionSearch(session,
+                    item.GuildId,
+                    GetGuildDisplayName(item.GuildId)))
+                .ToArray();
+            var embed = BaseEmbed(Localize("🧭 Administration de l’instance", "🧭 Instance administration"),
+                Localize("Accès propriétaire : inspection, pilotage et nettoyage de tous les serveurs enregistrés.", "Owner access: inspect, control, and clean every stored guild."));
+            var components = new ComponentBuilder();
+            var page = PageValues(filtered, session.SelectionPageIndex);
+            if (page.Count > 0)
+            {
+                var menu = new SelectMenuBuilder()
+                    .WithCustomId(Id(session, "instance-guild"))
+                    .WithPlaceholder(Localize("Choisir un serveur enregistré", "Choose a stored guild"))
+                    .WithMinValues(1)
+                    .WithMaxValues(1);
+                foreach (var guild in page)
+                    menu.AddOption(ClampSelectLabel($"{GetGuildDisplayName(guild.GuildId)} ({guild.RoomCount} {Localize("salon(s)", "room(s)")})"), guild.GuildId);
+                components.WithSelectMenu(menu, row: 0);
+                AddSelectionNavigation(components, session, filtered.Length, row: 1);
+                AddPageField(embed, session, filtered.Length);
+            }
+            else
+            {
+                embed.AddField(Localize("Serveurs", "Guilds"), session.SelectionSearch == null
+                    ? Localize("Aucun serveur n’est enregistré dans la base.", "No guild is stored in the database.")
+                    : Localize("Aucun serveur ne correspond au filtre.", "No guild matches the filter."));
+                if (session.SelectionSearch != null)
+                    AddSelectionNavigation(components, session, 0, row: 1);
+            }
+            components.WithButton(Resource.AstCenterBack, Id(session, "home"), ButtonStyle.Primary, emote: new Emoji("↩️"), row: 2);
+            return new AstUiView(null, embed.Build(), components.Build());
+        }
+
+        var targetGuild = guilds.FirstOrDefault(item => item.GuildId == session.InstanceTargetGuildId);
+        if (targetGuild == null)
+            return new AstUiView(Localize("Ce serveur n’est plus enregistré.", "This guild is no longer stored."), BaseEmbed(Localize("🧭 Administration de l’instance", "🧭 Instance administration"), Localize("Sélection expirée.", "Selection expired.")).Build(),
+                new ComponentBuilder().WithButton(Localize("Liste des serveurs", "Guild list"), Id(session, "instance-back-guilds"), ButtonStyle.Primary).Build());
+
+        var rooms = await InstanceAdministrationCommands.GetRoomsAsync(targetGuild.GuildId).ConfigureAwait(false);
+        if (session.InstanceTargetChannelId == null)
+        {
+            var filtered = rooms.Where(item => MatchesSelectionSearch(session,
+                    item.ChannelId,
+                    item.Room,
+                    GetChannelDisplayName(item.ChannelId)))
+                .ToArray();
+            var embed = BaseEmbed($"🧭 {Safe(GetGuildDisplayName(targetGuild.GuildId))}",
+                $"GuildId: `{targetGuild.GuildId}`\n{targetGuild.RoomCount} {Localize("salon(s) enregistré(s)", "stored room(s)")}.")
+                .AddField(Localize("Santé", "Health"), Clamp(TrackingControlCommands.GetGuildHealth(targetGuild.GuildId), 1000));
+            var components = new ComponentBuilder();
+            var page = PageValues(filtered, session.SelectionPageIndex);
+            if (page.Count > 0)
+            {
+                var menu = new SelectMenuBuilder()
+                    .WithCustomId(Id(session, "instance-room"))
+                    .WithPlaceholder(Localize("Choisir un salon suivi", "Choose a tracked channel"))
+                    .WithMinValues(1)
+                    .WithMaxValues(1);
+                foreach (var room in page)
+                    menu.AddOption(ClampSelectLabel($"{GetChannelDisplayName(room.ChannelId)} — {room.Room}"), room.ChannelId);
+                components.WithSelectMenu(menu, row: 0);
+                AddSelectionNavigation(components, session, filtered.Length, row: 1);
+                AddPageField(embed, session, filtered.Length);
+            }
+            components
+                .WithButton(Localize("Nettoyer ce serveur", "Clean this guild"), Id(session, "instance-delete-guild-request"), ButtonStyle.Danger, row: 2)
+                .WithButton(Localize("Liste des serveurs", "Guild list"), Id(session, "instance-back-guilds"), ButtonStyle.Primary, emote: new Emoji("↩️"), row: 2);
+            return new AstUiView(null, embed.Build(), components.Build());
+        }
+
+        var roomTarget = rooms.FirstOrDefault(item => item.ChannelId == session.InstanceTargetChannelId);
+        if (roomTarget == null)
+            return new AstUiView(Localize("Ce salon n’est plus enregistré.", "This channel is no longer stored."), BaseEmbed(Localize("🧭 Administration de l’instance", "🧭 Instance administration"), Localize("Sélection expirée.", "Selection expired.")).Build(),
+                new ComponentBuilder().WithButton(Localize("Salons du serveur", "Guild rooms"), Id(session, "instance-back-rooms"), ButtonStyle.Primary).Build());
+
+        var roomDescription = $"GuildId : `{roomTarget.GuildId}`\nChannelId : `{roomTarget.ChannelId}`\n" +
+                              $"Room : `{Safe(roomTarget.Room)}`\nTracker : `{Safe(roomTarget.Tracker)}`\n" +
+                              $"Fréquence : `{Safe(roomTarget.CheckFrequency)}` — silencieux : `{roomTarget.Silent}`\n" +
+                              $"URL : `{Safe(roomTarget.BaseUrl)}`\n\n" +
+                              TrackingControlCommands.FormatRoomHealth(
+                                  TrackingDataManager.GetRoomHealth(roomTarget.GuildId, roomTarget.ChannelId));
+        var roomComponents = new ComponentBuilder()
+            .WithButton(Resource.AstCenterSyncNow, Id(session, "instance-sync"), ButtonStyle.Success, row: 0)
+            .WithButton(Resource.AstCenterPause, Id(session, "instance-pause"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.AstCenterResume, Id(session, "instance-resume"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Localize("Nettoyer ce salon", "Clean this channel"), Id(session, "instance-delete-room-request"), ButtonStyle.Danger, row: 1)
+            .WithButton(Localize("Salons du serveur", "Guild rooms"), Id(session, "instance-back-rooms"), ButtonStyle.Primary, emote: new Emoji("↩️"), row: 1);
+        return new AstUiView(null, BaseEmbed($"🌐 {Safe(GetChannelDisplayName(roomTarget.ChannelId))}", Clamp(roomDescription, 4000)).Build(), roomComponents.Build());
+    }
+
+    private static string GetGuildDisplayName(string guildId)
+        => ulong.TryParse(guildId, out var id) && Declare.Client.GetGuild(id) is { } guild
+            ? guild.Name
+            : $"{Localize("Serveur absent", "Missing guild")} {guildId}";
+
+    private static string GetChannelDisplayName(string channelId)
+        => ulong.TryParse(channelId, out var id) && Declare.Client.GetChannel(id) is IChannel channel
+            ? channel.Name
+            : $"{Localize("Salon absent", "Missing channel")} {channelId}";
+
+    private static string GetGuildMemberDisplayName(ulong guildId, string userId)
+        => ulong.TryParse(userId, out var id) && Declare.Client.GetGuild(guildId)?.GetUser(id) is { } user
+            ? user.DisplayName
+            : $"{Localize("Utilisateur", "User")} {userId}";
+
+    private static string ClampSelectLabel(string value)
+    {
+        var safe = Safe(value);
+        return safe[..Math.Min(safe.Length, 100)];
+    }
+
+    private static string Localize(string french, string english)
+        => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("fr", StringComparison.OrdinalIgnoreCase)
+            ? french
+            : english;
 
     private static AstUiView RenderHelp(AstUiSession session)
         => Screen(session,
@@ -2176,6 +2647,15 @@ public static class AstCommandCenter
             AstUiScreen.Home when session.RoomChannelId == null
                 => (await GetAccessibleRoomsAsync(session, authorization).ConfigureAwait(false))
                     .Count(room => MatchesSelectionSearch(session, room.Name, room.ChannelId)),
+            AstUiScreen.InstanceAdministration when session.InstanceTargetGuildId == null
+                => (await InstanceAdministrationCommands.GetGuildsAsync().ConfigureAwait(false))
+                    .Count(item => MatchesSelectionSearch(session, item.GuildId, GetGuildDisplayName(item.GuildId))),
+            AstUiScreen.InstanceAdministration
+                => (await InstanceAdministrationCommands.GetRoomsAsync(session.InstanceTargetGuildId).ConfigureAwait(false))
+                    .Count(item => MatchesSelectionSearch(session, item.ChannelId, item.Room, GetChannelDisplayName(item.ChannelId))),
+            AstUiScreen.AccessManagement
+                => (await AstRoleBindingsCommands.GetGuildManagersAsync(guildId).ConfigureAwait(false))
+                    .Count(binding => MatchesSelectionSearch(session, binding.UserId, GetGuildMemberDisplayName(session.GuildId, binding.UserId))),
             AstUiScreen.Yaml => Math.Max(
                 YamlClass.GetYamlFileNames(session.SourceChannelId.ToString(CultureInfo.InvariantCulture))
                     .Count(file => MatchesSelectionSearch(session, file)),
@@ -2264,7 +2744,7 @@ public static class AstCommandCenter
                 ? YamlClass.ListYamls(session.SourceChannelId.ToString(CultureInfo.InvariantCulture))
                 : AstAuthorizationService.DeniedMessage;
         if (action == "apworld-list")
-            return AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization)
+            return AstAuthorizationService.CanManageArchipelagoAssets(authorization)
                 ? ApworldClass.ListApworld()
                 : AstAuthorizationService.DeniedMessage;
         if (channelId == null) return Unavailable();
@@ -2432,6 +2912,23 @@ public static class AstCommandCenter
         audit.Succeed();
     }
 
+    private static async Task AuditedAsync(
+        ulong actorUserId,
+        ulong guildId,
+        ulong channelId,
+        SecurityAuditAction action,
+        Func<Task> operation)
+    {
+        await using var audit = await SecurityAuditScope.StartAsync(
+            SecurityAuditSource.Discord,
+            actorUserId.ToString(CultureInfo.InvariantCulture),
+            guildId.ToString(CultureInfo.InvariantCulture),
+            channelId.ToString(CultureInfo.InvariantCulture),
+            action).ConfigureAwait(false);
+        await operation().ConfigureAwait(false);
+        audit.Succeed();
+    }
+
     private static bool TryScreen(string action, out AstUiScreen screen)
     {
         screen = action switch
@@ -2441,6 +2938,8 @@ public static class AstCommandCenter
             "room" => AstUiScreen.Room,
             "manage" => AstUiScreen.Manage,
             "admin" => AstUiScreen.Administration,
+            "admin-access" => AstUiScreen.AccessManagement,
+            "instance-admin" => AstUiScreen.InstanceAdministration,
             "help" => AstUiScreen.Help,
             "manage-polling" => AstUiScreen.Polling,
             "manage-more" => AstUiScreen.ManageMore,
@@ -2464,9 +2963,11 @@ public static class AstCommandCenter
             AstUiScreen.Personal or AstUiScreen.Room => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Manage => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
             AstUiScreen.Administration => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization),
+            AstUiScreen.AccessManagement => AstAuthorizationService.CanManageGuildRoleBindings(authorization),
+            AstUiScreen.InstanceAdministration => authorization.IsInstanceOwner,
             AstUiScreen.Polling or AstUiScreen.ManageMore => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
             AstUiScreen.Yaml or AstUiScreen.Generation => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization),
-            AstUiScreen.Apworld => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization),
+            AstUiScreen.Apworld => AstAuthorizationService.CanManageArchipelagoAssets(authorization),
             AstUiScreen.Slots => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Patch => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Advanced => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),

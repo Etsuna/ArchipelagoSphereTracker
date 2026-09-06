@@ -8,8 +8,12 @@ Ce document décrit les règles appliquées depuis la PR 2 de durcissement. Les 
 |---|---|---|
 | Membre du serveur | consultation, récapitulatif personnel, alias personnel, upload et analyse du spoiler partagé de la room | membre Discord ayant encore accès au salon ou au thread |
 | Gestionnaire de room | configuration et suppression d'une room, portail du thread, consultation des patches | propriétaire du thread, permission `Manage Threads`, gestionnaire du serveur |
-| Gestionnaire du serveur | création de room, YAML, génération, portail global | propriétaire du serveur, administrateur, permission `Manage Server`, propriétaire de l'instance |
-| Propriétaire de l'instance | installation, sauvegarde et chargement des APWorld | utilisateur `AST_OWNER_USER_ID`; à défaut, propriétaire du serveur Discord |
+| Gestionnaire du serveur | création et gestion des rooms, YAML, génération, portail global | propriétaire du serveur, administrateur, permission `Manage Server`, responsable AST délégué, propriétaire de l'instance |
+| Propriétaire de l'instance | inspection, pilotage et nettoyage de tous les serveurs et salons stockés dans l'instance | utilisateur exact défini par `AST_OWNER_USER_ID` |
+
+Un propriétaire, administrateur ou membre disposant de `Manage Server` peut ouvrir `Administration AST → Responsables AST` dans `/ast` afin d'accorder ou de révoquer le rôle applicatif `GuildManager`. Ce rôle ne modifie aucun rôle Discord et ne permet pas de déléguer à son tour. Les attributions sont persistées par serveur depuis la migration SQLite `5.0.13` et les changements sont audités.
+
+`AST_OWNER_USER_ID` n'a plus de repli implicite vers le propriétaire du serveur Discord. Lorsqu'il est configuré, cet utilisateur voit dans `/ast` une console `Instance AST` permettant de parcourir les guildes et salons enregistrés, consulter leur état, demander une synchronisation, les mettre en pause/reprendre et effectuer un nettoyage après confirmation. Cette autorité globale permet aussi de traiter les entrées dont le serveur ou le salon Discord n'existe plus.
 
 Les commandes Discord et les requêtes Web utilisent la même matrice. Un token de portail est un secret porteur lié à `(serveur, salon, utilisateur)` ; sa présence ne suffit pas : AST vérifie aussi que l'utilisateur appartient toujours au serveur, qu'il voit encore le salon et qu'il possède le niveau demandé.
 
@@ -32,7 +36,7 @@ Les noms de fichiers sont réduits à un nom simple et leur extension est vérif
 
 Les ZIP de génération sont limités à 500 entrées et 256 Mio décompressés, et seules des entrées YAML non imbriquées sont acceptées. Les archives APWorld doivent être lisibles, respecter les mêmes limites et ne contenir aucun chemin absolu ou traversée de répertoire. Les YAML et spoilers texte doivent être du texte UTF-8 non vide sans octet nul; un spoiler `.json` doit contenir un objet ou un tableau JSON valide. Voir [quarantaine et validation des téléversements](upload-quarantine-security.fr.md).
 
-Un APWorld contient du code exécuté par l'outillage Archipelago local. Son chargement est donc réservé au propriétaire de l'instance ; la validation d'extension ne transforme pas un APWorld non fiable en fichier sûr.
+Un APWorld contient du code exécuté par l'outillage Archipelago local. En mode Normal, les opérations APWorld restent réservées au propriétaire de l'instance. En mode Archipelago, prévu pour un unique Discord, elles sont aussi accessibles aux gestionnaires de ce serveur. La validation d'extension ne transforme pas un APWorld non fiable en fichier sûr.
 
 Le dossier global `extern/Archipelago/custom_worlds` est exclu de tous les nettoyages de room et de guilde. Les custom worlds ne sont supprimés que par une action manuelle dédiée.
 

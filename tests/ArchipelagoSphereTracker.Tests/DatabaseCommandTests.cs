@@ -225,12 +225,27 @@ public class DatabaseCommandTests
             cmd.Parameters.AddWithValue("@Game", "Game");
             cmd.Parameters.AddWithValue("@Patch", "Patch");
             await cmd.ExecuteNonQueryAsync();
+
+            cmd.Parameters.Clear();
+            cmd.CommandText = @"
+                INSERT INTO TrackedRooms
+                    (GuildId, ChannelId, CreatedAtUtc, UpdatedAtUtc, IsBaselineInitialized)
+                VALUES (@GuildId, @ChannelId, @Now, @Now, 1);
+                INSERT INTO RoomSnapshots
+                    (GuildId, ChannelId, ContentHash, CapturedAtUtc, CompleteSections, TrackingState, PayloadJson)
+                VALUES (@GuildId, @ChannelId, 'hash', @Now, 1, 'Healthy', '{}');";
+            cmd.Parameters.AddWithValue("@GuildId", guildId);
+            cmd.Parameters.AddWithValue("@ChannelId", channelId);
+            cmd.Parameters.AddWithValue("@Now", DateTimeOffset.UtcNow.ToString("O"));
+            await cmd.ExecuteNonQueryAsync();
         }
 
         await DatabaseCommands.DeleteChannelDataAsync(guildId, channelId);
 
         Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("ChannelsAndUrlsTable", guildId, channelId));
         Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("UrlAndChannelPatchTable"));
+        Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("TrackedRooms", guildId, channelId));
+        Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("RoomSnapshots", guildId, channelId));
     }
 
     [Fact]

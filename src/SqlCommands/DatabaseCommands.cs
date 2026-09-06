@@ -201,6 +201,15 @@ public static class DatabaseCommands
                 command.Parameters.Clear();
 
                 command.CommandText = @"
+                    DELETE FROM TrackedRooms
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+
+                command.CommandText = @"
                     DELETE FROM ChannelsAndUrlsTable
                     WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
@@ -386,6 +395,11 @@ public static class DatabaseCommands
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                 command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM TrackedRooms WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM ChannelsAndUrlsTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -477,6 +491,11 @@ public static class DatabaseCommands
 
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM PortalAccessTable WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM AstRoleBindingsTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });

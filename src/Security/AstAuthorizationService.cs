@@ -16,7 +16,8 @@ public sealed record AstAuthorizationContext(
     bool CanManageGuild,
     bool IsAdministrator,
     bool IsGuildOwner,
-    bool IsInstanceOwner);
+    bool IsInstanceOwner,
+    bool IsDelegatedGuildManager = false);
 
 public sealed record AstPortalActor(string UserId, IGuildUser User, AstAuthorizationContext Authorization);
 
@@ -26,7 +27,7 @@ public static class AstAuthorizationService
 
     public static bool IsAllowed(AstAuthorizationLevel required, AstAuthorizationContext context)
     {
-        if (!context.IsGuildMember)
+        if (!context.IsGuildMember && !context.IsInstanceOwner)
             return false;
 
         return required switch
@@ -110,9 +111,12 @@ public static class AstAuthorizationService
 
         var configuredOwner = Declare.InstanceOwnerUserId;
         var isGuildOwner = guild.OwnerId == userId;
-        var isInstanceOwner = !string.IsNullOrWhiteSpace(configuredOwner)
-            ? string.Equals(configuredOwner, userId.ToString(), StringComparison.Ordinal)
-            : isGuildOwner;
+        var isInstanceOwner = !string.IsNullOrWhiteSpace(configuredOwner) &&
+                              string.Equals(configuredOwner, userId.ToString(), StringComparison.Ordinal);
+        var isDelegatedGuildManager = await AstRoleBindingsCommands.IsGuildManagerAsync(
+            guildId,
+            userId.ToString(),
+            CancellationToken.None).ConfigureAwait(false);
 
         var channelPermissions = user.GetPermissions(guildChannel);
         var canAccessPrivateThreadWithoutMembership = isGuildOwner ||
@@ -134,7 +138,8 @@ public static class AstAuthorizationService
             CanManageGuild: user.GuildPermissions.ManageGuild,
             IsAdministrator: user.GuildPermissions.Administrator,
             IsGuildOwner: isGuildOwner,
-            IsInstanceOwner: isInstanceOwner);
+            IsInstanceOwner: isInstanceOwner,
+            IsDelegatedGuildManager: isDelegatedGuildManager);
     }
 
     public static async Task<AstPortalActor?> ResolvePortalActorAsync(
@@ -168,12 +173,24 @@ public static class AstAuthorizationService
         return user == null || context == null ? null : new AstPortalActor(userId, user, context);
     }
 
-    private static bool IsGuildManager(AstAuthorizationContext context)
+    public static bool CanManageGuildRoleBindings(AstAuthorizationContext context)
     {
         return context.IsGuildOwner ||
                context.IsAdministrator ||
                context.CanManageGuild ||
                context.IsInstanceOwner;
+    }
+
+    public static bool CanManageArchipelagoAssets(AstAuthorizationContext context)
+        => context.IsInstanceOwner || Declare.IsArchipelagoMode && IsGuildManager(context);
+
+    private static bool IsGuildManager(AstAuthorizationContext context)
+    {
+        return context.IsGuildOwner ||
+               context.IsAdministrator ||
+               context.CanManageGuild ||
+               context.IsInstanceOwner ||
+               context.IsDelegatedGuildManager;
     }
 
     private static async Task<bool> IsThreadMemberAsync(IThreadChannel thread, ulong userId)

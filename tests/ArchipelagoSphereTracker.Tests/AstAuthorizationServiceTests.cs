@@ -47,12 +47,44 @@ public class AstAuthorizationServiceTests
     }
 
     [Fact]
-    public void NonMember_IsAlwaysDenied()
+    public void NonMember_IsDeniedUnlessTheyAreTheConfiguredInstanceOwner()
     {
-        var actor = Context(isGuildMember: false, isInstanceOwner: true, isGuildOwner: true);
+        var actor = Context(isGuildMember: false);
 
         foreach (var level in Enum.GetValues<AstAuthorizationLevel>())
             Assert.False(AstAuthorizationService.IsAllowed(level, actor));
+
+        var instanceOwner = Context(isGuildMember: false, isInstanceOwner: true);
+        foreach (var level in Enum.GetValues<AstAuthorizationLevel>())
+            Assert.True(AstAuthorizationService.IsAllowed(level, instanceOwner));
+    }
+
+    [Fact]
+    public void DelegatedGuildManager_CanManageAstButCannotDelegateRights()
+    {
+        var delegated = Context(isDelegatedGuildManager: true);
+
+        Assert.True(AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, delegated));
+        Assert.True(AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, delegated));
+        Assert.False(AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, delegated));
+        Assert.False(AstAuthorizationService.CanManageGuildRoleBindings(delegated));
+    }
+
+    [Theory]
+    [InlineData(true, false, false, false)]
+    [InlineData(false, true, false, false)]
+    [InlineData(false, false, true, false)]
+    [InlineData(false, false, false, true)]
+    public void NativeDiscordManagersAndInstanceOwner_CanDelegateRights(
+        bool isOwner, bool isAdministrator, bool canManageGuild, bool isInstanceOwner)
+    {
+        var actor = Context(
+            isGuildOwner: isOwner,
+            isAdministrator: isAdministrator,
+            canManageGuild: canManageGuild,
+            isInstanceOwner: isInstanceOwner);
+
+        Assert.True(AstAuthorizationService.CanManageGuildRoleBindings(actor));
     }
 
     [Theory]
@@ -104,7 +136,8 @@ public class AstAuthorizationServiceTests
         bool canManageGuild = false,
         bool isAdministrator = false,
         bool isGuildOwner = false,
-        bool isInstanceOwner = false)
+        bool isInstanceOwner = false,
+        bool isDelegatedGuildManager = false)
     {
         return new AstAuthorizationContext(
             isGuildMember,
@@ -113,6 +146,7 @@ public class AstAuthorizationServiceTests
             canManageGuild,
             isAdministrator,
             isGuildOwner,
-            isInstanceOwner);
+            isInstanceOwner,
+            isDelegatedGuildManager);
     }
 }

@@ -801,6 +801,29 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
         }
     }
 
+    public static async Task Migrate_5_0_13(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.13: guild-scoped AST role bindings.");
+
+        await Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                CREATE TABLE IF NOT EXISTS AstRoleBindingsTable (
+                    GuildId TEXT NOT NULL,
+                    UserId TEXT NOT NULL,
+                    Role TEXT NOT NULL CHECK (Role IN ('GuildManager')),
+                    GrantedByUserId TEXT NOT NULL,
+                    GrantedAtUtc TEXT NOT NULL,
+                    PRIMARY KEY (GuildId, UserId, Role)
+                );
+
+                CREATE INDEX IF NOT EXISTS IX_AstRoleBindings_Guild_Role
+                ON AstRoleBindingsTable (GuildId, Role);";
+            await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+        });
+    }
+
 
     private static async Task<HashSet<string>> GetColumnsAsync(
         System.Data.Common.DbConnection connection,

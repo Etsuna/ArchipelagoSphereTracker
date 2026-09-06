@@ -33,7 +33,10 @@ public enum SecurityAuditAction
     ApworldUpload,
     ApworldBackup,
     Generation,
-    DataCleanup
+    DataCleanup,
+    GuildManagerGrant,
+    GuildManagerRevoke,
+    InstanceCleanup
 }
 
 public sealed record SecurityAuditEntry(
