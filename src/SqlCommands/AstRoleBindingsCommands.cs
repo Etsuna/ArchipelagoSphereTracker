@@ -124,6 +124,6 @@ public static class AstRoleBindingsCommands
     private static void ValidateSnowflake(string value, string parameterName)
     {
         if (!IsSnowflake(value))
-            throw new ArgumentException("A valid Discord snowflake is required.", parameterName);
+            throw new ArgumentException(ArchipelagoSphereTracker.src.Resources.Resource.DiscordSnowflakeRequired, parameterName);
     }
 }

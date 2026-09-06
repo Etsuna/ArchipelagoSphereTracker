@@ -6,7 +6,7 @@ Creating a room required users to know all six `/add-url` parameters. Channel, t
 
 ## Architecture
 
-`/ast-setup` opens an ephemeral Discord assistant. An in-memory session, scoped to the user, guild, and interaction channel, keeps the draft for 15 minutes of inactivity. Components contain only a random session identifier and an action; the room URL is never placed in a `custom_id`, preview, or log.
+`/ast-setup` opens an ephemeral Discord assistant. An in-memory session, scoped to the user, guild, and interaction channel, keeps the draft for 15 minutes of inactivity. Components contain only a random session identifier and an action; the room URL is never placed in a `custom_id`, summary, or log.
 
 The flow lets an organizer:
 
@@ -14,10 +14,10 @@ The flow lets an organizer:
 2. enter the WebHost URL and thread name in a modal;
 3. choose a private thread, public thread, or public thread with member addition;
 4. choose normal or silent notifications;
-5. set the minimum polling frequency;
-6. review the preview, then confirm or cancel.
+5. set the minimum polling frequency; each option explains its active/quiet delay and the summary displays both automatic mode and the effective initial maximum;
+6. review the automatically updated summary, then confirm or cancel.
 
-The preview displays only the validated host name. On confirmation, AST consumes the session to prevent double submission, revalidates the `GuildManager` role, guild, and target channel, then invokes the same service as `/add-url`. SSRF/URL validation, public WebHost API reads, thread creation, encrypted persistence, and tracking startup therefore remain centralized. AST never connects to the Archipelago protocol.
+The summary displays only the validated host name and refreshes after every change. On confirmation, AST consumes the session to prevent double submission, revalidates the `GuildManager` role, guild, and target channel, then invokes the same service as `/add-url`. SSRF/URL validation, public WebHost API reads, database persistence, and tracking startup therefore remain centralized. AST never connects to the Archipelago protocol.
 
 Discord-to-slot associations and notification detail levels are not faked in this PR: they require the persistent preference model planned in their dedicated PRs. The assistant provides the integration point once those records exist.
 
@@ -31,7 +31,7 @@ Discord-to-slot associations and notification detail levels are not faked in thi
 
 ## Files changed
 
-- `src/Bot/AstSetupWizard.cs`: sessions, components, modal, preview, and confirmation.
+- `src/Bot/AstSetupWizard.cs`: sessions, components, modal, summary, and confirmation.
 - `src/Bot/BotCommands.cs`: Discord interaction handler registration.
 - `src/Bot/SlashCommandDefinitions.cs`: `/ast-setup` definition.
 - `src/Bot/UrlClass.cs`: reusable structured result and secret-free response.

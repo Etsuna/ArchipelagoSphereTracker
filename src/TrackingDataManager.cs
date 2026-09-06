@@ -66,7 +66,8 @@ public static class TrackingDataManager
                     GlobalConcurrency = Declare.TrackingGlobalConcurrency,
                     PerOriginConcurrency = Declare.TrackingOriginConcurrency
                 },
-                metrics: CentralSchedulerMetrics.Instance);
+                metrics: CentralSchedulerMetrics.Instance,
+                completionObserver: LogScheduledRoomCompletion);
             _trackingTask = Task.Run(async () =>
             {
                 try
@@ -559,13 +560,123 @@ public static class TrackingDataManager
         {
             throw;
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            Console.WriteLine(
-                $"[TDM][Scheduler] Room {scheduled.GuildId}/{scheduled.ChannelId} failed ({exception.GetType().Name}).");
             return RoomPollResult.Failed(PollFailureKind.Unexpected);
         }
     }
+
+    private static void LogScheduledRoomCompletion(RoomPollCompletion completion)
+    {
+        var (guildName, channelName) = ResolveScheduledRoomNames(completion.Room);
+        var status = BuildScheduledRoomStatus(completion);
+        var nextCheck = completion.State == null
+            ? Resource.TDMSyncNoNextCheck
+            : string.Format(
+                Resource.TDMSyncNextCheck,
+                completion.State.NextPollAtUtc.ToLocalTime().ToString("T", CultureInfo.CurrentCulture));
+
+        Console.WriteLine(string.Format(
+            Resource.TDMSyncLog,
+            guildName,
+            channelName,
+            completion.Room.ChannelId,
+            status,
+            completion.Duration.TotalSeconds.ToString("0.00", CultureInfo.CurrentCulture),
+            nextCheck));
+    }
+
+    private static (string GuildName, string ChannelName) ResolveScheduledRoomNames(
+        ScheduledRoomDefinition room)
+    {
+        var guildName = room.GuildId;
+        var channelName = room.ChannelId;
+
+        if (!ulong.TryParse(room.GuildId, out var guildId) ||
+            !ulong.TryParse(room.ChannelId, out var channelId))
+        {
+            return (guildName, channelName);
+        }
+
+        var guild = Declare.Client.GetGuild(guildId);
+        if (guild == null)
+            return (guildName, channelName);
+
+        guildName = SanitizeLogLabel(guild.Name, guildName);
+        var channel = guild.ThreadChannels.FirstOrDefault(candidate => candidate.Id == channelId)
+            ?? guild.GetChannel(channelId);
+        channelName = SanitizeLogLabel(channel?.Name, channelName);
+        return (guildName, channelName);
+    }
+
+    private static string BuildScheduledRoomStatus(RoomPollCompletion completion)
+    {
+        var result = completion.Result;
+        if (result.RemoveRoom)
+            return Resource.TDMSyncTrackingEnded;
+        if (!result.Success)
+        {
+            var failure = result.FailureKind switch
+            {
+                PollFailureKind.NotFound => Resource.TDMSyncFailureNotFound,
+                PollFailureKind.RateLimited => Resource.TDMSyncFailureRateLimited,
+                PollFailureKind.ServerError => Resource.TDMSyncFailureServer,
+                PollFailureKind.Timeout => Resource.TDMSyncFailureTimeout,
+                PollFailureKind.Network => Resource.TDMSyncFailureNetwork,
+                PollFailureKind.InvalidContentType => Resource.TDMSyncFailureContentType,
+                PollFailureKind.InvalidJson => Resource.TDMSyncFailureJson,
+                PollFailureKind.PartialResponse => Resource.TDMSyncFailurePartial,
+                PollFailureKind.CircuitOpen => Resource.TDMSyncFailureCircuitOpen,
+                _ => Resource.TDMSyncFailureUnexpected
+            };
+            return string.Format(
+                Resource.TDMSyncFailure,
+                failure,
+                completion.State?.ConsecutiveFailures ?? 1);
+        }
+
+        var changes = new List<string>(4);
+        AddCountSummary(
+            changes,
+            result.NewItemCount,
+            Resource.TDMSyncOneNewItem,
+            Resource.TDMSyncManyNewItems);
+        AddCountSummary(
+            changes,
+            result.NewHintCount,
+            Resource.TDMSyncOneNewHint,
+            Resource.TDMSyncManyNewHints);
+        AddCountSummary(
+            changes,
+            result.UpdatedHintCount,
+            Resource.TDMSyncOneUpdatedHint,
+            Resource.TDMSyncManyUpdatedHints);
+        AddCountSummary(
+            changes,
+            result.CompletedGoalCount,
+            Resource.TDMSyncOneCompletedGoal,
+            Resource.TDMSyncManyCompletedGoals);
+
+        return changes.Count == 0
+            ? Resource.TDMSyncNoNewItem
+            : string.Join(", ", changes);
+    }
+
+    private static void AddCountSummary(
+        ICollection<string> summaries,
+        int count,
+        string singular,
+        string plural)
+    {
+        if (count <= 0)
+            return;
+        summaries.Add(count == 1 ? singular : string.Format(plural, count));
+    }
+
+    private static string SanitizeLogLabel(string? value, string fallback)
+        => string.IsNullOrWhiteSpace(value)
+            ? fallback
+            : value.Replace('\r', ' ').Replace('\n', ' ').Trim();
 
     private static async Task<bool> KeepThreadAsync(
         ScheduledRoomDefinition scheduled,
@@ -751,9 +862,15 @@ public static class TrackingDataManager
         if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0)
             return RoomPollResult.Ok(normalizedSnapshot?.ContentHash);
 
-        if (statuses.Count > 0) await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false);
-        if (items.Count > 0) await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false);
-        if (hints.Count > 0) await ProcessHintTableAsync(guild, channel, hints, silent, ctChan, isAddUrl).ConfigureAwait(false);
+        var completedGoalCount = statuses.Count > 0
+            ? await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false)
+            : 0;
+        var newItemCount = items.Count > 0
+            ? await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false)
+            : 0;
+        var hintChanges = hints.Count > 0
+            ? await ProcessHintTableAsync(guild, channel, hints, silent, ctChan, isAddUrl).ConfigureAwait(false)
+            : (Added: 0, Updated: 0);
 
         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guild, channel);
 
@@ -779,7 +896,12 @@ public static class TrackingDataManager
             }
         }
 
-        return RoomPollResult.Ok(normalizedSnapshot?.ContentHash);
+        return RoomPollResult.Ok(
+            normalizedSnapshot?.ContentHash,
+            newItemCount,
+            hintChanges.Added,
+            hintChanges.Updated,
+            completedGoalCount);
     }
 
     private static async Task TryPersistTrackingV2Async(
@@ -852,7 +974,7 @@ public static class TrackingDataManager
         return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
     }
 
-    private static async Task ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent, CancellationToken ctChan)
+    private static async Task<int> ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent, CancellationToken ctChan)
     {
         var channelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
         var existingKeys = new HashSet<string>(await DisplayItemCommands.GetExistingKeysAsync(guild, channel));
@@ -914,9 +1036,11 @@ public static class TrackingDataManager
                 }
             }
         }
+
+        return newItems.Count;
     }
 
-    private static async Task ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent, CancellationToken ctChan = default, bool isAddUrl = false)
+    private static async Task<(int Added, int Updated)> ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent, CancellationToken ctChan = default, bool isAddUrl = false)
     {
         var existingList = await HintStatusCommands.GetHintStatus(guild, channel);
         var existingByKey = existingList.ToDictionary(MakeKey);
@@ -925,7 +1049,7 @@ public static class TrackingDataManager
         var hintsToUpdate = new List<HintStatus>();
 
         if (hintsList == null || hintsList.Count == 0)
-            return;
+            return (0, 0);
 
         foreach (var hint in hintsList)
         {
@@ -1044,12 +1168,14 @@ public static class TrackingDataManager
                 }
             }
         }
+
+        return (hintsToAdd.Count, hintsToUpdate.Count);
     }
 
-    private static async Task ProcessGameStatusTableAsync(string guild, string channel, List<GameStatus> statuses, bool silent, CancellationToken ctChan)
+    private static async Task<int> ProcessGameStatusTableAsync(string guild, string channel, List<GameStatus> statuses, bool silent, CancellationToken ctChan)
     {
         if (statuses == null || statuses.Count == 0)
-            return;
+            return 0;
 
         var previous = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guild, channel).ConfigureAwait(false);
         var prevByKey = previous.ToDictionary(
@@ -1110,6 +1236,8 @@ public static class TrackingDataManager
                 }
             }
         }
+
+        return previous.Count == 0 ? 0 : newlyCompleted.Count;
     }
 
     private static string MakeKey(string? name, string? game)

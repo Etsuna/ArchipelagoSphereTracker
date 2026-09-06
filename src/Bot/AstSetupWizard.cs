@@ -314,8 +314,6 @@ public static class AstSetupWizard
             "frequency" when value is "5m" or "15m" or "30m" or "1h" or "6h" or "12h" or "18h" or "1d" =>
                 Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
                     current => current with { CheckFrequency = value }, out updated),
-            "preview" => Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
-                current => current, out updated),
             _ => false
         };
 
@@ -402,7 +400,17 @@ public static class AstSetupWizard
             ? Resource.AstSetupReadyToConfirm
             : Resource.AstSetupConfigureTheURLAndThreadName;
 
-        return string.Format(Resource.AstSetupASTSetupAssistantTargetChannelWebHostThreadNotificationsMinimum, draft.TargetChannelId, urlStatus, title, thread, notifications, draft.CheckFrequency, ready);
+        return string.Format(
+            Resource.AstSetupASTSetupAssistantTargetChannelWebHostThreadNotificationsMinimum,
+            draft.TargetChannelId,
+            urlStatus,
+            title,
+            thread,
+            notifications,
+            draft.CheckFrequency,
+            GetInitialMaximumFrequency(draft.CheckFrequency),
+            Resource.AstSetupHighIntervalWarning,
+            ready);
     }
 
     public static MessageComponent BuildComponents(AstSetupDraft draft)
@@ -410,7 +418,6 @@ public static class AstSetupWizard
         var id = draft.SessionId;
         var builder = new ComponentBuilder()
             .WithButton(Resource.AstSetupConfigureRoom, CustomId(id, "details"), ButtonStyle.Primary, row: 0)
-            .WithButton(Resource.AstSetupPreview, CustomId(id, "preview"), ButtonStyle.Secondary, row: 0)
             .WithButton(Resource.AstCenterConfirm, CustomId(id, "confirm"), ButtonStyle.Success, disabled: !IsReady(draft), row: 0)
             .WithButton(Resource.AstCenterCancel, CustomId(id, "cancel"), ButtonStyle.Danger, row: 0)
             .WithSelectMenu(ChannelMenu(draft), row: 1)
@@ -593,8 +600,31 @@ public static class AstSetupWizard
             .WithMinValues(1)
             .WithMaxValues(1);
         foreach (var frequency in new[] { "5m", "15m", "30m", "1h", "6h", "12h", "18h", "1d" })
-            menu.AddOption(Option(frequency, frequency, draft.CheckFrequency == frequency));
+            menu.AddOption(Option(frequency, frequency, draft.CheckFrequency == frequency)
+                .WithDescription(FrequencyDescription(frequency)));
         return menu;
+    }
+
+    private static string GetInitialMaximumFrequency(string minimumFrequency)
+    {
+        var minimum = TrackingDataManager.CheckFrequencyParser.ParseOrDefault(
+            minimumFrequency,
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromDays(1));
+        return minimum > TimeSpan.FromHours(1) ? minimumFrequency : "1h";
+    }
+
+    private static string FrequencyDescription(string frequency)
+    {
+        var interval = TrackingDataManager.CheckFrequencyParser.ParseOrDefault(
+            frequency,
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromDays(1));
+        return interval < TimeSpan.FromHours(1)
+            ? string.Format(Resource.AstSetupAdaptiveFrequencyDescription, frequency, "1h")
+            : string.Format(Resource.AstSetupSlowFrequencyDescription, frequency);
     }
 
     private static SelectMenuOptionBuilder Option(string label, string value, bool isDefault)

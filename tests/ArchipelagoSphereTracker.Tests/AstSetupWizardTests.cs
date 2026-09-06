@@ -73,13 +73,22 @@ public class AstSetupWizardTests
             })
             .Where(value => value != null)
             .ToList();
+        var frequencyMenu = components.Components
+            .OfType<ActionRowComponent>()
+            .SelectMany(row => row.Components)
+            .OfType<SelectMenuComponent>()
+            .Single(menu => menu.CustomId.EndsWith(":frequency", StringComparison.Ordinal));
 
         Assert.True(AstSetupWizard.IsReady(draft));
         Assert.Contains("archipelago.example", summary, StringComparison.Ordinal);
         Assert.Contains("<#3>", summary, StringComparison.Ordinal);
+        Assert.Contains("`1h`", summary, StringComparison.Ordinal);
         Assert.DoesNotContain("private-room-token", summary, StringComparison.Ordinal);
         Assert.DoesNotContain("private-room-token", draft.ToString(), StringComparison.Ordinal);
-        Assert.Equal(8, customIds.Count);
+        Assert.Equal(7, customIds.Count);
+        Assert.DoesNotContain(customIds, customId => customId!.EndsWith(":preview", StringComparison.Ordinal));
+        Assert.Equal(8, frequencyMenu.Options.Count);
+        Assert.All(frequencyMenu.Options, option => Assert.False(string.IsNullOrWhiteSpace(option.Description)));
         Assert.All(customIds, customId => Assert.StartsWith(
             $"{AstSetupWizard.CustomIdPrefix}:{draft.SessionId}:",
             customId!,
@@ -88,7 +97,7 @@ public class AstSetupWizardTests
 
     [Theory]
     [InlineData("invalid")]
-    [InlineData("astsetup:not-a-guid:preview")]
+    [InlineData("astsetup:not-a-guid:details")]
     [InlineData("astsetup:00000000000000000000000000000000")]
     public void CustomIdParser_RejectsForeignOrMalformedIds(string customId)
     {

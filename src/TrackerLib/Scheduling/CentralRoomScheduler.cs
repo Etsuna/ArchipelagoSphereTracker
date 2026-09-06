@@ -26,6 +26,7 @@ public sealed class CentralRoomScheduler
     private readonly CentralRoomSchedulerOptions _options;
     private readonly TimeProvider _timeProvider;
     private readonly ICentralSchedulerMetrics _metrics;
+    private readonly RoomPollCompletionObserver? _completionObserver;
     private readonly SemaphoreSlim _cycleGate = new(1, 1);
     private readonly SemaphoreSlim _globalGate;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _originGates =
@@ -45,7 +46,8 @@ public sealed class CentralRoomScheduler
         RoomPollExecutor executor,
         CentralRoomSchedulerOptions? options = null,
         TimeProvider? timeProvider = null,
-        ICentralSchedulerMetrics? metrics = null)
+        ICentralSchedulerMetrics? metrics = null,
+        RoomPollCompletionObserver? completionObserver = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
@@ -53,6 +55,7 @@ public sealed class CentralRoomScheduler
         ValidateOptions(_options);
         _timeProvider = timeProvider ?? TimeProvider.System;
         _metrics = metrics ?? NullCentralSchedulerMetrics.Instance;
+        _completionObserver = completionObserver;
         _globalGate = new SemaphoreSlim(_options.GlobalConcurrency, _options.GlobalConcurrency);
     }
 
@@ -544,7 +547,7 @@ public sealed class CentralRoomScheduler
         TimeSpan duration,
         CancellationToken cancellationToken)
     {
-        RoomScheduleState state;
+        RoomScheduleState? state;
         lock (_sync)
         {
             if (result.RemoveRoom || room.RemovedOnReload)
@@ -552,99 +555,121 @@ public sealed class CentralRoomScheduler
                 _rooms.Remove(room.Definition.Key);
                 _lastPromotions.Remove(room.Definition.Key);
                 UpdateMetricsLocked(now);
-                return;
+                state = null;
             }
-
-            var failures = result.Success ? 0 : room.State.ConsecutiveFailures + 1;
-            DateTimeOffset nextPoll;
-            DateTimeOffset? breakerUntil = null;
-            var lastContentHash = room.State.LastContentHash;
-            var unchangedSuccesses = room.State.UnchangedSuccessCount;
-            var effectiveInterval = room.State.EffectiveIntervalSeconds > 0
-                ? TimeSpan.FromSeconds(room.State.EffectiveIntervalSeconds)
-                : room.Definition.PollInterval;
-            var lastChangeAt = room.State.LastChangeAtUtc;
-
-            if (result.Success)
+            else
             {
-                ResetOriginLocked(room.Definition.Origin);
-                if (!string.IsNullOrWhiteSpace(result.ContentHash))
+                var failures = result.Success ? 0 : room.State.ConsecutiveFailures + 1;
+                DateTimeOffset nextPoll;
+                DateTimeOffset? breakerUntil = null;
+                var lastContentHash = room.State.LastContentHash;
+                var unchangedSuccesses = room.State.UnchangedSuccessCount;
+                var effectiveInterval = room.State.EffectiveIntervalSeconds > 0
+                    ? TimeSpan.FromSeconds(room.State.EffectiveIntervalSeconds)
+                    : room.Definition.PollInterval;
+                var lastChangeAt = room.State.LastChangeAtUtc;
+
+                if (result.Success)
                 {
-                    if (string.IsNullOrWhiteSpace(lastContentHash))
+                    ResetOriginLocked(room.Definition.Origin);
+                    if (!string.IsNullOrWhiteSpace(result.ContentHash))
                     {
-                        unchangedSuccesses = 0;
-                        effectiveInterval = room.Definition.PollInterval;
-                        lastChangeAt ??= now;
-                    }
-                    else if (string.Equals(lastContentHash, result.ContentHash, StringComparison.Ordinal))
-                    {
-                        if (room.Definition.PollingMode == RoomPollingMode.Automatic)
+                        if (string.IsNullOrWhiteSpace(lastContentHash))
                         {
-                            unchangedSuccesses++;
-                            effectiveInterval = ComputeAdaptiveInterval(room.Definition, unchangedSuccesses);
+                            unchangedSuccesses = 0;
+                            effectiveInterval = room.Definition.PollInterval;
+                            lastChangeAt ??= now;
                         }
+                        else if (string.Equals(lastContentHash, result.ContentHash, StringComparison.Ordinal))
+                        {
+                            if (room.Definition.PollingMode == RoomPollingMode.Automatic)
+                            {
+                                unchangedSuccesses++;
+                                effectiveInterval = ComputeAdaptiveInterval(room.Definition, unchangedSuccesses);
+                            }
+                        }
+                        else
+                        {
+                            unchangedSuccesses = 0;
+                            effectiveInterval = room.Definition.PollInterval;
+                            lastChangeAt = now;
+                        }
+                        lastContentHash = result.ContentHash;
                     }
                     else
                     {
                         unchangedSuccesses = 0;
                         effectiveInterval = room.Definition.PollInterval;
-                        lastChangeAt = now;
                     }
-                    lastContentHash = result.ContentHash;
+                    if (room.Definition.PollingMode == RoomPollingMode.Fixed)
+                    {
+                        unchangedSuccesses = 0;
+                        effectiveInterval = room.Definition.PollInterval;
+                    }
+                    nextPoll = now
+                        .Add(effectiveInterval)
+                        .Add(ComputePositiveJitter(room.Definition.Key, now));
                 }
                 else
                 {
-                    unchangedSuccesses = 0;
-                    effectiveInterval = room.Definition.PollInterval;
-                }
-                if (room.Definition.PollingMode == RoomPollingMode.Fixed)
-                {
-                    unchangedSuccesses = 0;
-                    effectiveInterval = room.Definition.PollInterval;
-                }
-                nextPoll = now
-                    .Add(effectiveInterval)
-                    .Add(ComputePositiveJitter(room.Definition.Key, now));
-            }
-            else
-            {
-                if (result.AffectsOriginBreaker)
-                    breakerUntil = RecordOriginFailureLocked(room.Definition.Origin, now);
+                    if (result.AffectsOriginBreaker)
+                        breakerUntil = RecordOriginFailureLocked(room.Definition.Origin, now);
 
-                var delay = ComputeBackoff(failures);
-                if (result.RetryAfter is { } retryAfter && retryAfter > delay)
-                    delay = retryAfter;
-                if (result.FailureKind == PollFailureKind.NotFound && room.Definition.PollInterval > delay)
-                    delay = room.Definition.PollInterval;
-                if (breakerUntil is { } openUntil && openUntil > now.Add(delay))
-                    delay = openUntil - now;
-                nextPoll = now.Add(delay).Add(ComputePositiveJitter(room.Definition.Key, now));
-            }
+                    var delay = ComputeBackoff(failures);
+                    if (result.RetryAfter is { } retryAfter && retryAfter > delay)
+                        delay = retryAfter;
+                    if (result.FailureKind == PollFailureKind.NotFound && room.Definition.PollInterval > delay)
+                        delay = room.Definition.PollInterval;
+                    if (breakerUntil is { } openUntil && openUntil > now.Add(delay))
+                        delay = openUntil - now;
+                    nextPoll = now.Add(delay).Add(ComputePositiveJitter(room.Definition.Key, now));
+                }
 
-            state = room.State = new RoomScheduleState(
-                room.Definition.GuildId,
-                room.Definition.ChannelId,
-                nextPoll,
-                now,
-                result.Success ? now : room.State.LastSuccessAtUtc,
-                failures,
-                result.Success ? PollFailureKind.None : result.FailureKind,
-                breakerUntil,
-                Math.Max(0, duration.TotalMilliseconds),
-                room.State.IsPaused,
-                room.State.PausedAtUtc,
-                room.State.LastForcedSyncAtUtc,
-                lastContentHash,
-                unchangedSuccesses,
-                effectiveInterval.TotalSeconds,
-                lastChangeAt);
-            room.Running = false;
-            if (!state.IsPaused)
-                EnqueueLocked(room);
-            UpdateMetricsLocked(now);
+                state = room.State = new RoomScheduleState(
+                    room.Definition.GuildId,
+                    room.Definition.ChannelId,
+                    nextPoll,
+                    now,
+                    result.Success ? now : room.State.LastSuccessAtUtc,
+                    failures,
+                    result.Success ? PollFailureKind.None : result.FailureKind,
+                    breakerUntil,
+                    Math.Max(0, duration.TotalMilliseconds),
+                    room.State.IsPaused,
+                    room.State.PausedAtUtc,
+                    room.State.LastForcedSyncAtUtc,
+                    lastContentHash,
+                    unchangedSuccesses,
+                    effectiveInterval.TotalSeconds,
+                    lastChangeAt);
+                room.Running = false;
+                if (!state.IsPaused)
+                    EnqueueLocked(room);
+                UpdateMetricsLocked(now);
+            }
         }
 
-        await _store.SaveStateAsync(state, cancellationToken).ConfigureAwait(false);
+        if (state != null)
+            await _store.SaveStateAsync(state, cancellationToken).ConfigureAwait(false);
+        var completionResult = state == null && !result.RemoveRoom
+            ? result with { RemoveRoom = true }
+            : result;
+        NotifyCompletion(new RoomPollCompletion(room.Definition, completionResult, state, duration));
+    }
+
+    private void NotifyCompletion(RoomPollCompletion completion)
+    {
+        if (_completionObserver == null)
+            return;
+
+        try
+        {
+            _completionObserver(completion);
+        }
+        catch
+        {
+            // Diagnostics must never interrupt room scheduling.
+        }
     }
 
     private DateTimeOffset? RecordOriginFailureLocked(string origin, DateTimeOffset now)

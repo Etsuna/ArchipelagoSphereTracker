@@ -6,7 +6,7 @@ La création d'une room imposait de connaître les six paramètres de `/add-url`
 
 ## Architecture retenue
 
-`/ast-setup` ouvre un assistant éphémère Discord. Une session en mémoire, liée à l'utilisateur, au serveur et au canal d'interaction, contient le brouillon pendant 15 minutes d'inactivité. Les composants portent uniquement un identifiant de session aléatoire et une action ; l'URL de room n'est jamais placée dans un `custom_id`, un aperçu ou un log.
+`/ast-setup` ouvre un assistant éphémère Discord. Une session en mémoire, liée à l'utilisateur, au serveur et au canal d'interaction, contient le brouillon pendant 15 minutes d'inactivité. Les composants portent uniquement un identifiant de session aléatoire et une action ; l'URL de room n'est jamais placée dans un `custom_id`, le récapitulatif ou un log.
 
 Le parcours permet de :
 
@@ -14,10 +14,10 @@ Le parcours permet de :
 2. saisir l'URL WebHost et le nom du thread dans une modale ;
 3. choisir un thread privé, public, ou public avec ajout des membres ;
 4. choisir les notifications normales ou silencieuses ;
-5. définir la fréquence minimale de polling ;
-6. vérifier l'aperçu, puis confirmer ou annuler.
+5. définir la fréquence minimale de polling ; chaque option indique le délai actif/calme et le récapitulatif affiche le mode automatique ainsi que le plafond initial réellement appliqué ;
+6. vérifier le récapitulatif mis à jour automatiquement, puis confirmer ou annuler.
 
-L'aperçu ne montre que le nom d'hôte validé. À la confirmation, AST retire la session pour empêcher un double clic, revalide le rôle `GuildManager`, le serveur et le canal cible, puis appelle le même service que `/add-url`. La validation SSRF/URL, la lecture des API publiques WebHost, la création du thread, l'écriture chiffrée et le démarrage du suivi restent donc centralisés. AST ne se connecte pas au protocole Archipelago.
+Le récapitulatif ne montre que le nom d'hôte validé et se rafraîchit après chaque modification. À la confirmation, AST retire la session pour empêcher un double clic, revalide le rôle `GuildManager`, le serveur et le canal cible, puis appelle le même service que `/add-url`. La validation SSRF/URL, la lecture des API publiques WebHost, la création du thread, l'écriture en base et le démarrage du suivi restent donc centralisés. AST ne se connecte pas au protocole Archipelago.
 
 L'association Discord ↔ slots et les niveaux de détail de notification ne sont pas simulés ici : ils nécessitent le modèle persistant de préférences prévu par les PR dédiées. L'assistant pourra les intégrer lorsque ces données existeront.
 
@@ -31,7 +31,7 @@ L'association Discord ↔ slots et les niveaux de détail de notification ne son
 
 ## Fichiers touchés
 
-- `src/Bot/AstSetupWizard.cs` : sessions, composants, modale, aperçu et confirmation.
+- `src/Bot/AstSetupWizard.cs` : sessions, composants, modale, récapitulatif et confirmation.
 - `src/Bot/BotCommands.cs` : enregistrement des interactions Discord.
 - `src/Bot/SlashCommandDefinitions.cs` : définition de `/ast-setup`.
 - `src/Bot/UrlClass.cs` : résultat structuré réutilisable et message sans secret.

@@ -27,9 +27,25 @@ public sealed record RoomPollResult(
     TimeSpan? RetryAfter = null,
     bool AffectsOriginBreaker = false,
     bool RemoveRoom = false,
-    string? ContentHash = null)
+    string? ContentHash = null,
+    int NewItemCount = 0,
+    int NewHintCount = 0,
+    int UpdatedHintCount = 0,
+    int CompletedGoalCount = 0)
 {
-    public static RoomPollResult Ok(string? contentHash = null) => new(true, ContentHash: contentHash);
+    public static RoomPollResult Ok(
+        string? contentHash = null,
+        int newItemCount = 0,
+        int newHintCount = 0,
+        int updatedHintCount = 0,
+        int completedGoalCount = 0)
+        => new(
+            true,
+            ContentHash: contentHash,
+            NewItemCount: newItemCount,
+            NewHintCount: newHintCount,
+            UpdatedHintCount: updatedHintCount,
+            CompletedGoalCount: completedGoalCount);
     public static RoomPollResult Removed() => new(true, RemoveRoom: true);
 
     public static RoomPollResult Failed(
@@ -38,6 +54,14 @@ public sealed record RoomPollResult(
         bool affectsOriginBreaker = false)
         => new(false, kind, retryAfter, affectsOriginBreaker);
 }
+
+public sealed record RoomPollCompletion(
+    ScheduledRoomDefinition Room,
+    RoomPollResult Result,
+    RoomScheduleState? State,
+    TimeSpan Duration);
+
+public delegate void RoomPollCompletionObserver(RoomPollCompletion completion);
 
 public sealed record ScheduledRoomDefinition(
     string GuildId,

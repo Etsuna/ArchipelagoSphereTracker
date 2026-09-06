@@ -173,6 +173,78 @@
     <value>Tracking canceled.</value>
     <comment>Tracking canceled.</comment>
   </data>
+  <data name="TDMSyncLog" xml:space="preserve">
+    <value>[TDM][Sync] {0} / #{1} ({2}) — {3} — {4} s — {5}</value>
+  </data>
+  <data name="TDMSyncNextCheck" xml:space="preserve">
+    <value>next check around {0}</value>
+  </data>
+  <data name="TDMSyncNoNextCheck" xml:space="preserve">
+    <value>no further check scheduled</value>
+  </data>
+  <data name="TDMSyncNoNewItem" xml:space="preserve">
+    <value>no new item</value>
+  </data>
+  <data name="TDMSyncOneNewItem" xml:space="preserve">
+    <value>1 new item</value>
+  </data>
+  <data name="TDMSyncManyNewItems" xml:space="preserve">
+    <value>{0} new items</value>
+  </data>
+  <data name="TDMSyncOneNewHint" xml:space="preserve">
+    <value>1 new hint</value>
+  </data>
+  <data name="TDMSyncManyNewHints" xml:space="preserve">
+    <value>{0} new hints</value>
+  </data>
+  <data name="TDMSyncOneUpdatedHint" xml:space="preserve">
+    <value>1 updated hint</value>
+  </data>
+  <data name="TDMSyncManyUpdatedHints" xml:space="preserve">
+    <value>{0} updated hints</value>
+  </data>
+  <data name="TDMSyncOneCompletedGoal" xml:space="preserve">
+    <value>1 completed goal</value>
+  </data>
+  <data name="TDMSyncManyCompletedGoals" xml:space="preserve">
+    <value>{0} completed goals</value>
+  </data>
+  <data name="TDMSyncTrackingEnded" xml:space="preserve">
+    <value>tracking ended (room or channel removed)</value>
+  </data>
+  <data name="TDMSyncFailure" xml:space="preserve">
+    <value>error: {0} (consecutive failures: {1})</value>
+  </data>
+  <data name="TDMSyncFailureNotFound" xml:space="preserve">
+    <value>tracker not found</value>
+  </data>
+  <data name="TDMSyncFailureRateLimited" xml:space="preserve">
+    <value>WebHost rate limit</value>
+  </data>
+  <data name="TDMSyncFailureServer" xml:space="preserve">
+    <value>WebHost server error</value>
+  </data>
+  <data name="TDMSyncFailureTimeout" xml:space="preserve">
+    <value>WebHost timeout</value>
+  </data>
+  <data name="TDMSyncFailureNetwork" xml:space="preserve">
+    <value>network or Discord unavailable</value>
+  </data>
+  <data name="TDMSyncFailureContentType" xml:space="preserve">
+    <value>invalid WebHost response type</value>
+  </data>
+  <data name="TDMSyncFailureJson" xml:space="preserve">
+    <value>invalid WebHost data</value>
+  </data>
+  <data name="TDMSyncFailurePartial" xml:space="preserve">
+    <value>room temporarily unavailable</value>
+  </data>
+  <data name="TDMSyncFailureCircuitOpen" xml:space="preserve">
+    <value>WebHost temporarily suspended after repeated failures</value>
+  </data>
+  <data name="TDMSyncFailureUnexpected" xml:space="preserve">
+    <value>unexpected error</value>
+  </data>
   <data name="TDMGoalComplete" xml:space="preserve">
     <value>@everyone {0} has completed their goal for this game: {1}!</value>
     <comment>@everyone {newEntry.Name} has completed their goal for this game: {newEntry.Game}!</comment>
@@ -1161,7 +1233,7 @@
     <value>Dissociate by name</value>
   </data>
   <data name="AstCenterDissociateOneOfMySlots" xml:space="preserve">
-    <value>Dissociate one of my slots…</value>
+    <value>────────  Dissociate one of my slots…</value>
   </data>
   <data name="AstCenterDownloadATemplate" xml:space="preserve">
     <value>Download a template…</value>
@@ -1609,9 +1681,10 @@ Target channel: &lt;#{0}&gt;
 WebHost: `{1}`
 Thread: `{2}` ({3})
 Notifications: {4}
-Minimum frequency: `{5}`
+Initial polling: automatic — minimum `{5}` — maximum `{6}`
+ℹ️ {7}
 
-{6}
+{8}
 The session expires after 15 minutes of inactivity.</value>
   </data>
   <data name="AstSetupArchipelagoRoomURL" xml:space="preserve">
@@ -1630,7 +1703,16 @@ The session expires after 15 minutes of inactivity.</value>
     <value>invalid format</value>
   </data>
   <data name="AstSetupMinimumFrequency" xml:space="preserve">
-    <value>Minimum frequency</value>
+    <value>Automatic polling minimum</value>
+  </data>
+  <data name="AstSetupHighIntervalWarning" xml:space="preserve">
+    <value>A high interval can significantly delay updates and notifications.</value>
+  </data>
+  <data name="AstSetupAdaptiveFrequencyDescription" xml:space="preserve">
+    <value>Active: {0}; quiet: up to {1} (+ up to 1 min)</value>
+  </data>
+  <data name="AstSetupSlowFrequencyDescription" xml:space="preserve">
+    <value>Very slow: changes may take up to {0} (+ up to 1 min)</value>
   </data>
   <data name="AstSetupNormal" xml:space="preserve">
     <value>normal</value>
@@ -1649,9 +1731,6 @@ The session expires after 15 minutes of inactivity.</value>
   </data>
   <data name="AstSetupOpenAstInTheTextChannelThatWillHost" xml:space="preserve">
     <value>Open `/ast` in the text channel that will host the new room.</value>
-  </data>
-  <data name="AstSetupPreview" xml:space="preserve">
-    <value>Preview</value>
   </data>
   <data name="AstSetupPrivate" xml:space="preserve">
     <value>private</value>
@@ -2753,5 +2832,145 @@ Items: **{3}**
   <data name="AstCenterSpoilerImportHint" xml:space="preserve">
     <value>To import or replace the shared spoiler, run `/ast` again with the `file` option.</value>
     <comment>To import or replace the shared spoiler, run `/ast` again with the `file` option.</comment>
+  </data>
+  <data name="AstCenterGuildNoLongerStoredInDatabase" xml:space="preserve">
+    <value>This guild is no longer stored in the database.</value>
+  </data>
+  <data name="AstCenterGuildDataDeleted" xml:space="preserve">
+    <value>The guild's AST data has been deleted.</value>
+  </data>
+  <data name="AstCenterChannelDataDeleted" xml:space="preserve">
+    <value>The channel's AST data has been deleted.</value>
+  </data>
+  <data name="AstCenterAccountNotHumanGuildMember" xml:space="preserve">
+    <value>This account is not a human member of this guild.</value>
+  </data>
+  <data name="AstCenterMemberAlreadyHasDiscordManagementAccess" xml:space="preserve">
+    <value>This member already has management access through Discord.</value>
+  </data>
+  <data name="AstCenterUserCanNowManageAst" xml:space="preserve">
+    <value>&lt;@{0}&gt; can now manage AST in this guild.</value>
+  </data>
+  <data name="AstCenterDelegatedAccessRevoked" xml:space="preserve">
+    <value>The delegated AST access for &lt;@{0}&gt; has been revoked.</value>
+  </data>
+  <data name="AstCenterAstInstance" xml:space="preserve">
+    <value>AST instance</value>
+  </data>
+  <data name="AstCenterAstManagers" xml:space="preserve">
+    <value>AST managers</value>
+  </data>
+  <data name="AstCenterAstAccess" xml:space="preserve">
+    <value>AST access</value>
+  </data>
+  <data name="AstCenterNoDelegatedManager" xml:space="preserve">
+    <value>No delegated AST manager. Discord administrators automatically retain all management permissions.</value>
+  </data>
+  <data name="AstCenterNoManagerMatchesFilter" xml:space="preserve">
+    <value>No manager matches the filter.</value>
+  </data>
+  <data name="AstCenterDelegatedManagers" xml:space="preserve">
+    <value>Delegated AST managers:</value>
+  </data>
+  <data name="AstCenterManagerGrantedBy" xml:space="preserve">
+    <value>• &lt;@{0}&gt; — granted by &lt;@{1}&gt;</value>
+  </data>
+  <data name="AstCenterChooseMemberAuthorize" xml:space="preserve">
+    <value>Choose a member to authorize</value>
+  </data>
+  <data name="AstCenterChooseManagerRevoke" xml:space="preserve">
+    <value>Choose a manager to revoke</value>
+  </data>
+  <data name="AstCenterAstManagersTitle" xml:space="preserve">
+    <value>🔐 AST managers</value>
+  </data>
+  <data name="AstCenterGuildAndAllAstData" xml:space="preserve">
+    <value>of guild `{0}` and all its AST data</value>
+  </data>
+  <data name="AstCenterChannelAndAllAstData" xml:space="preserve">
+    <value>of channel `{0}` and all its AST data</value>
+  </data>
+  <data name="AstCenterInstanceCleanup" xml:space="preserve">
+    <value>⚠️ Instance cleanup</value>
+  </data>
+  <data name="AstCenterConfirmIrreversibleDeletion" xml:space="preserve">
+    <value>Confirm deletion {0}? This operation cannot be undone.</value>
+  </data>
+  <data name="AstCenterInstanceAdministration" xml:space="preserve">
+    <value>🧭 Instance administration</value>
+  </data>
+  <data name="AstCenterOwnerGlobalAccessDescription" xml:space="preserve">
+    <value>Owner access: inspect, control, and clean every stored guild.</value>
+  </data>
+  <data name="AstCenterChooseStoredGuild" xml:space="preserve">
+    <value>Choose a stored guild</value>
+  </data>
+  <data name="AstCenterRoomCount" xml:space="preserve">
+    <value>{0} room(s)</value>
+  </data>
+  <data name="AstCenterGuilds" xml:space="preserve">
+    <value>Guilds</value>
+  </data>
+  <data name="AstCenterNoGuildStored" xml:space="preserve">
+    <value>No guild is stored in the database.</value>
+  </data>
+  <data name="AstCenterNoGuildMatches" xml:space="preserve">
+    <value>No guild matches the filter.</value>
+  </data>
+  <data name="AstCenterGuildNoLongerStored" xml:space="preserve">
+    <value>This guild is no longer stored.</value>
+  </data>
+  <data name="AstCenterGuildList" xml:space="preserve">
+    <value>Guild list</value>
+  </data>
+  <data name="AstCenterStoredRoomCount" xml:space="preserve">
+    <value>{0} stored room(s).</value>
+  </data>
+  <data name="AstCenterHealth" xml:space="preserve">
+    <value>Health</value>
+  </data>
+  <data name="AstCenterChooseTrackedChannel" xml:space="preserve">
+    <value>Choose a tracked channel</value>
+  </data>
+  <data name="AstCenterCleanGuild" xml:space="preserve">
+    <value>Clean this guild</value>
+  </data>
+  <data name="AstCenterChannelNoLongerStored" xml:space="preserve">
+    <value>This channel is no longer stored.</value>
+  </data>
+  <data name="AstCenterGuildRooms" xml:space="preserve">
+    <value>Guild rooms</value>
+  </data>
+  <data name="AstCenterCleanChannel" xml:space="preserve">
+    <value>Clean this channel</value>
+  </data>
+  <data name="AstCenterMissingGuild" xml:space="preserve">
+    <value>Missing guild {0}</value>
+  </data>
+  <data name="AstCenterMissingChannel" xml:space="preserve">
+    <value>Missing channel {0}</value>
+  </data>
+  <data name="AstCenterUserLabel" xml:space="preserve">
+    <value>User {0}</value>
+  </data>
+  <data name="DiscordSnowflakeRequired" xml:space="preserve">
+    <value>A valid Discord snowflake is required.</value>
+  </data>
+  <data name="DatabaseMigrationRoleBindings" xml:space="preserve">
+    <value>Migrating to DB version 5.0.13: guild-scoped AST role bindings.</value>
+  </data>
+  <data name="AstCenterInstanceGuildDetails" xml:space="preserve">
+    <value>Guild ID: `{0}`
+{1}</value>
+  </data>
+  <data name="AstCenterInstanceRoomDetails" xml:space="preserve">
+    <value>Guild ID: `{0}`
+Channel ID: `{1}`
+Room: `{2}`
+Tracker: `{3}`
+Frequency: `{4}` — silent: `{5}`
+URL: `{6}`
+
+{7}</value>
   </data>
 </root>

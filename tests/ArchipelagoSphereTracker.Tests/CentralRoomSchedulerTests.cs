@@ -314,6 +314,58 @@ public sealed class CentralRoomSchedulerTests
     }
 
     [Fact]
+    public async Task Completion_observer_receives_activity_counts_and_next_schedule()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("observed", "https://a.example", T0)]);
+        RoomPollCompletion? completion = null;
+        var scheduler = new CentralRoomScheduler(
+            store,
+            (_, _) => Task.FromResult(RoomPollResult.Ok(
+                "snapshot",
+                newItemCount: 3,
+                newHintCount: 2,
+                updatedHintCount: 1,
+                completedGoalCount: 1)),
+            Options(global: 1, perOrigin: 1),
+            timeProvider: time,
+            completionObserver: value => completion = value);
+        await scheduler.InitializeAsync();
+
+        Assert.Equal(1, await scheduler.RunDueOnceAsync());
+
+        var observed = Assert.IsType<RoomPollCompletion>(completion);
+        Assert.Equal("observed", observed.Room.ChannelId);
+        Assert.Equal(3, observed.Result.NewItemCount);
+        Assert.Equal(2, observed.Result.NewHintCount);
+        Assert.Equal(1, observed.Result.UpdatedHintCount);
+        Assert.Equal(1, observed.Result.CompletedGoalCount);
+        Assert.Equal(T0.AddMinutes(5), observed.State!.NextPollAtUtc);
+    }
+
+    [Fact]
+    public async Task Completion_observer_reports_when_tracking_is_removed()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("removed", "https://a.example", T0)]);
+        RoomPollCompletion? completion = null;
+        var scheduler = new CentralRoomScheduler(
+            store,
+            (_, _) => Task.FromResult(RoomPollResult.Removed()),
+            Options(global: 1, perOrigin: 1),
+            timeProvider: time,
+            completionObserver: value => completion = value);
+        await scheduler.InitializeAsync();
+
+        Assert.Equal(1, await scheduler.RunDueOnceAsync());
+
+        var observed = Assert.IsType<RoomPollCompletion>(completion);
+        Assert.True(observed.Result.RemoveRoom);
+        Assert.Null(observed.State);
+        Assert.Equal(0, scheduler.RoomCount);
+    }
+
+    [Fact]
     public async Task Open_breaker_delays_other_rooms_on_the_same_origin()
     {
         var time = new ManualTimeProvider(T0);

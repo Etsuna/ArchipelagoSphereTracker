@@ -111,7 +111,7 @@ Les fonctions YAML, génération et APWorld ne sont visibles que lorsque `Declar
 | Ancienne commande | Destination dans `/ast` | Interaction proposée | Permission |
 |---|---|---|---|
 | `get-aliases` | La room → Associations | liste paginée/recherche | GuildMember |
-| `add-alias` | Mon espace → Mes slots → Associer | sélecteur de slot puis sélecteur de filtres de mention | GuildMember |
+| `add-alias` | Mon espace → Mes slots → Associer | sélecteur de filtres de mention puis sélecteur de slot | GuildMember |
 | `delete-alias` | Mon espace → Mes slots → Dissocier | sélecteur limité aux slots de l’utilisateur + confirmation | GuildMember ; gestion globale séparée pour administrateur |
 | `update-frequency-check` | Gérer la room → Polling | fusionné dans l’assistant de polling | RoomManager |
 | `add-url` | Accueil serveur → Configurer une room | remplacé par l’assistant de configuration | GuildManager |

@@ -803,7 +803,7 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
 
     public static async Task Migrate_5_0_13(CancellationToken ct = default)
     {
-        Console.WriteLine("Migrating to DB version 5.0.13: guild-scoped AST role bindings.");
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationRoleBindings);
 
         await Db.WriteAsync(async connection =>
         {

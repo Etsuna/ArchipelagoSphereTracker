@@ -277,6 +277,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à This account is not a human member of this guild..
+        /// </summary>
+        internal static string AstCenterAccountNotHumanGuildMember {
+            get {
+                return ResourceManager.GetString("AstCenterAccountNotHumanGuildMember", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Actions restricted to this room&apos;s managers..
         /// </summary>
         internal static string AstCenterActionsRestrictedToThisRoomSManagers {
@@ -322,7 +331,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Advanced.
+        ///   Recherche une chaîne localisée semblable à Recap management.
         /// </summary>
         internal static string AstCenterAdvanced {
             get {
@@ -331,7 +340,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à 🧹 Advanced recaps.
+        ///   Recherche une chaîne localisée semblable à 🧹 Recap management.
         /// </summary>
         internal static string AstCenterAdvancedRecaps {
             get {
@@ -448,6 +457,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à AST access.
+        /// </summary>
+        internal static string AstCenterAstAccess {
+            get {
+                return ResourceManager.GetString("AstCenterAstAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à 🛠️ AST administration.
         /// </summary>
         internal static string AstCenterASTAdministration {
@@ -471,6 +489,33 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string AstCenterASTHealth {
             get {
                 return ResourceManager.GetString("AstCenterASTHealth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à AST instance.
+        /// </summary>
+        internal static string AstCenterAstInstance {
+            get {
+                return ResourceManager.GetString("AstCenterAstInstance", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à AST managers.
+        /// </summary>
+        internal static string AstCenterAstManagers {
+            get {
+                return ResourceManager.GetString("AstCenterAstManagers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 🔐 AST managers.
+        /// </summary>
+        internal static string AstCenterAstManagersTitle {
+            get {
+                return ResourceManager.GetString("AstCenterAstManagersTitle", resourceCulture);
             }
         }
         
@@ -565,6 +610,33 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à of channel `{0}` and all its AST data.
+        /// </summary>
+        internal static string AstCenterChannelAndAllAstData {
+            get {
+                return ResourceManager.GetString("AstCenterChannelAndAllAstData", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The channel&apos;s AST data has been deleted..
+        /// </summary>
+        internal static string AstCenterChannelDataDeleted {
+            get {
+                return ResourceManager.GetString("AstCenterChannelDataDeleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à This channel is no longer stored..
+        /// </summary>
+        internal static string AstCenterChannelNoLongerStored {
+            get {
+                return ResourceManager.GetString("AstCenterChannelNoLongerStored", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Choose an item….
         /// </summary>
         internal static string AstCenterChooseAnItem {
@@ -601,6 +673,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose a manager to revoke.
+        /// </summary>
+        internal static string AstCenterChooseManagerRevoke {
+            get {
+                return ResourceManager.GetString("AstCenterChooseManagerRevoke", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose a member to authorize.
+        /// </summary>
+        internal static string AstCenterChooseMemberAuthorize {
+            get {
+                return ResourceManager.GetString("AstCenterChooseMemberAuthorize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Choose mode and interval….
         /// </summary>
         internal static string AstCenterChooseModeAndInterval {
@@ -619,6 +709,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose a stored guild.
+        /// </summary>
+        internal static string AstCenterChooseStoredGuild {
+            get {
+                return ResourceManager.GetString("AstCenterChooseStoredGuild", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Choose the area you want to open..
         /// </summary>
         internal static string AstCenterChooseTheAreaYouWantToOpen {
@@ -628,11 +727,38 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose a tracked channel.
+        /// </summary>
+        internal static string AstCenterChooseTrackedChannel {
+            get {
+                return ResourceManager.GetString("AstCenterChooseTrackedChannel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Clean all.
         /// </summary>
         internal static string AstCenterCleanAll {
             get {
                 return ResourceManager.GetString("AstCenterCleanAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clean this channel.
+        /// </summary>
+        internal static string AstCenterCleanChannel {
+            get {
+                return ResourceManager.GetString("AstCenterCleanChannel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clean this guild.
+        /// </summary>
+        internal static string AstCenterCleanGuild {
+            get {
+                return ResourceManager.GetString("AstCenterCleanGuild", resourceCulture);
             }
         }
         
@@ -754,11 +880,38 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Confirm deletion {0}? This operation cannot be undone..
+        /// </summary>
+        internal static string AstCenterConfirmIrreversibleDeletion {
+            get {
+                return ResourceManager.GetString("AstCenterConfirmIrreversibleDeletion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Confirm removal.
         /// </summary>
         internal static string AstCenterConfirmRemoval {
             get {
                 return ResourceManager.GetString("AstCenterConfirmRemoval", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The delegated AST access for &lt;@{0}&gt; has been revoked..
+        /// </summary>
+        internal static string AstCenterDelegatedAccessRevoked {
+            get {
+                return ResourceManager.GetString("AstCenterDelegatedAccessRevoked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Delegated AST managers:.
+        /// </summary>
+        internal static string AstCenterDelegatedManagers {
+            get {
+                return ResourceManager.GetString("AstCenterDelegatedManagers", resourceCulture);
             }
         }
         
@@ -835,7 +988,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Dissociate one of my slots….
+        ///   Recherche une chaîne localisée semblable à ────────  Dissociate one of my slots….
         /// </summary>
         internal static string AstCenterDissociateOneOfMySlots {
             get {
@@ -1051,11 +1204,83 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à of guild `{0}` and all its AST data.
+        /// </summary>
+        internal static string AstCenterGuildAndAllAstData {
+            get {
+                return ResourceManager.GetString("AstCenterGuildAndAllAstData", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The guild&apos;s AST data has been deleted..
+        /// </summary>
+        internal static string AstCenterGuildDataDeleted {
+            get {
+                return ResourceManager.GetString("AstCenterGuildDataDeleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Guild list.
+        /// </summary>
+        internal static string AstCenterGuildList {
+            get {
+                return ResourceManager.GetString("AstCenterGuildList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Guild-manager access..
         /// </summary>
         internal static string AstCenterGuildManagerAccess {
             get {
                 return ResourceManager.GetString("AstCenterGuildManagerAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à This guild is no longer stored..
+        /// </summary>
+        internal static string AstCenterGuildNoLongerStored {
+            get {
+                return ResourceManager.GetString("AstCenterGuildNoLongerStored", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à This guild is no longer stored in the database..
+        /// </summary>
+        internal static string AstCenterGuildNoLongerStoredInDatabase {
+            get {
+                return ResourceManager.GetString("AstCenterGuildNoLongerStoredInDatabase", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Guild rooms.
+        /// </summary>
+        internal static string AstCenterGuildRooms {
+            get {
+                return ResourceManager.GetString("AstCenterGuildRooms", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Guilds.
+        /// </summary>
+        internal static string AstCenterGuilds {
+            get {
+                return ResourceManager.GetString("AstCenterGuilds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Health.
+        /// </summary>
+        internal static string AstCenterHealth {
+            get {
+                return ResourceManager.GetString("AstCenterHealth", resourceCulture);
             }
         }
         
@@ -1096,11 +1321,55 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à 🧭 Instance administration.
+        /// </summary>
+        internal static string AstCenterInstanceAdministration {
+            get {
+                return ResourceManager.GetString("AstCenterInstanceAdministration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à ⚠️ Instance cleanup.
+        /// </summary>
+        internal static string AstCenterInstanceCleanup {
+            get {
+                return ResourceManager.GetString("AstCenterInstanceCleanup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Guild ID: `{0}`
+        ///{1}.
+        /// </summary>
+        internal static string AstCenterInstanceGuildDetails {
+            get {
+                return ResourceManager.GetString("AstCenterInstanceGuildDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Instance-owner access..
         /// </summary>
         internal static string AstCenterInstanceOwnerAccess {
             get {
                 return ResourceManager.GetString("AstCenterInstanceOwnerAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Guild ID: `{0}`
+        ///Channel ID: `{1}`
+        ///Room: `{2}`
+        ///Tracker: `{3}`
+        ///Frequency: `{4}` — silent: `{5}`
+        ///URL: `{6}`
+        ///
+        ///{7}.
+        /// </summary>
+        internal static string AstCenterInstanceRoomDetails {
+            get {
+                return ResourceManager.GetString("AstCenterInstanceRoomDetails", resourceCulture);
             }
         }
         
@@ -1177,6 +1446,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à • &lt;@{0}&gt; — granted by &lt;@{1}&gt;.
+        /// </summary>
+        internal static string AstCenterManagerGrantedBy {
+            get {
+                return ResourceManager.GetString("AstCenterManagerGrantedBy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à ⚙️ Manage room.
         /// </summary>
         internal static string AstCenterManageRoom {
@@ -1195,6 +1473,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à This member already has management access through Discord..
+        /// </summary>
+        internal static string AstCenterMemberAlreadyHasDiscordManagementAccess {
+            get {
+                return ResourceManager.GetString("AstCenterMemberAlreadyHasDiscordManagementAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Mention filter updated..
         /// </summary>
         internal static string AstCenterMentionFilterUpdated {
@@ -1204,11 +1491,29 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Missing channel {0}.
+        /// </summary>
+        internal static string AstCenterMissingChannel {
+            get {
+                return ResourceManager.GetString("AstCenterMissingChannel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Missing checks scope….
         /// </summary>
         internal static string AstCenterMissingChecksScope {
             get {
                 return ResourceManager.GetString("AstCenterMissingChecksScope", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Missing guild {0}.
+        /// </summary>
+        internal static string AstCenterMissingGuild {
+            get {
+                return ResourceManager.GetString("AstCenterMissingGuild", resourceCulture);
             }
         }
         
@@ -1420,11 +1725,47 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à No delegated AST manager. Discord administrators automatically retain all management permissions..
+        /// </summary>
+        internal static string AstCenterNoDelegatedManager {
+            get {
+                return ResourceManager.GetString("AstCenterNoDelegatedManager", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à No filter.
         /// </summary>
         internal static string AstCenterNoFilter {
             get {
                 return ResourceManager.GetString("AstCenterNoFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No guild matches the filter..
+        /// </summary>
+        internal static string AstCenterNoGuildMatches {
+            get {
+                return ResourceManager.GetString("AstCenterNoGuildMatches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No guild is stored in the database..
+        /// </summary>
+        internal static string AstCenterNoGuildStored {
+            get {
+                return ResourceManager.GetString("AstCenterNoGuildStored", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No manager matches the filter..
+        /// </summary>
+        internal static string AstCenterNoManagerMatchesFilter {
+            get {
+                return ResourceManager.GetString("AstCenterNoManagerMatchesFilter", resourceCulture);
             }
         }
         
@@ -1515,6 +1856,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string AstCenterNoUnfoundHintForYourSlots {
             get {
                 return ResourceManager.GetString("AstCenterNoUnfoundHintForYourSlots", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Owner access: inspect, control, and clean every stored guild..
+        /// </summary>
+        internal static string AstCenterOwnerGlobalAccessDescription {
+            get {
+                return ResourceManager.GetString("AstCenterOwnerGlobalAccessDescription", resourceCulture);
             }
         }
         
@@ -1746,6 +2096,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} room(s).
+        /// </summary>
+        internal static string AstCenterRoomCount {
+            get {
+                return ResourceManager.GetString("AstCenterRoomCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Room portal.
         /// </summary>
         internal static string AstCenterRoomPortal {
@@ -1836,7 +2195,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Sphere to validate (optional).
+        ///   Recherche une chaîne localisée semblable à Validate through the entered sphere.
         /// </summary>
         internal static string AstCenterSphereToValidateOptional {
             get {
@@ -1864,6 +2223,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string AstCenterSpoilerAnalysisDescription {
             get {
                 return ResourceManager.GetString("AstCenterSpoilerAnalysisDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à To import or replace the shared spoiler, run `/ast` again with the `file` option..
+        /// </summary>
+        internal static string AstCenterSpoilerImportHint {
+            get {
+                return ResourceManager.GetString("AstCenterSpoilerImportHint", resourceCulture);
             }
         }
         
@@ -1900,6 +2268,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string AstCenterSpoilerModeFull {
             get {
                 return ResourceManager.GetString("AstCenterSpoilerModeFull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} stored room(s)..
+        /// </summary>
+        internal static string AstCenterStoredRoomCount {
+            get {
+                return ResourceManager.GetString("AstCenterStoredRoomCount", resourceCulture);
             }
         }
         
@@ -2156,6 +2533,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à &lt;@{0}&gt; can now manage AST in this guild..
+        /// </summary>
+        internal static string AstCenterUserCanNowManageAst {
+            get {
+                return ResourceManager.GetString("AstCenterUserCanNowManageAst", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à User {0}.
+        /// </summary>
+        internal static string AstCenterUserLabel {
+            get {
+                return ResourceManager.GetString("AstCenterUserLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Use the buttons to navigate.
         ///
         ///{0}
@@ -2204,11 +2599,11 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Use /ast-room-portal to manage your room..
+        ///   Recherche une chaîne localisée semblable à Active: {0}; quiet: up to {1} (+ up to 1 min).
         /// </summary>
-        internal static string ASTRoomCommand {
+        internal static string AstSetupAdaptiveFrequencyDescription {
             get {
-                return ResourceManager.GetString("ASTRoomCommand", resourceCulture);
+                return ResourceManager.GetString("AstSetupAdaptiveFrequencyDescription", resourceCulture);
             }
         }
         
@@ -2227,9 +2622,10 @@ namespace ArchipelagoSphereTracker.src.Resources {
         ///WebHost: `{1}`
         ///Thread: `{2}` ({3})
         ///Notifications: {4}
-        ///Minimum frequency: `{5}`
+        ///Initial polling: automatic — minimum `{5}` — maximum `{6}`
+        ///ℹ️ {7}
         ///
-        ///{6}
+        ///{8}
         ///The session expires after 15 minutes of inactivity..
         /// </summary>
         internal static string AstSetupASTSetupAssistantTargetChannelWebHostThreadNotificationsMinimum {
@@ -2266,6 +2662,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à A high interval can significantly delay updates and notifications..
+        /// </summary>
+        internal static string AstSetupHighIntervalWarning {
+            get {
+                return ResourceManager.GetString("AstSetupHighIntervalWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à invalid format.
         /// </summary>
         internal static string AstSetupInvalidFormat {
@@ -2275,7 +2680,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Minimum frequency.
+        ///   Recherche une chaîne localisée semblable à Automatic polling minimum.
         /// </summary>
         internal static string AstSetupMinimumFrequency {
             get {
@@ -2334,15 +2739,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string AstSetupOpenAstInTheTextChannelThatWillHost {
             get {
                 return ResourceManager.GetString("AstSetupOpenAstInTheTextChannelThatWillHost", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Preview.
-        /// </summary>
-        internal static string AstSetupPreview {
-            get {
-                return ResourceManager.GetString("AstSetupPreview", resourceCulture);
             }
         }
         
@@ -2428,6 +2824,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Very slow: changes may take up to {0} (+ up to 1 min).
+        /// </summary>
+        internal static string AstSetupSlowFrequencyDescription {
+            get {
+                return ResourceManager.GetString("AstSetupSlowFrequencyDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à This session expired or does not belong to you. Run `/ast-setup` again..
         /// </summary>
         internal static string AstSetupThisSessionExpiredOrDoesNotBelongToYou {
@@ -2451,15 +2856,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string AstSetupValidatingTheRoomAndCreatingTheThread {
             get {
                 return ResourceManager.GetString("AstSetupValidatingTheRoomAndCreatingTheThread", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Use /ast-user-portal to manage your aliases and recaps..
-        /// </summary>
-        internal static string ASTUserCommand {
-            get {
-                return ResourceManager.GetString("ASTUserCommand", resourceCulture);
             }
         }
         
@@ -2752,6 +3148,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à check-frequency.
+        /// </summary>
+        internal static string CheckFrequency {
+            get {
+                return ResourceManager.GetString("CheckFrequency", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Check frequency, default 5m..
+        /// </summary>
+        internal static string CheckFrequencyDesc {
+            get {
+                return ResourceManager.GetString("CheckFrequencyDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à The verification frequency has been updated: {0}.
         /// </summary>
         internal static string CheckFrequencyUpdated {
@@ -2797,6 +3211,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Migrating to DB version 5.0.13: guild-scoped AST role bindings..
+        /// </summary>
+        internal static string DatabaseMigrationRoleBindings {
+            get {
+                return ResourceManager.GetString("DatabaseMigrationRoleBindings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Deletion successful!.
         /// </summary>
         internal static string DeleteChannelDataAsyncDeleteSuccessful {
@@ -2824,11 +3247,38 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Shows the Discord link..
+        /// </summary>
+        internal static string DiscordDesc {
+            get {
+                return ResourceManager.GetString("DiscordDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à A valid Discord snowflake is required..
+        /// </summary>
+        internal static string DiscordSnowflakeRequired {
+            get {
+                return ResourceManager.GetString("DiscordSnowflakeRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Download and Install Archipelago version {0} before to install the bot in Archipelago Mode..
         /// </summary>
         internal static string DownloadAndInstall {
             get {
                 return ResourceManager.GetString("DownloadAndInstall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Downloading the update:.
+        /// </summary>
+        internal static string DownloadUpdate {
+            get {
+                return ResourceManager.GetString("DownloadUpdate", resourceCulture);
             }
         }
         
@@ -2847,6 +3297,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string ErrorSilentModeUpdate {
             get {
                 return ResourceManager.GetString("ErrorSilentModeUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every.
+        /// </summary>
+        internal static string Every {
+            get {
+                return ResourceManager.GetString("Every", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every day.
+        /// </summary>
+        internal static string EveryDay {
+            get {
+                return ResourceManager.GetString("EveryDay", resourceCulture);
             }
         }
         
@@ -3256,6 +3724,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à hour.
+        /// </summary>
+        internal static string Hour {
+            get {
+                return ResourceManager.GetString("Hour", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Clean {0}.
         /// </summary>
         internal static string InstallCleanTempExtractPath {
@@ -3414,6 +3891,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string NoFileSelected {
             get {
                 return ResourceManager.GetString("NoFileSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No filter.
+        /// </summary>
+        internal static string None {
+            get {
+                return ResourceManager.GetString("None", resourceCulture);
             }
         }
         
@@ -3706,6 +4192,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Recap and clean list of items for a specific game.
+        /// </summary>
+        internal static string RCRecapAndCleanDescription {
+            get {
+                return ResourceManager.GetString("RCRecapAndCleanDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Required.
         /// </summary>
         internal static string Required {
@@ -3733,6 +4228,429 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Add Alias.
+        /// </summary>
+        internal static string SCAddAliasDescription {
+            get {
+                return ResourceManager.GetString("SCAddAliasDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à skip_mention_items.
+        /// </summary>
+        internal static string SCAddAliasSkipMention {
+            get {
+                return ResourceManager.GetString("SCAddAliasSkipMention", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Set if you want to skip useless mention (filler Items).
+        /// </summary>
+        internal static string SCAddAliasSkipMentionDescription {
+            get {
+                return ResourceManager.GetString("SCAddAliasSkipMentionDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Add a URL and create a thread..
+        /// </summary>
+        internal static string SCAddUrlDescription {
+            get {
+                return ResourceManager.GetString("SCAddUrlDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose an APWorld.
+        /// </summary>
+        internal static string SCApworldInfoChoiceDescription {
+            get {
+                return ResourceManager.GetString("SCApworldInfoChoiceDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à List info for specific APWorld.
+        /// </summary>
+        internal static string SCApworldInfoDescription {
+            get {
+                return ResourceManager.GetString("SCApworldInfoDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Backup all APWorlds for the channel.
+        /// </summary>
+        internal static string SCBackupApworldDescription {
+            get {
+                return ResourceManager.GetString("SCBackupApworldDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Backup all YAMLs for the channel.
+        /// </summary>
+        internal static string SCBackupYamlDescription {
+            get {
+                return ResourceManager.GetString("SCBackupYamlDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose an alias.
+        /// </summary>
+        internal static string SCChooseAnAlias {
+            get {
+                return ResourceManager.GetString("SCChooseAnAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose an item.
+        /// </summary>
+        internal static string SCChooseAnItem {
+            get {
+                return ResourceManager.GetString("SCChooseAnItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clean all recap items.
+        /// </summary>
+        internal static string SCCleanAllDescription {
+            get {
+                return ResourceManager.GetString("SCCleanAllDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clean list of items for a specific game.
+        /// </summary>
+        internal static string SCCleanDescription {
+            get {
+                return ResourceManager.GetString("SCCleanDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clean all YAMLs in the channel.
+        /// </summary>
+        internal static string SCCleanYamlDescription {
+            get {
+                return ResourceManager.GetString("SCCleanYamlDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Delete Alias.
+        /// </summary>
+        internal static string SCDeleteAliasDescription {
+            get {
+                return ResourceManager.GetString("SCDeleteAliasDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Deletes the item from the exclusion list.
+        /// </summary>
+        internal static string SCDeleteExcludedItemDesc {
+            get {
+                return ResourceManager.GetString("SCDeleteExcludedItemDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Delete Url, clean Aliases and Recap.
+        /// </summary>
+        internal static string SCDeleteUrlDescription {
+            get {
+                return ResourceManager.GetString("SCDeleteUrlDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose a YAML file to delete.
+        /// </summary>
+        internal static string SCDeleteYamlChooseDescription {
+            get {
+                return ResourceManager.GetString("SCDeleteYamlChooseDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Delete a specific YAML file.
+        /// </summary>
+        internal static string SCDeleteYamlDescription {
+            get {
+                return ResourceManager.GetString("SCDeleteYamlDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Download a YAML template.
+        /// </summary>
+        internal static string SCDownloadYamlTemplateDescription {
+            get {
+                return ResourceManager.GetString("SCDownloadYamlTemplateDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Excludes notifications for this item.
+        /// </summary>
+        internal static string SCExcludedItemDesc {
+            get {
+                return ResourceManager.GetString("SCExcludedItemDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Displays your excluded items list.
+        /// </summary>
+        internal static string SCExcludedItemListDesc {
+            get {
+                return ResourceManager.GetString("SCExcludedItemListDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Generate multiworld from existing YAMLs.
+        /// </summary>
+        internal static string SCGenerateDescription {
+            get {
+                return ResourceManager.GetString("SCGenerateDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Upload a ZIP containing YAMLs.
+        /// </summary>
+        internal static string SCGenerateWithZipChooseDescription {
+            get {
+                return ResourceManager.GetString("SCGenerateWithZipChooseDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Generate multiworld from a ZIP.
+        /// </summary>
+        internal static string SCGenerateWithZipDescription {
+            get {
+                return ResourceManager.GetString("SCGenerateWithZipDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à List all Aliases.
+        /// </summary>
+        internal static string SCGetAliasesDescription {
+            get {
+                return ResourceManager.GetString("SCGetAliasesDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Get a hint for receiver.
+        /// </summary>
+        internal static string SCGetHintForReveiverDescription {
+            get {
+                return ResourceManager.GetString("SCGetHintForReveiverDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Get a hint from finder.
+        /// </summary>
+        internal static string SCGetHintFromFinderDescription {
+            get {
+                return ResourceManager.GetString("SCGetHintFromFinderDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Get patch for alias.
+        /// </summary>
+        internal static string SCGetPatchDescription {
+            get {
+                return ResourceManager.GetString("SCGetPatchDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Get all infos for your Archipelago.
+        /// </summary>
+        internal static string SCInfoDescription {
+            get {
+                return ResourceManager.GetString("SCInfoDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à List all APWorlds.
+        /// </summary>
+        internal static string SCListApworldDescription {
+            get {
+                return ResourceManager.GetString("SCListApworldDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à List all items for alias.
+        /// </summary>
+        internal static string SCListItemDescription {
+            get {
+                return ResourceManager.GetString("SCListItemDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à List all YAML files for the channel.
+        /// </summary>
+        internal static string SCListYamlsDescription {
+            get {
+                return ResourceManager.GetString("SCListYamlsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Get your web portal link..
+        /// </summary>
+        internal static string SCPortalLinkDescription {
+            get {
+                return ResourceManager.GetString("SCPortalLinkDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Get the web portal commands page..
+        /// </summary>
+        internal static string SCPortalUrlDescription {
+            get {
+                return ResourceManager.GetString("SCPortalUrlDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Recap list of items for all games.
+        /// </summary>
+        internal static string SCRecapAllDescription {
+            get {
+                return ResourceManager.GetString("SCRecapAllDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Recap list of items for a specific game.
+        /// </summary>
+        internal static string SCRecapDescription {
+            get {
+                return ResourceManager.GetString("SCRecapDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Upload an APWorld file.
+        /// </summary>
+        internal static string SCSendApworldChooseDescription {
+            get {
+                return ResourceManager.GetString("SCSendApworldChooseDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Send or replace an APWorld file.
+        /// </summary>
+        internal static string SCSendApworldDescription {
+            get {
+                return ResourceManager.GetString("SCSendApworldDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Upload a YAML file.
+        /// </summary>
+        internal static string SCSendYamlChooseDescription {
+            get {
+                return ResourceManager.GetString("SCSendYamlChooseDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Send or replace a YAML file for generation.
+        /// </summary>
+        internal static string SCSendYamlDescription {
+            get {
+                return ResourceManager.GetString("SCSendYamlDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Only send message when an alias is set.
+        /// </summary>
+        internal static string SCSilentDescription {
+            get {
+                return ResourceManager.GetString("SCSilentDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à silent.
+        /// </summary>
+        internal static string SCSilentOption {
+            get {
+                return ResourceManager.GetString("SCSilentOption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Status for all games.
+        /// </summary>
+        internal static string SCStatusGameListDescription {
+            get {
+                return ResourceManager.GetString("SCStatusGameListDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose a YAML file to download.
+        /// </summary>
+        internal static string SCTemplateDescription {
+            get {
+                return ResourceManager.GetString("SCTemplateDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Test generation of multiworld from existing YAMLs.
+        /// </summary>
+        internal static string SCTestGenerateDescription {
+            get {
+                return ResourceManager.GetString("SCTestGenerateDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à thread-name.
+        /// </summary>
+        internal static string SCThreadName {
+            get {
+                return ResourceManager.GetString("SCThreadName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Name of the thread to create.
+        /// </summary>
+        internal static string SCThreadNameDescription {
+            get {
+                return ResourceManager.GetString("SCThreadNameDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Private.
         /// </summary>
         internal static string SCThreadPrivate {
@@ -3747,6 +4665,42 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string SCThreadPublic {
             get {
                 return ResourceManager.GetString("SCThreadPublic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à thread-type.
+        /// </summary>
+        internal static string SCThreadType {
+            get {
+                return ResourceManager.GetString("SCThreadType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Specify if the thread is public or private.
+        /// </summary>
+        internal static string SCThreadTypeDescription {
+            get {
+                return ResourceManager.GetString("SCThreadTypeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Updated the “Silent” option..
+        /// </summary>
+        internal static string SCUpdateSilentOptionDescription {
+            get {
+                return ResourceManager.GetString("SCUpdateSilentOptionDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The URL to track.
+        /// </summary>
+        internal static string SCUrlToTrack {
+            get {
+                return ResourceManager.GetString("SCUrlToTrack", resourceCulture);
             }
         }
         
@@ -3828,6 +4782,60 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string SlashSkipProgressionBalancingDuringGeneration {
             get {
                 return ResourceManager.GetString("SlashSkipProgressionBalancingDuringGeneration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to download the spoiler log..
+        /// </summary>
+        internal static string SpoilerLogDownloadFailed {
+            get {
+                return ResourceManager.GetString("SpoilerLogDownloadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The spoiler log content is invalid..
+        /// </summary>
+        internal static string SpoilerLogInvalidContent {
+            get {
+                return ResourceManager.GetString("SpoilerLogInvalidContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Invalid or oversized spoiler file. Upload a .txt or .json file..
+        /// </summary>
+        internal static string SpoilerLogInvalidFile {
+            get {
+                return ResourceManager.GetString("SpoilerLogInvalidFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No spoiler log was found for this room. Upload one, then run the analysis again..
+        /// </summary>
+        internal static string SpoilerLogNotFoundForRoom {
+            get {
+                return ResourceManager.GetString("SpoilerLogNotFoundForRoom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Spoiler log received: {0}.
+        /// </summary>
+        internal static string SpoilerLogReceived {
+            get {
+                return ResourceManager.GetString("SpoilerLogReceived", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The spoiler file is too large..
+        /// </summary>
+        internal static string SpoilerLogTooLarge {
+            get {
+                return ResourceManager.GetString("SpoilerLogTooLarge", resourceCulture);
             }
         }
         
@@ -3936,6 +4944,222 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string TDMSkippingCheck {
             get {
                 return ResourceManager.GetString("TDMSkippingCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à error: {0} (consecutive failures: {1}).
+        /// </summary>
+        internal static string TDMSyncFailure {
+            get {
+                return ResourceManager.GetString("TDMSyncFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à WebHost temporarily suspended after repeated failures.
+        /// </summary>
+        internal static string TDMSyncFailureCircuitOpen {
+            get {
+                return ResourceManager.GetString("TDMSyncFailureCircuitOpen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à invalid WebHost response type.
+        /// </summary>
+        internal static string TDMSyncFailureContentType {
+            get {
+                return ResourceManager.GetString("TDMSyncFailureContentType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à invalid WebHost data.
+        /// </summary>
+        internal static string TDMSyncFailureJson {
+            get {
+                return ResourceManager.GetString("TDMSyncFailureJson", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à network or Discord unavailable.
+        /// </summary>
+        internal static string TDMSyncFailureNetwork {
+            get {
+                return ResourceManager.GetString("TDMSyncFailureNetwork", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à tracker not found.
+        /// </summary>
+        internal static string TDMSyncFailureNotFound {
+            get {
+                return ResourceManager.GetString("TDMSyncFailureNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à room temporarily unavailable.
+        /// </summary>
+        internal static string TDMSyncFailurePartial {
+            get {
+                return ResourceManager.GetString("TDMSyncFailurePartial", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à WebHost rate limit.
+        /// </summary>
+        internal static string TDMSyncFailureRateLimited {
+            get {
+                return ResourceManager.GetString("TDMSyncFailureRateLimited", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à WebHost server error.
+        /// </summary>
+        internal static string TDMSyncFailureServer {
+            get {
+                return ResourceManager.GetString("TDMSyncFailureServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à WebHost timeout.
+        /// </summary>
+        internal static string TDMSyncFailureTimeout {
+            get {
+                return ResourceManager.GetString("TDMSyncFailureTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à unexpected error.
+        /// </summary>
+        internal static string TDMSyncFailureUnexpected {
+            get {
+                return ResourceManager.GetString("TDMSyncFailureUnexpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à [TDM][Sync] {0} / #{1} ({2}) — {3} — {4} s — {5}.
+        /// </summary>
+        internal static string TDMSyncLog {
+            get {
+                return ResourceManager.GetString("TDMSyncLog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} completed goals.
+        /// </summary>
+        internal static string TDMSyncManyCompletedGoals {
+            get {
+                return ResourceManager.GetString("TDMSyncManyCompletedGoals", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} new hints.
+        /// </summary>
+        internal static string TDMSyncManyNewHints {
+            get {
+                return ResourceManager.GetString("TDMSyncManyNewHints", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} new items.
+        /// </summary>
+        internal static string TDMSyncManyNewItems {
+            get {
+                return ResourceManager.GetString("TDMSyncManyNewItems", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} updated hints.
+        /// </summary>
+        internal static string TDMSyncManyUpdatedHints {
+            get {
+                return ResourceManager.GetString("TDMSyncManyUpdatedHints", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à next check around {0}.
+        /// </summary>
+        internal static string TDMSyncNextCheck {
+            get {
+                return ResourceManager.GetString("TDMSyncNextCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à no new item.
+        /// </summary>
+        internal static string TDMSyncNoNewItem {
+            get {
+                return ResourceManager.GetString("TDMSyncNoNewItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à no further check scheduled.
+        /// </summary>
+        internal static string TDMSyncNoNextCheck {
+            get {
+                return ResourceManager.GetString("TDMSyncNoNextCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 1 completed goal.
+        /// </summary>
+        internal static string TDMSyncOneCompletedGoal {
+            get {
+                return ResourceManager.GetString("TDMSyncOneCompletedGoal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 1 new hint.
+        /// </summary>
+        internal static string TDMSyncOneNewHint {
+            get {
+                return ResourceManager.GetString("TDMSyncOneNewHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 1 new item.
+        /// </summary>
+        internal static string TDMSyncOneNewItem {
+            get {
+                return ResourceManager.GetString("TDMSyncOneNewItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 1 updated hint.
+        /// </summary>
+        internal static string TDMSyncOneUpdatedHint {
+            get {
+                return ResourceManager.GetString("TDMSyncOneUpdatedHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à tracking ended (room or channel removed).
+        /// </summary>
+        internal static string TDMSyncTrackingEnded {
+            get {
+                return ResourceManager.GetString("TDMSyncTrackingEnded", resourceCulture);
             }
         }
         
@@ -4336,6 +5560,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Update available:.
+        /// </summary>
+        internal static string UpdateAvailable {
+            get {
+                return ResourceManager.GetString("UpdateAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à You are not allowed to add a room. (USERIDFORBIGASYNC is needed in the .env file.).
         /// </summary>
         internal static string URLAddByAsyncNotAllowed {
@@ -4408,6 +5641,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Name: {0} | Download: {1}.
+        /// </summary>
+        internal static string UrlGamePatch {
+            get {
+                return ResourceManager.GetString("UrlGamePatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à The link is incorrect; use the room URL..
         /// </summary>
         internal static string URLNotValid {
@@ -4422,6 +5664,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string UrlPrivateThreadUserNotFound {
             get {
                 return ResourceManager.GetString("UrlPrivateThreadUserNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à URL set to {0}. Messages configured for this channel. Please wait while the program retrieves all aliases..
+        /// </summary>
+        internal static string URLSet {
+            get {
+                return ResourceManager.GetString("URLSet", resourceCulture);
             }
         }
         
@@ -4453,6 +5704,573 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Access.
+        /// </summary>
+        internal static string WebAccess {
+            get {
+                return ResourceManager.GetString("WebAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Active Hints.
+        /// </summary>
+        internal static string WebActiveHints {
+            get {
+                return ResourceManager.GetString("WebActiveHints", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Add an existing alias in this thread:.
+        /// </summary>
+        internal static string WebAddExistingAliasInThread {
+            get {
+                return ResourceManager.GetString("WebAddExistingAliasInThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Adding alias....
+        /// </summary>
+        internal static string WebAddingAlias {
+            get {
+                return ResourceManager.GetString("WebAddingAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Add selected alias.
+        /// </summary>
+        internal static string WebAddSelectedAlias {
+            get {
+                return ResourceManager.GetString("WebAddSelectedAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Alias added:.
+        /// </summary>
+        internal static string WebAliasAddedPrefix {
+            get {
+                return ResourceManager.GetString("WebAliasAddedPrefix", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Alias deleted:.
+        /// </summary>
+        internal static string WebAliasDeletedPrefix {
+            get {
+                return ResourceManager.GetString("WebAliasDeletedPrefix", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Aliases unavailable.
+        /// </summary>
+        internal static string WebAliasesUnavailable {
+            get {
+                return ResourceManager.GetString("WebAliasesUnavailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Alias not found..
+        /// </summary>
+        internal static string WebAliasNotFound {
+            get {
+                return ResourceManager.GetString("WebAliasNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à List APWorld.
+        /// </summary>
+        internal static string WebAPWorldList {
+            get {
+                return ResourceManager.GetString("WebAPWorldList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Security audit log.
+        /// </summary>
+        internal static string WebAuditLog {
+            get {
+                return ResourceManager.GetString("WebAuditLog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Auto-add members (public).
+        /// </summary>
+        internal static string WebAutoAddMembersPublic {
+            get {
+                return ResourceManager.GetString("WebAutoAddMembersPublic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Available links for this Guild ID with thread names..
+        /// </summary>
+        internal static string WebAvailableLinksForGuild {
+            get {
+                return ResourceManager.GetString("WebAvailableLinksForGuild", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Check frequency.
+        /// </summary>
+        internal static string WebCheckFrequency {
+            get {
+                return ResourceManager.GetString("WebCheckFrequency", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Checking for an imported spoiler log....
+        /// </summary>
+        internal static string WebCheckingSpoilerLog {
+            get {
+                return ResourceManager.GetString("WebCheckingSpoilerLog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clean all YAMLs.
+        /// </summary>
+        internal static string WebCleanAllYamls {
+            get {
+                return ResourceManager.GetString("WebCleanAllYamls", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Error while executing command..
+        /// </summary>
+        internal static string WebCommandError {
+            get {
+                return ResourceManager.GetString("WebCommandError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Command executed..
+        /// </summary>
+        internal static string WebCommandExecuted {
+            get {
+                return ResourceManager.GetString("WebCommandExecuted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to copy the companion link..
+        /// </summary>
+        internal static string WebCompanionCopyFailed {
+            get {
+                return ResourceManager.GetString("WebCompanionCopyFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Open AST Companion for this portal..
+        /// </summary>
+        internal static string WebCompanionDescription {
+            get {
+                return ResourceManager.GetString("WebCompanionDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Companion link copied..
+        /// </summary>
+        internal static string WebCompanionLinkCopied {
+            get {
+                return ResourceManager.GetString("WebCompanionLinkCopied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Add an alias before opening AST Companion..
+        /// </summary>
+        internal static string WebCompanionNeedsAlias {
+            get {
+                return ResourceManager.GetString("WebCompanionNeedsAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Opening AST Companion....
+        /// </summary>
+        internal static string WebCompanionOpening {
+            get {
+                return ResourceManager.GetString("WebCompanionOpening", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à AST Companion is ready..
+        /// </summary>
+        internal static string WebCompanionReady {
+            get {
+                return ResourceManager.GetString("WebCompanionReady", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clear all your recaps? This action cannot be undone..
+        /// </summary>
+        internal static string WebConfirmClearAllRecaps {
+            get {
+                return ResourceManager.GetString("WebConfirmClearAllRecaps", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Confirm this sensitive action?.
+        /// </summary>
+        internal static string WebConfirmDangerousAction {
+            get {
+                return ResourceManager.GetString("WebConfirmDangerousAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Remove this item from your exclusions?.
+        /// </summary>
+        internal static string WebConfirmDeleteExclusion {
+            get {
+                return ResourceManager.GetString("WebConfirmDeleteExclusion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clear this recap?.
+        /// </summary>
+        internal static string WebConfirmDeleteRecap {
+            get {
+                return ResourceManager.GetString("WebConfirmDeleteRecap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Revoke this portal link? This page will stop working immediately..
+        /// </summary>
+        internal static string WebConfirmRevokePortal {
+            get {
+                return ResourceManager.GetString("WebConfirmRevokePortal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Copy companion link.
+        /// </summary>
+        internal static string WebCopyCompanionLink {
+            get {
+                return ResourceManager.GetString("WebCopyCompanionLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Create thread.
+        /// </summary>
+        internal static string WebCreateThread {
+            get {
+                return ResourceManager.GetString("WebCreateThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Create a thread via /add-url.
+        /// </summary>
+        internal static string WebCreateThreadViaAddUrl {
+            get {
+                return ResourceManager.GetString("WebCreateThreadViaAddUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Current recap.
+        /// </summary>
+        internal static string WebCurrentRecap {
+            get {
+                return ResourceManager.GetString("WebCurrentRecap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Remove an alias from your list:.
+        /// </summary>
+        internal static string WebDeleteAliasFromYourList {
+            get {
+                return ResourceManager.GetString("WebDeleteAliasFromYourList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Delete recap.
+        /// </summary>
+        internal static string WebDeleteRecap {
+            get {
+                return ResourceManager.GetString("WebDeleteRecap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Delete selected alias.
+        /// </summary>
+        internal static string WebDeleteSelectedAlias {
+            get {
+                return ResourceManager.GetString("WebDeleteSelectedAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Delete thread URL.
+        /// </summary>
+        internal static string WebDeleteThreadUrl {
+            get {
+                return ResourceManager.GetString("WebDeleteThreadUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Delete YAML.
+        /// </summary>
+        internal static string WebDeleteYaml {
+            get {
+                return ResourceManager.GetString("WebDeleteYaml", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Deleting alias....
+        /// </summary>
+        internal static string WebDeletingAlias {
+            get {
+                return ResourceManager.GetString("WebDeletingAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Deleting recap....
+        /// </summary>
+        internal static string WebDeletingRecap {
+            get {
+                return ResourceManager.GetString("WebDeletingRecap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Disabled.
+        /// </summary>
+        internal static string WebDisabled {
+            get {
+                return ResourceManager.GetString("WebDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Discord commands.
+        /// </summary>
+        internal static string WebDiscordCommands {
+            get {
+                return ResourceManager.GetString("WebDiscordCommands", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Download file.
+        /// </summary>
+        internal static string WebDownloadFile {
+            get {
+                return ResourceManager.GetString("WebDownloadFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Download template.
+        /// </summary>
+        internal static string WebDownloadTemplate {
+            get {
+                return ResourceManager.GetString("WebDownloadTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Download YAML.
+        /// </summary>
+        internal static string WebDownloadYaml {
+            get {
+                return ResourceManager.GetString("WebDownloadYaml", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Enabled.
+        /// </summary>
+        internal static string WebEnabled {
+            get {
+                return ResourceManager.GetString("WebEnabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Error while loading aliases..
+        /// </summary>
+        internal static string WebErrorLoadingAliases {
+            get {
+                return ResourceManager.GetString("WebErrorLoadingAliases", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Error loading YAMLs.
+        /// </summary>
+        internal static string WebErrorLoadingYamls {
+            get {
+                return ResourceManager.GetString("WebErrorLoadingYamls", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 12h.
+        /// </summary>
+        internal static string WebEvery12h {
+            get {
+                return ResourceManager.GetString("WebEvery12h", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 12 hours.
+        /// </summary>
+        internal static string WebEvery12Hours {
+            get {
+                return ResourceManager.GetString("WebEvery12Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 15 minutes.
+        /// </summary>
+        internal static string WebEvery15Minutes {
+            get {
+                return ResourceManager.GetString("WebEvery15Minutes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 18h.
+        /// </summary>
+        internal static string WebEvery18h {
+            get {
+                return ResourceManager.GetString("WebEvery18h", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 18 hours.
+        /// </summary>
+        internal static string WebEvery18Hours {
+            get {
+                return ResourceManager.GetString("WebEvery18Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 1h.
+        /// </summary>
+        internal static string WebEvery1h {
+            get {
+                return ResourceManager.GetString("WebEvery1h", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 1 hour.
+        /// </summary>
+        internal static string WebEvery1Hour {
+            get {
+                return ResourceManager.GetString("WebEvery1Hour", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 30 minutes.
+        /// </summary>
+        internal static string WebEvery30Minutes {
+            get {
+                return ResourceManager.GetString("WebEvery30Minutes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 5 minutes.
+        /// </summary>
+        internal static string WebEvery5Minutes {
+            get {
+                return ResourceManager.GetString("WebEvery5Minutes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 6h.
+        /// </summary>
+        internal static string WebEvery6h {
+            get {
+                return ResourceManager.GetString("WebEvery6h", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every 6 hours.
+        /// </summary>
+        internal static string WebEvery6Hours {
+            get {
+                return ResourceManager.GetString("WebEvery6Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Every day.
+        /// </summary>
+        internal static string WebEveryDay {
+            get {
+                return ResourceManager.GetString("WebEveryDay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Frequency.
+        /// </summary>
+        internal static string WebFrequency {
+            get {
+                return ResourceManager.GetString("WebFrequency", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Game: .
+        /// </summary>
+        internal static string WebGameLabelPrefix {
+            get {
+                return ResourceManager.GetString("WebGameLabelPrefix", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Game: unknown.
+        /// </summary>
+        internal static string WebGameUnknown {
+            get {
+                return ResourceManager.GetString("WebGameUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Generate.
         /// </summary>
         internal static string WebGenerate {
@@ -4462,11 +6280,407 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Generate with ZIP.
+        /// </summary>
+        internal static string WebGenerateWithZip {
+            get {
+                return ResourceManager.GetString("WebGenerateWithZip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Generation.
         /// </summary>
         internal static string WebGeneration {
             get {
                 return ResourceManager.GetString("WebGeneration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Guild ID not found in URL..
+        /// </summary>
+        internal static string WebGuildIdMissingInUrl {
+            get {
+                return ResourceManager.GetString("WebGuildIdMissingInUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Info unavailable: guildId/channelId not found..
+        /// </summary>
+        internal static string WebInfoUnavailableMissingIds {
+            get {
+                return ResourceManager.GetString("WebInfoUnavailableMissingIds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Invalid URL: guildId/channelId not found..
+        /// </summary>
+        internal static string WebInvalidUrlMissingIds {
+            get {
+                return ResourceManager.GetString("WebInvalidUrlMissingIds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Invalid URL: guildId/channelId not found. Open via /portal/{guildId}/{channelId}/commands.html.
+        /// </summary>
+        internal static string WebInvalidUrlOpenViaPortal {
+            get {
+                return ResourceManager.GetString("WebInvalidUrlOpenViaPortal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Last update.
+        /// </summary>
+        internal static string WebLastUpdate {
+            get {
+                return ResourceManager.GetString("WebLastUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à List YAMLs.
+        /// </summary>
+        internal static string WebListYamls {
+            get {
+                return ResourceManager.GetString("WebListYamls", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Loading aliases….
+        /// </summary>
+        internal static string WebLoadingAliases {
+            get {
+                return ResourceManager.GetString("WebLoadingAliases", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Loading AST Room Portals....
+        /// </summary>
+        internal static string WebLoadingAstRoomPortals {
+            get {
+                return ResourceManager.GetString("WebLoadingAstRoomPortals", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Loading info….
+        /// </summary>
+        internal static string WebLoadingInfo {
+            get {
+                return ResourceManager.GetString("WebLoadingInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Loading thread aliases....
+        /// </summary>
+        internal static string WebLoadingThreadAliases {
+            get {
+                return ResourceManager.GetString("WebLoadingThreadAliases", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Loading YAMLs....
+        /// </summary>
+        internal static string WebLoadingYamls {
+            get {
+                return ResourceManager.GetString("WebLoadingYamls", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Loading your aliases....
+        /// </summary>
+        internal static string WebLoadingYourAliases {
+            get {
+                return ResourceManager.GetString("WebLoadingYourAliases", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No.
+        /// </summary>
+        internal static string WebNo {
+            get {
+                return ResourceManager.GetString("WebNo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No active hint..
+        /// </summary>
+        internal static string WebNoActiveHint {
+            get {
+                return ResourceManager.GetString("WebNoActiveHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No active recap for this user..
+        /// </summary>
+        internal static string WebNoActiveRecapForUser {
+            get {
+                return ResourceManager.GetString("WebNoActiveRecapForUser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No alias available.
+        /// </summary>
+        internal static string WebNoAliasAvailable {
+            get {
+                return ResourceManager.GetString("WebNoAliasAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No alias found for this thread..
+        /// </summary>
+        internal static string WebNoAliasForThread {
+            get {
+                return ResourceManager.GetString("WebNoAliasForThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No alias available in this thread.
+        /// </summary>
+        internal static string WebNoAliasInThread {
+            get {
+                return ResourceManager.GetString("WebNoAliasInThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No AST Room Portal available for this Guild ID..
+        /// </summary>
+        internal static string WebNoAstRoomPortalForGuild {
+            get {
+                return ResourceManager.GetString("WebNoAstRoomPortalForGuild", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No audit entry available..
+        /// </summary>
+        internal static string WebNoAuditEntries {
+            get {
+                return ResourceManager.GetString("WebNoAuditEntries", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No item available for this slot..
+        /// </summary>
+        internal static string WebNoAvailableItem {
+            get {
+                return ResourceManager.GetString("WebNoAvailableItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No hint as Finder..
+        /// </summary>
+        internal static string WebNoHintAsFinder {
+            get {
+                return ResourceManager.GetString("WebNoHintAsFinder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No hint as Receiver..
+        /// </summary>
+        internal static string WebNoHintAsReceiver {
+            get {
+                return ResourceManager.GetString("WebNoHintAsReceiver", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No info available..
+        /// </summary>
+        internal static string WebNoInfoAvailable {
+            get {
+                return ResourceManager.GetString("WebNoInfoAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No patch link available for this alias..
+        /// </summary>
+        internal static string WebNoPatchLinkForAlias {
+            get {
+                return ResourceManager.GetString("WebNoPatchLinkForAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No pending item..
+        /// </summary>
+        internal static string WebNoPendingItem {
+            get {
+                return ResourceManager.GetString("WebNoPendingItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No received items..
+        /// </summary>
+        internal static string WebNoReceivedItems {
+            get {
+                return ResourceManager.GetString("WebNoReceivedItems", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No items received yet..
+        /// </summary>
+        internal static string WebNoReceivedItemsYet {
+            get {
+                return ResourceManager.GetString("WebNoReceivedItemsYet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à You don&apos;t have any registered alias.
+        /// </summary>
+        internal static string WebNoRegisteredAlias {
+            get {
+                return ResourceManager.GetString("WebNoRegisteredAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No spoiler log is currently imported for this room..
+        /// </summary>
+        internal static string WebNoSpoilerLogImported {
+            get {
+                return ResourceManager.GetString("WebNoSpoilerLogImported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No template available.
+        /// </summary>
+        internal static string WebNoTemplateAvailable {
+            get {
+                return ResourceManager.GetString("WebNoTemplateAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No YAML available.
+        /// </summary>
+        internal static string WebNoYamlAvailable {
+            get {
+                return ResourceManager.GetString("WebNoYamlAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No YAML selected..
+        /// </summary>
+        internal static string WebNoYamlSelected {
+            get {
+                return ResourceManager.GetString("WebNoYamlSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Open.
+        /// </summary>
+        internal static string WebOpen {
+            get {
+                return ResourceManager.GetString("WebOpen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Open AST Companion.
+        /// </summary>
+        internal static string WebOpenCompanion {
+            get {
+                return ResourceManager.GetString("WebOpenCompanion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Overall AST health.
+        /// </summary>
+        internal static string WebOverallAstHealth {
+            get {
+                return ResourceManager.GetString("WebOverallAstHealth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Pause tracking.
+        /// </summary>
+        internal static string WebPauseTracking {
+            get {
+                return ResourceManager.GetString("WebPauseTracking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Personal portal.
+        /// </summary>
+        internal static string WebPersonalPortal {
+            get {
+                return ResourceManager.GetString("WebPersonalPortal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Automatic.
+        /// </summary>
+        internal static string WebPollingAutomatic {
+            get {
+                return ResourceManager.GetString("WebPollingAutomatic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Fixed frequency.
+        /// </summary>
+        internal static string WebPollingFixedFrequency {
+            get {
+                return ResourceManager.GetString("WebPollingFixedFrequency", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Maximum interval.
+        /// </summary>
+        internal static string WebPollingMaximumInterval {
+            get {
+                return ResourceManager.GetString("WebPollingMaximumInterval", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Polling mode.
+        /// </summary>
+        internal static string WebPollingMode {
+            get {
+                return ResourceManager.GetString("WebPollingMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Update polling policy.
+        /// </summary>
+        internal static string WebPollingUpdatePolicy {
+            get {
+                return ResourceManager.GetString("WebPollingUpdatePolicy", resourceCulture);
             }
         }
         
@@ -4498,11 +6712,254 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Portal unavailable..
+        /// </summary>
+        internal static string WebPortalUnavailable {
+            get {
+                return ResourceManager.GetString("WebPortalUnavailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Private.
+        /// </summary>
+        internal static string WebPrivate {
+            get {
+                return ResourceManager.GetString("WebPrivate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Processing....
+        /// </summary>
+        internal static string WebProcessing {
+            get {
+                return ResourceManager.GetString("WebProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Progression balancing.
+        /// </summary>
+        internal static string WebProgressionBalancing {
+            get {
+                return ResourceManager.GetString("WebProgressionBalancing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Provide a user ID if you target a private thread..
+        /// </summary>
+        internal static string WebProvideUserIdForPrivateThread {
+            get {
+                return ResourceManager.GetString("WebProvideUserIdForPrivateThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Quick actions.
+        /// </summary>
+        internal static string WebQuickActions {
+            get {
+                return ResourceManager.GetString("WebQuickActions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Recap deleted for.
+        /// </summary>
+        internal static string WebRecapDeletedFor {
+            get {
+                return ResourceManager.GetString("WebRecapDeletedFor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Received items.
+        /// </summary>
+        internal static string WebReceivedItems {
+            get {
+                return ResourceManager.GetString("WebReceivedItems", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Refresh audit log.
+        /// </summary>
+        internal static string WebRefreshAudit {
+            get {
+                return ResourceManager.GetString("WebRefreshAudit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Refresh data.
+        /// </summary>
+        internal static string WebRefreshData {
+            get {
+                return ResourceManager.GetString("WebRefreshData", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Resume tracking.
+        /// </summary>
+        internal static string WebResumeTracking {
+            get {
+                return ResourceManager.GetString("WebResumeTracking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Room health.
+        /// </summary>
+        internal static string WebRoomHealth {
+            get {
+                return ResourceManager.GetString("WebRoomHealth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Select an alias.
+        /// </summary>
+        internal static string WebSelectAlias {
+            get {
+                return ResourceManager.GetString("WebSelectAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Select a slot and an item first..
+        /// </summary>
+        internal static string WebSelectAliasAndItem {
+            get {
+                return ResourceManager.GetString("WebSelectAliasAndItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Select an alias to view the patch..
+        /// </summary>
+        internal static string WebSelectAliasForPatch {
+            get {
+                return ResourceManager.GetString("WebSelectAliasForPatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Select an alias to add..
+        /// </summary>
+        internal static string WebSelectAliasToAdd {
+            get {
+                return ResourceManager.GetString("WebSelectAliasToAdd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Select an alias to delete..
+        /// </summary>
+        internal static string WebSelectAliasToDelete {
+            get {
+                return ResourceManager.GetString("WebSelectAliasToDelete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Select a YAML.
+        /// </summary>
+        internal static string WebSelectYaml {
+            get {
+                return ResourceManager.GetString("WebSelectYaml", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Send APWorld.
+        /// </summary>
+        internal static string WebSendApworld {
+            get {
+                return ResourceManager.GetString("WebSendApworld", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Send YAML.
+        /// </summary>
+        internal static string WebSendYaml {
+            get {
+                return ResourceManager.GetString("WebSendYaml", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Show game status.
+        /// </summary>
+        internal static string WebShowGameStatus {
+            get {
+                return ResourceManager.GetString("WebShowGameStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Show info.
+        /// </summary>
+        internal static string WebShowInfo {
+            get {
+                return ResourceManager.GetString("WebShowInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Silent mode.
         /// </summary>
         internal static string WebSilentMode {
             get {
                 return ResourceManager.GetString("WebSilentMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à A spoiler log is already imported for this room: {0}.
+        /// </summary>
+        internal static string WebSpoilerLogAlreadyImported {
+            get {
+                return ResourceManager.GetString("WebSpoilerLogAlreadyImported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Synchronizing with database....
+        /// </summary>
+        internal static string WebSyncingDatabase {
+            get {
+                return ResourceManager.GetString("WebSyncingDatabase", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Sync now.
+        /// </summary>
+        internal static string WebSyncNow {
+            get {
+                return ResourceManager.GetString("WebSyncNow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Test generation.
+        /// </summary>
+        internal static string WebTestGeneration {
+            get {
+                return ResourceManager.GetString("WebTestGeneration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Thread commands.
+        /// </summary>
+        internal static string WebThreadCommandsSubtitle {
+            get {
+                return ResourceManager.GetString("WebThreadCommandsSubtitle", resourceCulture);
             }
         }
         
@@ -4521,6 +6978,177 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string WebThreadType {
             get {
                 return ResourceManager.GetString("WebThreadType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Tracking health and controls.
+        /// </summary>
+        internal static string WebTrackingHealthAndControls {
+            get {
+                return ResourceManager.GetString("WebTrackingHealthAndControls", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to add this alias..
+        /// </summary>
+        internal static string WebUnableToAddAlias {
+            get {
+                return ResourceManager.GetString("WebUnableToAddAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to delete this alias..
+        /// </summary>
+        internal static string WebUnableToDeleteAlias {
+            get {
+                return ResourceManager.GetString("WebUnableToDeleteAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to delete recap..
+        /// </summary>
+        internal static string WebUnableToDeleteRecap {
+            get {
+                return ResourceManager.GetString("WebUnableToDeleteRecap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to load aliases..
+        /// </summary>
+        internal static string WebUnableToLoadAliases {
+            get {
+                return ResourceManager.GetString("WebUnableToLoadAliases", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to load AST Room Portals..
+        /// </summary>
+        internal static string WebUnableToLoadAstRoomPortals {
+            get {
+                return ResourceManager.GetString("WebUnableToLoadAstRoomPortals", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to load info..
+        /// </summary>
+        internal static string WebUnableToLoadInfo {
+            get {
+                return ResourceManager.GetString("WebUnableToLoadInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to load thread aliases.
+        /// </summary>
+        internal static string WebUnableToLoadThreadAliases {
+            get {
+                return ResourceManager.GetString("WebUnableToLoadThreadAliases", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to load your aliases.
+        /// </summary>
+        internal static string WebUnableToLoadYourAliases {
+            get {
+                return ResourceManager.GetString("WebUnableToLoadYourAliases", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Unable to reach server..
+        /// </summary>
+        internal static string WebUnableToReachServer {
+            get {
+                return ResourceManager.GetString("WebUnableToReachServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Update frequency.
+        /// </summary>
+        internal static string WebUpdateFrequency {
+            get {
+                return ResourceManager.GetString("WebUpdateFrequency", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Update silent mode.
+        /// </summary>
+        internal static string WebUpdateSilentMode {
+            get {
+                return ResourceManager.GetString("WebUpdateSilentMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Upload a YAML.
+        /// </summary>
+        internal static string WebUploaderUnYAML {
+            get {
+                return ResourceManager.GetString("WebUploaderUnYAML", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Useful info.
+        /// </summary>
+        internal static string WebUsefulInfo {
+            get {
+                return ResourceManager.GetString("WebUsefulInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à User ID (optional, useful for private threads).
+        /// </summary>
+        internal static string WebUserIdOptionalPrivateThreads {
+            get {
+                return ResourceManager.GetString("WebUserIdOptionalPrivateThreads", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à YAML file to delete.
+        /// </summary>
+        internal static string WebYamlFileToDelete {
+            get {
+                return ResourceManager.GetString("WebYamlFileToDelete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à YAML file to download.
+        /// </summary>
+        internal static string WebYamlFileToDownload {
+            get {
+                return ResourceManager.GetString("WebYamlFileToDownload", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Yes.
+        /// </summary>
+        internal static string WebYes {
+            get {
+                return ResourceManager.GetString("WebYes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Your aliases.
+        /// </summary>
+        internal static string WebYourAliases {
+            get {
+                return ResourceManager.GetString("WebYourAliases", resourceCulture);
             }
         }
         
@@ -4629,1890 +7257,6 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string YamlWrongFile {
             get {
                 return ResourceManager.GetString("YamlWrongFile", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à check-frequency.
-        /// </summary>
-        internal static string CheckFrequency {
-            get {
-                return ResourceManager.GetString("CheckFrequency", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Check frequency, default 5m..
-        /// </summary>
-        internal static string CheckFrequencyDesc {
-            get {
-                return ResourceManager.GetString("CheckFrequencyDesc", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Shows the Discord link..
-        /// </summary>
-        internal static string DiscordDesc {
-            get {
-                return ResourceManager.GetString("DiscordDesc", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Downloading the update:.
-        /// </summary>
-        internal static string DownloadUpdate {
-            get {
-                return ResourceManager.GetString("DownloadUpdate", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every.
-        /// </summary>
-        internal static string Every {
-            get {
-                return ResourceManager.GetString("Every", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every day.
-        /// </summary>
-        internal static string EveryDay {
-            get {
-                return ResourceManager.GetString("EveryDay", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à hour.
-        /// </summary>
-        internal static string Hour {
-            get {
-                return ResourceManager.GetString("Hour", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No filter.
-        /// </summary>
-        internal static string None {
-            get {
-                return ResourceManager.GetString("None", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Recap and clean list of items for a specific game.
-        /// </summary>
-        internal static string RCRecapAndCleanDescription {
-            get {
-                return ResourceManager.GetString("RCRecapAndCleanDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Add Alias.
-        /// </summary>
-        internal static string SCAddAliasDescription {
-            get {
-                return ResourceManager.GetString("SCAddAliasDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à skip_mention_items.
-        /// </summary>
-        internal static string SCAddAliasSkipMention {
-            get {
-                return ResourceManager.GetString("SCAddAliasSkipMention", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Set if you want to skip useless mention (filler Items).
-        /// </summary>
-        internal static string SCAddAliasSkipMentionDescription {
-            get {
-                return ResourceManager.GetString("SCAddAliasSkipMentionDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Add a URL and create a thread..
-        /// </summary>
-        internal static string SCAddUrlDescription {
-            get {
-                return ResourceManager.GetString("SCAddUrlDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Choose an APWorld.
-        /// </summary>
-        internal static string SCApworldInfoChoiceDescription {
-            get {
-                return ResourceManager.GetString("SCApworldInfoChoiceDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à List info for specific APWorld.
-        /// </summary>
-        internal static string SCApworldInfoDescription {
-            get {
-                return ResourceManager.GetString("SCApworldInfoDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Backup all APWorlds for the channel.
-        /// </summary>
-        internal static string SCBackupApworldDescription {
-            get {
-                return ResourceManager.GetString("SCBackupApworldDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Backup all YAMLs for the channel.
-        /// </summary>
-        internal static string SCBackupYamlDescription {
-            get {
-                return ResourceManager.GetString("SCBackupYamlDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Choose an alias.
-        /// </summary>
-        internal static string SCChooseAnAlias {
-            get {
-                return ResourceManager.GetString("SCChooseAnAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Choose an item.
-        /// </summary>
-        internal static string SCChooseAnItem {
-            get {
-                return ResourceManager.GetString("SCChooseAnItem", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Clean all recap items.
-        /// </summary>
-        internal static string SCCleanAllDescription {
-            get {
-                return ResourceManager.GetString("SCCleanAllDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Clean list of items for a specific game.
-        /// </summary>
-        internal static string SCCleanDescription {
-            get {
-                return ResourceManager.GetString("SCCleanDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Clean all YAMLs in the channel.
-        /// </summary>
-        internal static string SCCleanYamlDescription {
-            get {
-                return ResourceManager.GetString("SCCleanYamlDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Delete Alias.
-        /// </summary>
-        internal static string SCDeleteAliasDescription {
-            get {
-                return ResourceManager.GetString("SCDeleteAliasDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Deletes the item from the exclusion list.
-        /// </summary>
-        internal static string SCDeleteExcludedItemDesc {
-            get {
-                return ResourceManager.GetString("SCDeleteExcludedItemDesc", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Delete Url, clean Aliases and Recap.
-        /// </summary>
-        internal static string SCDeleteUrlDescription {
-            get {
-                return ResourceManager.GetString("SCDeleteUrlDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Choose a YAML file to delete.
-        /// </summary>
-        internal static string SCDeleteYamlChooseDescription {
-            get {
-                return ResourceManager.GetString("SCDeleteYamlChooseDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Delete a specific YAML file.
-        /// </summary>
-        internal static string SCDeleteYamlDescription {
-            get {
-                return ResourceManager.GetString("SCDeleteYamlDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Download a YAML template.
-        /// </summary>
-        internal static string SCDownloadYamlTemplateDescription {
-            get {
-                return ResourceManager.GetString("SCDownloadYamlTemplateDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Excludes notifications for this item.
-        /// </summary>
-        internal static string SCExcludedItemDesc {
-            get {
-                return ResourceManager.GetString("SCExcludedItemDesc", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Displays your excluded items list.
-        /// </summary>
-        internal static string SCExcludedItemListDesc {
-            get {
-                return ResourceManager.GetString("SCExcludedItemListDesc", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Generate multiworld from existing YAMLs.
-        /// </summary>
-        internal static string SCGenerateDescription {
-            get {
-                return ResourceManager.GetString("SCGenerateDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Upload a ZIP containing YAMLs.
-        /// </summary>
-        internal static string SCGenerateWithZipChooseDescription {
-            get {
-                return ResourceManager.GetString("SCGenerateWithZipChooseDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Generate multiworld from a ZIP.
-        /// </summary>
-        internal static string SCGenerateWithZipDescription {
-            get {
-                return ResourceManager.GetString("SCGenerateWithZipDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à List all Aliases.
-        /// </summary>
-        internal static string SCGetAliasesDescription {
-            get {
-                return ResourceManager.GetString("SCGetAliasesDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Get a hint for receiver.
-        /// </summary>
-        internal static string SCGetHintForReveiverDescription {
-            get {
-                return ResourceManager.GetString("SCGetHintForReveiverDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Get a hint from finder.
-        /// </summary>
-        internal static string SCGetHintFromFinderDescription {
-            get {
-                return ResourceManager.GetString("SCGetHintFromFinderDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Get patch for alias.
-        /// </summary>
-        internal static string SCGetPatchDescription {
-            get {
-                return ResourceManager.GetString("SCGetPatchDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Get all infos for your Archipelago.
-        /// </summary>
-        internal static string SCInfoDescription {
-            get {
-                return ResourceManager.GetString("SCInfoDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à List all APWorlds.
-        /// </summary>
-        internal static string SCListApworldDescription {
-            get {
-                return ResourceManager.GetString("SCListApworldDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à List all items for alias.
-        /// </summary>
-        internal static string SCListItemDescription {
-            get {
-                return ResourceManager.GetString("SCListItemDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à List all YAML files for the channel.
-        /// </summary>
-        internal static string SCListYamlsDescription {
-            get {
-                return ResourceManager.GetString("SCListYamlsDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Get your web portal link..
-        /// </summary>
-        internal static string SCPortalLinkDescription {
-            get {
-                return ResourceManager.GetString("SCPortalLinkDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Get the web portal commands page..
-        /// </summary>
-        internal static string SCPortalUrlDescription {
-            get {
-                return ResourceManager.GetString("SCPortalUrlDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Recap list of items for all games.
-        /// </summary>
-        internal static string SCRecapAllDescription {
-            get {
-                return ResourceManager.GetString("SCRecapAllDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Recap list of items for a specific game.
-        /// </summary>
-        internal static string SCRecapDescription {
-            get {
-                return ResourceManager.GetString("SCRecapDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Upload an APWorld file.
-        /// </summary>
-        internal static string SCSendApworldChooseDescription {
-            get {
-                return ResourceManager.GetString("SCSendApworldChooseDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Send or replace an APWorld file.
-        /// </summary>
-        internal static string SCSendApworldDescription {
-            get {
-                return ResourceManager.GetString("SCSendApworldDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Upload a YAML file.
-        /// </summary>
-        internal static string SCSendYamlChooseDescription {
-            get {
-                return ResourceManager.GetString("SCSendYamlChooseDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Send or replace a YAML file for generation.
-        /// </summary>
-        internal static string SCSendYamlDescription {
-            get {
-                return ResourceManager.GetString("SCSendYamlDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Only send message when an alias is set.
-        /// </summary>
-        internal static string SCSilentDescription {
-            get {
-                return ResourceManager.GetString("SCSilentDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à silent.
-        /// </summary>
-        internal static string SCSilentOption {
-            get {
-                return ResourceManager.GetString("SCSilentOption", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Status for all games.
-        /// </summary>
-        internal static string SCStatusGameListDescription {
-            get {
-                return ResourceManager.GetString("SCStatusGameListDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Choose a YAML file to download.
-        /// </summary>
-        internal static string SCTemplateDescription {
-            get {
-                return ResourceManager.GetString("SCTemplateDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Test generation of multiworld from existing YAMLs.
-        /// </summary>
-        internal static string SCTestGenerateDescription {
-            get {
-                return ResourceManager.GetString("SCTestGenerateDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à thread-name.
-        /// </summary>
-        internal static string SCThreadName {
-            get {
-                return ResourceManager.GetString("SCThreadName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Name of the thread to create.
-        /// </summary>
-        internal static string SCThreadNameDescription {
-            get {
-                return ResourceManager.GetString("SCThreadNameDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à thread-type.
-        /// </summary>
-        internal static string SCThreadType {
-            get {
-                return ResourceManager.GetString("SCThreadType", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Specify if the thread is public or private.
-        /// </summary>
-        internal static string SCThreadTypeDescription {
-            get {
-                return ResourceManager.GetString("SCThreadTypeDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Updated the “Silent” option..
-        /// </summary>
-        internal static string SCUpdateSilentOptionDescription {
-            get {
-                return ResourceManager.GetString("SCUpdateSilentOptionDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à The URL to track.
-        /// </summary>
-        internal static string SCUrlToTrack {
-            get {
-                return ResourceManager.GetString("SCUrlToTrack", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Update available:.
-        /// </summary>
-        internal static string UpdateAvailable {
-            get {
-                return ResourceManager.GetString("UpdateAvailable", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Name: {0} | Download: {1}.
-        /// </summary>
-        internal static string UrlGamePatch {
-            get {
-                return ResourceManager.GetString("UrlGamePatch", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à URL set to {0}. Messages configured for this channel. Please wait while the program retrieves all aliases..
-        /// </summary>
-        internal static string URLSet {
-            get {
-                return ResourceManager.GetString("URLSet", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Access.
-        /// </summary>
-        internal static string WebAccess {
-            get {
-                return ResourceManager.GetString("WebAccess", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Active Hints.
-        /// </summary>
-        internal static string WebActiveHints {
-            get {
-                return ResourceManager.GetString("WebActiveHints", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Add an existing alias in this thread:.
-        /// </summary>
-        internal static string WebAddExistingAliasInThread {
-            get {
-                return ResourceManager.GetString("WebAddExistingAliasInThread", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Adding alias....
-        /// </summary>
-        internal static string WebAddingAlias {
-            get {
-                return ResourceManager.GetString("WebAddingAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Add selected alias.
-        /// </summary>
-        internal static string WebAddSelectedAlias {
-            get {
-                return ResourceManager.GetString("WebAddSelectedAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Alias added:.
-        /// </summary>
-        internal static string WebAliasAddedPrefix {
-            get {
-                return ResourceManager.GetString("WebAliasAddedPrefix", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Alias deleted:.
-        /// </summary>
-        internal static string WebAliasDeletedPrefix {
-            get {
-                return ResourceManager.GetString("WebAliasDeletedPrefix", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Aliases unavailable.
-        /// </summary>
-        internal static string WebAliasesUnavailable {
-            get {
-                return ResourceManager.GetString("WebAliasesUnavailable", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Alias not found..
-        /// </summary>
-        internal static string WebAliasNotFound {
-            get {
-                return ResourceManager.GetString("WebAliasNotFound", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à List APWorld.
-        /// </summary>
-        internal static string WebAPWorldList {
-            get {
-                return ResourceManager.GetString("WebAPWorldList", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Auto-add members (public).
-        /// </summary>
-        internal static string WebAutoAddMembersPublic {
-            get {
-                return ResourceManager.GetString("WebAutoAddMembersPublic", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Available links for this Guild ID with thread names..
-        /// </summary>
-        internal static string WebAvailableLinksForGuild {
-            get {
-                return ResourceManager.GetString("WebAvailableLinksForGuild", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Check frequency.
-        /// </summary>
-        internal static string WebCheckFrequency {
-            get {
-                return ResourceManager.GetString("WebCheckFrequency", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Clean all YAMLs.
-        /// </summary>
-        internal static string WebCleanAllYamls {
-            get {
-                return ResourceManager.GetString("WebCleanAllYamls", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Error while executing command..
-        /// </summary>
-        internal static string WebCommandError {
-            get {
-                return ResourceManager.GetString("WebCommandError", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Command executed..
-        /// </summary>
-        internal static string WebCommandExecuted {
-            get {
-                return ResourceManager.GetString("WebCommandExecuted", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Create thread.
-        /// </summary>
-        internal static string WebCreateThread {
-            get {
-                return ResourceManager.GetString("WebCreateThread", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Create a thread via /add-url.
-        /// </summary>
-        internal static string WebCreateThreadViaAddUrl {
-            get {
-                return ResourceManager.GetString("WebCreateThreadViaAddUrl", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Current recap.
-        /// </summary>
-        internal static string WebCurrentRecap {
-            get {
-                return ResourceManager.GetString("WebCurrentRecap", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Remove an alias from your list:.
-        /// </summary>
-        internal static string WebDeleteAliasFromYourList {
-            get {
-                return ResourceManager.GetString("WebDeleteAliasFromYourList", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Delete recap.
-        /// </summary>
-        internal static string WebDeleteRecap {
-            get {
-                return ResourceManager.GetString("WebDeleteRecap", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Delete selected alias.
-        /// </summary>
-        internal static string WebDeleteSelectedAlias {
-            get {
-                return ResourceManager.GetString("WebDeleteSelectedAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Delete thread URL.
-        /// </summary>
-        internal static string WebDeleteThreadUrl {
-            get {
-                return ResourceManager.GetString("WebDeleteThreadUrl", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Delete YAML.
-        /// </summary>
-        internal static string WebDeleteYaml {
-            get {
-                return ResourceManager.GetString("WebDeleteYaml", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Deleting alias....
-        /// </summary>
-        internal static string WebDeletingAlias {
-            get {
-                return ResourceManager.GetString("WebDeletingAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Deleting recap....
-        /// </summary>
-        internal static string WebDeletingRecap {
-            get {
-                return ResourceManager.GetString("WebDeletingRecap", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Disabled.
-        /// </summary>
-        internal static string WebDisabled {
-            get {
-                return ResourceManager.GetString("WebDisabled", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Discord commands.
-        /// </summary>
-        internal static string WebDiscordCommands {
-            get {
-                return ResourceManager.GetString("WebDiscordCommands", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Download file.
-        /// </summary>
-        internal static string WebDownloadFile {
-            get {
-                return ResourceManager.GetString("WebDownloadFile", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Download template.
-        /// </summary>
-        internal static string WebDownloadTemplate {
-            get {
-                return ResourceManager.GetString("WebDownloadTemplate", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Download YAML.
-        /// </summary>
-        internal static string WebDownloadYaml {
-            get {
-                return ResourceManager.GetString("WebDownloadYaml", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Enabled.
-        /// </summary>
-        internal static string WebEnabled {
-            get {
-                return ResourceManager.GetString("WebEnabled", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Error while loading aliases..
-        /// </summary>
-        internal static string WebErrorLoadingAliases {
-            get {
-                return ResourceManager.GetString("WebErrorLoadingAliases", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Error loading YAMLs.
-        /// </summary>
-        internal static string WebErrorLoadingYamls {
-            get {
-                return ResourceManager.GetString("WebErrorLoadingYamls", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 12h.
-        /// </summary>
-        internal static string WebEvery12h {
-            get {
-                return ResourceManager.GetString("WebEvery12h", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 12 hours.
-        /// </summary>
-        internal static string WebEvery12Hours {
-            get {
-                return ResourceManager.GetString("WebEvery12Hours", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 15 minutes.
-        /// </summary>
-        internal static string WebEvery15Minutes {
-            get {
-                return ResourceManager.GetString("WebEvery15Minutes", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 18h.
-        /// </summary>
-        internal static string WebEvery18h {
-            get {
-                return ResourceManager.GetString("WebEvery18h", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 18 hours.
-        /// </summary>
-        internal static string WebEvery18Hours {
-            get {
-                return ResourceManager.GetString("WebEvery18Hours", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 1h.
-        /// </summary>
-        internal static string WebEvery1h {
-            get {
-                return ResourceManager.GetString("WebEvery1h", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 1 hour.
-        /// </summary>
-        internal static string WebEvery1Hour {
-            get {
-                return ResourceManager.GetString("WebEvery1Hour", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 30 minutes.
-        /// </summary>
-        internal static string WebEvery30Minutes {
-            get {
-                return ResourceManager.GetString("WebEvery30Minutes", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 5 minutes.
-        /// </summary>
-        internal static string WebEvery5Minutes {
-            get {
-                return ResourceManager.GetString("WebEvery5Minutes", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 6h.
-        /// </summary>
-        internal static string WebEvery6h {
-            get {
-                return ResourceManager.GetString("WebEvery6h", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every 6 hours.
-        /// </summary>
-        internal static string WebEvery6Hours {
-            get {
-                return ResourceManager.GetString("WebEvery6Hours", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Every day.
-        /// </summary>
-        internal static string WebEveryDay {
-            get {
-                return ResourceManager.GetString("WebEveryDay", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Frequency.
-        /// </summary>
-        internal static string WebFrequency {
-            get {
-                return ResourceManager.GetString("WebFrequency", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Game: .
-        /// </summary>
-        internal static string WebGameLabelPrefix {
-            get {
-                return ResourceManager.GetString("WebGameLabelPrefix", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Game: unknown.
-        /// </summary>
-        internal static string WebGameUnknown {
-            get {
-                return ResourceManager.GetString("WebGameUnknown", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Generate with ZIP.
-        /// </summary>
-        internal static string WebGenerateWithZip {
-            get {
-                return ResourceManager.GetString("WebGenerateWithZip", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Guild ID not found in URL..
-        /// </summary>
-        internal static string WebGuildIdMissingInUrl {
-            get {
-                return ResourceManager.GetString("WebGuildIdMissingInUrl", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Info unavailable: guildId/channelId not found..
-        /// </summary>
-        internal static string WebInfoUnavailableMissingIds {
-            get {
-                return ResourceManager.GetString("WebInfoUnavailableMissingIds", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Invalid URL: guildId/channelId not found..
-        /// </summary>
-        internal static string WebInvalidUrlMissingIds {
-            get {
-                return ResourceManager.GetString("WebInvalidUrlMissingIds", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Invalid URL: guildId/channelId not found. Open via /portal/{guildId}/{channelId}/commands.html.
-        /// </summary>
-        internal static string WebInvalidUrlOpenViaPortal {
-            get {
-                return ResourceManager.GetString("WebInvalidUrlOpenViaPortal", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Last update.
-        /// </summary>
-        internal static string WebLastUpdate {
-            get {
-                return ResourceManager.GetString("WebLastUpdate", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à List YAMLs.
-        /// </summary>
-        internal static string WebListYamls {
-            get {
-                return ResourceManager.GetString("WebListYamls", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Loading aliases….
-        /// </summary>
-        internal static string WebLoadingAliases {
-            get {
-                return ResourceManager.GetString("WebLoadingAliases", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Loading AST Room Portals....
-        /// </summary>
-        internal static string WebLoadingAstRoomPortals {
-            get {
-                return ResourceManager.GetString("WebLoadingAstRoomPortals", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Loading info….
-        /// </summary>
-        internal static string WebLoadingInfo {
-            get {
-                return ResourceManager.GetString("WebLoadingInfo", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Loading thread aliases....
-        /// </summary>
-        internal static string WebLoadingThreadAliases {
-            get {
-                return ResourceManager.GetString("WebLoadingThreadAliases", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Loading YAMLs....
-        /// </summary>
-        internal static string WebLoadingYamls {
-            get {
-                return ResourceManager.GetString("WebLoadingYamls", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Loading your aliases....
-        /// </summary>
-        internal static string WebLoadingYourAliases {
-            get {
-                return ResourceManager.GetString("WebLoadingYourAliases", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No.
-        /// </summary>
-        internal static string WebNo {
-            get {
-                return ResourceManager.GetString("WebNo", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No active hint..
-        /// </summary>
-        internal static string WebNoActiveHint {
-            get {
-                return ResourceManager.GetString("WebNoActiveHint", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No active recap for this user..
-        /// </summary>
-        internal static string WebNoActiveRecapForUser {
-            get {
-                return ResourceManager.GetString("WebNoActiveRecapForUser", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No alias available.
-        /// </summary>
-        internal static string WebNoAliasAvailable {
-            get {
-                return ResourceManager.GetString("WebNoAliasAvailable", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No alias found for this thread..
-        /// </summary>
-        internal static string WebNoAliasForThread {
-            get {
-                return ResourceManager.GetString("WebNoAliasForThread", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No alias available in this thread.
-        /// </summary>
-        internal static string WebNoAliasInThread {
-            get {
-                return ResourceManager.GetString("WebNoAliasInThread", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No AST Room Portal available for this Guild ID..
-        /// </summary>
-        internal static string WebNoAstRoomPortalForGuild {
-            get {
-                return ResourceManager.GetString("WebNoAstRoomPortalForGuild", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No hint as Finder..
-        /// </summary>
-        internal static string WebNoHintAsFinder {
-            get {
-                return ResourceManager.GetString("WebNoHintAsFinder", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No hint as Receiver..
-        /// </summary>
-        internal static string WebNoHintAsReceiver {
-            get {
-                return ResourceManager.GetString("WebNoHintAsReceiver", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No info available..
-        /// </summary>
-        internal static string WebNoInfoAvailable {
-            get {
-                return ResourceManager.GetString("WebNoInfoAvailable", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No patch link available for this alias..
-        /// </summary>
-        internal static string WebNoPatchLinkForAlias {
-            get {
-                return ResourceManager.GetString("WebNoPatchLinkForAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No pending item..
-        /// </summary>
-        internal static string WebNoPendingItem {
-            get {
-                return ResourceManager.GetString("WebNoPendingItem", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No received items..
-        /// </summary>
-        internal static string WebNoReceivedItems {
-            get {
-                return ResourceManager.GetString("WebNoReceivedItems", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No items received yet..
-        /// </summary>
-        internal static string WebNoReceivedItemsYet {
-            get {
-                return ResourceManager.GetString("WebNoReceivedItemsYet", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à You don&apos;t have any registered alias.
-        /// </summary>
-        internal static string WebNoRegisteredAlias {
-            get {
-                return ResourceManager.GetString("WebNoRegisteredAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No template available.
-        /// </summary>
-        internal static string WebNoTemplateAvailable {
-            get {
-                return ResourceManager.GetString("WebNoTemplateAvailable", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No YAML available.
-        /// </summary>
-        internal static string WebNoYamlAvailable {
-            get {
-                return ResourceManager.GetString("WebNoYamlAvailable", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à No YAML selected..
-        /// </summary>
-        internal static string WebNoYamlSelected {
-            get {
-                return ResourceManager.GetString("WebNoYamlSelected", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Open.
-        /// </summary>
-        internal static string WebOpen {
-            get {
-                return ResourceManager.GetString("WebOpen", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Personal portal.
-        /// </summary>
-        internal static string WebPersonalPortal {
-            get {
-                return ResourceManager.GetString("WebPersonalPortal", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Portal unavailable..
-        /// </summary>
-        internal static string WebPortalUnavailable {
-            get {
-                return ResourceManager.GetString("WebPortalUnavailable", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Private.
-        /// </summary>
-        internal static string WebPrivate {
-            get {
-                return ResourceManager.GetString("WebPrivate", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Processing....
-        /// </summary>
-        internal static string WebProcessing {
-            get {
-                return ResourceManager.GetString("WebProcessing", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Provide a user ID if you target a private thread..
-        /// </summary>
-        internal static string WebProvideUserIdForPrivateThread {
-            get {
-                return ResourceManager.GetString("WebProvideUserIdForPrivateThread", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Quick actions.
-        /// </summary>
-        internal static string WebQuickActions {
-            get {
-                return ResourceManager.GetString("WebQuickActions", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Recap deleted for.
-        /// </summary>
-        internal static string WebRecapDeletedFor {
-            get {
-                return ResourceManager.GetString("WebRecapDeletedFor", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Received items.
-        /// </summary>
-        internal static string WebReceivedItems {
-            get {
-                return ResourceManager.GetString("WebReceivedItems", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Refresh data.
-        /// </summary>
-        internal static string WebRefreshData {
-            get {
-                return ResourceManager.GetString("WebRefreshData", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Select an alias.
-        /// </summary>
-        internal static string WebSelectAlias {
-            get {
-                return ResourceManager.GetString("WebSelectAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Select an alias to view the patch..
-        /// </summary>
-        internal static string WebSelectAliasForPatch {
-            get {
-                return ResourceManager.GetString("WebSelectAliasForPatch", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Select an alias to add..
-        /// </summary>
-        internal static string WebSelectAliasToAdd {
-            get {
-                return ResourceManager.GetString("WebSelectAliasToAdd", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Select an alias to delete..
-        /// </summary>
-        internal static string WebSelectAliasToDelete {
-            get {
-                return ResourceManager.GetString("WebSelectAliasToDelete", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Select a YAML.
-        /// </summary>
-        internal static string WebSelectYaml {
-            get {
-                return ResourceManager.GetString("WebSelectYaml", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Send APWorld.
-        /// </summary>
-        internal static string WebSendApworld {
-            get {
-                return ResourceManager.GetString("WebSendApworld", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Send YAML.
-        /// </summary>
-        internal static string WebSendYaml {
-            get {
-                return ResourceManager.GetString("WebSendYaml", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Show game status.
-        /// </summary>
-        internal static string WebShowGameStatus {
-            get {
-                return ResourceManager.GetString("WebShowGameStatus", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Show info.
-        /// </summary>
-        internal static string WebShowInfo {
-            get {
-                return ResourceManager.GetString("WebShowInfo", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Synchronizing with database....
-        /// </summary>
-        internal static string WebSyncingDatabase {
-            get {
-                return ResourceManager.GetString("WebSyncingDatabase", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Test generation.
-        /// </summary>
-        internal static string WebTestGeneration {
-            get {
-                return ResourceManager.GetString("WebTestGeneration", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Thread commands.
-        /// </summary>
-        internal static string WebThreadCommandsSubtitle {
-            get {
-                return ResourceManager.GetString("WebThreadCommandsSubtitle", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Unable to add this alias..
-        /// </summary>
-        internal static string WebUnableToAddAlias {
-            get {
-                return ResourceManager.GetString("WebUnableToAddAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Unable to delete this alias..
-        /// </summary>
-        internal static string WebUnableToDeleteAlias {
-            get {
-                return ResourceManager.GetString("WebUnableToDeleteAlias", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Unable to delete recap..
-        /// </summary>
-        internal static string WebUnableToDeleteRecap {
-            get {
-                return ResourceManager.GetString("WebUnableToDeleteRecap", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Unable to load aliases..
-        /// </summary>
-        internal static string WebUnableToLoadAliases {
-            get {
-                return ResourceManager.GetString("WebUnableToLoadAliases", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Unable to load AST Room Portals..
-        /// </summary>
-        internal static string WebUnableToLoadAstRoomPortals {
-            get {
-                return ResourceManager.GetString("WebUnableToLoadAstRoomPortals", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Unable to load info..
-        /// </summary>
-        internal static string WebUnableToLoadInfo {
-            get {
-                return ResourceManager.GetString("WebUnableToLoadInfo", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Unable to load thread aliases.
-        /// </summary>
-        internal static string WebUnableToLoadThreadAliases {
-            get {
-                return ResourceManager.GetString("WebUnableToLoadThreadAliases", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Unable to load your aliases.
-        /// </summary>
-        internal static string WebUnableToLoadYourAliases {
-            get {
-                return ResourceManager.GetString("WebUnableToLoadYourAliases", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Unable to reach server..
-        /// </summary>
-        internal static string WebUnableToReachServer {
-            get {
-                return ResourceManager.GetString("WebUnableToReachServer", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Update frequency.
-        /// </summary>
-        internal static string WebUpdateFrequency {
-            get {
-                return ResourceManager.GetString("WebUpdateFrequency", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Update silent mode.
-        /// </summary>
-        internal static string WebUpdateSilentMode {
-            get {
-                return ResourceManager.GetString("WebUpdateSilentMode", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Useful info.
-        /// </summary>
-        internal static string WebUsefulInfo {
-            get {
-                return ResourceManager.GetString("WebUsefulInfo", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à User ID (optional, useful for private threads).
-        /// </summary>
-        internal static string WebUserIdOptionalPrivateThreads {
-            get {
-                return ResourceManager.GetString("WebUserIdOptionalPrivateThreads", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à YAML file to delete.
-        /// </summary>
-        internal static string WebYamlFileToDelete {
-            get {
-                return ResourceManager.GetString("WebYamlFileToDelete", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à YAML file to download.
-        /// </summary>
-        internal static string WebYamlFileToDownload {
-            get {
-                return ResourceManager.GetString("WebYamlFileToDownload", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Yes.
-        /// </summary>
-        internal static string WebYes {
-            get {
-                return ResourceManager.GetString("WebYes", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Recherche une chaîne localisée semblable à Your aliases.
-        /// </summary>
-        internal static string WebYourAliases {
-            get {
-                return ResourceManager.GetString("WebYourAliases", resourceCulture);
-            }
-        }
-
-        internal static string WebCompanionCopyFailed {
-            get {
-                return ResourceManager.GetString("WebCompanionCopyFailed", resourceCulture);
-            }
-        }
-
-        internal static string WebCompanionDescription {
-            get {
-                return ResourceManager.GetString("WebCompanionDescription", resourceCulture);
-            }
-        }
-
-        internal static string WebCompanionLinkCopied {
-            get {
-                return ResourceManager.GetString("WebCompanionLinkCopied", resourceCulture);
-            }
-        }
-
-        internal static string WebCompanionNeedsAlias {
-            get {
-                return ResourceManager.GetString("WebCompanionNeedsAlias", resourceCulture);
-            }
-        }
-
-        internal static string WebCompanionOpening {
-            get {
-                return ResourceManager.GetString("WebCompanionOpening", resourceCulture);
-            }
-        }
-
-        internal static string WebCompanionReady {
-            get {
-                return ResourceManager.GetString("WebCompanionReady", resourceCulture);
-            }
-        }
-
-        internal static string WebCopyCompanionLink {
-            get {
-                return ResourceManager.GetString("WebCopyCompanionLink", resourceCulture);
-            }
-        }
-
-        internal static string WebOpenCompanion {
-            get {
-                return ResourceManager.GetString("WebOpenCompanion", resourceCulture);
-            }
-        }
-
-        internal static string WebOverallAstHealth {
-            get {
-                return ResourceManager.GetString("WebOverallAstHealth", resourceCulture);
-            }
-        }
-
-        internal static string WebPauseTracking {
-            get {
-                return ResourceManager.GetString("WebPauseTracking", resourceCulture);
-            }
-        }
-
-        internal static string WebPollingAutomatic {
-            get {
-                return ResourceManager.GetString("WebPollingAutomatic", resourceCulture);
-            }
-        }
-
-        internal static string WebPollingFixedFrequency {
-            get {
-                return ResourceManager.GetString("WebPollingFixedFrequency", resourceCulture);
-            }
-        }
-
-        internal static string WebPollingMaximumInterval {
-            get {
-                return ResourceManager.GetString("WebPollingMaximumInterval", resourceCulture);
-            }
-        }
-
-        internal static string WebPollingMode {
-            get {
-                return ResourceManager.GetString("WebPollingMode", resourceCulture);
-            }
-        }
-
-        internal static string WebPollingUpdatePolicy {
-            get {
-                return ResourceManager.GetString("WebPollingUpdatePolicy", resourceCulture);
-            }
-        }
-
-        internal static string WebResumeTracking {
-            get {
-                return ResourceManager.GetString("WebResumeTracking", resourceCulture);
-            }
-        }
-
-        internal static string WebRoomHealth {
-            get {
-                return ResourceManager.GetString("WebRoomHealth", resourceCulture);
-            }
-        }
-
-        internal static string WebSyncNow {
-            get {
-                return ResourceManager.GetString("WebSyncNow", resourceCulture);
-            }
-        }
-
-        internal static string WebTrackingHealthAndControls {
-            get {
-                return ResourceManager.GetString("WebTrackingHealthAndControls", resourceCulture);
-            }
-        }
-
-        internal static string WebUploaderUnYAML {
-            get {
-                return ResourceManager.GetString("WebUploaderUnYAML", resourceCulture);
-            }
-        }
-
-        internal static string WebAuditLog {
-            get {
-                return ResourceManager.GetString("WebAuditLog", resourceCulture);
-            }
-        }
-
-        internal static string WebConfirmClearAllRecaps {
-            get {
-                return ResourceManager.GetString("WebConfirmClearAllRecaps", resourceCulture);
-            }
-        }
-
-        internal static string WebConfirmDangerousAction {
-            get {
-                return ResourceManager.GetString("WebConfirmDangerousAction", resourceCulture);
-            }
-        }
-
-        internal static string WebConfirmDeleteExclusion {
-            get {
-                return ResourceManager.GetString("WebConfirmDeleteExclusion", resourceCulture);
-            }
-        }
-
-        internal static string WebConfirmDeleteRecap {
-            get {
-                return ResourceManager.GetString("WebConfirmDeleteRecap", resourceCulture);
-            }
-        }
-
-        internal static string WebConfirmRevokePortal {
-            get {
-                return ResourceManager.GetString("WebConfirmRevokePortal", resourceCulture);
-            }
-        }
-
-        internal static string WebNoAuditEntries {
-            get {
-                return ResourceManager.GetString("WebNoAuditEntries", resourceCulture);
-            }
-        }
-
-        internal static string WebNoAvailableItem {
-            get {
-                return ResourceManager.GetString("WebNoAvailableItem", resourceCulture);
-            }
-        }
-
-        internal static string WebProgressionBalancing {
-            get {
-                return ResourceManager.GetString("WebProgressionBalancing", resourceCulture);
-            }
-        }
-
-        internal static string WebRefreshAudit {
-            get {
-                return ResourceManager.GetString("WebRefreshAudit", resourceCulture);
-            }
-        }
-
-        internal static string WebSelectAliasAndItem {
-            get {
-                return ResourceManager.GetString("WebSelectAliasAndItem", resourceCulture);
-            }
-        }
-
-        internal static string SpoilerLogDownloadFailed {
-            get {
-                return ResourceManager.GetString("SpoilerLogDownloadFailed", resourceCulture);
-            }
-        }
-
-        internal static string SpoilerLogInvalidContent {
-            get {
-                return ResourceManager.GetString("SpoilerLogInvalidContent", resourceCulture);
-            }
-        }
-
-        internal static string SpoilerLogInvalidFile {
-            get {
-                return ResourceManager.GetString("SpoilerLogInvalidFile", resourceCulture);
-            }
-        }
-
-        internal static string SpoilerLogNotFoundForRoom {
-            get {
-                return ResourceManager.GetString("SpoilerLogNotFoundForRoom", resourceCulture);
-            }
-        }
-
-        internal static string SpoilerLogReceived {
-            get {
-                return ResourceManager.GetString("SpoilerLogReceived", resourceCulture);
-            }
-        }
-
-        internal static string SpoilerLogTooLarge {
-            get {
-                return ResourceManager.GetString("SpoilerLogTooLarge", resourceCulture);
-            }
-        }
-
-        internal static string WebCheckingSpoilerLog {
-            get {
-                return ResourceManager.GetString("WebCheckingSpoilerLog", resourceCulture);
-            }
-        }
-
-        internal static string WebNoSpoilerLogImported {
-            get {
-                return ResourceManager.GetString("WebNoSpoilerLogImported", resourceCulture);
-            }
-        }
-
-        internal static string WebSpoilerLogAlreadyImported {
-            get {
-                return ResourceManager.GetString("WebSpoilerLogAlreadyImported", resourceCulture);
-            }
-        }
-
-        internal static string AstCenterSpoilerImportHint {
-            get {
-                return ResourceManager.GetString("AstCenterSpoilerImportHint", resourceCulture);
             }
         }
     }
