@@ -62,7 +62,7 @@ Comportement proposé pour la PR 9 : refuser proprement la commande, car les per
 
 ### 4.1 Mon espace — `GuildMember`
 
-- `Mes slots` : voir ses associations, associer un slot libre, modifier les notifications, dissocier un de ses slots.
+- `Mes slots` : voir ses associations, associer un slot même s’il est partagé avec d’autres joueurs, modifier les notifications, dissocier un de ses slots.
 - `Mes objets` : objets reçus, filtres par slot et type, pagination.
 - `Mes hints` : vue « reçus » ou « trouvés », filtrée par slot.
 - `Mon récap` : un slot ou tous les slots ; nettoyage séparé et confirmé.

@@ -2361,12 +2361,12 @@ public static class AstCommandCenter
         var allAliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId).ConfigureAwait(false);
         var allOwnAliases = (await ReceiverAliasesCommands.GetReceiversForUserAsync(guildId, channelId, userId).ConfigureAwait(false))
             .ToArray();
+        var ownAliasSet = allOwnAliases.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var ownAliases = allOwnAliases
             .Where(alias => MatchesSelectionSearch(session, alias))
             .ToArray();
-        var associated = await ReceiverAliasesCommands.GetAssociatedReceiversAsync(guildId, channelId).ConfigureAwait(false);
         var available = allAliases.Distinct(StringComparer.OrdinalIgnoreCase)
-            .Where(alias => !associated.Contains(alias))
+            .Where(alias => !ownAliasSet.Contains(alias))
             .Where(alias => MatchesSelectionSearch(session, alias))
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -2685,9 +2685,9 @@ public static class AstCommandCenter
         var allAliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId).ConfigureAwait(false);
         var ownAliases = await ReceiverAliasesCommands.GetReceiversForUserAsync(
             guildId, channelId, userId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
-        var associated = await ReceiverAliasesCommands.GetAssociatedReceiversAsync(guildId, channelId).ConfigureAwait(false);
+        var ownAliasSet = ownAliases.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var availableCount = allAliases.Distinct(StringComparer.OrdinalIgnoreCase)
-            .Count(alias => !associated.Contains(alias) && MatchesSelectionSearch(session, alias));
+            .Count(alias => !ownAliasSet.Contains(alias) && MatchesSelectionSearch(session, alias));
         var ownCount = ownAliases.Count(alias => MatchesSelectionSearch(session, alias));
         return Math.Max(availableCount, ownCount);
     }

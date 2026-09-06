@@ -43,7 +43,7 @@ In a regular guild channel it displays accessible rooms, room setup, global heal
 | Legacy command | `/ast` destination | Interaction | Access |
 |---|---|---|---|
 | `get-aliases` | Room → Associations | private paginated/searchable list | Member; full Discord mapping only for managers |
-| `add-alias` | My space → Slots → Associate | notification-filter then slot selectors | Member |
+| `add-alias` | My space → Slots → Associate | notification-filter then slot selectors; slots may be shared by several users | Member |
 | `delete-alias` | My space → Slots → Dissociate | own-slot selector + confirmation | Member |
 | `update-frequency-check` | Manage → Polling | merged polling workflow | Room manager |
 | `add-url` | Guild home → Configure room | setup workflow | Guild manager |

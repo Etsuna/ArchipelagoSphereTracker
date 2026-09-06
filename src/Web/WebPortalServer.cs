@@ -386,8 +386,8 @@ public static class WebPortalServer
                 return Results.BadRequest(new { message = "alias is required" });
 
             var owners = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
-            if (owners.Count > 0)
-                return Results.Conflict(new { message = "Alias already registered for this user." });
+            if (owners.Contains(userId, StringComparer.Ordinal))
+                return Results.Conflict(new { message = string.Format(Resource.AliasAlreadyRegistered, alias, userId) });
 
             await using var audit = await SecurityAuditScope.StartAsync(
                 SecurityAuditSource.Web,
@@ -395,7 +395,8 @@ public static class WebPortalServer
                 guildId,
                 channelId,
                 SecurityAuditAction.AliasAdd);
-            await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, skipMention);
+            if (!await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, skipMention))
+                return Results.Conflict(new { message = string.Format(Resource.AliasAlreadyRegistered, alias, userId) });
 
             var recapExists = await RecapListCommands.CheckIfExists(guildId, channelId, userId, alias);
             if (!recapExists)
@@ -403,7 +404,7 @@ public static class WebPortalServer
 
             var aliasItems = await DisplayItemCommands.GetAliasItems(guildId, channelId, alias);
             if (aliasItems != null)
-                await RecapListCommands.AddOrEditRecapListItemsAsync(guildId, channelId, alias, aliasItems);
+                await RecapListCommands.AddOrEditRecapListItemsAsync(guildId, channelId, userId, alias, aliasItems);
 
             audit.Succeed();
             return Results.Ok(new { message = "ok" });

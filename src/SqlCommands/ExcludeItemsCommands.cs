@@ -273,34 +273,40 @@ public static class ExcludedItemsCommands
 
     public static async Task<bool> IsItemExcludedForAnyUserAsync(string guildId, string channelId, string alias, string item, List<ReceiverUserInfo> users)
     {
+        var excludedUserIds = await GetExcludedUserIdsAsync(guildId, channelId, alias, item).ConfigureAwait(false);
+        return users.Any(user => excludedUserIds.Contains(user.UserId));
+    }
+
+    public static async Task<HashSet<string>> GetExcludedUserIdsAsync(
+        string guildId,
+        string channelId,
+        string alias,
+        string item)
+    {
+        var userIds = new HashSet<string>(StringComparer.Ordinal);
         await using var conn = await Db.OpenReadAsync();
 
-        foreach (var u in users)
-        {
-            if (string.IsNullOrWhiteSpace(u.UserId))
-                continue;
-
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-            SELECT 1
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT DISTINCT UserId
             FROM ExcludedItemTable
             WHERE GuildId = @GuildId
               AND ChannelId = @ChannelId
-              AND UserId = @UserId
               AND Alias = @Alias
-              AND Item = @Item
-            LIMIT 1;";
-            cmd.Parameters.AddWithValue("@GuildId", guildId);
-            cmd.Parameters.AddWithValue("@ChannelId", channelId);
-            cmd.Parameters.AddWithValue("@UserId", u.UserId);
-            cmd.Parameters.AddWithValue("@Alias", alias);
-            cmd.Parameters.AddWithValue("@Item", item);
+              AND Item = @Item;";
+        cmd.Parameters.AddWithValue("@GuildId", guildId);
+        cmd.Parameters.AddWithValue("@ChannelId", channelId);
+        cmd.Parameters.AddWithValue("@Alias", alias);
+        cmd.Parameters.AddWithValue("@Item", item);
 
-            var res = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
-            if (res != null)
-                return true;
+        using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
+        {
+            var userId = reader["UserId"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(userId))
+                userIds.Add(userId);
         }
 
-        return false;
+        return userIds;
     }
 }

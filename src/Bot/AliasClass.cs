@@ -24,12 +24,13 @@ public class AliasClass
 
         var getReceiverAlias = await ReceiverAliasesCommands.GetAllUsersIds(guildId, channelId, alias);
 
-        if (getReceiverAlias.Count > 0)
+        if (getReceiverAlias.Contains(userId, StringComparer.Ordinal))
         {
             return string.Format(Resource.AliasAlreadyRegistered, alias, userId);
         }
 
-        await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, skipUselessMention);
+        if (!await ReceiverAliasesCommands.InsertReceiverAlias(guildId, channelId, alias, userId, skipUselessMention))
+            return string.Format(Resource.AliasAlreadyRegistered, alias, userId);
 
         var checkRecapList = await RecapListCommands.CheckIfExists(guildId, channelId, userId, alias);
         if (!checkRecapList)
@@ -40,7 +41,7 @@ public class AliasClass
         var getAliasItems = await DisplayItemCommands.GetAliasItems(guildId, channelId, alias);
         if (getAliasItems != null)
         {
-            await RecapListCommands.AddOrEditRecapListItemsAsync(guildId, channelId, alias, getAliasItems);
+            await RecapListCommands.AddOrEditRecapListItemsAsync(guildId, channelId, userId, alias, getAliasItems);
         }
 
         var message = string.Format(Resource.AliasAdded, alias, userId);

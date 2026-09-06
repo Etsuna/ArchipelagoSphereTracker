@@ -183,19 +183,27 @@ public static class ReceiverAliasesCommands
     // ==========================
     // 🎯 INSERT RECEIVER ALIAS  (WRITE)
     // ==========================   
-    public static async Task InsertReceiverAlias(string guildId, string channelId, string receiver, string userId, string flag)
+    public static async Task<bool> InsertReceiverAlias(string guildId, string channelId, string receiver, string userId, string flag)
     {
-        await Db.WriteAsync(async conn =>
+        return await Db.WriteAsync(async conn =>
         {
             using var command = new SQLiteCommand(@"
                 INSERT INTO ReceiverAliasesTable (GuildId, ChannelId, Receiver, UserId, Flag)
-                VALUES (@GuildId, @ChannelId, @Receiver, @UserId, @Flag);", conn);
+                SELECT @GuildId, @ChannelId, @Receiver, @UserId, @Flag
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM ReceiverAliasesTable
+                    WHERE GuildId = @GuildId
+                      AND ChannelId = @ChannelId
+                      AND Receiver = @Receiver
+                      AND UserId = @UserId
+                );", conn);
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@ChannelId", channelId);
             command.Parameters.AddWithValue("@Receiver", receiver);
             command.Parameters.AddWithValue("@UserId", userId);
             command.Parameters.AddWithValue("@Flag", flag);
-            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+            return await command.ExecuteNonQueryAsync().ConfigureAwait(false) > 0;
         });
     }
 

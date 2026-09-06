@@ -928,50 +928,50 @@ public static class TrackingDataManager
         }
     }
 
-    private static async Task<string> BuildMessageAsync(string guild, string channel, DisplayedItem item, bool silent)
+    private sealed record ItemNotification(string Text, IReadOnlyList<string> MentionedUserIds);
+
+    private static async Task<ItemNotification?> BuildItemNotificationAsync(
+        string guild,
+        string channel,
+        DisplayedItem item,
+        bool silent)
     {
-        if (!silent)
-        {
-            if (item.Finder == item.Receiver)
-                return string.Empty;
-        }
+        if (item.Finder == item.Receiver)
+            return null;
 
         if ((int.TryParse(item.Location, out var loc) && loc < 0) || (int.TryParse(item.Item, out var itm) && itm < 0))
-            return string.Empty;
+            return null;
+
+        var text = string.Format(
+            Resource.TDPMEssageItemsNoMention,
+            item.Finder,
+            item.Item,
+            item.Receiver,
+            item.Location);
 
         var userInfos = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, item.Receiver);
+        if (userInfos.Count == 0)
+            return silent ? null : new ItemNotification(text, []);
 
-        if (userInfos.Count > 0)
-        {
-            if (silent && item.Finder == item.Receiver)
-                return string.Empty;
+        var excludedUserIds = await ExcludedItemsCommands.GetExcludedUserIdsAsync(
+            guild,
+            channel,
+            item.Receiver,
+            item.Item).ConfigureAwait(false);
+        var gameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver).ConfigureAwait(false);
+        var applyMentionFilter = !string.IsNullOrWhiteSpace(gameName);
+        var mentionedUserIds = userInfos
+            .Where(user => !string.IsNullOrWhiteSpace(user.UserId))
+            .Where(user => !excludedUserIds.Contains(user.UserId))
+            .Where(user => !applyMentionFilter || !HasFlag(user.Flag, item.Flag))
+            .Select(user => user.UserId)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(userId => userId, StringComparer.Ordinal)
+            .ToArray();
 
-            if (await ExcludedItemsCommands.IsItemExcludedForAnyUserAsync(guild, channel, item.Receiver, item.Item, userInfos))
-                return string.Empty;
-
-            if (userInfos.Any())
-            {
-                var gameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver);
-                if (!string.IsNullOrWhiteSpace(gameName))
-                {
-                    bool shouldSkip = userInfos.Any(u => HasFlag(u.Flag, item.Flag));
-
-                    if (shouldSkip)
-                    {
-                        return string.Empty;
-                    }
-
-                    return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
-                }
-            }
-
-            return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
-        }
-
-        if (silent)
-            return string.Empty;
-
-        return string.Format(Resource.TDPMEssageItemsNoMention, item.Finder, item.Item, item.Receiver, item.Location);
+        return mentionedUserIds.Length == 0
+            ? null
+            : new ItemNotification(text, mentionedUserIds);
     }
 
     private static async Task<int> ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent, CancellationToken ctChan)
@@ -1003,35 +1003,40 @@ public static class TrackingDataManager
                 {
                     var receiver = group.Key;
 
-                    var messages = await Task.WhenAll(
-                        group.Select(item => BuildMessageAsync(guild, channel, item, silent))
-                    );
+                    var notifications = (await Task.WhenAll(
+                            group.Select(item => BuildItemNotificationAsync(guild, channel, item, silent))))
+                        .Where(notification => notification != null)
+                        .Cast<ItemNotification>()
+                        .ToArray();
 
-                    var withHeader = messages.Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
-                    var chunks = ChunkMessages(withHeader).ToList();
-
-                    var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, receiver);
-                    var mentions = string.Join(" ", userIds.Select(x => x.UserId).Select(id => $"<@{id}>"));
-
-                    for (int i = 0; i < chunks.Count; i++)
+                    foreach (var recipientGroup in notifications.GroupBy(
+                                 notification => string.Join(",", notification.MentionedUserIds),
+                                 StringComparer.Ordinal))
                     {
-                        string header = chunks.Count > 1
-                            ? $"**{Resource.ItemFor} {receiver} {mentions} ({withHeader.Count}) [{i + 1}/{chunks.Count}]:**"
-                            : $"**{Resource.ItemFor} {receiver} {mentions} ({withHeader.Count}):**";
+                        var recipientNotifications = recipientGroup.ToArray();
+                        var mentions = string.Join(" ", recipientNotifications[0].MentionedUserIds.Select(id => $"<@{id}>"));
+                        var chunks = ChunkMessages(recipientNotifications.Select(notification => notification.Text)).ToList();
 
-                        string finalMessage = header + "\n>>> " + chunks[i];
-
-                        await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
-                        try
+                        for (int i = 0; i < chunks.Count; i++)
                         {
-                            await BotCommands.SendMessageAsync(finalMessage, channel);
-                        }
-                        finally
-                        {
-                            RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
-                        }
+                            string header = chunks.Count > 1
+                                ? $"**{Resource.ItemFor} {receiver} {mentions} ({recipientNotifications.Length}) [{i + 1}/{chunks.Count}]:**"
+                                : $"**{Resource.ItemFor} {receiver} {mentions} ({recipientNotifications.Length}):**";
 
-                        await Task.Delay(1100, ctChan);
+                            string finalMessage = header + "\n>>> " + chunks[i];
+
+                            await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
+                            try
+                            {
+                                await BotCommands.SendMessageAsync(finalMessage, channel);
+                            }
+                            finally
+                            {
+                                RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
+                            }
+
+                            await Task.Delay(1100, ctChan);
+                        }
                     }
                 }
             }

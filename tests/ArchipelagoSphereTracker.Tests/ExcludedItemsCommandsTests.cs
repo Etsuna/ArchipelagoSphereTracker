@@ -36,6 +36,19 @@ public sealed class ExcludedItemsCommandsTests
     }
 
     [Fact]
+    public async Task Excluded_users_are_returned_individually_for_shared_slots()
+    {
+        using var scope = new TestDatabaseScope();
+        await ExcludedItemsCommands.AddExcludedItemForUserAsync("g", "c", "user-1", "Shared Slot", "Item");
+
+        var excludedUsers = await ExcludedItemsCommands.GetExcludedUserIdsAsync(
+            "g", "c", "Shared Slot", "Item");
+
+        Assert.Contains("user-1", excludedUsers);
+        Assert.DoesNotContain("user-2", excludedUsers);
+    }
+
+    [Fact]
     public async Task Item_catalog_returns_every_item_for_the_exact_alias_game()
     {
         using var scope = new TestDatabaseScope();

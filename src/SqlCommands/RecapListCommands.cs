@@ -83,6 +83,7 @@ public static class RecapListCommands
     public static async Task AddOrEditRecapListItemsAsync(
         string guildId,
         string channelId,
+        string userId,
         string alias,
         List<DisplayedItem> items
         )
@@ -91,36 +92,30 @@ public static class RecapListCommands
 
         try
         {
-            var ids = await DatabaseCommands
-                .GetIdsAsync(guildId, channelId, alias, "RecapListTable")
-                .ConfigureAwait(false);
-
-            if (ids is null || ids.Count == 0)
-            {
-                Console.WriteLine("Error: No Guild/Channel record found. Unable to add the items.");
-                return;
-            }
-
             await Db.WriteAsync(async conn =>
             {
                 using var insert = conn.CreateCommand();
                 insert.CommandText = @"
                     INSERT INTO RecapListItemsTable (RecapListTableId, Item)
-                    VALUES (@RecapListTableId, @Item);";
-                var pId = insert.Parameters.Add("@RecapListTableId", System.Data.DbType.Int64);
+                    SELECT Id, @Item
+                    FROM RecapListTable
+                    WHERE GuildId = @GuildId
+                      AND ChannelId = @ChannelId
+                      AND UserId = @UserId
+                      AND Alias = @Alias;";
+                insert.Parameters.AddWithValue("@GuildId", guildId);
+                insert.Parameters.AddWithValue("@ChannelId", channelId);
+                insert.Parameters.AddWithValue("@UserId", userId);
+                insert.Parameters.AddWithValue("@Alias", alias);
                 var pItem = insert.Parameters.Add("@Item", System.Data.DbType.String);
                 insert.Prepare();
 
-                foreach (var id in ids)
+                foreach (var it in items)
                 {
-                    foreach (var it in items)
-                    {
-                        if (it.Receiver == it.Finder) continue;
+                    if (it.Receiver == it.Finder) continue;
 
-                        pId.Value = id;
-                        pItem.Value = it.Item ?? string.Empty;
-                        await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
-                    }
+                    pItem.Value = it.Item ?? string.Empty;
+                    await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             });
         }
