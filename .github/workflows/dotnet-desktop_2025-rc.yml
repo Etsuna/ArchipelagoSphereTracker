@@ -196,6 +196,38 @@ jobs:
         filename="ast-${{ matrix.rid }}-${{ github.ref_name }}"
         tar -czvf "release_assets/${filename}.tar.gz" -C upload_dir .
 
+    - name: Generate short release description
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        previous_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name' 2>/dev/null || true)"
+
+        if [ -n "$previous_tag" ]; then
+          title="## Changements depuis \`$previous_tag\`"
+          changes="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/compare/${previous_tag}...${GITHUB_REF_NAME}?per_page=100" \
+            --jq '.commits[].commit.message | split("\n")[0] | select(startswith("Merge ") | not) | select(. != "Squashed commit of the following:") | "- " + .')"
+        else
+          title="## Changements de \`$GITHUB_REF_NAME\`"
+          changes="- $(git log -1 --pretty=format:'%s')"
+        fi
+
+        if [ -z "$changes" ]; then
+          changes="- Aucun changement supplémentaire."
+        fi
+
+        {
+          echo "$title"
+          echo
+          echo "$changes"
+          if [ -n "$previous_tag" ]; then
+            echo
+            echo "[Voir la comparaison complète](https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${GITHUB_REF_NAME})"
+          fi
+        } > release-notes.md
+
     - name: Create GitHub Draft Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
@@ -203,4 +235,5 @@ jobs:
         name: Release ${{ github.ref_name }}
         tag_name: ${{ github.ref_name }}
         draft: true
+        body_path: release-notes.md
         files: release_assets/*
