@@ -61,12 +61,14 @@ public class YamlClass : Declare
                     FileUploadSecurity.IsSafeTextFile);
                 if (!accepted)
                     return Resource.YamlWrongFile;
-                message = string.Format(Resource.YamlFileSent, safeFileName);
+                message = Resource.YamlSuccess;
             }
             else
             {
                 message = Resource.YamlFileDownloadFailed;
             }
+
+        await BotCommands.SendMessageAsync(string.Format(Resource.YamlFileSent, safeFileName), channelId);
 
         return message;
     }

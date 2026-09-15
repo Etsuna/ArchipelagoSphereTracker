@@ -2535,4 +2535,7 @@ URL : `{6}`
 
 {7}</value>
   </data>
+  <data name="YamlSuccess" xml:space="preserve">
+    <value>Envoyé</value>
+  </data>
 </root>

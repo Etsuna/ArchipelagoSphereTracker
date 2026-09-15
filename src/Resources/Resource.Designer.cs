@@ -7252,6 +7252,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à .
+        /// </summary>
+        internal static string YamlSuccess {
+            get {
+                return ResourceManager.GetString("YamlSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à ❌ You must send a YAML file!.
         /// </summary>
         internal static string YamlWrongFile {
