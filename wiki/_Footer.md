@@ -1,0 +1,1 @@
+ArchipelagoSphereTracker · [Source](https://github.com/Etsuna/ArchipelagoSphereTracker) · [Releases](https://github.com/Etsuna/ArchipelagoSphereTracker/releases) · [Discord](https://discord.gg/PJfWRKVyEW) · English and French documentation

@@ -1,22 +1,22 @@
 # PR 9 — Spécification du centre de commandes `/ast`
 
-> Statut : implémenté sur `codex/evolution` ; validation Discord en conditions réelles à effectuer avant fusion.
+> Statut : centre `/ast` implémenté ; mode de compatibilité rétabli avec les commandes directes de `v5.6.7`.
 
 ## 1. Objectif
 
 AST expose actuellement 47 commandes slash : 35 commandes générales et 12 commandes supplémentaires en mode Archipelago. Cette surface est difficile à découvrir, encombre le sélecteur Discord et oblige les utilisateurs à connaître les noms et paramètres techniques.
 
-La PR 9 remplace toutes les commandes slash publiques par une seule commande, avec une pièce jointe facultative pour les imports :
+La PR 9 a initialement remplacé toutes les commandes slash publiques par une seule commande, avec une pièce jointe facultative pour les imports :
 
 ```text
 /ast
 ```
 
-`/ast` ouvre un centre de commandes éphémère, personnel, contextuel et filtré selon les permissions. Les anciennes fonctions restent disponibles via boutons, sélecteurs, formulaires, assistants et confirmations. Aucun panneau permanent n’est publié dans les salons ou threads.
+`/ast` ouvre un centre de commandes éphémère, personnel, contextuel et filtré selon les permissions. Le mode de compatibilité actuel publie également toutes les commandes directes présentes en `v5.6.7` ; les utilisateurs peuvent donc choisir l’une ou l’autre interface. Aucun panneau permanent n’est publié dans les salons ou threads.
 
 ## 2. Principes validés
 
-- Une seule commande Discord enregistrée : `/ast`.
+- `/ast` et les commandes directes de `v5.6.7` sont enregistrés simultanément.
 - Toutes les interfaces ouvertes par `/ast` sont éphémères et visibles uniquement par leur utilisateur.
 - Le même message est réutilisé pendant la navigation ; les actions ne créent pas de bruit dans le thread.
 - L’accueil dépend du contexte : room suivie, salon du serveur ou contexte invalide.
@@ -35,8 +35,10 @@ L’accueil affiche un résumé compact : nom de la room, état du suivi, derni�
 1. `👤 Mon espace`
 2. `🌐 La room`
 3. `⚙️ Gérer la room` — uniquement pour `RoomManager` ou niveau supérieur
-4. `🛠️ Administration AST` — uniquement pour `GuildManager` ou `InstanceOwner`
-5. `🔄 Actualiser`
+4. `🧰 Outils Archipelago` — en mode Archipelago, sauf interdiction explicite
+5. `🛠️ Administration AST` — uniquement pour `GuildManager` ou `InstanceOwner`
+6. `🖥️ Instance AST` — uniquement pour le propriétaire configuré de l'instance
+7. `❓ Aide et liens`
 
 ### 3.2 Dans un salon normal du serveur
 
@@ -97,12 +99,18 @@ Le réglage historique de fréquence et le polling adaptatif deviennent une seul
 - configurer une nouvelle room avec l’assistant existant ;
 - santé globale des rooms du serveur ;
 - portail d’administration ;
-- gestion YAML ;
-- génération ;
-- gestion APWorld ;
+- gestion des responsables AST ;
+- restrictions d’accès aux outils Archipelago ;
 - sauvegardes et diagnostic.
 
-Les fonctions YAML, génération et APWorld ne sont visibles que lorsque `Declare.IsArchipelagoMode` est actif. Les actions APWorld sensibles restent réservées à `InstanceOwner` conformément à la matrice actuelle.
+### 4.5 Outils Archipelago — `GuildMember`, sauf interdiction explicite
+
+- `YAML` : fichiers, sauvegarde, import, suppression et nettoyage ;
+- `APWorld` : fichiers, sauvegarde et import ;
+- `Génération` : test, lancement depuis les YAML ou depuis une archive ZIP ;
+- `Modèles` : téléchargement des templates, séparé de la gestion YAML.
+
+Cette section n’existe qu’en mode Archipelago. Elle est accessible par défaut à tous les membres du serveur. Le propriétaire du serveur, les administrateurs Discord, les membres disposant de `Manage Server` et le propriétaire de l’instance peuvent interdire ou rétablir individuellement cet accès depuis `Administration AST → Restrictions d’accès Archipelago`. Les responsables AST délégués ne peuvent pas modifier ces restrictions, et le propriétaire de l’instance ne peut pas être interdit.
 
 ## 5. Matrice de remplacement des 47 commandes
 
@@ -150,24 +158,24 @@ La matrice corrige une incohérence actuelle : les exclusions sont stockées ave
 
 ### 5.2 Commandes du mode Archipelago (12)
 
-| Ancienne commande | Destination dans `/ast` | Interaction proposée | Permission actuelle conservée |
+| Ancienne commande | Destination dans `/ast` | Interaction proposée | Permission |
 |---|---|---|---|
-| `list-yamls` | Administration → YAML → Fichiers | liste paginée | GuildManager |
-| `list-apworld` | Administration → APWorld → Fichiers | liste paginée | InstanceOwner |
-| `backup-yamls` | Administration → YAML → Sauvegarder | génération puis téléchargement privé | GuildManager |
-| `backup-apworld` | Administration → APWorld → Sauvegarder | génération puis téléchargement privé | InstanceOwner |
-| `download-template` | Administration → YAML → Modèles | sélecteur paginé puis téléchargement privé | GuildManager |
-| `delete-yaml` | Administration → YAML → Supprimer | sélecteur + confirmation | GuildManager |
-| `clean-yamls` | Administration → YAML → Tout supprimer | confirmation forte | GuildManager |
-| `send-yaml` | `/ast file:<players.yaml>` | pièce jointe Discord native | GuildManager |
-| `generate-with-zip` | `/ast file:<players.zip>` | pièce jointe native + option de balancing | GuildManager |
-| `send-apworld` | `/ast file:<world.apworld>` | pièce jointe Discord native | InstanceOwner |
-| `generate` | Administration → Génération → Lancer | confirmation + choix de balancing | GuildManager |
-| `test-generate` | Administration → Génération → Tester | confirmation | GuildManager |
+| `list-yamls` | Outils Archipelago → YAML → Fichiers | liste paginée | GuildMember sauf interdiction explicite |
+| `list-apworld` | Outils Archipelago → APWorld → Fichiers | liste paginée | GuildMember sauf interdiction explicite |
+| `backup-yamls` | Outils Archipelago → YAML → Sauvegarder | génération puis téléchargement privé | GuildMember sauf interdiction explicite |
+| `backup-apworld` | Outils Archipelago → APWorld → Sauvegarder | génération puis téléchargement privé | GuildMember sauf interdiction explicite |
+| `download-template` | Outils Archipelago → Modèles | sélecteur paginé puis téléchargement privé | GuildMember sauf interdiction explicite |
+| `delete-yaml` | Outils Archipelago → YAML → Supprimer | sélecteur + confirmation | GuildMember sauf interdiction explicite |
+| `clean-yamls` | Outils Archipelago → YAML → Tout supprimer | confirmation forte | GuildMember sauf interdiction explicite |
+| `send-yaml` | `/ast file:<players.yaml>` | pièce jointe Discord native | GuildMember sauf interdiction explicite |
+| `generate-with-zip` | `/ast file:<players.zip>` | pièce jointe native + option de balancing | GuildMember sauf interdiction explicite |
+| `send-apworld` | `/ast file:<world.apworld>` | pièce jointe Discord native | GuildMember sauf interdiction explicite |
+| `generate` | Outils Archipelago → Génération → Lancer | confirmation + choix de balancing | GuildMember sauf interdiction explicite |
+| `test-generate` | Outils Archipelago → Génération → Tester | confirmation | GuildMember sauf interdiction explicite |
 
 ## 6. Import de fichiers
 
-Discord ne permet pas à un bouton ou à une modale de demander une pièce jointe. L’unique commande `/ast` conserve donc une option facultative `file`. En mode Normal, seuls les spoilers `.txt` et `.json` sont acceptés. En mode Archipelago, le type de fichier peut aussi router vers un YAML, un ZIP de génération ou un APWorld, et l’option `skip-prog-balancing` devient disponible. Les permissions sont contrôlées avant traitement, puis les limites de taille, la quarantaine, l’extension et le contenu sont validés comme auparavant. Le résultat est une réponse éphémère ; aucun fichier sensible n’est demandé dans un message public. Le portail reste disponible séparément via ses boutons explicites, mais il n’est pas requis pour les imports Discord.
+Discord ne permet pas à un bouton ou à une modale de demander une pièce jointe. La commande `/ast` conserve donc une option facultative `file`. En mode Normal, seuls les spoilers `.txt` et `.json` sont acceptés. En mode Archipelago, le type de fichier peut aussi router vers un YAML, un ZIP de génération ou un APWorld, et l’option `skip-prog-balancing` devient disponible. Les commandes directes historiques d’import restent également disponibles. Les permissions sont contrôlées avant traitement, puis les limites de taille, la quarantaine, l’extension et le contenu sont validés comme auparavant. Le résultat de `/ast` est une réponse éphémère ; aucun fichier sensible n’est demandé dans un message public. Le portail reste disponible séparément via ses boutons explicites, mais il n’est pas requis pour les imports Discord.
 
 ## 7. Navigation et état de session
 
@@ -194,7 +202,7 @@ Les `custom_id` contiennent uniquement le préfixe du routeur, l’identifiant o
 
 ## 9. Architecture d’implémentation proposée
 
-1. `SlashCommandDefinitions` n’enregistre plus que `/ast`.
+1. `SlashCommandDefinitions` enregistre `/ast` et la surface de commandes de `v5.6.7`.
 2. `AstCommandCenter` gère l’ouverture et le rendu des écrans.
 3. `AstInteractionRouter` route boutons, sélecteurs et modales par identifiant d’action stable.
 4. `AstUiSessionStore` isole les sessions et leur expiration.
@@ -206,15 +214,15 @@ L’ancienne logique de dispatch par grand `switch` sur `CommandName` est suppri
 
 ## 10. Migration et compatibilité
 
-- Le déploiement utilise l’écrasement global des commandes du serveur déjà présent : Discord retire automatiquement les 47 anciennes entrées et conserve `/ast`.
-- Aucun alias slash temporaire n’est prévu dans cette proposition, conformément à l’objectif de suppression immédiate.
+- Le déploiement utilise l’écrasement global des commandes du serveur déjà présent : Discord publie `/ast` et l’ensemble exact des commandes directes de `v5.6.7`.
+- Les commandes directes passent par la matrice d’autorisation et l’audit actuels avant d’appeler leur logique historique.
 - Les données existantes de rooms, associations, récaps, exclusions, YAML, APWorld, portails et audit sont conservées.
 - Les liens de portail déjà émis restent révocables.
 - L’assistant `/ast-setup` devient un écran interne ; sa logique et ses tests de sécurité sont conservés.
 
 ## 11. Critères d’acceptation
 
-- La liste des commandes enregistrées contient exactement `/ast` dans les deux modes d’exécution.
+- La liste des commandes enregistrées contient exactement `/ast` et les commandes de `v5.6.7` applicables au mode d’exécution.
 - Les 47 anciennes commandes ont une destination fonctionnelle dans la matrice ci-dessus.
 - Un joueur ne voit et ne déclenche que ses actions autorisées.
 - Un gestionnaire retrouve toutes les fonctions de room sans connaître une commande historique.

@@ -12,11 +12,14 @@ public enum AstUiScreen
     Manage,
     Administration,
     AccessManagement,
+    ArchipelagoAccessManagement,
     InstanceAdministration,
     Help,
     Polling,
     ManageMore,
+    ArchipelagoTools,
     Yaml,
+    Templates,
     Generation,
     Apworld,
     Slots,
@@ -501,18 +504,18 @@ public static class AstCommandCenter
             ["excluded-item"] = "personal-exclusions",
             ["excluded-item-list"] = "personal-exclusions",
             ["delete-excluded-item"] = "personal-exclusions",
-            ["list-yamls"] = "yaml-list",
-            ["list-apworld"] = "apworld-list",
-            ["backup-yamls"] = "yaml-backup",
-            ["backup-apworld"] = "apworld-backup",
-            ["download-template"] = "yaml-template-download",
-            ["delete-yaml"] = "yaml-delete-select",
-            ["clean-yamls"] = "yaml-clean-request",
+            ["list-yamls"] = "archipelago-yaml",
+            ["list-apworld"] = "archipelago-apworld",
+            ["backup-yamls"] = "archipelago-yaml",
+            ["backup-apworld"] = "archipelago-apworld",
+            ["download-template"] = "archipelago-templates",
+            ["delete-yaml"] = "archipelago-yaml",
+            ["clean-yamls"] = "archipelago-yaml",
             ["send-yaml"] = "ast-file",
             ["generate-with-zip"] = "ast-file",
             ["send-apworld"] = "ast-file",
-            ["generate"] = "generation-run",
-            ["test-generate"] = "generation-test"
+            ["generate"] = "archipelago-generation",
+            ["test-generate"] = "archipelago-generation"
         };
     private const string SpoilerAliasInputId = "ast-spoiler-alias";
     private const string SpoilerSphereInputId = "ast-spoiler-sphere";
@@ -582,15 +585,15 @@ public static class AstCommandCenter
         string result;
         switch (extension)
         {
-            case ".yaml" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization):
+            case ".yaml" when AstAuthorizationService.CanUseArchipelagoTools(authorization):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.YamlUpload,
                     () => YamlClass.SendYaml(command, channelIdText)).ConfigureAwait(false);
                 break;
-            case ".apworld" when AstAuthorizationService.CanManageArchipelagoAssets(authorization):
+            case ".apworld" when AstAuthorizationService.CanUseArchipelagoTools(authorization):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.ApworldUpload,
                     () => ApworldClass.SendApworld(command)).ConfigureAwait(false);
                 break;
-            case ".zip" when AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization):
+            case ".zip" when AstAuthorizationService.CanUseArchipelagoTools(authorization):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.Generation,
                     () => GenerationClass.GenerateWithZip(command, channelIdText)).ConfigureAwait(false);
                 break;
@@ -629,6 +632,8 @@ public static class AstCommandCenter
                 ephemeral: true);
             return;
         }
+
+        using var telemetry = CommandTelemetry.BeginCommandCenterAction("button", action);
 
         if (action == "spoiler-configure")
         {
@@ -1104,9 +1109,7 @@ public static class AstCommandCenter
 
             if (action is "yaml-backup" or "apworld-backup")
             {
-                var allowed = action == "yaml-backup"
-                    ? AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization)
-                    : AstAuthorizationService.CanManageArchipelagoAssets(authorization);
+                var allowed = AstAuthorizationService.CanUseArchipelagoTools(authorization);
                 if (!allowed)
                 {
                     await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
@@ -1141,7 +1144,7 @@ public static class AstCommandCenter
 
             if (action is "yaml-clean-request" or "yaml-confirm-clean" or "yaml-cancel")
             {
-                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+                if (!AstAuthorizationService.CanUseArchipelagoTools(authorization))
                 {
                     await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
                     return;
@@ -1169,7 +1172,7 @@ public static class AstCommandCenter
 
             if (action is "yaml-confirm-delete" or "yaml-cancel-delete")
             {
-                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+                if (!AstAuthorizationService.CanUseArchipelagoTools(authorization))
                 {
                     await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
                     return;
@@ -1192,7 +1195,7 @@ public static class AstCommandCenter
 
             if (action is "generation-run" or "generation-test")
             {
-                if (!AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+                if (!AstAuthorizationService.CanUseArchipelagoTools(authorization))
                 {
                     await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
                     return;
@@ -1255,7 +1258,7 @@ public static class AstCommandCenter
     public static async Task HandleSelectMenuAsync(SocketMessageComponent component)
     {
         if (!TryParseCustomId(component.Data.CustomId, out var sessionId, out var action) ||
-            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "patch-alias" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide" or "yaml-delete-select" or "yaml-template-download" or "generation-skip" or "access-grant" or "access-revoke" or "instance-guild" or "instance-room"))
+            action is not ("select-room" or "poll-policy" or "notifications" or "alias-add" or "alias-delete" or "alias-filter" or "patch-alias" or "clean-select" or "recap-clean-select" or "exclude-add-alias" or "exclude-delete-alias" or "exclude-item-add" or "exclude-item-delete" or "spoiler-alias" or "spoiler-mode" or "spoiler-hide" or "yaml-delete-select" or "yaml-template-download" or "generation-skip" or "access-grant" or "access-revoke" or "arch-access-deny" or "arch-access-restore" or "instance-guild" or "instance-room"))
             return;
         if (component.GuildId is not { } guildId || component.ChannelId is not { } sourceChannelId ||
             component.Data.Values.FirstOrDefault() is not { } selected ||
@@ -1265,6 +1268,7 @@ public static class AstCommandCenter
             return;
         }
 
+        using var telemetry = CommandTelemetry.BeginCommandCenterAction("select", action, selected);
         await component.DeferAsync(ephemeral: true);
         if (action is "access-grant" or "access-revoke")
         {
@@ -1321,6 +1325,61 @@ public static class AstCommandCenter
             return;
         }
 
+        if (action is "arch-access-deny" or "arch-access-restore")
+        {
+            var accessAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
+                guildId.ToString(CultureInfo.InvariantCulture), sourceChannelId.ToString(CultureInfo.InvariantCulture),
+                component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
+            if (accessAuthorization == null || !Declare.IsArchipelagoMode ||
+                !AstAuthorizationService.CanManageGuildRoleBindings(accessAuthorization) ||
+                !ulong.TryParse(selected, out var selectedUserId))
+            {
+                await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
+                return;
+            }
+
+            var targetUserText = selectedUserId.ToString(CultureInfo.InvariantCulture);
+            if (action == "arch-access-deny")
+            {
+                var guild = Declare.Client.GetGuild(guildId);
+                IGuildUser? targetUser = guild?.GetUser(selectedUserId);
+                targetUser ??= component.Data.Members?.FirstOrDefault(member => member.Id == selectedUserId);
+                if (targetUser == null || targetUser.IsBot)
+                {
+                    await SetErrorAsync(component, Resource.AstCenterAccountNotHumanGuildMember).ConfigureAwait(false);
+                    return;
+                }
+                if (string.Equals(Declare.InstanceOwnerUserId, targetUserText, StringComparison.Ordinal))
+                {
+                    await SetErrorAsync(component, Resource.AstCenterInstanceOwnerCannotBeRestricted).ConfigureAwait(false);
+                    return;
+                }
+
+                await AuditedAsync(session, sourceChannelId, SecurityAuditAction.ArchipelagoAccessDeny,
+                    () => AstArchipelagoAccessCommands.DenyAsync(
+                        guildId.ToString(CultureInfo.InvariantCulture),
+                        targetUserText,
+                        component.User.Id.ToString(CultureInfo.InvariantCulture))).ConfigureAwait(false);
+            }
+            else
+            {
+                await AuditedAsync(session, sourceChannelId, SecurityAuditAction.ArchipelagoAccessRestore,
+                    () => AstArchipelagoAccessCommands.AllowAsync(
+                        guildId.ToString(CultureInfo.InvariantCulture), targetUserText)).ConfigureAwait(false);
+            }
+
+            var accessView = await RenderArchipelagoAccessManagementAsync(session, accessAuthorization).ConfigureAwait(false);
+            await component.ModifyOriginalResponseAsync(properties =>
+            {
+                properties.Content = action == "arch-access-deny"
+                    ? string.Format(Resource.AstCenterArchipelagoAccessDeniedFor, targetUserText)
+                    : string.Format(Resource.AstCenterArchipelagoAccessRestoredFor, targetUserText);
+                properties.Embed = accessView.Embed;
+                properties.Components = accessView.Components;
+            }).ConfigureAwait(false);
+            return;
+        }
+
         if (action is "instance-guild" or "instance-room")
         {
             var ownerAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
@@ -1353,7 +1412,7 @@ public static class AstCommandCenter
                 guildId.ToString(CultureInfo.InvariantCulture), sourceChannelId.ToString(CultureInfo.InvariantCulture),
                 component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
             if (generationAuthorization == null ||
-                !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, generationAuthorization) ||
+                !AstAuthorizationService.CanUseArchipelagoTools(generationAuthorization) ||
                 !bool.TryParse(selected, out var skip) ||
                 !Sessions.TrySetGenerationSkipProgBalancing(session.Id, component.User.Id, guildId, sourceChannelId, skip, out session))
             {
@@ -1368,7 +1427,7 @@ public static class AstCommandCenter
             var yamlAuthorization = await AstAuthorizationService.CreateDiscordContextAsync(
                 guildId.ToString(CultureInfo.InvariantCulture), sourceChannelId.ToString(CultureInfo.InvariantCulture),
                 component.User.Id, component.User as IGuildUser).ConfigureAwait(false);
-            if (yamlAuthorization == null || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, yamlAuthorization))
+            if (yamlAuthorization == null || !AstAuthorizationService.CanUseArchipelagoTools(yamlAuthorization))
             {
                 await SetErrorAsync(component, AstAuthorizationService.DeniedMessage).ConfigureAwait(false);
                 return;
@@ -1638,6 +1697,10 @@ public static class AstCommandCenter
             return;
         }
 
+        using var telemetry = CommandTelemetry.BeginCommandCenterAction("modal", action);
+        foreach (var option in modal.Data.Components)
+            CommandTelemetry.RecordModalOption(action, option.CustomId, !string.IsNullOrWhiteSpace(option.Value));
+
         var authorizationChannelId = session.RoomChannelId ?? session.SourceChannelId;
         var authorization = await AstAuthorizationService.CreateDiscordContextAsync(
             guildId.ToString(CultureInfo.InvariantCulture), authorizationChannelId.ToString(CultureInfo.InvariantCulture),
@@ -1807,11 +1870,14 @@ public static class AstCommandCenter
             AstUiScreen.Manage => RenderManage(session),
             AstUiScreen.Administration => RenderAdministration(session, authorization),
             AstUiScreen.AccessManagement => await RenderAccessManagementAsync(session, authorization).ConfigureAwait(false),
+            AstUiScreen.ArchipelagoAccessManagement => await RenderArchipelagoAccessManagementAsync(session, authorization).ConfigureAwait(false),
             AstUiScreen.InstanceAdministration => await RenderInstanceAdministrationAsync(session).ConfigureAwait(false),
             AstUiScreen.Help => RenderHelp(session),
             AstUiScreen.Polling => RenderPolling(session),
             AstUiScreen.ManageMore => RenderManageMore(session),
+            AstUiScreen.ArchipelagoTools => RenderArchipelagoTools(session),
             AstUiScreen.Yaml => await RenderYamlAsync(session).ConfigureAwait(false),
+            AstUiScreen.Templates => RenderTemplates(session),
             AstUiScreen.Generation => RenderGeneration(session),
             AstUiScreen.Apworld => RenderApworld(session),
             AstUiScreen.Slots => await RenderSlotsAsync(session).ConfigureAwait(false),
@@ -1839,6 +1905,8 @@ public static class AstCommandCenter
             if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization))
                 components.WithButton(Resource.AstCenterManage, Id(session, "manage"), ButtonStyle.Secondary, emote: new Emoji("⚙️"));
         }
+        if (AstAuthorizationService.CanUseArchipelagoTools(authorization))
+            components.WithButton(Resource.AstCenterArchipelagoTools, Id(session, "archipelago-tools"), ButtonStyle.Secondary, emote: new Emoji("🧰"));
         if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
             components.WithButton(Resource.AstCenterAdministration, Id(session, "admin"), ButtonStyle.Secondary, emote: new Emoji("🛠️"));
         if (authorization.IsInstanceOwner)
@@ -1963,13 +2031,8 @@ public static class AstCommandCenter
         };
         if (AstAuthorizationService.CanManageGuildRoleBindings(authorization))
             actions.Add((Resource.AstCenterAstManagers, "admin-access"));
-        if (Declare.IsArchipelagoMode)
-        {
-            actions.Add(("YAML", "admin-yaml"));
-            actions.Add((Resource.WebGeneration, "admin-generation"));
-            if (AstAuthorizationService.CanManageArchipelagoAssets(authorization))
-                actions.Add(("APWorld", "admin-apworld"));
-        }
+        if (Declare.IsArchipelagoMode && AstAuthorizationService.CanManageGuildRoleBindings(authorization))
+            actions.Add((Resource.AstCenterArchipelagoRestrictions, "admin-archipelago-access"));
         return Screen(session,
             Resource.AstCenterASTAdministration,
             AstAuthorizationService.IsAllowed(AstAuthorizationLevel.InstanceOwner, authorization)
@@ -1977,6 +2040,15 @@ public static class AstCommandCenter
                 : (Resource.AstCenterGuildManagerAccess),
             actions);
     }
+
+    private static AstUiView RenderArchipelagoTools(AstUiSession session)
+        => Screen(session,
+            Resource.AstCenterArchipelagoTools,
+            Resource.AstCenterArchipelagoToolsDescription,
+            [("YAML", "archipelago-yaml"),
+             ("APWorld", "archipelago-apworld"),
+             (Resource.WebGeneration, "archipelago-generation"),
+             (Resource.AstCenterTemplates, "archipelago-templates")]);
 
     private static async Task<AstUiView> RenderAccessManagementAsync(
         AstUiSession session,
@@ -2021,6 +2093,61 @@ public static class AstCommandCenter
         components.WithButton(Resource.AstCenterBack, Id(session, "admin"), ButtonStyle.Primary, emote: new Emoji("↩️"), row: 3);
         var embed = BaseEmbed(Resource.AstCenterAstManagersTitle, Clamp(description, 4000));
         AddPageField(embed, session, filteredBindings.Length);
+        return new AstUiView(null, embed.Build(), components.Build());
+    }
+
+    private static async Task<AstUiView> RenderArchipelagoAccessManagementAsync(
+        AstUiSession session,
+        AstAuthorizationContext authorization)
+    {
+        if (!Declare.IsArchipelagoMode || !AstAuthorizationService.CanManageGuildRoleBindings(authorization))
+            return Screen(session, Resource.AstCenterArchipelagoRestrictions, AstAuthorizationService.DeniedMessage, []);
+
+        var guildId = session.GuildId.ToString(CultureInfo.InvariantCulture);
+        var denials = await AstArchipelagoAccessCommands.GetDeniedUsersAsync(guildId).ConfigureAwait(false);
+        var filtered = denials
+            .Where(denial => MatchesSelectionSearch(
+                session,
+                denial.UserId,
+                GetGuildMemberDisplayName(session.GuildId, denial.UserId)))
+            .ToArray();
+        var page = PageValues(filtered, session.SelectionPageIndex);
+        var description = denials.Count == 0
+            ? Resource.AstCenterNoArchipelagoRestrictions
+            : page.Count == 0
+                ? Resource.AstCenterNoArchipelagoRestrictionMatches
+                : Resource.AstCenterArchipelagoRestrictionsDescription + "\n" + string.Join("\n", page.Select(denial =>
+                    string.Format(
+                        Resource.AstCenterArchipelagoRestrictionBy,
+                        GetGuildMemberDisplayName(session.GuildId, denial.UserId),
+                        denial.UserId,
+                        denial.DeniedByUserId)));
+
+        var deny = new SelectMenuBuilder()
+            .WithCustomId(Id(session, "arch-access-deny"))
+            .WithPlaceholder(Resource.AstCenterChooseMemberToRestrict)
+            .WithType(ComponentType.UserSelect)
+            .WithMinValues(1)
+            .WithMaxValues(1);
+        var components = new ComponentBuilder().WithSelectMenu(deny, row: 0);
+        if (page.Count > 0)
+        {
+            var restore = new SelectMenuBuilder()
+                .WithCustomId(Id(session, "arch-access-restore"))
+                .WithPlaceholder(Resource.AstCenterChooseRestrictionToRemove)
+                .WithMinValues(1)
+                .WithMaxValues(1);
+            foreach (var denial in page)
+                restore.AddOption(
+                    ClampSelectLabel(GetGuildMemberDisplayName(session.GuildId, denial.UserId)),
+                    denial.UserId);
+            components.WithSelectMenu(restore, row: 1);
+        }
+        if (denials.Count > 0)
+            AddSelectionNavigation(components, session, filtered.Length, row: 2);
+        components.WithButton(Resource.AstCenterBack, Id(session, "admin"), ButtonStyle.Primary, emote: new Emoji("↩️"), row: 3);
+        var embed = BaseEmbed(Resource.AstCenterArchipelagoRestrictions, Clamp(description, 4000));
+        AddPageField(embed, session, filtered.Length);
         return new AstUiView(null, embed.Build(), components.Build());
     }
 
@@ -2300,14 +2427,11 @@ public static class AstCommandCenter
         var channelId = session.SourceChannelId.ToString(CultureInfo.InvariantCulture);
         var yamls = YamlClass.GetYamlFileNames(channelId)
             .Where(file => MatchesSelectionSearch(session, file)).ToArray();
-        var templates = YamlClass.GetTemplateFileNames()
-            .Where(file => MatchesSelectionSearch(session, file)).ToArray();
         var components = new ComponentBuilder()
-            .WithButton(Resource.AstCenterPortal, Id(session, "admin-portal"), ButtonStyle.Primary, row: 0)
             .WithButton(Resource.AstCenterList, Id(session, "yaml-list"), ButtonStyle.Secondary, row: 0)
             .WithButton(Resource.AstCenterBackup, Id(session, "yaml-backup"), ButtonStyle.Success, row: 0)
             .WithButton(Resource.AstCenterCleanAll, Id(session, "yaml-clean-request"), ButtonStyle.Danger, row: 0)
-            .WithButton(Resource.AstCenterBack, Id(session, "admin"), ButtonStyle.Secondary, row: 0);
+            .WithButton(Resource.AstCenterBack, Id(session, "archipelago-tools"), ButtonStyle.Secondary, row: 0);
         var yamlPage = PageValues(yamls, session.SelectionPageIndex);
         if (yamlPage.Count > 0)
         {
@@ -2316,18 +2440,32 @@ public static class AstCommandCenter
             foreach (var file in yamlPage) delete.AddOption(file[..Math.Min(file.Length, 100)], file);
             components.WithSelectMenu(delete, row: 1);
         }
-        var templatePage = PageValues(templates, session.SelectionPageIndex);
-        if (templatePage.Count > 0)
+        var selectionCount = yamls.Length;
+        AddSelectionNavigation(components, session, selectionCount, row: 2);
+        var description = string.Format(Resource.AstCenterYAMLFileSForThisChannelActionsExecuteDirectly, yamls.Length, PageLabel(session, selectionCount));
+        return Task.FromResult(new AstUiView(null, BaseEmbed("YAML", description).Build(), components.Build()));
+    }
+
+    private static AstUiView RenderTemplates(AstUiSession session)
+    {
+        var templates = YamlClass.GetTemplateFileNames()
+            .Where(file => MatchesSelectionSearch(session, file)).ToArray();
+        var components = new ComponentBuilder()
+            .WithButton(Resource.AstCenterBack, Id(session, "archipelago-tools"), ButtonStyle.Secondary, row: 0);
+        var page = PageValues(templates, session.SelectionPageIndex);
+        if (page.Count > 0)
         {
             var download = new SelectMenuBuilder().WithCustomId(Id(session, "yaml-template-download"))
                 .WithPlaceholder(Resource.AstCenterDownloadATemplate);
-            foreach (var file in templatePage) download.AddOption(file[..Math.Min(file.Length, 100)], file);
-            components.WithSelectMenu(download, row: 2);
+            foreach (var file in page)
+                download.AddOption(file[..Math.Min(file.Length, 100)], file);
+            components.WithSelectMenu(download, row: 1);
         }
-        var selectionCount = Math.Max(yamls.Length, templates.Length);
-        AddSelectionNavigation(components, session, selectionCount, row: 3);
-        var description = string.Format(Resource.AstCenterYAMLFileSForThisChannelActionsExecuteDirectly, yamls.Length, PageLabel(session, selectionCount));
-        return Task.FromResult(new AstUiView(null, BaseEmbed("YAML", description).Build(), components.Build()));
+        AddSelectionNavigation(components, session, templates.Length, row: 2);
+        return new AstUiView(null, BaseEmbed(
+            Resource.AstCenterTemplates,
+            string.Format(Resource.AstCenterTemplatesDescription, templates.Length, PageLabel(session, templates.Length))).Build(),
+            components.Build());
     }
 
     private static AstUiView RenderGeneration(AstUiSession session)
@@ -2337,10 +2475,9 @@ public static class AstCommandCenter
             .AddOption(Resource.AstCenterNormalBalancing, "false", isDefault: !session.GenerationSkipProgBalancing)
             .AddOption(Resource.AstCenterSkipBalancing, "true", isDefault: session.GenerationSkipProgBalancing);
         var components = new ComponentBuilder()
-            .WithButton(Resource.AstCenterPortal, Id(session, "admin-portal"), ButtonStyle.Primary, row: 0)
             .WithButton(Resource.WebGenerate, Id(session, "generation-run"), ButtonStyle.Success, row: 0)
             .WithButton(Resource.AstCenterTest, Id(session, "generation-test"), ButtonStyle.Secondary, row: 0)
-            .WithButton(Resource.AstCenterBack, Id(session, "admin"), ButtonStyle.Secondary, row: 0)
+            .WithButton(Resource.AstCenterBack, Id(session, "archipelago-tools"), ButtonStyle.Secondary, row: 0)
             .WithSelectMenu(skip, row: 1)
             .Build();
         var description = Resource.AstCenterGenerateFromTheChannelYAMLFilesOrTestThem;
@@ -2350,8 +2487,8 @@ public static class AstCommandCenter
     private static AstUiView RenderApworld(AstUiSession session)
         => Screen(session, "APWorld", Resource.AstCenterNativeDiscordAPWorldManagement,
             [(Resource.AstCenterList, "apworld-list"),
-             (Resource.AstCenterBackup, "apworld-backup"),
-             (Resource.AstCenterPortal, "admin-portal")]);
+             (Resource.AstCenterBackup, "apworld-backup")],
+            "archipelago-tools");
 
     private static async Task<AstUiView> RenderSlotsAsync(AstUiSession session)
     {
@@ -2656,10 +2793,13 @@ public static class AstCommandCenter
             AstUiScreen.AccessManagement
                 => (await AstRoleBindingsCommands.GetGuildManagersAsync(guildId).ConfigureAwait(false))
                     .Count(binding => MatchesSelectionSearch(session, binding.UserId, GetGuildMemberDisplayName(session.GuildId, binding.UserId))),
-            AstUiScreen.Yaml => Math.Max(
-                YamlClass.GetYamlFileNames(session.SourceChannelId.ToString(CultureInfo.InvariantCulture))
-                    .Count(file => MatchesSelectionSearch(session, file)),
-                YamlClass.GetTemplateFileNames().Count(file => MatchesSelectionSearch(session, file))),
+            AstUiScreen.ArchipelagoAccessManagement
+                => (await AstArchipelagoAccessCommands.GetDeniedUsersAsync(guildId).ConfigureAwait(false))
+                    .Count(binding => MatchesSelectionSearch(session, binding.UserId, GetGuildMemberDisplayName(session.GuildId, binding.UserId))),
+            AstUiScreen.Yaml => YamlClass.GetYamlFileNames(session.SourceChannelId.ToString(CultureInfo.InvariantCulture))
+                .Count(file => MatchesSelectionSearch(session, file)),
+            AstUiScreen.Templates => YamlClass.GetTemplateFileNames()
+                .Count(file => MatchesSelectionSearch(session, file)),
             AstUiScreen.Slots when channelId != null
                 => await GetSlotSelectionCountAsync(session, guildId, channelId, session.OwnerUserId).ConfigureAwait(false),
             AstUiScreen.Patch when channelId != null
@@ -2696,7 +2836,8 @@ public static class AstCommandCenter
         AstUiSession session,
         string title,
         string description,
-        IEnumerable<(string Label, string Action)> actions)
+        IEnumerable<(string Label, string Action)> actions,
+        string backAction = "home")
     {
         var components = new ComponentBuilder();
         foreach (var (label, action) in actions
@@ -2708,7 +2849,7 @@ public static class AstCommandCenter
                 Id(session, action),
                 IsPortalLinkAction(action) ? ButtonStyle.Primary : ButtonStyle.Secondary);
         }
-        components.WithButton(Resource.AstCenterBack, Id(session, "home"), ButtonStyle.Primary, emote: new Emoji("↩️"));
+        components.WithButton(Resource.AstCenterBack, Id(session, backAction), ButtonStyle.Primary, emote: new Emoji("↩️"));
         return new AstUiView(null, BaseEmbed(title, Clamp(description, 4000)).Build(), components.Build());
     }
 
@@ -2740,11 +2881,11 @@ public static class AstCommandCenter
                 Resource.AstCenterPrivateAdministrationPortal).ConfigureAwait(false);
         }
         if (action == "yaml-list")
-            return AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization)
+            return AstAuthorizationService.CanUseArchipelagoTools(authorization)
                 ? YamlClass.ListYamls(session.SourceChannelId.ToString(CultureInfo.InvariantCulture))
                 : AstAuthorizationService.DeniedMessage;
         if (action == "apworld-list")
-            return AstAuthorizationService.CanManageArchipelagoAssets(authorization)
+            return AstAuthorizationService.CanUseArchipelagoTools(authorization)
                 ? ApworldClass.ListApworld()
                 : AstAuthorizationService.DeniedMessage;
         if (channelId == null) return Unavailable();
@@ -2939,13 +3080,16 @@ public static class AstCommandCenter
             "manage" => AstUiScreen.Manage,
             "admin" => AstUiScreen.Administration,
             "admin-access" => AstUiScreen.AccessManagement,
+            "admin-archipelago-access" => AstUiScreen.ArchipelagoAccessManagement,
             "instance-admin" => AstUiScreen.InstanceAdministration,
             "help" => AstUiScreen.Help,
             "manage-polling" => AstUiScreen.Polling,
             "manage-more" => AstUiScreen.ManageMore,
-            "admin-yaml" => AstUiScreen.Yaml,
-            "admin-generation" => AstUiScreen.Generation,
-            "admin-apworld" => AstUiScreen.Apworld,
+            "archipelago-tools" => AstUiScreen.ArchipelagoTools,
+            "archipelago-yaml" => AstUiScreen.Yaml,
+            "archipelago-templates" => AstUiScreen.Templates,
+            "archipelago-generation" => AstUiScreen.Generation,
+            "archipelago-apworld" => AstUiScreen.Apworld,
             "personal-slots" => AstUiScreen.Slots,
             "personal-patch" => AstUiScreen.Patch,
             "personal-advanced" => AstUiScreen.Advanced,
@@ -2964,10 +3108,11 @@ public static class AstCommandCenter
             AstUiScreen.Manage => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
             AstUiScreen.Administration => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization),
             AstUiScreen.AccessManagement => AstAuthorizationService.CanManageGuildRoleBindings(authorization),
+            AstUiScreen.ArchipelagoAccessManagement => AstAuthorizationService.CanManageGuildRoleBindings(authorization),
             AstUiScreen.InstanceAdministration => authorization.IsInstanceOwner,
             AstUiScreen.Polling or AstUiScreen.ManageMore => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, authorization),
-            AstUiScreen.Yaml or AstUiScreen.Generation => AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization),
-            AstUiScreen.Apworld => AstAuthorizationService.CanManageArchipelagoAssets(authorization),
+            AstUiScreen.ArchipelagoTools or AstUiScreen.Yaml or AstUiScreen.Templates or AstUiScreen.Generation or AstUiScreen.Apworld
+                => AstAuthorizationService.CanUseArchipelagoTools(authorization),
             AstUiScreen.Slots => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Patch => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),
             AstUiScreen.Advanced => hasRoom && AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization),

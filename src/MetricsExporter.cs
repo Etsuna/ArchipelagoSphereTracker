@@ -1,5 +1,6 @@
 ﻿using Prometheus;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Globalization;
 
 public static class MetricsExporter
@@ -66,6 +67,77 @@ public static class MetricsExporter
            "Horodatage Unix UTC (secondes) du dernier contrôle des objets.",
            new[] { "guild_id", "guild_name", "channel_id", "channel_name" });
 
+    // Low-cardinality operational overview.
+    private static readonly Gauge BuildInfo = Metrics.CreateGauge(
+        "ast_info",
+        "Static AST build and operating-mode information.",
+        new[] { "version", "operating_mode" });
+
+    private static readonly Gauge DiscordConnected = Metrics.CreateGauge(
+        "ast_discord_connected",
+        "Whether the Discord gateway is currently connected (1 or 0).");
+
+    private static readonly Gauge DiscordGuilds = Metrics.CreateGauge(
+        "ast_discord_guilds",
+        "Number of Discord guilds currently visible to the bot.");
+
+    private static readonly Gauge TrackedGuilds = Metrics.CreateGauge(
+        "ast_tracked_guilds",
+        "Number of guilds with at least one tracked room.");
+
+    private static readonly Gauge TrackedRooms = Metrics.CreateGauge(
+        "ast_tracked_rooms",
+        "Number of rooms currently tracked by AST.");
+
+    private static readonly Gauge TrackedSlots = Metrics.CreateGauge(
+        "ast_tracked_slots",
+        "Number of slot status rows currently tracked by AST.");
+
+    private static readonly Gauge RoomPollStates = Metrics.CreateGauge(
+        "ast_room_poll_states",
+        "Rooms by bounded polling state.",
+        new[] { "state" });
+
+    private static readonly Gauge EventDeliveries = Metrics.CreateGauge(
+        "ast_event_deliveries",
+        "Tracking event deliveries by bounded state.",
+        new[] { "state" });
+
+    private static readonly Gauge PortalTokens = Metrics.CreateGauge(
+        "ast_portal_tokens",
+        "Portal tokens by bounded lifecycle state.",
+        new[] { "state" });
+
+    private static readonly Gauge ArchipelagoRestrictions = Metrics.CreateGauge(
+        "ast_archipelago_access_restrictions",
+        "Number of guild-scoped Archipelago access restrictions.");
+
+    private static readonly Gauge DelegatedGuildManagers = Metrics.CreateGauge(
+        "ast_delegated_guild_managers",
+        "Number of delegated AST guild-manager bindings.");
+
+    private static readonly Gauge SecurityAuditEvents = Metrics.CreateGauge(
+        "ast_security_audit_events",
+        "Retained security audit entries by bounded outcome.",
+        new[] { "outcome" });
+
+    private static readonly Gauge MetricsCollectionSuccess = Metrics.CreateGauge(
+        "ast_metrics_collection_success",
+        "Whether the latest database metrics collection succeeded (1 or 0).");
+
+    private static readonly Gauge MetricsCollectionLastSuccess = Metrics.CreateGauge(
+        "ast_metrics_collection_last_success_timestamp_seconds",
+        "Unix timestamp of the latest successful database metrics collection.");
+
+    private static readonly Histogram MetricsCollectionDuration = Metrics.CreateHistogram(
+        "ast_metrics_collection_duration_seconds",
+        "Database metrics collection duration.",
+        new HistogramConfiguration { Buckets = Histogram.ExponentialBuckets(0.01, 2, 14) });
+
+    private static readonly Counter MetricsCollectionFailures = Metrics.CreateCounter(
+        "ast_metrics_collection_failures_total",
+        "Number of failed database metrics collections.");
+
     // ==============
     // état interne pour dépublier
     // ==============
@@ -88,9 +160,37 @@ public static class MetricsExporter
         {
             while (!token.IsCancellationRequested)
             {
-                await CollectOnce(token);
-                Console.WriteLine($"[{DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture)}] Metrics collection completed.");
-                await Task.Delay(TimeSpan.FromMinutes(5), token);
+                var startedAt = Stopwatch.GetTimestamp();
+                try
+                {
+                    await CollectOnce(token);
+                    MetricsCollectionSuccess.Set(1);
+                    MetricsCollectionLastSuccess.Set(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                    Console.WriteLine($"[{DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture)}] Metrics collection completed.");
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception exception)
+                {
+                    MetricsCollectionSuccess.Set(0);
+                    MetricsCollectionFailures.Inc();
+                    Console.WriteLine($"[Metrics] Collection failed: {exception.GetType().Name}");
+                }
+                finally
+                {
+                    MetricsCollectionDuration.Observe(Stopwatch.GetElapsedTime(startedAt).TotalSeconds);
+                }
+
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(5), token);
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    break;
+                }
             }
         }, token);
     }
@@ -113,6 +213,14 @@ public static class MetricsExporter
         var curAliasChoice = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
 
         var curLastItemsChecked = new Dictionary<string, Gauge.Child>(StringComparer.Ordinal);
+        var trackedGuildIds = new HashSet<string>(StringComparer.Ordinal);
+        var trackedRoomCount = 0;
+        var trackedSlotCount = 0;
+
+        BuildInfo.WithLabels(
+            string.IsNullOrWhiteSpace(Declare.BotVersion) ? "unknown" : Declare.BotVersion,
+            Declare.IsArchipelagoMode ? "archipelago" : "normal").Set(1);
+        DiscordGuilds.Set(Declare.Client?.Guilds.Count ?? 0);
 
         // ====================
         // ChannelsAndUrlsTable
@@ -127,6 +235,8 @@ public static class MetricsExporter
             {
                 var guild = rdr.GetString(0);
                 var channel = rdr.GetString(1);
+                trackedRoomCount++;
+                trackedGuildIds.Add(guild);
                 var checkFrequency = rdr.GetString(2);
                 var silentStr = rdr.IsDBNull(4) ? "null" : (rdr.GetInt32(4) != 0 ? "true" : "false");
 
@@ -166,6 +276,7 @@ public static class MetricsExporter
             using var rdr = await cmd.ExecuteReaderAsync(ct);
             while (await rdr.ReadAsync(ct))
             {
+                trackedSlotCount++;
                 var guild = rdr.GetString(0);
                 var channel = rdr.GetString(1);
                 var name = rdr.GetString(2);
@@ -295,6 +406,47 @@ public static class MetricsExporter
             }
         }
 
+        TrackedRooms.Set(trackedRoomCount);
+        TrackedGuilds.Set(trackedGuildIds.Count);
+        TrackedSlots.Set(trackedSlotCount);
+
+        await SetGroupedGaugeAsync(
+            conn,
+            "SELECT CASE WHEN IsPaused = 1 THEN 'paused' ELSE 'active' END, COUNT(*) FROM RoomPollState GROUP BY IsPaused;",
+            RoomPollStates,
+            ["active", "paused", "other"],
+            ct).ConfigureAwait(false);
+        await SetGroupedGaugeAsync(
+            conn,
+            "SELECT Status, COUNT(*) FROM EventDeliveries GROUP BY Status;",
+            EventDeliveries,
+            ["pending", "delivering", "delivered", "failed", "other"],
+            ct).ConfigureAwait(false);
+        await SetGroupedGaugeAsync(
+            conn,
+            @"SELECT CASE
+                    WHEN RevokedAtUtc IS NOT NULL THEN 'revoked'
+                    WHEN ExpiresAtUtc <= @Now THEN 'expired'
+                    ELSE 'active'
+                END, COUNT(*)
+                FROM PortalAccessTable
+                GROUP BY 1;",
+            PortalTokens,
+            ["active", "revoked", "expired", "other"],
+            ct,
+            command => command.Parameters.AddWithValue(
+                "@Now", PortalAccessCommands.FormatTimestamp(DateTimeOffset.UtcNow))).ConfigureAwait(false);
+        await SetGroupedGaugeAsync(
+            conn,
+            "SELECT Outcome, COUNT(*) FROM SecurityAuditLogTable GROUP BY Outcome;",
+            SecurityAuditEvents,
+            ["started", "succeeded", "denied", "failed", "other"],
+            ct).ConfigureAwait(false);
+        ArchipelagoRestrictions.Set(await ReadCountAsync(
+            conn, "SELECT COUNT(*) FROM AstArchipelagoAccessDenyTable;", ct).ConfigureAwait(false));
+        DelegatedGuildManagers.Set(await ReadCountAsync(
+            conn, "SELECT COUNT(*) FROM AstRoleBindingsTable WHERE Role = 'GuildManager';", ct).ConfigureAwait(false));
+
         // ====================
         // nettoyage
         // ====================
@@ -329,6 +481,45 @@ public static class MetricsExporter
             if (!newMap.ContainsKey(kv.Key))
                 kv.Value.Unpublish();
         }
+    }
+
+    public static void SetDiscordConnected(bool connected)
+        => DiscordConnected.Set(connected ? 1 : 0);
+
+    private static async Task<long> ReadCountAsync(
+        SQLiteConnection connection,
+        string sql,
+        CancellationToken cancellationToken)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        return Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false));
+    }
+
+    private static async Task SetGroupedGaugeAsync(
+        SQLiteConnection connection,
+        string sql,
+        Gauge gauge,
+        IReadOnlyCollection<string> knownStates,
+        CancellationToken cancellationToken,
+        Action<SQLiteCommand>? configure = null)
+    {
+        var counts = knownStates.ToDictionary(state => state, _ => 0d, StringComparer.Ordinal);
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        configure?.Invoke(command);
+        using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var state = reader.IsDBNull(0) ? "other" : reader.GetString(0).Trim().ToLowerInvariant();
+            if (!knownStates.Contains(state))
+                state = "other";
+            counts[state] += Convert.ToDouble(reader.GetValue(1), CultureInfo.InvariantCulture);
+        }
+
+        foreach (var (state, count) in counts)
+            gauge.WithLabels(state).Set(count);
     }
 
     // ==========================================================

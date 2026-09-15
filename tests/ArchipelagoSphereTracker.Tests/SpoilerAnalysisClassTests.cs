@@ -1,11 +1,24 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using Xunit;
 
-public class SpoilerAnalysisClassTests
+public class SpoilerAnalysisClassTests : IDisposable
 {
+    private readonly CultureInfo previousCulture = CultureInfo.CurrentUICulture;
+
+    public SpoilerAnalysisClassTests()
+    {
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("fr");
+    }
+
+    public void Dispose()
+    {
+        CultureInfo.CurrentUICulture = previousCulture;
+    }
+
     [Fact]
     public void ParsePlaythrough_ExtractsChecks()
     {
@@ -246,6 +259,40 @@ public class SpoilerAnalysisClassTests
         finally
         {
             Declare.BasePath = previousBasePath;
+        }
+    }
+
+    [Theory]
+    [InlineData("en", "Current blocking sphere: 1", "Rule used:")]
+    [InlineData("fr", "Sphère actuellement bloquante : 1", "Règle utilisée :")]
+    public void BuildReport_LocalizesAnalysisText(
+        string cultureName,
+        string expectedSphereHeading,
+        string expectedRuleHeading)
+    {
+        var previousCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(cultureName);
+            var checks = new List<SpoilerAnalysisClass.Check>
+            {
+                new(1, "location", "finder", "item", "receiver")
+            };
+
+            var report = SpoilerAnalysisClass.BuildReport(
+                checks,
+                new HashSet<string>(StringComparer.Ordinal),
+                "receiver",
+                sphereLimit: null,
+                showAllMissing: false,
+                hideItems: true);
+
+            Assert.Contains(expectedSphereHeading, report);
+            Assert.Contains(expectedRuleHeading, report);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = previousCulture;
         }
     }
 }

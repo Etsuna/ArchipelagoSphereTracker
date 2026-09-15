@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -47,6 +48,7 @@ public static class WebPortalServer
         var app = builder.Build();
         _app = app;
 
+        app.UseHttpMetrics();
         app.UseRequestLocalization(CreateLocalizationOptions(culture));
         app.Use(async (context, next) =>
         {
@@ -629,6 +631,8 @@ public static class WebPortalServer
 
             if (!Declare.IsArchipelagoMode)
                 return Results.BadRequest(new { message = "Archipelago mode is disabled." });
+            if (!AstAuthorizationService.CanUseArchipelagoTools(actor.Authorization))
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
 
             var safeTemplateName = Path.GetFileName(templateName);
             if (string.IsNullOrWhiteSpace(safeTemplateName) ||
@@ -656,6 +660,8 @@ public static class WebPortalServer
 
             if (!Declare.IsArchipelagoMode)
                 return Results.BadRequest(new { message = "Archipelago mode is disabled." });
+            if (!AstAuthorizationService.CanUseArchipelagoTools(actor.Authorization))
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
 
             var yamls = YamlClass.GetYamlFileNames(channelId);
             return Results.Ok(new { files = yamls });
@@ -673,6 +679,8 @@ public static class WebPortalServer
 
             if (!Declare.IsArchipelagoMode)
                 return Results.BadRequest(new { message = "Archipelago mode is disabled." });
+            if (!AstAuthorizationService.CanUseArchipelagoTools(actor.Authorization))
+                return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
 
             var safeYamlName = Path.GetFileName(yamlName);
             if (string.IsNullOrWhiteSpace(safeYamlName) ||
@@ -842,6 +850,12 @@ public static class WebPortalServer
 
             if (string.IsNullOrWhiteSpace(command) || string.IsNullOrWhiteSpace(channelId))
                 return Results.BadRequest(new { message = "command and channelId are required." });
+
+            using var telemetry = CommandTelemetry.BeginWebCommand(
+                command,
+                form.Where(option => option.Key != "command")
+                    .Select(option => new KeyValuePair<string, string?>(option.Key, option.Value.FirstOrDefault())),
+                form.Files.Select(file => new KeyValuePair<string, string?>(file.Name, file.FileName)));
 
             if (command == "ast-health" &&
                 !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, actor.Authorization))
@@ -1039,8 +1053,14 @@ public static class WebPortalServer
             if (string.IsNullOrWhiteSpace(command) || string.IsNullOrWhiteSpace(channelId))
                 return Results.BadRequest(new { message = "command and channelId are required." });
 
-            if ((command is "list-apworld" or "backup-apworld" or "send-apworld") &&
-                !AstAuthorizationService.CanManageArchipelagoAssets(actor.Authorization))
+            using var telemetry = CommandTelemetry.BeginWebCommand(
+                command,
+                form.Where(option => option.Key != "command")
+                    .Select(option => new KeyValuePair<string, string?>(option.Key, option.Value.FirstOrDefault())),
+                form.Files.Select(file => new KeyValuePair<string, string?>(file.Name, file.FileName)));
+
+            if (AstAuthorizationService.IsArchipelagoToolCommand(command) &&
+                !AstAuthorizationService.CanUseArchipelagoTools(actor.Authorization))
             {
                 return Results.NotFound(new { message = "Invalid portal link or insufficient permissions." });
             }

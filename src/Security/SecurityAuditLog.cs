@@ -36,6 +36,8 @@ public enum SecurityAuditAction
     DataCleanup,
     GuildManagerGrant,
     GuildManagerRevoke,
+    ArchipelagoAccessDeny,
+    ArchipelagoAccessRestore,
     InstanceCleanup
 }
 

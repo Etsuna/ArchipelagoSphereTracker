@@ -421,6 +421,69 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago tools were disabled for user {0}..
+        /// </summary>
+        internal static string AstCenterArchipelagoAccessDeniedFor {
+            get {
+                return ResourceManager.GetString("AstCenterArchipelagoAccessDeniedFor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago tools were restored for user {0}..
+        /// </summary>
+        internal static string AstCenterArchipelagoAccessRestoredFor {
+            get {
+                return ResourceManager.GetString("AstCenterArchipelagoAccessRestoredFor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à • {0} (`{1}`) — restricted by `{2}`.
+        /// </summary>
+        internal static string AstCenterArchipelagoRestrictionBy {
+            get {
+                return ResourceManager.GetString("AstCenterArchipelagoRestrictionBy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago access restrictions.
+        /// </summary>
+        internal static string AstCenterArchipelagoRestrictions {
+            get {
+                return ResourceManager.GetString("AstCenterArchipelagoRestrictions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The following members cannot use Archipelago tools:.
+        /// </summary>
+        internal static string AstCenterArchipelagoRestrictionsDescription {
+            get {
+                return ResourceManager.GetString("AstCenterArchipelagoRestrictionsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago tools.
+        /// </summary>
+        internal static string AstCenterArchipelagoTools {
+            get {
+                return ResourceManager.GetString("AstCenterArchipelagoTools", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Manage YAML files, APWorlds, generation, and templates. Access is allowed by default unless an administrator restricts it..
+        /// </summary>
+        internal static string AstCenterArchipelagoToolsDescription {
+            get {
+                return ResourceManager.GetString("AstCenterArchipelagoToolsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Associate a slot….
         /// </summary>
         internal static string AstCenterAssociateASlot {
@@ -691,6 +754,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose a member to restrict.
+        /// </summary>
+        internal static string AstCenterChooseMemberToRestrict {
+            get {
+                return ResourceManager.GetString("AstCenterChooseMemberToRestrict", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Choose mode and interval….
         /// </summary>
         internal static string AstCenterChooseModeAndInterval {
@@ -705,6 +777,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string AstCenterChooseOneOfMySlots {
             get {
                 return ResourceManager.GetString("AstCenterChooseOneOfMySlots", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose a restriction to remove.
+        /// </summary>
+        internal static string AstCenterChooseRestrictionToRemove {
+            get {
+                return ResourceManager.GetString("AstCenterChooseRestrictionToRemove", resourceCulture);
             }
         }
         
@@ -1358,6 +1439,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à The instance owner cannot be restricted from using Archipelago tools..
+        /// </summary>
+        internal static string AstCenterInstanceOwnerCannotBeRestricted {
+            get {
+                return ResourceManager.GetString("AstCenterInstanceOwnerCannotBeRestricted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Guild ID: `{0}`
         ///Channel ID: `{1}`
         ///Room: `{2}`
@@ -1703,6 +1793,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string AstCenterNoAccessibleRoomOnThisServer {
             get {
                 return ResourceManager.GetString("AstCenterNoAccessibleRoomOnThisServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No restriction matches the current filter..
+        /// </summary>
+        internal static string AstCenterNoArchipelagoRestrictionMatches {
+            get {
+                return ResourceManager.GetString("AstCenterNoArchipelagoRestrictionMatches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No member is currently restricted from using Archipelago tools..
+        /// </summary>
+        internal static string AstCenterNoArchipelagoRestrictions {
+            get {
+                return ResourceManager.GetString("AstCenterNoArchipelagoRestrictions", resourceCulture);
             }
         }
         
@@ -2286,6 +2394,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string AstCenterSyncNow {
             get {
                 return ResourceManager.GetString("AstCenterSyncNow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Templates.
+        /// </summary>
+        internal static string AstCenterTemplates {
+            get {
+                return ResourceManager.GetString("AstCenterTemplates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} template(s) available. {1}.
+        /// </summary>
+        internal static string AstCenterTemplatesDescription {
+            get {
+                return ResourceManager.GetString("AstCenterTemplatesDescription", resourceCulture);
             }
         }
         
@@ -4606,6 +4732,96 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Analyze blocking spheres and dependencies in the spoiler log.
+        /// </summary>
+        internal static string SCSpoilerAnalyzeDescription {
+            get {
+                return ResourceManager.GetString("SCSpoilerAnalyzeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à full report.
+        /// </summary>
+        internal static string SCSpoilerChoiceFull {
+            get {
+                return ResourceManager.GetString("SCSpoilerChoiceFull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à first blocking sphere only.
+        /// </summary>
+        internal static string SCSpoilerChoiceLowestSphereOnly {
+            get {
+                return ResourceManager.GetString("SCSpoilerChoiceLowestSphereOnly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Spoiler log file (.txt/.json).
+        /// </summary>
+        internal static string SCSpoilerFileDescription {
+            get {
+                return ResourceManager.GetString("SCSpoilerFileDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Hide item names in the report.
+        /// </summary>
+        internal static string SCSpoilerHideItemsDescription {
+            get {
+                return ResourceManager.GetString("SCSpoilerHideItemsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à first = first blocking sphere, full = all missing checks.
+        /// </summary>
+        internal static string SCSpoilerMissingModeDescription {
+            get {
+                return ResourceManager.GetString("SCSpoilerMissingModeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Clear manual sphere validation for this slot.
+        /// </summary>
+        internal static string SCSpoilerResetValidationDescription {
+            get {
+                return ResourceManager.GetString("SCSpoilerResetValidationDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Maximum sphere to analyze (optional).
+        /// </summary>
+        internal static string SCSpoilerSphereDescription {
+            get {
+                return ResourceManager.GetString("SCSpoilerSphereDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Upload a spoiler log for analysis.
+        /// </summary>
+        internal static string SCSpoilerUploadDescription {
+            get {
+                return ResourceManager.GetString("SCSpoilerUploadDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Validate ambiguous local checks through this sphere.
+        /// </summary>
+        internal static string SCSpoilerValidateSphereDescription {
+            get {
+                return ResourceManager.GetString("SCSpoilerValidateSphereDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Status for all games.
         /// </summary>
         internal static string SCStatusGameListDescription {
@@ -4782,6 +4998,168 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string SlashSkipProgressionBalancingDuringGeneration {
             get {
                 return ResourceManager.GetString("SlashSkipProgressionBalancingDuringGeneration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à - actionable now: {0}.
+        /// </summary>
+        internal static string SpoilerAnalysisActionableNowCount {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisActionableNowCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Checks where {0} is currently blocking other players: {1}.
+        /// </summary>
+        internal static string SpoilerAnalysisBlockingOtherPlayers {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisBlockingOtherPlayers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Checks in later spheres:.
+        /// </summary>
+        internal static string SpoilerAnalysisChecksInLaterSpheres {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisChecksInLaterSpheres", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Checks to complete now:.
+        /// </summary>
+        internal static string SpoilerAnalysisChecksToDoNow {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisChecksToDoNow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Current blocking sphere: {0}.
+        /// </summary>
+        internal static string SpoilerAnalysisCurrentBlockingSphere {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisCurrentBlockingSphere", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Displayed missing checks: {0}.
+        /// </summary>
+        internal static string SpoilerAnalysisDisplayedMissingChecks {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisDisplayedMissingChecks", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à - in later spheres: {0}.
+        /// </summary>
+        internal static string SpoilerAnalysisLaterSphereCount {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisLaterSphereCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Manually validated spheres for {0}: through S{1}.
+        /// </summary>
+        internal static string SpoilerAnalysisManualValidationSummary {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisManualValidationSummary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No check is currently blocking {0}..
+        /// </summary>
+        internal static string SpoilerAnalysisNoCurrentBlockingCheck {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisNoCurrentBlockingCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No item is missing from the Playthrough with the current settings..
+        /// </summary>
+        internal static string SpoilerAnalysisNoMissingItem {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisNoMissingItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No sphere was found with these filters..
+        /// </summary>
+        internal static string SpoilerAnalysisNoSphereFound {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisNoSphereFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à - The lowest sphere containing at least one missing check is the current blocking sphere..
+        /// </summary>
+        internal static string SpoilerAnalysisRuleBlockingSphere {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisRuleBlockingSphere", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à - All missing checks in that sphere are considered actionable now..
+        /// </summary>
+        internal static string SpoilerAnalysisRuleCurrentChecks {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisRuleCurrentChecks", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Rule used:.
+        /// </summary>
+        internal static string SpoilerAnalysisRuleHeading {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisRuleHeading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à - Missing checks in later spheres are listed separately, without using the Paths section..
+        /// </summary>
+        internal static string SpoilerAnalysisRuleLaterSpheres {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisRuleLaterSpheres", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à - For each other player, a check held by the selected slot is blocking only if it belongs to that player&apos;s current sphere..
+        /// </summary>
+        internal static string SpoilerAnalysisRuleOtherPlayers {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisRuleOtherPlayers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à - The Playthrough defines sphere order..
+        /// </summary>
+        internal static string SpoilerAnalysisRulePlaythroughOrder {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisRulePlaythroughOrder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Sphere {0}:.
+        /// </summary>
+        internal static string SpoilerAnalysisSphereHeading {
+            get {
+                return ResourceManager.GetString("SpoilerAnalysisSphereHeading", resourceCulture);
             }
         }
         

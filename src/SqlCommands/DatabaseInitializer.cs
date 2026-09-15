@@ -112,6 +112,20 @@ CREATE INDEX IF NOT EXISTS IX_AstRoleBindings_Guild_Role
 ON AstRoleBindingsTable (GuildId, Role);
 
 -- ==========================
+-- Guild-scoped Archipelago access deny list
+-- ==========================
+CREATE TABLE IF NOT EXISTS AstArchipelagoAccessDenyTable (
+    GuildId TEXT NOT NULL,
+    UserId TEXT NOT NULL,
+    DeniedByUserId TEXT NOT NULL,
+    DeniedAtUtc TEXT NOT NULL,
+    PRIMARY KEY (GuildId, UserId)
+);
+
+CREATE INDEX IF NOT EXISTS IX_AstArchipelagoAccessDeny_Guild
+ON AstArchipelagoAccessDenyTable (GuildId);
+
+-- ==========================
 -- Tracking V2 event ledger/outbox
 -- ==========================
 CREATE TABLE IF NOT EXISTS TrackedRooms (

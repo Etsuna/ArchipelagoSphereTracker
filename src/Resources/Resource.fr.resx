@@ -2538,4 +2538,130 @@ URL : `{6}`
   <data name="YamlSuccess" xml:space="preserve">
     <value>Envoyé</value>
   </data>
+  <data name="AstCenterArchipelagoTools" xml:space="preserve">
+    <value>Outils Archipelago</value>
+  </data>
+  <data name="AstCenterArchipelagoToolsDescription" xml:space="preserve">
+    <value>Gérez les fichiers YAML, les APWorlds, la génération et les modèles. L’accès est autorisé par défaut, sauf restriction définie par un administrateur.</value>
+  </data>
+  <data name="AstCenterTemplates" xml:space="preserve">
+    <value>Modèles</value>
+  </data>
+  <data name="AstCenterTemplatesDescription" xml:space="preserve">
+    <value>{0} modèle(s) disponible(s). {1}</value>
+  </data>
+  <data name="AstCenterArchipelagoRestrictions" xml:space="preserve">
+    <value>Restrictions d’accès Archipelago</value>
+  </data>
+  <data name="AstCenterArchipelagoRestrictionsDescription" xml:space="preserve">
+    <value>Les membres suivants ne peuvent pas utiliser les outils Archipelago :</value>
+  </data>
+  <data name="AstCenterNoArchipelagoRestrictions" xml:space="preserve">
+    <value>Aucun membre n’est actuellement privé des outils Archipelago.</value>
+  </data>
+  <data name="AstCenterNoArchipelagoRestrictionMatches" xml:space="preserve">
+    <value>Aucune restriction ne correspond au filtre actuel.</value>
+  </data>
+  <data name="AstCenterArchipelagoRestrictionBy" xml:space="preserve">
+    <value>• {0} (`{1}`) — restriction ajoutée par `{2}`</value>
+  </data>
+  <data name="AstCenterChooseMemberToRestrict" xml:space="preserve">
+    <value>Choisissez un membre à interdire</value>
+  </data>
+  <data name="AstCenterChooseRestrictionToRemove" xml:space="preserve">
+    <value>Choisissez une interdiction à retirer</value>
+  </data>
+  <data name="AstCenterArchipelagoAccessDeniedFor" xml:space="preserve">
+    <value>Les outils Archipelago ont été désactivés pour l’utilisateur {0}.</value>
+  </data>
+  <data name="AstCenterArchipelagoAccessRestoredFor" xml:space="preserve">
+    <value>Les outils Archipelago ont été réactivés pour l’utilisateur {0}.</value>
+  </data>
+  <data name="AstCenterInstanceOwnerCannotBeRestricted" xml:space="preserve">
+    <value>L’Owner de l’instance ne peut pas être privé des outils Archipelago.</value>
+  </data>
+  <data name="SpoilerAnalysisNoSphereFound" xml:space="preserve">
+    <value>Aucune sphère trouvée avec ces filtres.</value>
+  </data>
+  <data name="SpoilerAnalysisManualValidationSummary" xml:space="preserve">
+    <value>Sphères validées manuellement pour {0} : jusqu’à S{1}</value>
+  </data>
+  <data name="SpoilerAnalysisNoMissingItem" xml:space="preserve">
+    <value>Aucun item manquant dans le Playthrough avec les paramètres actuels.</value>
+  </data>
+  <data name="SpoilerAnalysisCurrentBlockingSphere" xml:space="preserve">
+    <value>Sphère actuellement bloquante : {0}</value>
+  </data>
+  <data name="SpoilerAnalysisDisplayedMissingChecks" xml:space="preserve">
+    <value>Checks manquantes affichées : {0}</value>
+  </data>
+  <data name="SpoilerAnalysisActionableNowCount" xml:space="preserve">
+    <value>- actionnables maintenant : {0}</value>
+  </data>
+  <data name="SpoilerAnalysisLaterSphereCount" xml:space="preserve">
+    <value>- dans les sphères suivantes : {0}</value>
+  </data>
+  <data name="SpoilerAnalysisChecksToDoNow" xml:space="preserve">
+    <value>Checks à faire maintenant :</value>
+  </data>
+  <data name="SpoilerAnalysisNoCurrentBlockingCheck" xml:space="preserve">
+    <value>Aucune check ne bloque actuellement {0}.</value>
+  </data>
+  <data name="SpoilerAnalysisBlockingOtherPlayers" xml:space="preserve">
+    <value>Checks avec lesquelles {0} bloque actuellement d'autres joueurs : {1}</value>
+  </data>
+  <data name="SpoilerAnalysisChecksInLaterSpheres" xml:space="preserve">
+    <value>Checks dans les sphères suivantes :</value>
+  </data>
+  <data name="SpoilerAnalysisSphereHeading" xml:space="preserve">
+    <value>Sphère {0} :</value>
+  </data>
+  <data name="SpoilerAnalysisRuleHeading" xml:space="preserve">
+    <value>Règle utilisée :</value>
+  </data>
+  <data name="SpoilerAnalysisRulePlaythroughOrder" xml:space="preserve">
+    <value>- Le Playthrough définit l'ordre des sphères.</value>
+  </data>
+  <data name="SpoilerAnalysisRuleBlockingSphere" xml:space="preserve">
+    <value>- La plus petite sphère contenant au moins une check manquante est la sphère bloquante actuelle.</value>
+  </data>
+  <data name="SpoilerAnalysisRuleCurrentChecks" xml:space="preserve">
+    <value>- Toutes les checks manquantes de cette sphère sont considérées comme à faire maintenant.</value>
+  </data>
+  <data name="SpoilerAnalysisRuleOtherPlayers" xml:space="preserve">
+    <value>- Pour chaque autre joueur, une check détenue par l'alias sélectionné est bloquante seulement si elle appartient à sa sphère actuelle.</value>
+  </data>
+  <data name="SpoilerAnalysisRuleLaterSpheres" xml:space="preserve">
+    <value>- Les checks manquantes des sphères suivantes sont listées séparément, sans utiliser la section Paths.</value>
+  </data>
+  <data name="SCSpoilerAnalyzeDescription" xml:space="preserve">
+    <value>Analyse les sphères bloquantes et les dépendances du spoiler log</value>
+  </data>
+  <data name="SCSpoilerSphereDescription" xml:space="preserve">
+    <value>Sphère maximale à analyser (optionnel)</value>
+  </data>
+  <data name="SCSpoilerMissingModeDescription" xml:space="preserve">
+    <value>first = première sphère bloquante, full = toutes les checks manquantes</value>
+  </data>
+  <data name="SCSpoilerChoiceLowestSphereOnly" xml:space="preserve">
+    <value>première sphère bloquante uniquement</value>
+  </data>
+  <data name="SCSpoilerChoiceFull" xml:space="preserve">
+    <value>rapport complet</value>
+  </data>
+  <data name="SCSpoilerHideItemsDescription" xml:space="preserve">
+    <value>Masquer le nom des items dans le rapport</value>
+  </data>
+  <data name="SCSpoilerValidateSphereDescription" xml:space="preserve">
+    <value>Valide les checks locales ambiguës jusqu’à cette sphère</value>
+  </data>
+  <data name="SCSpoilerResetValidationDescription" xml:space="preserve">
+    <value>Efface la validation manuelle des sphères pour cet alias</value>
+  </data>
+  <data name="SCSpoilerUploadDescription" xml:space="preserve">
+    <value>Charge un spoiler log pour l'analyse</value>
+  </data>
+  <data name="SCSpoilerFileDescription" xml:space="preserve">
+    <value>Fichier spoiler log (.txt/.json)</value>
+  </data>
 </root>

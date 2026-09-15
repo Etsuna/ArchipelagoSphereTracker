@@ -52,7 +52,7 @@ Le bot existe en **deux modes** :
 ### Communes (Normal + Archipelago)
 
 - Multi-serveurs Discord, multi-salons et multi-threads.
-- Centre de commandes éphémère `/ast` : toute l’interface Discord (configuration, rooms, alias, récaps, exclusions, portails et administration) est regroupée derrière une seule commande slash.
+- Centre de commandes éphémère `/ast` : toute l’interface Discord (configuration, rooms, alias, récaps, exclusions, portails et administration) est accessible depuis une seule commande slash, en complément des commandes historiques.
 - Assistant interactif intégré à `/ast` pour connecter une room, configurer le thread, les notifications et le polling, puis confirmer depuis un aperçu éphémère.
 - Paramétrage de fréquence de polling (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
 - Polling adaptatif : après trois snapshots inchangés, l'intervalle ralentit progressivement jusqu'à une heure et revient immédiatement au minimum configuré dès qu'une activité est détectée.
@@ -69,7 +69,8 @@ Le bot existe en **deux modes** :
 
 ### Spécifiques au mode Archipelago
 
-- Gestion des fichiers de génération : YAML / APWorld / templates.
+- Entrée principale `Outils Archipelago` dans `/ast`, avec quatre rubriques séparées : YAML, APWorld, Génération et Modèles.
+- Accès autorisé par défaut à tous les membres ; les administrateurs Discord peuvent interdire individuellement certains utilisateurs.
 - Backup/restauration des assets liés à la génération.
 - Génération multiworld (`/generate`, `/test-generate`, `/generate-with-zip`).
 - Gestion de compatibilité Linux/Windows autour de l’installation Archipelago.
@@ -259,11 +260,11 @@ Permissions associées :
 
 ## Commandes Slash
 
-AST enregistre une seule commande publique : `/ast`.
+AST enregistre `/ast` ainsi que les commandes historiques de la version `v5.6.7`. Les utilisateurs peuvent employer indifféremment l’interface centralisée ou les commandes directes.
 
 - `/ast` ouvre un centre de commandes personnel et éphémère, adapté au salon, à la room et aux permissions de l’utilisateur.
 - `/ast file:<fichier>` importe un YAML, un APWorld, un ZIP de génération ou un spoiler selon le mode et les permissions.
-- Les anciennes fonctions restent disponibles dans les écrans `Mon espace`, `La room`, `Gérer la room` et `Administration AST`.
+- Les mêmes fonctions restent disponibles dans les écrans `Mon espace`, `La room`, `Gérer la room`, `Outils Archipelago` et `Administration AST`.
 - Les grandes listes sont paginées ; les exclusions disposent en plus d’une recherche.
 - Les actions sensibles sont revérifiées côté serveur et inscrites dans le journal de sécurité.
 - Les propriétaires, administrateurs et membres ayant `Gérer le serveur` peuvent déléguer la gestion AST à un membre sans lui donner de rôle administrateur Discord. Le responsable délégué ne peut pas redéléguer ce droit.
@@ -307,8 +308,27 @@ Exemples de familles :
 - `ast_game_status_last_activity_seconds`
 - `ast_alias_choice`
 - `ast_last_items_checked_timestamp`
+- `ast_command_invocations_total{surface,command}`
+- `ast_command_options_total{surface,command,option,selection}`
+- `ast_command_outcomes_total{surface,command,outcome}`
+- `ast_command_duration_seconds`
+- `ast_tracked_rooms`, `ast_tracked_guilds`, `ast_tracked_slots`
+- `ast_room_poll_states{state}`, `ast_event_deliveries{state}`
+- `ast_portal_tokens{state}`, `ast_archipelago_access_restrictions`
+- `ast_metrics_collection_success`, `ast_metrics_collection_failures_total`
+- `http_requests_received_total`, `http_request_duration_seconds`
 
-Utilité : supervision de la fraîcheur des données, activité des rooms, volumétrie de suivi.
+Le label `surface` distingue `discord_slash`, les boutons/sélecteurs/modales de `/ast` et `web_portal`. Les valeurs libres ne sont jamais exportées : alias, URLs, recherches, noms de salons, IDs utilisateur et noms de fichiers sont réduits à `provided`; seule une petite liste de choix bornés et d’extensions est conservée.
+
+Exemple PromQL pour les commandes les plus utilisées sur 30 jours :
+
+```promql
+sum by (surface, command) (increase(ast_command_invocations_total[30d]))
+```
+
+```promql
+sum by (surface, command, option, selection) (increase(ast_command_options_total[30d]))
+```
 
 ---
 
@@ -492,7 +512,7 @@ AST supports **two modes**:
 ### Shared (Normal + Archipelago)
 
 - Multi-server, multi-channel, multi-thread support.
-- Ephemeral `/ast` command center: all Discord workflows (setup, rooms, aliases, recaps, exclusions, portals, and administration) are grouped behind one slash command.
+- Ephemeral `/ast` command center: all Discord workflows (setup, rooms, aliases, recaps, exclusions, portals, and administration) are accessible from one slash command, alongside the historical commands.
 - Interactive assistant embedded in `/ast` to connect a room, configure its thread, notifications, and polling, then confirm from an ephemeral preview.
 - Configurable polling frequency (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
 - Adaptive polling: after three unchanged snapshots, the interval progressively slows down up to one hour and immediately returns to the configured minimum when activity resumes.
@@ -509,7 +529,8 @@ AST supports **two modes**:
 
 ### Archipelago mode only
 
-- Generation file management: YAML / APWorld / templates.
+- Top-level `Archipelago tools` entry in `/ast`, with separate YAML, APWorld, Generation, and Templates sections.
+- Access is allowed to every member by default; Discord administrators can explicitly restrict individual users.
 - Backup/restore for generation-related assets.
 - Multiworld generation (`/generate`, `/test-generate`, `/generate-with-zip`).
 - Linux/Windows compatibility handling for Archipelago setup.
@@ -699,11 +720,11 @@ Permissions included:
 
 ## Slash commands
 
-AST registers a single public command: `/ast`.
+AST registers `/ast` together with the historical commands from version `v5.6.7`. Users can choose either the centralized interface or the direct commands.
 
 - `/ast` opens a personal ephemeral command center adapted to the channel, room, and user permissions.
 - `/ast file:<file>` imports a YAML, APWorld, generation ZIP, or spoiler according to the current mode and permissions.
-- Existing capabilities remain available under `My space`, `The room`, `Manage room`, and `AST administration`.
+- Existing capabilities remain available under `My space`, `The room`, `Manage room`, `Archipelago tools`, and `AST administration`.
 - Large lists are paginated; exclusions also provide search.
 - Sensitive actions are authorized again server-side and written to the security audit log.
 - Guild owners, administrators, and members with `Manage Server` can delegate AST management to a member without granting a Discord administrator role. A delegated manager cannot delegate that permission again.
@@ -747,8 +768,27 @@ Examples:
 - `ast_game_status_last_activity_seconds`
 - `ast_alias_choice`
 - `ast_last_items_checked_timestamp`
+- `ast_command_invocations_total{surface,command}`
+- `ast_command_options_total{surface,command,option,selection}`
+- `ast_command_outcomes_total{surface,command,outcome}`
+- `ast_command_duration_seconds`
+- `ast_tracked_rooms`, `ast_tracked_guilds`, `ast_tracked_slots`
+- `ast_room_poll_states{state}`, `ast_event_deliveries{state}`
+- `ast_portal_tokens{state}`, `ast_archipelago_access_restrictions`
+- `ast_metrics_collection_success`, `ast_metrics_collection_failures_total`
+- `http_requests_received_total`, `http_request_duration_seconds`
 
-Use cases: data freshness monitoring, room activity tracking, and operational observability.
+The `surface` label distinguishes `discord_slash`, `/ast` buttons/selects/modals, and `web_portal`. Free-form values are never exported: aliases, URLs, searches, channel names, user IDs, and filenames become `provided`; only a small bounded set of choices and extensions is retained.
+
+Example PromQL for the most-used commands over 30 days:
+
+```promql
+sum by (surface, command) (increase(ast_command_invocations_total[30d]))
+```
+
+```promql
+sum by (surface, command, option, selection) (increase(ast_command_options_total[30d]))
+```
 
 ---
 

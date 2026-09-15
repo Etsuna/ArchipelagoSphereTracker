@@ -35,9 +35,10 @@ La santé globale AST a été retirée de cette page : elle relève de `GuildMan
 |---|---|
 | Rooms | création via URL Archipelago et accès aux portails de room |
 | Santé | santé globale AST |
-| YAML | liste, backup, téléchargement protégé, upload, suppression, nettoyage et modèles protégés |
-| APWorld | liste, backup et upload avec contrôle `InstanceOwner` côté API |
+| YAML | liste, backup, téléchargement protégé, upload, suppression et nettoyage |
+| APWorld | liste, backup et upload avec contrôle de la restriction Archipelago côté API |
 | Génération | test, génération depuis les YAML, génération depuis ZIP, balancing normal ou désactivé |
+| Modèles | téléchargement protégé, séparé de la gestion YAML |
 | Sécurité | journal d'audit et révocation du lien actif |
 | Aide | informations APWorlds et Discord |
 
@@ -48,5 +49,6 @@ La santé globale AST a été retirée de cette page : elle relève de `GuildMan
 - Les uploads spoiler utilisent la quarantaine, la limite de taille et la validation de contenu existantes.
 - Le spoiler actif, les YAML et les téléchargements générés n'expirent plus. Ils sont nettoyés avec les données de la room lors de la suppression de son thread ou de son URL ; les custom worlds globaux ne sont jamais inclus.
 - Les téléchargements de modèles YAML sont désormais protégés par le token du portail.
+- En mode Archipelago, les opérations YAML, APWorld, génération et modèles sont ouvertes par défaut aux membres, avec une liste d’interdiction par serveur également appliquée côté API. L’accès au portail d’administration lui-même conserve son niveau `GuildManager`.
 - Les actions destructrices demandent une confirmation dans l'interface et sont inscrites dans le journal d'audit lorsqu'elles modifient des données.
 - Les libellés ajoutés existent en anglais et en français, et un test vérifie que toute clé dynamique du WebHost existe dans les ressources.

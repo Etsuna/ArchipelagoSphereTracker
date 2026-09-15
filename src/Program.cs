@@ -193,6 +193,7 @@ if (args.Length == 0)
 
         Declare.Client = new DiscordSocketClient(config);
         Declare.CommandService = new CommandService();
+        MetricsExporter.SetDiscordConnected(false);
 
         Declare.Client.Log += LogAsync;
         Declare.Client.Ready += ReadyAsync;
@@ -250,6 +251,7 @@ if (args.Length == 0)
 
         static Task OnDisconnected(Exception _)
         {
+            MetricsExporter.SetDiscordConnected(false);
             Declare.Cts?.Cancel();
             return Task.CompletedTask;
         }
@@ -269,6 +271,7 @@ if (args.Length == 0)
 
         static Task OnConnected()
         {
+            MetricsExporter.SetDiscordConnected(true);
             _ = Task.Run(async () =>
             {
                 await Task.Delay(10000);

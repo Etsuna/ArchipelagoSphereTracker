@@ -324,7 +324,7 @@ public static class SpoilerAnalysisClass
 
         if (scopedChecks.Count == 0)
         {
-            return "Aucune sphère trouvée avec ces filtres.";
+            return Resource.SpoilerAnalysisNoSphereFound;
         }
 
         var allMissingChecks = scopedChecks
@@ -362,11 +362,14 @@ public static class SpoilerAnalysisClass
         {
             if (manuallyValidatedSphere.HasValue && !string.IsNullOrWhiteSpace(onlyReceiver))
             {
-                return $"Sphères validées manuellement pour {onlyReceiver} : jusqu’à S{manuallyValidatedSphere}\n\n"
-                    + "Aucun item manquant dans le Playthrough avec les paramètres actuels.";
+                return string.Format(
+                           Resource.SpoilerAnalysisManualValidationSummary,
+                           onlyReceiver,
+                           manuallyValidatedSphere)
+                    + $"\n\n{Resource.SpoilerAnalysisNoMissingItem}";
             }
 
-            return "Aucun item manquant dans le Playthrough avec les paramètres actuels.";
+            return Resource.SpoilerAnalysisNoMissingItem;
         }
 
         int? earliestIncompleteSphere = missingChecks.Count > 0
@@ -396,23 +399,26 @@ public static class SpoilerAnalysisClass
 
         if (manuallyValidatedSphere.HasValue && !string.IsNullOrWhiteSpace(onlyReceiver))
         {
-            sb.AppendLine($"Sphères validées manuellement pour {onlyReceiver} : jusqu’à S{manuallyValidatedSphere}");
+            sb.AppendLine(string.Format(
+                Resource.SpoilerAnalysisManualValidationSummary,
+                onlyReceiver,
+                manuallyValidatedSphere));
             sb.AppendLine();
         }
 
         if (earliestIncompleteSphere.HasValue)
         {
-            sb.AppendLine($"Sphère actuellement bloquante : {earliestIncompleteSphere}");
-            sb.AppendLine($"Checks manquantes affichées : {displayedTotal}");
-            sb.AppendLine($"- actionnables maintenant : {actionableNow.Count}");
+            sb.AppendLine(string.Format(Resource.SpoilerAnalysisCurrentBlockingSphere, earliestIncompleteSphere));
+            sb.AppendLine(string.Format(Resource.SpoilerAnalysisDisplayedMissingChecks, displayedTotal));
+            sb.AppendLine(string.Format(Resource.SpoilerAnalysisActionableNowCount, actionableNow.Count));
 
             if (showAllMissing)
             {
-                sb.AppendLine($"- dans les sphères suivantes : {laterMissing.Count}");
+                sb.AppendLine(string.Format(Resource.SpoilerAnalysisLaterSphereCount, laterMissing.Count));
             }
 
             sb.AppendLine();
-            sb.AppendLine("Checks à faire maintenant :");
+            sb.AppendLine(Resource.SpoilerAnalysisChecksToDoNow);
 
             foreach (var check in actionableNow)
             {
@@ -421,13 +427,16 @@ public static class SpoilerAnalysisClass
         }
         else
         {
-            sb.AppendLine($"Aucune check ne bloque actuellement {onlyReceiver}.");
+            sb.AppendLine(string.Format(Resource.SpoilerAnalysisNoCurrentBlockingCheck, onlyReceiver));
         }
 
         if (!string.IsNullOrWhiteSpace(onlyReceiver))
         {
             sb.AppendLine();
-            sb.AppendLine($"Checks avec lesquelles {onlyReceiver} bloque actuellement d'autres joueurs : {blockingOthersNow.Count}");
+            sb.AppendLine(string.Format(
+                Resource.SpoilerAnalysisBlockingOtherPlayers,
+                onlyReceiver,
+                blockingOthersNow.Count));
             foreach (var check in blockingOthersNow)
             {
                 sb.AppendLine($"- {FormatCheck(check, hideItems)}");
@@ -437,11 +446,11 @@ public static class SpoilerAnalysisClass
         if (showAllMissing && laterMissing.Count > 0)
         {
             sb.AppendLine();
-            sb.AppendLine("Checks dans les sphères suivantes :");
+            sb.AppendLine(Resource.SpoilerAnalysisChecksInLaterSpheres);
 
             foreach (var group in laterMissing.GroupBy(c => c.Sphere).OrderBy(g => g.Key))
             {
-                sb.AppendLine($"Sphère {group.Key} :");
+                sb.AppendLine(string.Format(Resource.SpoilerAnalysisSphereHeading, group.Key));
                 foreach (var check in group)
                 {
                     sb.AppendLine($"- {FormatCheck(check, hideItems)}");
@@ -450,15 +459,15 @@ public static class SpoilerAnalysisClass
         }
 
         sb.AppendLine();
-        sb.AppendLine("Règle utilisée :");
-        sb.AppendLine("- Le Playthrough définit l'ordre des sphères.");
-        sb.AppendLine("- La plus petite sphère contenant au moins une check manquante est la sphère bloquante actuelle.");
-        sb.AppendLine("- Toutes les checks manquantes de cette sphère sont considérées comme à faire maintenant.");
+        sb.AppendLine(Resource.SpoilerAnalysisRuleHeading);
+        sb.AppendLine(Resource.SpoilerAnalysisRulePlaythroughOrder);
+        sb.AppendLine(Resource.SpoilerAnalysisRuleBlockingSphere);
+        sb.AppendLine(Resource.SpoilerAnalysisRuleCurrentChecks);
         if (!string.IsNullOrWhiteSpace(onlyReceiver))
         {
-            sb.AppendLine("- Pour chaque autre joueur, une check détenue par l'alias sélectionné est bloquante seulement si elle appartient à sa sphère actuelle.");
+            sb.AppendLine(Resource.SpoilerAnalysisRuleOtherPlayers);
         }
-        sb.AppendLine("- Les checks manquantes des sphères suivantes sont listées séparément, sans utiliser la section Paths.");
+        sb.AppendLine(Resource.SpoilerAnalysisRuleLaterSpheres);
 
         return sb.ToString().TrimEnd();
     }

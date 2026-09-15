@@ -2976,4 +2976,130 @@ URL: `{6}`
   <data name="YamlSuccess" xml:space="preserve">
     <value></value>
   </data>
+  <data name="AstCenterArchipelagoTools" xml:space="preserve">
+    <value>Archipelago tools</value>
+  </data>
+  <data name="AstCenterArchipelagoToolsDescription" xml:space="preserve">
+    <value>Manage YAML files, APWorlds, generation, and templates. Access is allowed by default unless an administrator restricts it.</value>
+  </data>
+  <data name="AstCenterTemplates" xml:space="preserve">
+    <value>Templates</value>
+  </data>
+  <data name="AstCenterTemplatesDescription" xml:space="preserve">
+    <value>{0} template(s) available. {1}</value>
+  </data>
+  <data name="AstCenterArchipelagoRestrictions" xml:space="preserve">
+    <value>Archipelago access restrictions</value>
+  </data>
+  <data name="AstCenterArchipelagoRestrictionsDescription" xml:space="preserve">
+    <value>The following members cannot use Archipelago tools:</value>
+  </data>
+  <data name="AstCenterNoArchipelagoRestrictions" xml:space="preserve">
+    <value>No member is currently restricted from using Archipelago tools.</value>
+  </data>
+  <data name="AstCenterNoArchipelagoRestrictionMatches" xml:space="preserve">
+    <value>No restriction matches the current filter.</value>
+  </data>
+  <data name="AstCenterArchipelagoRestrictionBy" xml:space="preserve">
+    <value>• {0} (`{1}`) — restricted by `{2}`</value>
+  </data>
+  <data name="AstCenterChooseMemberToRestrict" xml:space="preserve">
+    <value>Choose a member to restrict</value>
+  </data>
+  <data name="AstCenterChooseRestrictionToRemove" xml:space="preserve">
+    <value>Choose a restriction to remove</value>
+  </data>
+  <data name="AstCenterArchipelagoAccessDeniedFor" xml:space="preserve">
+    <value>Archipelago tools were disabled for user {0}.</value>
+  </data>
+  <data name="AstCenterArchipelagoAccessRestoredFor" xml:space="preserve">
+    <value>Archipelago tools were restored for user {0}.</value>
+  </data>
+  <data name="AstCenterInstanceOwnerCannotBeRestricted" xml:space="preserve">
+    <value>The instance owner cannot be restricted from using Archipelago tools.</value>
+  </data>
+  <data name="SpoilerAnalysisNoSphereFound" xml:space="preserve">
+    <value>No sphere was found with these filters.</value>
+  </data>
+  <data name="SpoilerAnalysisManualValidationSummary" xml:space="preserve">
+    <value>Manually validated spheres for {0}: through S{1}</value>
+  </data>
+  <data name="SpoilerAnalysisNoMissingItem" xml:space="preserve">
+    <value>No item is missing from the Playthrough with the current settings.</value>
+  </data>
+  <data name="SpoilerAnalysisCurrentBlockingSphere" xml:space="preserve">
+    <value>Current blocking sphere: {0}</value>
+  </data>
+  <data name="SpoilerAnalysisDisplayedMissingChecks" xml:space="preserve">
+    <value>Displayed missing checks: {0}</value>
+  </data>
+  <data name="SpoilerAnalysisActionableNowCount" xml:space="preserve">
+    <value>- actionable now: {0}</value>
+  </data>
+  <data name="SpoilerAnalysisLaterSphereCount" xml:space="preserve">
+    <value>- in later spheres: {0}</value>
+  </data>
+  <data name="SpoilerAnalysisChecksToDoNow" xml:space="preserve">
+    <value>Checks to complete now:</value>
+  </data>
+  <data name="SpoilerAnalysisNoCurrentBlockingCheck" xml:space="preserve">
+    <value>No check is currently blocking {0}.</value>
+  </data>
+  <data name="SpoilerAnalysisBlockingOtherPlayers" xml:space="preserve">
+    <value>Checks where {0} is currently blocking other players: {1}</value>
+  </data>
+  <data name="SpoilerAnalysisChecksInLaterSpheres" xml:space="preserve">
+    <value>Checks in later spheres:</value>
+  </data>
+  <data name="SpoilerAnalysisSphereHeading" xml:space="preserve">
+    <value>Sphere {0}:</value>
+  </data>
+  <data name="SpoilerAnalysisRuleHeading" xml:space="preserve">
+    <value>Rule used:</value>
+  </data>
+  <data name="SpoilerAnalysisRulePlaythroughOrder" xml:space="preserve">
+    <value>- The Playthrough defines sphere order.</value>
+  </data>
+  <data name="SpoilerAnalysisRuleBlockingSphere" xml:space="preserve">
+    <value>- The lowest sphere containing at least one missing check is the current blocking sphere.</value>
+  </data>
+  <data name="SpoilerAnalysisRuleCurrentChecks" xml:space="preserve">
+    <value>- All missing checks in that sphere are considered actionable now.</value>
+  </data>
+  <data name="SpoilerAnalysisRuleOtherPlayers" xml:space="preserve">
+    <value>- For each other player, a check held by the selected slot is blocking only if it belongs to that player's current sphere.</value>
+  </data>
+  <data name="SpoilerAnalysisRuleLaterSpheres" xml:space="preserve">
+    <value>- Missing checks in later spheres are listed separately, without using the Paths section.</value>
+  </data>
+  <data name="SCSpoilerAnalyzeDescription" xml:space="preserve">
+    <value>Analyze blocking spheres and dependencies in the spoiler log</value>
+  </data>
+  <data name="SCSpoilerSphereDescription" xml:space="preserve">
+    <value>Maximum sphere to analyze (optional)</value>
+  </data>
+  <data name="SCSpoilerMissingModeDescription" xml:space="preserve">
+    <value>first = first blocking sphere, full = all missing checks</value>
+  </data>
+  <data name="SCSpoilerChoiceLowestSphereOnly" xml:space="preserve">
+    <value>first blocking sphere only</value>
+  </data>
+  <data name="SCSpoilerChoiceFull" xml:space="preserve">
+    <value>full report</value>
+  </data>
+  <data name="SCSpoilerHideItemsDescription" xml:space="preserve">
+    <value>Hide item names in the report</value>
+  </data>
+  <data name="SCSpoilerValidateSphereDescription" xml:space="preserve">
+    <value>Validate ambiguous local checks through this sphere</value>
+  </data>
+  <data name="SCSpoilerResetValidationDescription" xml:space="preserve">
+    <value>Clear manual sphere validation for this slot</value>
+  </data>
+  <data name="SCSpoilerUploadDescription" xml:space="preserve">
+    <value>Upload a spoiler log for analysis</value>
+  </data>
+  <data name="SCSpoilerFileDescription" xml:space="preserve">
+    <value>Spoiler log file (.txt/.json)</value>
+  </data>
 </root>

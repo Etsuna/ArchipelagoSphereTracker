@@ -17,7 +17,8 @@ public sealed record AstAuthorizationContext(
     bool IsAdministrator,
     bool IsGuildOwner,
     bool IsInstanceOwner,
-    bool IsDelegatedGuildManager = false);
+    bool IsDelegatedGuildManager = false,
+    bool IsArchipelagoAccessDenied = false);
 
 public sealed record AstPortalActor(string UserId, IGuildUser User, AstAuthorizationContext Authorization);
 
@@ -63,13 +64,17 @@ public static class AstAuthorizationService
 
         return commandName switch
         {
-            "list-apworld" or
-            "backup-apworld" or
-            "send-apworld" => AstAuthorizationLevel.InstanceOwner,
             "discord" or "apworlds-info" => AstAuthorizationLevel.GuildMember,
+            _ when IsArchipelagoToolCommand(commandName) => AstAuthorizationLevel.GuildMember,
             _ => AstAuthorizationLevel.GuildManager
         };
     }
+
+    public static bool IsArchipelagoToolCommand(string commandName)
+        => commandName is
+            "list-yamls" or "backup-yamls" or "download-yaml" or "download-template" or "delete-yaml" or "clean-yamls" or
+            "send-yaml" or "generate-with-zip" or "generate" or "test-generate" or
+            "list-apworld" or "backup-apworld" or "send-apworld";
 
     public static async Task<AstAuthorizationContext?> CreateDiscordContextAsync(
         string guildId,
@@ -117,6 +122,10 @@ public static class AstAuthorizationService
             guildId,
             userId.ToString(),
             CancellationToken.None).ConfigureAwait(false);
+        var isArchipelagoAccessDenied = await AstArchipelagoAccessCommands.IsDeniedAsync(
+            guildId,
+            userId.ToString(),
+            CancellationToken.None).ConfigureAwait(false);
 
         var channelPermissions = user.GetPermissions(guildChannel);
         var canAccessPrivateThreadWithoutMembership = isGuildOwner ||
@@ -139,7 +148,8 @@ public static class AstAuthorizationService
             IsAdministrator: user.GuildPermissions.Administrator,
             IsGuildOwner: isGuildOwner,
             IsInstanceOwner: isInstanceOwner,
-            IsDelegatedGuildManager: isDelegatedGuildManager);
+            IsDelegatedGuildManager: isDelegatedGuildManager,
+            IsArchipelagoAccessDenied: isArchipelagoAccessDenied);
     }
 
     public static async Task<AstPortalActor?> ResolvePortalActorAsync(
@@ -181,8 +191,10 @@ public static class AstAuthorizationService
                context.IsInstanceOwner;
     }
 
-    public static bool CanManageArchipelagoAssets(AstAuthorizationContext context)
-        => context.IsInstanceOwner || Declare.IsArchipelagoMode && IsGuildManager(context);
+    public static bool CanUseArchipelagoTools(AstAuthorizationContext context)
+        => Declare.IsArchipelagoMode &&
+           (context.IsInstanceOwner || !context.IsArchipelagoAccessDenied) &&
+           (context.IsGuildMember || context.IsInstanceOwner);
 
     private static bool IsGuildManager(AstAuthorizationContext context)
     {

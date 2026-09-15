@@ -98,11 +98,32 @@ public class AstAuthorizationServiceTests
     [InlineData("ast-resume", true, AstAuthorizationLevel.RoomManager)]
     [InlineData("ast-polling", true, AstAuthorizationLevel.RoomManager)]
     [InlineData("ast-health", false, AstAuthorizationLevel.GuildManager)]
-    [InlineData("send-apworld", false, AstAuthorizationLevel.InstanceOwner)]
-    [InlineData("generate", false, AstAuthorizationLevel.GuildManager)]
+    [InlineData("send-apworld", false, AstAuthorizationLevel.GuildMember)]
+    [InlineData("generate", false, AstAuthorizationLevel.GuildMember)]
     public void CommandMatrix_IsExplicit(string command, bool isThread, AstAuthorizationLevel expected)
     {
         Assert.Equal(expected, AstAuthorizationService.RequiredForDiscordCommand(command, isThread));
+    }
+
+    [Theory]
+    [InlineData("list-yamls")]
+    [InlineData("backup-yamls")]
+    [InlineData("download-template")]
+    [InlineData("delete-yaml")]
+    [InlineData("clean-yamls")]
+    [InlineData("send-yaml")]
+    [InlineData("generate-with-zip")]
+    [InlineData("generate")]
+    [InlineData("test-generate")]
+    [InlineData("list-apworld")]
+    [InlineData("backup-apworld")]
+    [InlineData("send-apworld")]
+    public void ArchipelagoToolCommands_AreMemberLevel(string command)
+    {
+        Assert.True(AstAuthorizationService.IsArchipelagoToolCommand(command));
+        Assert.Equal(
+            AstAuthorizationLevel.GuildMember,
+            AstAuthorizationService.RequiredForDiscordCommand(command, isThread: false));
     }
 
     [Theory]
@@ -129,6 +150,28 @@ public class AstAuthorizationServiceTests
         Assert.Null(SecurityAuditLog.ForCommand(command));
     }
 
+    [Fact]
+    public void ArchipelagoTools_AreAllowedByDefaultAndCanBeExplicitlyDenied()
+    {
+        var previousMode = Declare.IsArchipelagoMode;
+        try
+        {
+            Declare.IsArchipelagoMode = true;
+            Assert.True(AstAuthorizationService.CanUseArchipelagoTools(Context()));
+            Assert.False(AstAuthorizationService.CanUseArchipelagoTools(
+                Context(isArchipelagoAccessDenied: true)));
+            Assert.True(AstAuthorizationService.CanUseArchipelagoTools(
+                Context(isGuildMember: false, isInstanceOwner: true, isArchipelagoAccessDenied: true)));
+
+            Declare.IsArchipelagoMode = false;
+            Assert.False(AstAuthorizationService.CanUseArchipelagoTools(Context()));
+        }
+        finally
+        {
+            Declare.IsArchipelagoMode = previousMode;
+        }
+    }
+
     private static AstAuthorizationContext Context(
         bool isGuildMember = true,
         bool isThreadOwner = false,
@@ -137,7 +180,8 @@ public class AstAuthorizationServiceTests
         bool isAdministrator = false,
         bool isGuildOwner = false,
         bool isInstanceOwner = false,
-        bool isDelegatedGuildManager = false)
+        bool isDelegatedGuildManager = false,
+        bool isArchipelagoAccessDenied = false)
     {
         return new AstAuthorizationContext(
             isGuildMember,
@@ -147,6 +191,7 @@ public class AstAuthorizationServiceTests
             isAdministrator,
             isGuildOwner,
             isInstanceOwner,
-            isDelegatedGuildManager);
+            isDelegatedGuildManager,
+            isArchipelagoAccessDenied);
     }
 }

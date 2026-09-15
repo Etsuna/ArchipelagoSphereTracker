@@ -1,20 +1,20 @@
 # PR 9 — `/ast` command center specification
 
-> Status: implemented on `codex/evolution`; real Discord validation remains required before merge.
+> Status: `/ast` command center implemented; compatibility mode restored with the direct commands from `v5.6.7`.
 
 ## Goal
 
-AST currently registers 47 slash commands: 35 general commands and 12 additional commands in Archipelago mode. PR 9 replaces the entire public command surface with one command, with an optional attachment for imports:
+AST originally registered 47 slash commands: 35 general commands and 12 additional commands in Archipelago mode. PR 9 initially replaced the entire public command surface with one command, with an optional attachment for imports:
 
 ```text
 /ast
 ```
 
-It opens a personal, ephemeral and context-aware command center. Existing capabilities remain available through buttons, select menus, forms, guided workflows and explicit confirmations. No permanent control message is posted in a channel or room thread.
+It opens a personal, ephemeral and context-aware command center. The current compatibility mode also publishes every direct command present in `v5.6.7`, so users can choose either interface. No permanent control message is posted in a channel or room thread.
 
 ## Product rules
 
-- Discord registers exactly one command, `/ast`.
+- Discord registers `/ast` and the direct commands from `v5.6.7` at the same time.
 - The interface is ephemeral and visible only to its requester.
 - Navigation edits the same private response instead of posting messages.
 - The home screen adapts to a tracked room thread, a regular guild channel or an invalid context.
@@ -31,8 +31,10 @@ In a tracked room, `/ast` displays room health and progress, then offers:
 1. `My space`
 2. `The room`
 3. `Manage room` for room managers
-4. `AST administration` for guild managers and the instance owner
-5. `Refresh`
+4. `Archipelago tools` in Archipelago mode, unless the member is explicitly restricted
+5. `AST administration` for guild managers and the instance owner
+6. `AST instance` for the configured instance owner
+7. `Help`
 
 In a regular guild channel it displays accessible rooms, room setup, global health, administration, and help according to the actor’s permissions. In an untracked thread it explains that no room is associated and returns to the guild home. Direct messages are rejected in this first version.
 
@@ -82,24 +84,24 @@ In a regular guild channel it displays accessible rooms, room setup, global heal
 
 | Legacy command | `/ast` destination | Interaction | Access |
 |---|---|---|---|
-| `list-yamls` | Administration → YAML → Files | pagination | Guild manager |
-| `list-apworld` | Administration → APWorld → Files | pagination | Instance owner |
-| `backup-yamls` | Administration → YAML → Backup | private download | Guild manager |
-| `backup-apworld` | Administration → APWorld → Backup | private download | Instance owner |
-| `download-template` | Administration → YAML → Templates | selector + private download | Guild manager |
-| `delete-yaml` | Administration → YAML → Delete | selector + confirmation | Guild manager |
-| `clean-yamls` | Administration → YAML → Delete all | strong confirmation | Guild manager |
-| `send-yaml` | `/ast file:<players.yaml>` | native Discord attachment | Guild manager |
-| `generate-with-zip` | `/ast file:<players.zip>` | native attachment + balancing choice | Guild manager |
-| `send-apworld` | `/ast file:<world.apworld>` | native Discord attachment | Instance owner |
-| `generate` | Administration → Generation → Run | confirmation + balancing choice | Guild manager |
-| `test-generate` | Administration → Generation → Test | confirmation | Guild manager |
+| `list-yamls` | Archipelago tools → YAML → Files | pagination | Member unless explicitly restricted |
+| `list-apworld` | Archipelago tools → APWorld → Files | pagination | Member unless explicitly restricted |
+| `backup-yamls` | Archipelago tools → YAML → Backup | private download | Member unless explicitly restricted |
+| `backup-apworld` | Archipelago tools → APWorld → Backup | private download | Member unless explicitly restricted |
+| `download-template` | Archipelago tools → Templates | selector + private download | Member unless explicitly restricted |
+| `delete-yaml` | Archipelago tools → YAML → Delete | selector + confirmation | Member unless explicitly restricted |
+| `clean-yamls` | Archipelago tools → YAML → Delete all | strong confirmation | Member unless explicitly restricted |
+| `send-yaml` | `/ast file:<players.yaml>` | native Discord attachment | Member unless explicitly restricted |
+| `generate-with-zip` | `/ast file:<players.zip>` | native attachment + balancing choice | Member unless explicitly restricted |
+| `send-apworld` | `/ast file:<world.apworld>` | native Discord attachment | Member unless explicitly restricted |
+| `generate` | Archipelago tools → Generation → Run | confirmation + balancing choice | Member unless explicitly restricted |
+| `test-generate` | Archipelago tools → Generation → Test | confirmation | Member unless explicitly restricted |
 
 Personal exclusions are deliberately reclassified: storage is already user-scoped, so members may manage only their own exclusions. Global operations remain manager-only.
 
 ## Private uploads
 
-Discord buttons and modals cannot request attachments, so the single `/ast` command keeps an optional `file` parameter. Normal mode accepts only `.txt` and `.json` spoiler logs. Archipelago mode additionally routes YAML, generation ZIP and APWorld files, and exposes the `skip-prog-balancing` option. Authorization runs before processing, and existing size, quarantine, extension and content validation remains mandatory. The response is ephemeral and no sensitive file is requested in a public message. Explicit Web-portal buttons remain available as a parallel system, but Discord imports do not depend on the portal.
+Discord buttons and modals cannot request attachments, so `/ast` keeps an optional `file` parameter. Normal mode accepts only `.txt` and `.json` spoiler logs. Archipelago mode additionally routes YAML, generation ZIP and APWorld files, and exposes the `skip-prog-balancing` option. The historical direct upload commands also remain available. Authorization runs before processing, and existing size, quarantine, extension and content validation remains mandatory. The `/ast` response is ephemeral and no sensitive file is requested in a public message. Explicit Web-portal buttons remain available as a parallel system, but Discord imports do not depend on the portal.
 
 ## Session and security model
 
@@ -107,9 +109,11 @@ Each `/ast` opening creates a 15-minute in-memory session bound to its owner, gu
 
 Permissions are checked when rendering, clicking and immediately before a write. Destructive actions and configuration changes retain correlation-based security auditing. Outputs neutralize mentions and respect Discord limits. Private portal links are scoped and revocable.
 
+In Archipelago mode, every guild member can use YAML, APWorld, generation and template tools by default. Native Discord administrators (`guild owner`, `Administrator`, or `Manage Server`) and the configured instance owner can maintain a guild-scoped deny list under `AST administration → Archipelago access restrictions`. A denied member loses the `/ast` section and is rejected by the equivalent direct slash commands and Web operations. The instance owner cannot be denied, which preserves a recovery path. Delegated AST managers cannot edit this deny list.
+
 ## Implementation shape
 
-1. `SlashCommandDefinitions` registers only `/ast`.
+1. `SlashCommandDefinitions` registers `/ast` and the `v5.6.7` command surface.
 2. `AstCommandCenter` renders context-aware screens.
 3. `AstInteractionRouter` handles buttons, menus and modals by stable action ID.
 4. `AstUiSessionStore` owns isolation and expiration.
@@ -117,7 +121,7 @@ Permissions are checked when rendering, clicking and immediately before a write.
 6. Discord and Web adapters call the same services.
 7. Slow work defers immediately and completes through the private interaction response.
 
-Bulk command overwrite removes all 47 legacy Discord entries during deployment. Existing room, association, recap, exclusion, YAML, APWorld, portal and audit data is retained.
+Bulk command overwrite publishes `/ast` together with the exact direct-command set from `v5.6.7`. Direct commands pass through the current authorization matrix and audit layer before invoking their historical handlers. Existing room, association, recap, exclusion, YAML, APWorld, portal and audit data is retained.
 
 ## Accepted product decisions
 
@@ -129,7 +133,7 @@ Bulk command overwrite removes all 47 legacy Discord entries during deployment. 
 
 ## Acceptance criteria
 
-- Exactly `/ast` is registered in both operating modes.
+- Exactly `/ast` and the `v5.6.7` commands applicable to the current operating mode are registered.
 - All 47 legacy commands have a working destination above.
 - UI visibility and server-side authorization match the actor’s role.
 - Normal navigation never posts into the channel or thread.

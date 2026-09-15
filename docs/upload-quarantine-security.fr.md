@@ -18,7 +18,7 @@ Le démarrage et chaque nouveau téléversement suppriment au mieux les résidus
 - ZIP de génération : mêmes limites, uniquement des YAML à la racine de l'archive.
 - Spoiler : nom `.txt` ou `.json`, texte UTF-8 non vide; le JSON doit avoir un objet ou un tableau à la racine. La nouvelle version n'efface l'ancienne qu'après validation.
 
-Ces contrôles limitent les fichiers mal formés, les traversées de chemin et les bombes ZIP. Ils ne constituent ni une analyse antivirus ni une preuve que le code contenu dans un APWorld est digne de confiance; son installation reste réservée au propriétaire de l'instance.
+Ces contrôles limitent les fichiers mal formés, les traversées de chemin et les bombes ZIP. Ils ne constituent ni une analyse antivirus ni une preuve que le code contenu dans un APWorld est digne de confiance. En mode Archipelago, les opérations APWorld sont accessibles par défaut aux membres du serveur et peuvent être interdites individuellement par les administrateurs Discord natifs ou le propriétaire de l’instance.
 
 ## Configuration et exploitation
 

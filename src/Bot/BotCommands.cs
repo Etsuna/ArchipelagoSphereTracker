@@ -152,23 +152,59 @@ public static class BotCommands
 
     public static async Task HandleSlashCommandAsync(SocketSlashCommand command)
     {
+        var telemetry = CommandTelemetry.BeginSlash(command);
         if (command.CommandName == "ast")
         {
-            await AstCommandCenter.StartAsync(command);
+            using (telemetry)
+            {
+                try
+                {
+                    await AstCommandCenter.StartAsync(command);
+                    telemetry.Complete();
+                }
+                catch
+                {
+                    telemetry.Complete("failed");
+                    throw;
+                }
+            }
             return;
         }
 
         if (command.CommandName == "ast-setup")
         {
-            await AstSetupWizard.StartAsync(command);
+            using (telemetry)
+            {
+                try
+                {
+                    await AstSetupWizard.StartAsync(command);
+                    telemetry.Complete();
+                }
+                catch
+                {
+                    telemetry.Complete("failed");
+                    throw;
+                }
+            }
             return;
         }
 
         var isThread = command.Channel is IThreadChannel;
-        await command.DeferAsync(ephemeral: isThread);
+        try
+        {
+            await command.DeferAsync(ephemeral: isThread);
+        }
+        catch
+        {
+            telemetry.Complete("failed");
+            telemetry.Dispose();
+            throw;
+        }
 
         _ = Task.Run(async () =>
         {
+            using (telemetry)
+            {
             var correlationId = Guid.NewGuid().ToString("N");
             var revokePortal = command.Data.Options?.FirstOrDefault(option => option.Name == "revoke")?.Value as bool? ?? false;
             var auditAction = revokePortal && (command.CommandName is "ast-user-portal" or "ast-room-portal" or "ast-portal")
@@ -183,6 +219,7 @@ public static class BotCommands
                 if (string.IsNullOrWhiteSpace(guildId) || string.IsNullOrWhiteSpace(channelId))
                 {
                     await command.FollowupAsync(Resource.BotCommandOutsideServer, ephemeral: true);
+                    telemetry.Complete("invalid_context");
                     return;
                 }
 
@@ -210,6 +247,26 @@ public static class BotCommands
                             SecurityAuditOutcome.Denied);
                     }
                     await command.FollowupAsync(AstAuthorizationService.DeniedMessage, ephemeral: true);
+                    telemetry.Complete("denied");
+                    return;
+                }
+
+                if (AstAuthorizationService.IsArchipelagoToolCommand(command.CommandName) &&
+                    !AstAuthorizationService.CanUseArchipelagoTools(authorization))
+                {
+                    if (auditAction != null)
+                    {
+                        await SecurityAuditLog.WriteAsync(
+                            correlationId,
+                            SecurityAuditSource.Discord,
+                            command.User.Id.ToString(),
+                            guildId,
+                            channelId,
+                            auditAction.Value,
+                            SecurityAuditOutcome.Denied);
+                    }
+                    await command.FollowupAsync(AstAuthorizationService.DeniedMessage, ephemeral: true);
+                    telemetry.Complete("denied");
                     return;
                 }
 
@@ -253,9 +310,11 @@ public static class BotCommands
                         auditAction.Value,
                         SecurityAuditOutcome.Succeeded);
                 }
+                telemetry.Complete();
             }
             catch (Exception ex)
             {
+                telemetry.Complete("failed");
                 if (auditAction != null && !string.IsNullOrWhiteSpace(guildId))
                 {
                     try
@@ -279,6 +338,7 @@ public static class BotCommands
                 var safeErrorMessage = Resource.BotTheCommandFailedPleaseRetryOrContactAnAST;
                 await command.FollowupAsync(safeErrorMessage, ephemeral: true,
                     options: new RequestOptions { Timeout = 10000 });
+            }
             }
         });
     }

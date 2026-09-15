@@ -498,6 +498,11 @@ public static class DatabaseCommands
                 command.CommandText = @"DELETE FROM AstRoleBindingsTable WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM AstArchipelagoAccessDenyTable WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             });
 
             RoomFileStorage.DeleteGuildData(guildId, channelIds);
