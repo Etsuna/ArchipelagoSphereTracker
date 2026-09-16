@@ -124,6 +124,17 @@ sum by (surface, command) (increase(ast_command_invocations_total[30d]))
 sum by (surface, command, option, selection) (increase(ast_command_options_total[30d]))
 ```
 
+A Dashboard V2 specification is provided in [Grafana-Dashboard.json](Grafana-Dashboard.json). Create or open a dynamic dashboard in Grafana, choose **Edit as code**, select **JSON**, and replace the editor contents with this file. The V2 queries identify Prometheus by datasource type, so Grafana resolves the available Prometheus datasource without embedding an instance-specific UID.
+
+The tracking part of the dashboard consolidates the useful views from the former dashboards into four rows. The cascading **Discord server**, **Tracked room**, **Game**, and **Player / slot** filters can target one selection or **All**.
+
+- **Archipelago overview** provides checks, locations, completion, player/game/room totals, checked-versus-remaining locations, completion and activity distributions, and bounded game/room rankings.
+- **Progress and activity** restores the historical checks, locations, guild and room timelines, adds rolling progression and activity percentiles, and highlights stale or lagging rooms.
+- **Player drill-down** provides bounded Top/Bottom 25 rankings, checked-versus-remaining worlds, progress made during the selected period, stale players, and a Top 20 progression timeline. Selecting one player turns these panels into a focused player view.
+- **Raw tracking details** is collapsed by default and contains the only three tables: room configuration, alias choices, and per-player completion details. Its row-local **Alias** filter restores the focused alias lookup without cluttering the global controls.
+
+Rankings and multi-series charts are explicitly limited to 20 or 25 results, so choosing **All** remains readable for Big Async instances with several thousand players. The former `tracker` filter is intentionally omitted because `ast_channel_info` no longer exports sensitive tracker connection data.
+
 ---
 
 ## Français
@@ -247,3 +258,14 @@ sum by (surface, command) (increase(ast_command_invocations_total[30d]))
 ```promql
 sum by (surface, command, option, selection) (increase(ast_command_options_total[30d]))
 ```
+
+Une spécification Dashboard V2 est fournie dans [Grafana-Dashboard.json](Grafana-Dashboard.json). Créez ou ouvrez un dashboard dynamique dans Grafana, choisissez **Edit as code**, sélectionnez **JSON**, puis remplacez le contenu de l’éditeur par ce fichier. Les requêtes V2 identifient Prometheus par son type de datasource : aucun UID propre à une instance n’est intégré au fichier.
+
+La partie suivi du dashboard regroupe les vues utiles des anciens dashboards dans quatre lignes. Les filtres en cascade **Discord server**, **Tracked room**, **Game** et **Player / slot** permettent de cibler une valeur ou **All**.
+
+- **Archipelago overview** affiche les checks, les locations, la progression, les nombres de joueurs/jeux/rooms, les locations faites et restantes, les répartitions de progression et d’activité, ainsi que des classements bornés par jeu et par room.
+- **Progress and activity** restaure les historiques des checks, locations, serveurs et rooms, puis ajoute la progression glissante, les percentiles d’activité et les rooms inactives ou en retard.
+- **Player drill-down** fournit des classements Top/Bottom 25, les mondes faits/restants, les gains sur la période sélectionnée, les joueurs inactifs et une timeline limitée aux 20 premières séries. La sélection d’un joueur transforme ces panneaux en vue individuelle.
+- **Raw tracking details** est repliée par défaut et contient les trois seuls tableaux : configuration des rooms, choix d’alias et détail de progression par joueur. Son filtre local **Alias** restaure la recherche ciblée par alias sans encombrer les contrôles globaux.
+
+Les classements et graphiques multiséries sont explicitement limités à 20 ou 25 résultats : la sélection **All** reste donc lisible avec plusieurs milliers de joueurs dans un Big Async. L’ancien filtre `tracker` est volontairement absent, car `ast_channel_info` n’exporte plus les données sensibles de connexion au tracker.

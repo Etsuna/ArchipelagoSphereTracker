@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using ArchipelagoSphereTracker.src.Resources;
 using Xunit;
 
 public sealed class AstCommandCenterTests
@@ -225,6 +226,32 @@ public sealed class AstCommandCenterTests
     {
         Assert.Equal(expected, AstCommandCenter.TryParseCustomId(customId, out _, out var action));
         Assert.Equal(expectedAction, action);
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("1")]
+    [InlineData("16")]
+    [InlineData("17")]
+    [InlineData("21")]
+    [InlineData("27")]
+    [InlineData("31")]
+    [InlineData("invalid")]
+    public void Alias_mention_filters_have_readable_labels(string flag)
+    {
+        var expected = flag switch
+        {
+            "0" => Resource.AstCenterNoFilter,
+            "1" => Resource.AstCenterFiller,
+            "16" => Resource.AstCenterTraps,
+            "17" => Resource.AstCenterFillerTraps,
+            "21" => Resource.AstCenterThroughUseful,
+            "27" => Resource.AstCenterThroughRequired,
+            "31" => Resource.AstCenterFilterAll,
+            _ => Resource.AstCenterUnclassified
+        };
+
+        Assert.Equal(expected, AstCommandCenter.MentionFilterLabel(flag));
     }
 
     private sealed class FakeTimeProvider(DateTimeOffset now) : TimeProvider

@@ -145,6 +145,35 @@ public static class ReceiverAliasesCommands
         return receivers;
     }
 
+    public static async Task<List<ReceiverAliasFilter>> GetReceiverFiltersForUserAsync(
+        string guildId,
+        string channelId,
+        string userId)
+    {
+        var receivers = new List<ReceiverAliasFilter>();
+        await using var connection = await Db.OpenReadAsync();
+        using var command = new SQLiteCommand(@"
+            SELECT Receiver, Flag
+            FROM ReceiverAliasesTable
+            WHERE GuildId = @GuildId AND ChannelId = @ChannelId AND UserId = @UserId
+            ORDER BY Receiver COLLATE NOCASE;", connection);
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        command.Parameters.AddWithValue("@UserId", userId);
+        using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
+        {
+            var receiver = reader["Receiver"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(receiver))
+            {
+                receivers.Add(new ReceiverAliasFilter(
+                    receiver,
+                    reader["Flag"]?.ToString() ?? "0"));
+            }
+        }
+        return receivers;
+    }
+
     // ==========================
     // 🎯 DELETE RECEIVER ALIAS (WRITE)
     // ==========================

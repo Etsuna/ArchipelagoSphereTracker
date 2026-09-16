@@ -55,6 +55,8 @@ public class ReceiverUserInfo
     public required string Flag { get; set; }
 }
 
+public sealed record ReceiverAliasFilter(string Receiver, string Flag);
+
 [Flags]
 public enum ReceiverFlag
 {

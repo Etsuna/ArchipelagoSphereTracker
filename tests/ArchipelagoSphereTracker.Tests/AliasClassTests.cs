@@ -61,4 +61,20 @@ public sealed class AliasClassTests
         Assert.Equal(1, counts["user-1"]);
         Assert.Equal(1, counts["user-2"]);
     }
+
+    [Fact]
+    public async Task User_alias_filters_are_returned_with_their_slots()
+    {
+        using var scope = new TestDatabaseScope();
+
+        await AliasClass.AddAliasForUserAsync("Slot One", "17", "c", "g", "user-1");
+        await AliasClass.AddAliasForUserAsync("Slot Two", "31", "c", "g", "user-1");
+        await AliasClass.AddAliasForUserAsync("Other Slot", "1", "c", "g", "user-2");
+
+        var associations = await ReceiverAliasesCommands.GetReceiverFiltersForUserAsync("g", "c", "user-1");
+
+        Assert.Equal(
+            [new ReceiverAliasFilter("Slot One", "17"), new ReceiverAliasFilter("Slot Two", "31")],
+            associations);
+    }
 }

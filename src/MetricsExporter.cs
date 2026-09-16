@@ -307,36 +307,8 @@ public static class MetricsExporter
                 else
                 {
                     var lastStr = rdr.GetString(6);
-
-                    DateTimeOffset? dto = null;
-                    if (DateTimeOffset.TryParseExact(
-                            lastStr,
-                            "r",
-                            CultureInfo.InvariantCulture,
-                            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-                            out var rfcDto))
-                    {
-                        dto = rfcDto;
-                    }
-                    else if (DateTimeOffset.TryParse(
-                            lastStr,
-                            CultureInfo.InvariantCulture,
-                            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-                            out var anyDto))
-                    {
-                        dto = anyDto;
-                    }
-
-                    if (dto is null)
-                    {
-                        gLast.Set(double.NaN);
-                    }
-                    else
-                    {
-                        var age = (DateTimeOffset.UtcNow - dto.Value).TotalSeconds;
-                        if (age < 0) age = 0;
-                        gLast.Set(age);
-                    }
+                    var ageSeconds = ParseActivityAgeSeconds(lastStr, DateTimeOffset.UtcNow);
+                    gLast.Set(ageSeconds ?? double.NaN);
                 }
 
                 curGameStatusLastActivity[key] = gLast;
@@ -485,6 +457,60 @@ public static class MetricsExporter
 
     public static void SetDiscordConnected(bool connected)
         => DiscordConnected.Set(connected ? 1 : 0);
+
+    internal static double? ParseActivityAgeSeconds(string? value, DateTimeOffset nowUtc)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        var input = value.Trim();
+
+        // Archipelago exposes a Python timedelta. Values below one day look like
+        // "H:MM:SS"; longer values look like "N day(s), H:MM:SS".
+        var commaIndex = input.IndexOf(',');
+        if (commaIndex > 0)
+        {
+            var dayTokens = input[..commaIndex]
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var timePart = input[(commaIndex + 1)..].Trim();
+
+            if (dayTokens.Length == 2 &&
+                (dayTokens[1].Equals("day", StringComparison.OrdinalIgnoreCase) ||
+                 dayTokens[1].Equals("days", StringComparison.OrdinalIgnoreCase)) &&
+                long.TryParse(dayTokens[0], NumberStyles.None, CultureInfo.InvariantCulture, out var days) &&
+                TimeSpan.TryParse(timePart, CultureInfo.InvariantCulture, out var timeOfDay) &&
+                timeOfDay >= TimeSpan.Zero &&
+                timeOfDay < TimeSpan.FromDays(1))
+            {
+                return days * 86400d + timeOfDay.TotalSeconds;
+            }
+        }
+
+        if (TimeSpan.TryParse(input, CultureInfo.InvariantCulture, out var duration) &&
+            duration >= TimeSpan.Zero)
+        {
+            return duration.TotalSeconds;
+        }
+
+        // Retain compatibility with databases populated by older integrations
+        // that stored an absolute RFC 1123 or ISO timestamp instead of a duration.
+        if (!DateTimeOffset.TryParseExact(
+                input,
+                "r",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var timestamp) &&
+            !DateTimeOffset.TryParse(
+                input,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out timestamp))
+        {
+            return null;
+        }
+
+        return Math.Max(0, (nowUtc - timestamp).TotalSeconds);
+    }
 
     private static async Task<long> ReadCountAsync(
         SQLiteConnection connection,

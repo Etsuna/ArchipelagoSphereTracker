@@ -2496,11 +2496,11 @@ public static class AstCommandCenter
         var channelId = session.RoomChannelId!.Value.ToString(CultureInfo.InvariantCulture);
         var userId = session.OwnerUserId.ToString(CultureInfo.InvariantCulture);
         var allAliases = await AliasChoicesCommands.GetAliasesForGuildAndChannelAsync(guildId, channelId).ConfigureAwait(false);
-        var allOwnAliases = (await ReceiverAliasesCommands.GetReceiversForUserAsync(guildId, channelId, userId).ConfigureAwait(false))
+        var allOwnAliasFilters = (await ReceiverAliasesCommands.GetReceiverFiltersForUserAsync(guildId, channelId, userId).ConfigureAwait(false))
             .ToArray();
-        var ownAliasSet = allOwnAliases.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var ownAliases = allOwnAliases
-            .Where(alias => MatchesSelectionSearch(session, alias))
+        var ownAliasSet = allOwnAliasFilters.Select(value => value.Receiver).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var ownAliasFilters = allOwnAliasFilters
+            .Where(value => MatchesSelectionSearch(session, value.Receiver))
             .ToArray();
         var available = allAliases.Distinct(StringComparer.OrdinalIgnoreCase)
             .Where(alias => !ownAliasSet.Contains(alias))
@@ -2511,7 +2511,7 @@ public static class AstCommandCenter
         var components = new ComponentBuilder()
             .WithButton(Resource.AstCenterAssociateByName, Id(session, "alias-add-manual"), ButtonStyle.Success, row: 0)
             .WithButton(Resource.AstCenterDissociateByName, Id(session, "alias-delete-manual"), ButtonStyle.Danger, row: 0,
-                disabled: allOwnAliases.Length == 0)
+                disabled: allOwnAliasFilters.Length == 0)
             .WithButton(Resource.AstCenterBack, Id(session, "personal"), ButtonStyle.Primary, row: 0);
         var filter = new SelectMenuBuilder().WithCustomId(Id(session, "alias-filter"))
             .WithPlaceholder(Resource.AstCenterFilterUnnecessaryMentions)
@@ -2531,23 +2531,38 @@ public static class AstCommandCenter
             foreach (var alias in availablePage) add.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias);
             components.WithSelectMenu(add, row: 2);
         }
-        var ownAliasPage = PageValues(ownAliases, session.SelectionPageIndex);
+        var ownAliasPage = PageValues(ownAliasFilters, session.SelectionPageIndex);
         if (ownAliasPage.Count > 0)
         {
             var delete = new SelectMenuBuilder().WithCustomId(Id(session, "alias-delete"))
                 .WithPlaceholder(Resource.AstCenterDissociateOneOfMySlots);
-            foreach (var alias in ownAliasPage) delete.AddOption(Safe(alias)[..Math.Min(Safe(alias).Length, 100)], alias);
+            foreach (var alias in ownAliasPage)
+                delete.AddOption(Safe(alias.Receiver)[..Math.Min(Safe(alias.Receiver).Length, 100)], alias.Receiver);
             components.WithSelectMenu(delete, row: 3);
         }
-        var selectionCount = Math.Max(available.Count, ownAliases.Length);
+        var selectionCount = Math.Max(available.Count, ownAliasFilters.Length);
         AddSelectionNavigation(components, session, selectionCount, row: 4);
-        var description = allOwnAliases.Length == 0
+        var description = allOwnAliasFilters.Length == 0
             ? (Resource.AstCenterNoAssociatedSlot)
             : ownAliasPage.Count == 0
                 ? PageLabel(session, selectionCount) + " " + (Resource.AstCenterNoAssociatedSlotOnThisPage)
-                : PageLabel(session, selectionCount) + "\n" + string.Join("\n", ownAliasPage.Select(alias => $"• {Safe(alias)}"));
+                : PageLabel(session, selectionCount) + "\n" + string.Join("\n", ownAliasPage.Select(alias =>
+                    $"• {Safe(alias.Receiver)} — {MentionFilterLabel(alias.Flag)}"));
         return new AstUiView(null, BaseEmbed(Resource.AstCenterMySlots2, description).Build(), components.Build());
     }
+
+    internal static string MentionFilterLabel(string? flag)
+        => flag switch
+        {
+            "0" => Resource.AstCenterNoFilter,
+            "1" => Resource.AstCenterFiller,
+            "16" => Resource.AstCenterTraps,
+            "17" => Resource.AstCenterFillerTraps,
+            "21" => Resource.AstCenterThroughUseful,
+            "27" => Resource.AstCenterThroughRequired,
+            "31" => Resource.AstCenterFilterAll,
+            _ => Resource.AstCenterUnclassified
+        };
 
     private static async Task<AstUiView> RenderPatchAsync(AstUiSession session)
     {
