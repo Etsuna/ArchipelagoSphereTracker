@@ -4,7 +4,7 @@ using System.Reflection;
 
 public class Declare
 {
-    public static string Version = "0.6.7";
+    public static string Version = "0.6.8";
 #if RC
     public static string ReleaseVersion = $"{Version}-rc1";
 #else
