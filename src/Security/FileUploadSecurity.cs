@@ -5,6 +5,7 @@ using System.Text.Json;
 public static class FileUploadSecurity
 {
     public const int MaxArchiveEntries = 500;
+    public const int MaxApworldArchiveEntries = 5_000;
     public const long MaxArchiveUncompressedBytes = 256L * 1024 * 1024;
 
     public static bool TryGetSafeFileName(string? submittedName, string requiredExtension, out string safeFileName)
@@ -206,7 +207,7 @@ public static class FileUploadSecurity
 
     public static bool IsArchiveWithinLimits(
         string zipPath,
-        int maxEntries = MaxArchiveEntries,
+        int maxEntries = MaxApworldArchiveEntries,
         long maxUncompressedBytes = MaxArchiveUncompressedBytes)
     {
         try

@@ -18,9 +18,12 @@ public static class SpoilerLogClass
             .FirstOrDefault();
     }
 
-    public static async Task<string> SendSpoilerLog(SocketSlashCommand command, string channelId)
+    public static async Task<string> SendSpoilerLog(
+        SocketSlashCommand command,
+        string channelId,
+        IAttachment? attachment = null)
     {
-        var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
+        attachment ??= SlashCommandAttachmentResolver.GetFile(command);
         if (attachment == null ||
             attachment.Size <= 0 ||
             attachment.Size > Declare.WebPortalMaxUploadBytes ||

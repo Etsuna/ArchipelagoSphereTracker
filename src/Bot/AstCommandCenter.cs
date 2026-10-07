@@ -587,22 +587,22 @@ public static class AstCommandCenter
         {
             case ".yaml" when AstAuthorizationService.CanUseArchipelagoTools(authorization):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.YamlUpload,
-                    () => YamlClass.SendYaml(command, channelIdText)).ConfigureAwait(false);
+                    () => YamlClass.SendYaml(command, channelIdText, attachment)).ConfigureAwait(false);
                 break;
             case ".apworld" when AstAuthorizationService.CanUseArchipelagoTools(authorization):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.ApworldUpload,
-                    () => ApworldClass.SendApworld(command)).ConfigureAwait(false);
+                    () => ApworldClass.SendApworld(command, attachment)).ConfigureAwait(false);
                 break;
             case ".zip" when AstAuthorizationService.CanUseArchipelagoTools(authorization):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.Generation,
-                    () => GenerationClass.GenerateWithZip(command, channelIdText)).ConfigureAwait(false);
+                    () => GenerationClass.GenerateWithZip(command, channelIdText, attachment)).ConfigureAwait(false);
                 break;
             case ".txt" or ".json" when
                 AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization) &&
                 command.Channel is IThreadChannel &&
                 await IsTrackedRoomAsync(guildId, channelId).ConfigureAwait(false):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.SpoilerUpload,
-                    () => SpoilerLogClass.SendSpoilerLog(command, channelIdText)).ConfigureAwait(false);
+                    () => SpoilerLogClass.SendSpoilerLog(command, channelIdText, attachment)).ConfigureAwait(false);
                 break;
             case ".yaml" or ".apworld" or ".zip" or ".txt" or ".json":
                 result = AstAuthorizationService.DeniedMessage;

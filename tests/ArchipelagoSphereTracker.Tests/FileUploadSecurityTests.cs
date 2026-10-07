@@ -258,6 +258,21 @@ public class FileUploadSecurityTests
                 writer.Write("value = 1");
             Assert.True(FileUploadSecurity.IsArchiveWithinLimits(safeArchive));
 
+            var legacyApworld = Path.Combine(root, "legacy-many-entries.apworld");
+            using (var archive = ZipFile.Open(legacyApworld, ZipArchiveMode.Create))
+            {
+                for (var index = 0; index < 937; index++)
+                {
+                    using var writer = new StreamWriter(
+                        archive.CreateEntry($"world/data/{index}.py").Open());
+                    writer.Write("x");
+                }
+            }
+            Assert.True(FileUploadSecurity.IsArchiveWithinLimits(legacyApworld));
+            Assert.False(FileUploadSecurity.IsArchiveWithinLimits(
+                legacyApworld,
+                maxEntries: FileUploadSecurity.MaxArchiveEntries));
+
             var unsafeArchive = Path.Combine(root, "unsafe.apworld");
             using (var archive = ZipFile.Open(unsafeArchive, ZipArchiveMode.Create))
             using (var writer = new StreamWriter(archive.CreateEntry("../escape.py").Open()))

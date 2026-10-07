@@ -30,9 +30,12 @@ public class YamlClass : Declare
         return message;
     }
 
-    public static async Task<string> SendYaml(SocketSlashCommand command, string channelId)
+    public static async Task<string> SendYaml(
+        SocketSlashCommand command,
+        string channelId,
+        IAttachment? attachment = null)
     {
-        var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
+        attachment ??= SlashCommandAttachmentResolver.GetFile(command);
         var message = string.Empty;
         if (attachment == null ||
             attachment.Size <= 0 ||

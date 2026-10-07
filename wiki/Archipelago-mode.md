@@ -67,7 +67,7 @@ The restored direct alternatives are `/send-yaml`, `/generate-with-zip`, and `/s
 
 Uploads are first written to `extern/upload-quarantine/` and are not installed before validation succeeds. AST checks the extension, file signature and structure, normalizes archive paths, and rejects traversal or symbolic-link entries.
 
-A ZIP archive may contain at most 500 entries and 256 MiB of uncompressed data. The normal `WEB_MAX_UPLOAD_BYTES` and Discord attachment limits still apply before these archive checks.
+A YAML ZIP archive may contain at most 500 entries. An APWorld may contain up to 5,000 entries. Both archive types are limited to 256 MiB of uncompressed data. The normal `WEB_MAX_UPLOAD_BYTES` and Discord attachment limits still apply before these archive checks.
 
 Protected downloads are placed under `extern/portal-downloads/` and require a valid private token.
 
@@ -148,7 +148,7 @@ Les alternatives directes restaurées sont `/send-yaml`, `/generate-with-zip` et
 
 Les uploads sont d’abord écrits dans `extern/upload-quarantine/` et ne sont pas installés avant la réussite de la validation. AST vérifie l’extension, la signature et la structure du fichier, normalise les chemins d’archive et refuse les entrées de traversée ou les liens symboliques.
 
-Une archive ZIP peut contenir au maximum 500 entrées et 256 Mio de données décompressées. Les limites habituelles `WEB_MAX_UPLOAD_BYTES` et de pièce jointe Discord s’appliquent toujours avant ces contrôles d’archive.
+Une archive ZIP de YAML peut contenir au maximum 500 entrées. Un APWorld peut en contenir jusqu’à 5 000. Les deux types d’archives sont limités à 256 Mio de données décompressées. Les limites habituelles `WEB_MAX_UPLOAD_BYTES` et de pièce jointe Discord s’appliquent toujours avant ces contrôles d’archive.
 
 Les téléchargements protégés sont placés sous `extern/portal-downloads/` et exigent un token privé valide.
 

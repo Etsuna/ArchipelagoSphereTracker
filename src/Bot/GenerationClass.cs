@@ -183,9 +183,12 @@ public class GenerationClass : Declare
         return new GenerationResult(Resource.GenerationTestSuccessful, null);
     }
 
-    public static async Task<string> GenerateWithZip(SocketSlashCommand command, string channelId)
+    public static async Task<string> GenerateWithZip(
+        SocketSlashCommand command,
+        string channelId,
+        IAttachment? attachment = null)
     {
-        var attachment = command.Data.Options.FirstOrDefault()?.Value as IAttachment;
+        attachment ??= SlashCommandAttachmentResolver.GetFile(command);
         bool skipProgBalancing = command.Data.Options.FirstOrDefault(o => o.Name == "skip-prog-balancing")?.Value as bool? ?? false;
         
         if (attachment == null ||

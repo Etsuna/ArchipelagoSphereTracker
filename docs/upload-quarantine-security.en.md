@@ -14,8 +14,8 @@ Startup and every new upload make a best-effort cleanup of expired residue. User
 ## Checks by type
 
 - YAML: non-empty UTF-8 text without NUL bytes.
-- APWorld: readable ZIP archive, at most 500 entries and 256 MiB uncompressed, without absolute paths or `..` components.
-- Generation ZIP: the same limits, with YAML files only at archive root.
+- APWorld: readable ZIP archive, at most 5,000 entries and 256 MiB uncompressed, without absolute paths or `..` components.
+- Generation ZIP: at most 500 entries and 256 MiB uncompressed, with YAML files only at archive root.
 - Spoiler: `.txt` or `.json` name and non-empty UTF-8 text; JSON must have an object or array at its root. A new version deletes the old one only after validation.
 
 These checks limit malformed files, path traversal, and ZIP bombs. They are neither antivirus scanning nor proof that code inside an APWorld is trustworthy. In Archipelago mode, APWorld operations are available to guild members by default and can be denied individually by native Discord administrators or the instance owner.
