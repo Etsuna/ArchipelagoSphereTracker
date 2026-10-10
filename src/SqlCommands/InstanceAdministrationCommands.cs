@@ -13,16 +13,37 @@ public sealed record AstInstanceRoomSummary(
 
 public static class InstanceAdministrationCommands
 {
+    private const string StoredRoomsQuery = @"
+                SELECT GuildId, ChannelId FROM ChannelsAndUrlsTable
+                UNION SELECT GuildId, ChannelId FROM RecapListTable
+                UNION SELECT GuildId, ChannelId FROM PortalAccessTable
+                UNION SELECT GuildId, ChannelId FROM TrackedRooms
+                UNION SELECT GuildId, ChannelId FROM RoomSnapshots
+                UNION SELECT GuildId, ChannelId FROM TrackingEvents
+                UNION SELECT GuildId, ChannelId FROM RoomPollState
+                UNION SELECT GuildId, ChannelId FROM ReceiverAliasesTable
+                UNION SELECT GuildId, ChannelId FROM AliasChoicesTable
+                UNION SELECT GuildId, ChannelId FROM DisplayedItemTable
+                UNION SELECT GuildId, ChannelId FROM GameStatusTable
+                UNION SELECT GuildId, ChannelId FROM HintStatusTable
+                UNION SELECT GuildId, ChannelId FROM DatapackageItems
+                UNION SELECT GuildId, ChannelId FROM DatapackageItemGroups
+                UNION SELECT GuildId, ChannelId FROM DatapackageLocations
+                UNION SELECT GuildId, ChannelId FROM DatapackageLocationGroups
+                UNION SELECT GuildId, ChannelId FROM DatapackageGameMap
+                UNION SELECT GuildId, ChannelId FROM UpdateAlertsTable
+                UNION SELECT GuildId, ChannelId FROM SpoilerSphereValidationTable
+                UNION SELECT GuildId, ChannelId FROM LastItemsCheckTable
+                UNION SELECT GuildId, ChannelId FROM ExcludedItemTable";
+
     public static async Task<IReadOnlyList<AstInstanceGuildSummary>> GetGuildsAsync()
     {
         var guilds = new List<AstInstanceGuildSummary>();
         await using var connection = await Db.OpenReadAsync().ConfigureAwait(false);
-        using var command = new SQLiteCommand(@"
+        using var command = new SQLiteCommand($@"
             SELECT GuildId, COUNT(*) AS RoomCount
             FROM (
-                SELECT GuildId, ChannelId FROM ChannelsAndUrlsTable
-                UNION
-                SELECT GuildId, ChannelId FROM TrackedRooms
+                {StoredRoomsQuery}
             )
             GROUP BY GuildId
             ORDER BY GuildId;", connection);
@@ -41,11 +62,9 @@ public static class InstanceAdministrationCommands
         if (!ulong.TryParse(guildId, out _)) return [];
         var rooms = new List<AstInstanceRoomSummary>();
         await using var connection = await Db.OpenReadAsync().ConfigureAwait(false);
-        using var command = new SQLiteCommand(@"
+        using var command = new SQLiteCommand($@"
             WITH Rooms AS (
-                SELECT GuildId, ChannelId FROM ChannelsAndUrlsTable
-                UNION
-                SELECT GuildId, ChannelId FROM TrackedRooms
+                {StoredRoomsQuery}
             )
             SELECT Rooms.GuildId, Rooms.ChannelId,
                    COALESCE(Config.BaseUrl, '') AS BaseUrl,

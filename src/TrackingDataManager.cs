@@ -257,7 +257,8 @@ public static class TrackingDataManager
 
                                             var channelId = ulong.Parse(channel);
                                             var guildChannel = guildCheck.GetChannel(channelId) as SocketGuildChannel;
-                                            var thread = guildCheck.ThreadChannels.FirstOrDefault(t => t.Id == channelId);
+                                            IThreadChannel? thread = guildChannel as IThreadChannel
+                                                ?? guildCheck.ThreadChannels.FirstOrDefault(t => t.Id == channelId);
 
                                             if (guildChannel is null && thread is null)
                                             {
@@ -270,6 +271,11 @@ public static class TrackingDataManager
                                                     Console.WriteLine(Resource.TDMDeletionCompleted);
                                                     ChannelConfigCache.Remove(guild, channel);
 
+                                                    MissingChannelPassCount.TryRemove(channelId, out _);
+                                                }
+                                                else if (restChan is IThreadChannel restThread)
+                                                {
+                                                    thread = restThread;
                                                     MissingChannelPassCount.TryRemove(channelId, out _);
                                                 }
                                                 else
@@ -359,20 +365,27 @@ public static class TrackingDataManager
                                                 else
                                                 {
                                                     Console.WriteLine(Resource.TDMNoActivity);
-                                                    await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
-                                                    try
-                                                    {
-                                                        await BotCommands.SendMessageAsync(
-                                                            string.Format(Resource.TDMNoActivity, thread.Name), channel);
-                                                    }
-                                                    finally
-                                                    {
-                                                        RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
-                                                    }
-                                                    await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
-                                                    WebPortalPages.DeleteChannelPages(guild, channel);
-                                                    Declare.WarnedThreads.Remove(channel);
-                                                    ChannelConfigCache.Remove(guild, channel);
+                                                    await NotifyThenDeleteInactiveThreadAsync(
+                                                        async () =>
+                                                        {
+                                                            await RateLimitGuards.GetGuildSendGate(guildCheck.Id).WaitAsync(ctChan);
+                                                            try
+                                                            {
+                                                                await BotCommands.SendMessageAsync(
+                                                                    string.Format(Resource.TDMNoActivity, thread.Name), channel);
+                                                            }
+                                                            finally
+                                                            {
+                                                                RateLimitGuards.GetGuildSendGate(guildCheck.Id).Release();
+                                                            }
+                                                        },
+                                                        async () =>
+                                                        {
+                                                            await DatabaseCommands.DeleteChannelDataAsync(guild, channel);
+                                                            WebPortalPages.DeleteChannelPages(guild, channel);
+                                                            Declare.WarnedThreads.Remove(channel);
+                                                            ChannelConfigCache.Remove(guild, channel);
+                                                        }).ConfigureAwait(false);
                                                     return;
                                                 }
                                             }
@@ -494,7 +507,8 @@ public static class TrackingDataManager
             }
 
             var guildChannel = guild.GetChannel(channelId) as SocketGuildChannel;
-            var thread = guild.ThreadChannels.FirstOrDefault(candidate => candidate.Id == channelId);
+            IThreadChannel? thread = guildChannel as IThreadChannel
+                ?? guild.ThreadChannels.FirstOrDefault(candidate => candidate.Id == channelId);
             if (guildChannel == null && thread == null)
             {
                 var restChannel = await Declare.Client.Rest.GetChannelAsync(channelId).ConfigureAwait(false);
@@ -505,15 +519,23 @@ public static class TrackingDataManager
                     return RoomPollResult.Removed();
                 }
 
-                var misses = MissingChannelPassCount.AddOrUpdate(channelId, 1, (_, old) => old + 1);
-                if (misses >= MaxChecksBeforeDelete)
+                if (restChannel is IThreadChannel restThread)
                 {
-                    await DeleteScheduledChannelAsync(scheduled.GuildId, scheduled.ChannelId).ConfigureAwait(false);
+                    thread = restThread;
                     MissingChannelPassCount.TryRemove(channelId, out _);
-                    return RoomPollResult.Removed();
                 }
+                else
+                {
+                    var misses = MissingChannelPassCount.AddOrUpdate(channelId, 1, (_, old) => old + 1);
+                    if (misses >= MaxChecksBeforeDelete)
+                    {
+                        await DeleteScheduledChannelAsync(scheduled.GuildId, scheduled.ChannelId).ConfigureAwait(false);
+                        MissingChannelPassCount.TryRemove(channelId, out _);
+                        return RoomPollResult.Removed();
+                    }
 
-                return RoomPollResult.Failed(PollFailureKind.PartialResponse, TimeSpan.FromMinutes(1));
+                    return RoomPollResult.Failed(PollFailureKind.PartialResponse, TimeSpan.FromMinutes(1));
+                }
             }
 
             MissingChannelPassCount.TryRemove(channelId, out _);
@@ -681,7 +703,7 @@ public static class TrackingDataManager
     private static async Task<bool> KeepThreadAsync(
         ScheduledRoomDefinition scheduled,
         ulong guildId,
-        SocketThreadChannel thread,
+        IThreadChannel thread,
         CancellationToken cancellationToken)
     {
         var lastActivity = await ChannelsAndUrlsCommands.GetLastItemCheckAsync(
@@ -722,14 +744,38 @@ public static class TrackingDataManager
             return true;
         }
 
-        await SendScheduledMessageAsync(
-            guildId,
-            scheduled.ChannelId,
-            string.Format(Resource.TDMNoActivity, thread.Name),
-            cancellationToken).ConfigureAwait(false);
-        await DeleteScheduledChannelAsync(scheduled.GuildId, scheduled.ChannelId).ConfigureAwait(false);
-        Declare.WarnedThreads.Remove(scheduled.ChannelId);
+        await NotifyThenDeleteInactiveThreadAsync(
+            () => SendScheduledMessageAsync(
+                guildId,
+                scheduled.ChannelId,
+                string.Format(Resource.TDMNoActivity, thread.Name),
+                cancellationToken),
+            async () =>
+            {
+                await DeleteScheduledChannelAsync(scheduled.GuildId, scheduled.ChannelId).ConfigureAwait(false);
+                Declare.WarnedThreads.Remove(scheduled.ChannelId);
+            }).ConfigureAwait(false);
         return false;
+    }
+
+    internal static async Task NotifyThenDeleteInactiveThreadAsync(
+        Func<Task> notifyAsync,
+        Func<Task> deleteAsync)
+    {
+        try
+        {
+            await notifyAsync().ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine($"[TDM] Unable to announce inactive-thread cleanup ({exception.GetType().Name}); cleanup continues.");
+        }
+
+        await deleteAsync().ConfigureAwait(false);
     }
 
     private static async Task SendScheduledMessageAsync(

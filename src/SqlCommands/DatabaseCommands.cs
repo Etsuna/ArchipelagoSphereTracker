@@ -192,6 +192,36 @@ public static class DatabaseCommands
                 command.Parameters.Clear();
 
                 command.CommandText = @"
+                    DELETE FROM EventDeliveries
+                    WHERE EventId IN (
+                        SELECT Id FROM TrackingEvents
+                        WHERE GuildId = @GuildId AND ChannelId = @ChannelId
+                    );";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+
+                command.CommandText = @"
+                    DELETE FROM TrackingEvents
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+
+                command.CommandText = @"
+                    DELETE FROM RoomSnapshots
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+
+                command.CommandText = @"
                     DELETE FROM RoomPollState
                     WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
@@ -362,6 +392,7 @@ public static class DatabaseCommands
         catch (Exception ex)
         {
             Console.WriteLine($"Error while deleting: {ex.Message}");
+            throw;
         }
     }
 
@@ -386,6 +417,26 @@ public static class DatabaseCommands
                         SELECT Id FROM ChannelsAndUrlsTable
                         WHERE GuildId = @GuildId
                     );";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+
+                command.CommandText = @"
+                    DELETE FROM EventDeliveries
+                    WHERE EventId IN (
+                        SELECT Id FROM TrackingEvents WHERE GuildId = @GuildId
+                    );";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM TrackingEvents WHERE GuildId = @GuildId;";
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.Parameters.Clear();
+                command.CommandText = @"DELETE FROM RoomSnapshots WHERE GuildId = @GuildId;";
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
@@ -511,6 +562,7 @@ public static class DatabaseCommands
         catch (Exception ex)
         {
             Console.WriteLine($"Error while deleting by GuildId: {ex.Message}");
+            throw;
         }
     }
 }
