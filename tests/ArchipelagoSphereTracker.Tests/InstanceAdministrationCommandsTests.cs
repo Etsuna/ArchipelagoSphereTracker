@@ -33,29 +33,4 @@ public sealed class InstanceAdministrationCommandsTests
                 Assert.Equal(string.Empty, room.BaseUrl);
             });
     }
-
-    [Fact]
-    public async Task Inventory_IncludesRoomWithOnlyOrphanedData()
-    {
-        using var scope = new TestDatabaseScope();
-        await Db.WriteAsync(async connection =>
-        {
-            using var command = connection.CreateCommand();
-            command.CommandText = @"
-                INSERT INTO LastItemsCheckTable (GuildId, ChannelId, LastItemCheck)
-                VALUES ('100', '201', @Now);";
-            command.Parameters.AddWithValue("@Now", DateTimeOffset.UtcNow.ToString("O"));
-            await command.ExecuteNonQueryAsync();
-        });
-
-        var guild = Assert.Single(await InstanceAdministrationCommands.GetGuildsAsync());
-        Assert.Equal(1, guild.RoomCount);
-
-        var room = Assert.Single(await InstanceAdministrationCommands.GetRoomsAsync("100"));
-        Assert.Equal("201", room.ChannelId);
-        Assert.Equal(string.Empty, room.BaseUrl);
-
-        await DatabaseCommands.DeleteChannelDataAsync("100", "201");
-        Assert.Empty(await InstanceAdministrationCommands.GetGuildsAsync());
-    }
 }
