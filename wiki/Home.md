@@ -23,7 +23,7 @@ flowchart LR
 1. To use the public bot, [invite AST](https://discord.com/oauth2/authorize?client_id=1408901673522430047) to your server.
 2. Run `/ast` in a server channel.
 3. An administrator or member with **Manage Server** opens **AST Administration → Configure room**.
-4. Enter the exact `https://host.example/room/<id>` URL, choose the thread, notifications, and minimum polling frequency, then confirm.
+4. Enter the exact `https://host.example/room/<id>` URL, choose the thread, notifications, and automatic polling (default) or a fixed interval, then confirm.
 5. In the created thread, each player opens **My space → My slots** and associates one or more slots.
 
 Several people may associate the same slot, which is useful for multiplayer games. When an item arrives, AST mentions every relevant user while honoring individual mention filters and exclusions.
@@ -48,6 +48,7 @@ In Archipelago mode, every member receives the **Archipelago tools** entry by de
 - [[Room tracking|Room-tracking]]: room creation, adaptive polling, notifications, and the 7/14-day lifecycle.
 - [[Web portal|Web-portal]]: private links, permissions, and revocation.
 - [[Archipelago mode|Archipelago-mode]]: YAML/APWorld files and generation.
+- [[Room preparation|Room-preparation]]: `/organize-room`, player registration, YAML uploads, readiness, reminders, ZIP delivery and automatic cleanup.
 - [[Administration and security|Administration-and-security]]: AST roles, the instance owner, and the security model.
 - [[Data and migrations|Data-and-migrations]]: SQLite, backups, and the former encryption migration.
 - [[Troubleshooting|Troubleshooting]]: common errors, including `413 Request Entity Too Large`.
@@ -75,7 +76,7 @@ flowchart LR
 1. Pour utiliser le bot public, [invitez AST](https://discord.com/oauth2/authorize?client_id=1408901673522430047) sur votre serveur.
 2. Dans un salon du serveur, lancez `/ast`.
 3. Un administrateur ou un membre ayant **Gérer le serveur** ouvre **Administration AST → Configurer une room**.
-4. Saisissez l’URL exacte `https://hote.example/room/<id>`, choisissez le thread, les notifications et la fréquence minimale, puis confirmez.
+4. Saisissez l’URL exacte `https://hote.example/room/<id>`, choisissez le thread, les notifications et le polling automatique (par défaut) ou un intervalle fixe, puis confirmez.
 5. Dans le thread créé, chaque joueur utilise **Mon espace → Mes slots** pour associer son ou ses slots.
 
 Plusieurs personnes peuvent associer le même slot, par exemple pour un jeu multi-joueur. Lorsqu’un objet arrive, AST mentionne toutes les personnes concernées selon leurs filtres et exclusions personnels.
@@ -100,6 +101,7 @@ En mode Archipelago, tous les membres disposent par défaut de l’entrée **Out
 - [[Suivi des rooms|Room-tracking]] : création, polling adaptatif, notifications et cycle de vie 7/14 jours.
 - [[Portail Web|Web-portal]] : liens privés, permissions et révocation.
 - [[Mode Archipelago|Archipelago-mode]] : fichiers YAML/APWorld et génération.
+- [[Préparation des rooms|Room-preparation]] : `/organize-room`, inscriptions, envoi des YAML, disponibilité, relances, ZIP et nettoyage automatique.
 - [[Administration et sécurité|Administration-and-security]] : rôles AST, propriétaire d’instance et modèle de sécurité.
 - [[Données et migrations|Data-and-migrations]] : SQLite, sauvegardes et ancienne migration de chiffrement.
 - [[Dépannage|Troubleshooting]] : erreurs fréquentes, dont `413 Request Entity Too Large`.

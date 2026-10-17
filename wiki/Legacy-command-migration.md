@@ -17,7 +17,7 @@ Discord shows the registered direct commands to every member who has **Use Appli
 
 `/ast` behaves differently: it is visible to everyone, but its private buttons and sections are filtered according to the user's role. Permissions are checked again server-side for every action.
 
-Direct room commands must be run inside a tracked room thread. Server and Archipelago administration commands must be run from a regular guild text channel.
+Direct tracking commands must be run inside a tracked room thread. Server and standalone Archipelago administration commands use a regular guild text channel. `/organize-room` operates in its current channel or existing thread, and `/send-yaml` also accepts preparation uploads there without a registered tracking URL.
 
 ### General direct commands
 
@@ -54,7 +54,7 @@ Direct room commands must be run inside a tracked room thread. Server and Archip
 
 ### Archipelago-mode direct commands
 
-These twelve commands are registered only when AST starts with `--ArchipelagoMode`.
+These thirteen commands are registered only when AST starts with `--ArchipelagoMode`.
 
 | Direct command | Context | Direct-command permission | Equivalent in `/ast` |
 |---|---|---|---|
@@ -63,7 +63,8 @@ These twelve commands are registered only when AST starts with `--ArchipelagoMod
 | `/download-template` | Guild text channel | Member unless restricted | Archipelago tools → Templates |
 | `/delete-yaml` | Guild text channel | Member unless restricted | Archipelago tools → YAML → Delete |
 | `/clean-yamls` | Guild text channel | Member unless restricted | Archipelago tools → YAML → Clean all |
-| `/send-yaml` | Guild text channel | Member unless restricted | `/ast file:<players.yaml>` |
+| `/send-yaml` | Generation channel, or preparation channel/thread | Member unless restricted; registration required in a preparation | `/ast file:<players.yaml>` or preparation page |
+| `/organize-room` | Current guild channel/thread | Guild manager to create; organizer for management; registered player for own files/readiness; Archipelago restrictions apply | Organize a room / Preparation portal |
 | `/generate-with-zip` | Guild text channel | Member unless restricted | `/ast file:<players.zip>` |
 | `/generate` | Guild text channel | Member unless restricted | Archipelago tools → Generation → Generate |
 | `/test-generate` | Guild text channel | Member unless restricted | Archipelago tools → Generation → Test |
@@ -73,11 +74,13 @@ These twelve commands are registered only when AST starts with `--ArchipelagoMod
 
 ### Role summary
 
+`/organize-room` creates the preparation message in place, with a fixed 200-player/200-slot limit and no capacity option. Without an action it opens the creation assistant, shows preparation status, or uploads the supplied YAML when its `file` option is present. Its actions include registration/withdrawal, readiness, closing/reopening registrations, testing, generation, reminders, delivery retry, cancellation, private-thread invitations and removal of one's own YAML. See [[Room preparation|Room-preparation]]. Standalone `/generate` and `/test-generate` continue using the older generation folder; use the preparation's controls for its registered players.
+
 | Role | What it can do |
 |---|---|
-| **Player / member** | Personal and read-only room commands; `/discord`, `/apworlds-info`, and all Archipelago tools unless explicitly restricted |
+| **Player / member** | Personal and read-only room commands; `/discord`, `/apworlds-info`, general Archipelago tools unless restricted, and own preparation files/readiness |
 | **Room manager** | Everything above, plus polling, notifications, exclusions, room portal, and room deletion for that room |
-| **Guild manager / delegated AST manager** | Every room in the guild, room creation, and guild portal |
+| **Guild manager / delegated AST manager** | Every room in the guild, room/preparation creation, and guild portal |
 | **Instance owner** | Every level, unrestricted Archipelago tools, and global instance administration |
 
 A delegated AST manager cannot grant or revoke AST-manager access or edit Archipelago restrictions. Only the Discord guild owner, a Discord administrator, a member with **Manage Server**, or the instance owner may do so.
@@ -86,7 +89,7 @@ A delegated AST manager cannot grant or revoke AST-manager access or edit Archip
 
 - `/get-aliases` is executable by a member as a direct command, while `/ast` restricts the complete Discord-to-slot mapping to room managers.
 - Direct `/excluded-item` and `/delete-excluded-item` require a room manager. In `/ast`, a member may manage only their own exclusions.
-- All twelve direct Archipelago commands and the `/ast` Archipelago tools are allowed by default. A Discord administrator can explicitly restrict a member; the instance owner always keeps access.
+- General Archipelago tools are allowed by default unless a Discord administrator restricts a member; the instance owner always keeps access. Creating a preparation requires guild-manager authorization, and managing it is reserved to its organizer.
 - `/ast` navigation and results are ephemeral. Direct commands run in a room are also ephemeral; guild-channel command results may be posted in the channel.
 
 ---
@@ -106,7 +109,7 @@ Discord affiche les commandes directes enregistrées à tous les membres posséd
 
 `/ast` fonctionne différemment : la commande est visible par tous, mais ses sections et boutons privés sont filtrés selon le rôle. Les droits sont de nouveau contrôlés côté serveur pour chaque action.
 
-Les commandes de room doivent être lancées dans le thread d’une room suivie. Les commandes d’administration du serveur et du mode Archipelago doivent être lancées dans un salon texte normal du serveur.
+Les commandes de suivi doivent être lancées dans le thread d’une room suivie. Les commandes d’administration du serveur et les outils Archipelago autonomes utilisent un salon texte normal. `/organize-room` agit dans le salon ou thread courant, et `/send-yaml` y accepte aussi les YAML d’une préparation sans URL de suivi enregistrée.
 
 ### Commandes directes générales
 
@@ -143,7 +146,7 @@ Les commandes de room doivent être lancées dans le thread d’une room suivie.
 
 ### Commandes directes du mode Archipelago
 
-Ces douze commandes ne sont enregistrées que si AST démarre avec `--ArchipelagoMode`.
+Ces treize commandes ne sont enregistrées que si AST démarre avec `--ArchipelagoMode`.
 
 | Commande directe | Contexte | Droit de la commande directe | Équivalent dans `/ast` |
 |---|---|---|---|
@@ -152,7 +155,8 @@ Ces douze commandes ne sont enregistrées que si AST démarre avec `--Archipelag
 | `/download-template` | Salon texte du serveur | Joueur, sauf interdiction | Outils Archipelago → Modèles |
 | `/delete-yaml` | Salon texte du serveur | Joueur, sauf interdiction | Outils Archipelago → YAML → Supprimer |
 | `/clean-yamls` | Salon texte du serveur | Joueur, sauf interdiction | Outils Archipelago → YAML → Tout nettoyer |
-| `/send-yaml` | Salon texte du serveur | Joueur, sauf interdiction | `/ast file:<players.yaml>` |
+| `/send-yaml` | Salon de génération ou salon/thread de préparation | Joueur, sauf interdiction ; inscription requise dans une préparation | `/ast file:<players.yaml>` ou page de préparation |
+| `/organize-room` | Salon/thread courant du serveur | Gestionnaire pour créer ; organisateur pour gérer ; inscrit pour ses fichiers/disponibilité ; restrictions Archipelago appliquées | Organiser une room / Portail de préparation |
 | `/generate-with-zip` | Salon texte du serveur | Joueur, sauf interdiction | `/ast file:<players.zip>` |
 | `/generate` | Salon texte du serveur | Joueur, sauf interdiction | Outils Archipelago → Génération → Générer |
 | `/test-generate` | Salon texte du serveur | Joueur, sauf interdiction | Outils Archipelago → Génération → Tester |
@@ -162,11 +166,13 @@ Ces douze commandes ne sont enregistrées que si AST démarre avec `--Archipelag
 
 ### Résumé des rôles
 
+`/organize-room` crée le message sur place, avec 200 joueurs/200 slots maximum et sans option de capacité. Sans action, la commande ouvre l’assistant de création, affiche le statut existant, ou dépose le YAML fourni avec l’option `fichier`. Ses actions couvrent inscription/désinscription, disponibilité, fermeture/réouverture, test, génération, relance, nouvelle tentative de transmission, annulation, invitation dans un fil privé et retrait de ses propres YAML. Voir [[Préparation des rooms|Room-preparation]]. Les commandes autonomes `/generate` et `/test-generate` utilisent toujours l’ancien dossier ; utilisez les contrôles de préparation pour ses joueurs inscrits.
+
 | Rôle | Possibilités |
 |---|---|
-| **Joueur** | Commandes personnelles et consultation de la room ; `/discord`, `/apworlds-info` et tous les outils Archipelago sauf interdiction explicite |
+| **Joueur** | Commandes personnelles et consultation de la room ; `/discord`, `/apworlds-info`, outils Archipelago généraux sauf interdiction, et ses fichiers/disponibilité de préparation |
 | **Responsable de room** | Tout ce qui précède, plus polling, notifications, exclusions, portail et suppression de cette room |
-| **Admin AST du serveur / responsable délégué** | Toutes les rooms du serveur, création de room et portail serveur |
+| **Admin AST du serveur / responsable délégué** | Toutes les rooms du serveur, création de room/préparation et portail serveur |
 | **Owner de l’instance** | Tous les niveaux, accès Archipelago non révocable et administration globale de l’instance |
 
 Un responsable AST délégué ne peut pas accorder ou retirer ce droit, ni modifier les restrictions Archipelago. Seuls le propriétaire Discord, un administrateur Discord, un membre ayant **Gérer le serveur** ou l’Owner de l’instance peuvent effectuer ces changements.
@@ -175,5 +181,5 @@ Un responsable AST délégué ne peut pas accorder ou retirer ce droit, ni modif
 
 - `/get-aliases` est exécutable par un joueur en commande directe, tandis que `/ast` réserve la correspondance Discord-vers-slot complète aux responsables de room.
 - `/excluded-item` et `/delete-excluded-item` exigent un responsable de room en commande directe. Dans `/ast`, un joueur peut gérer uniquement ses propres exclusions.
-- Les douze commandes directes Archipelago et les outils Archipelago de `/ast` sont autorisés par défaut. Un administrateur Discord peut interdire explicitement un membre ; l’Owner de l’instance conserve toujours son accès.
+- Les outils Archipelago généraux sont autorisés par défaut, sauf interdiction explicite par un administrateur Discord ; l’Owner de l’instance conserve toujours son accès. Créer une préparation exige un droit de gestionnaire et sa gestion est réservée à son organisateur.
 - La navigation et les résultats de `/ast` sont éphémères. Les commandes directes lancées dans une room le sont également ; les résultats des commandes de salon peuvent être publiés dans le salon.

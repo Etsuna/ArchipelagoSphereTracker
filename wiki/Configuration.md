@@ -102,6 +102,8 @@ ENABLE_WEB_PORTAL=false
 
 The bot continues tracking rooms and `/ast` remains available, but no portal link can be issued.
 
+Room preparations can still use Discord commands and upload the generated ZIP as an attachment. If Discord rejects that ZIP, AST cannot publish its fallback download link while the portal is disabled: it retains the preparation for delivery retry. With the portal enabled, set a publicly reachable `WEB_BASE_URL` for the 24-hour ZIP link. Preparation YAML files retain their own 1 MiB/file and 16 MiB/preparation limits even if `WEB_MAX_UPLOAD_BYTES` is raised. See [[Room preparation|Room-preparation]].
+
 ### Prometheus telemetry
 
 Set `EXPORT_METRICS=true` and choose `METRICS_PORT` to expose the endpoint. In addition to room and scheduler health, AST exports:
@@ -236,6 +238,8 @@ ENABLE_WEB_PORTAL=false
 ```
 
 Le bot continue de suivre les rooms et `/ast` reste disponible, mais aucun lien de portail ne peut être créé.
+
+Les préparations restent utilisables par commandes Discord et peuvent envoyer leur ZIP en pièce jointe. Si Discord refuse ce ZIP, AST ne peut pas publier son lien de secours lorsque le portail est désactivé : il conserve la préparation pour une nouvelle tentative. Avec le portail actif, configurez un `WEB_BASE_URL` public accessible pour le lien ZIP valable 24 heures. Les YAML de préparation conservent leurs limites propres de 1 Mio/fichier et 16 Mio/préparation, même si `WEB_MAX_UPLOAD_BYTES` est augmenté. Voir [[Préparation des rooms|Room-preparation]].
 
 ### Télémétrie Prometheus
 

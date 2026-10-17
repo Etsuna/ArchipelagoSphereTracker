@@ -144,7 +144,10 @@ public static class PreparationDiscord
         var authorization = await AstAuthorizationService.CreateDiscordContextAsync(guild, channel, actor.Id, actor);
         if (authorization == null || !AstAuthorizationService.CanUseArchipelagoTools(authorization)) throw new PreparationException(AstAuthorizationService.DeniedMessage);
         await using var audit = await SecurityAuditScope.StartAsync(SecurityAuditSource.Discord, actor.Id.ToString(), guild, channel, SecurityAuditAction.YamlUpload);
-        if (attachment.Size is <= 0 or > PreparationService.MaximumYamlBytes) throw new PreparationException(Resource.PrepInvalidYaml);
+        var limit = Path.GetExtension(attachment.Filename).Equals(".zip", StringComparison.OrdinalIgnoreCase)
+            ? PreparationUploadReader.MaximumZipBytes : PreparationService.MaximumYamlBytes;
+        if (attachment.Size <= 0 || attachment.Size > limit) throw new PreparationException(limit == PreparationUploadReader.MaximumZipBytes
+            ? Text("PrepInvalidYamlZip") : Resource.PrepInvalidYaml);
         using var response = await TrackingDataManager.Http.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead);
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync();
@@ -335,7 +338,11 @@ public static class PreparationDiscord
         foreach (var player in room.Participants.Take(20))
         {
             var slots = room.Files.Where(file => file.UserId == player.UserId).SelectMany(file => file.Slots).ToArray();
-            text.AppendLine($"• {Safe(player.DisplayName)} · {slots.Length} · {(player.Ready ? Resource.PrepReady : Resource.PrepNotReady)}");
+            var files = room.Files.Where(file => file.UserId == player.UserId).ToArray();
+            var validation = files.Length == 0 ? Resource.PrepNoFiles :
+                files.Any(file => file.Validation == "Invalid") ? Resource.PrepInvalid :
+                files.Any(file => file.Validation == "Pending") ? Resource.PrepPending : Resource.PrepValid;
+            text.AppendLine($"• {Safe(player.DisplayName)} · {slots.Length} · {validation} · {(player.Ready ? Resource.PrepReady : Resource.PrepNotReady)}");
         }
         if (room.Participants.Count == 0) text.AppendLine(Resource.PrepNoPlayers);
         if (room.LastError != null) text.AppendLine(Resource.PrepGenerationFailed);

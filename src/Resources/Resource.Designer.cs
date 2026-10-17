@@ -4336,6 +4336,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Each uploaded YAML must have a safe, unique filename within the batch. No files were imported..
+        /// </summary>
+        internal static string PrepDuplicateYamlNames {
+            get {
+                return ResourceManager.GetString("PrepDuplicateYamlNames", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Preparation ended.
         /// </summary>
         internal static string PrepEnded {
@@ -4345,7 +4354,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Your Archipelago YAML file to upload or replace..
+        ///   Recherche une chaîne localisée semblable à Your YAML file or ZIP of YAML files to upload or replace..
         /// </summary>
         internal static string PrepFileDescription {
             get {
@@ -4435,6 +4444,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago requested an interactive file selection, which is unavailable during server-side validation..
+        /// </summary>
+        internal static string PrepInteractiveValidation {
+            get {
+                return ResourceManager.GetString("PrepInteractiveValidation", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à A task was interrupted by an AST restart. Your registrations and YAML files were retained; retry validation or generation..
         /// </summary>
         internal static string PrepInterrupted {
@@ -4467,6 +4485,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string PrepInvalidYaml {
             get {
                 return ResourceManager.GetString("PrepInvalidYaml", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Invalid YAML ZIP. Include 1–20 .yaml/.yml files, up to 1 MiB each and 16 MiB total. Paths must be safe, without links or duplicate filenames; other file types are rejected..
+        /// </summary>
+        internal static string PrepInvalidYamlZip {
+            get {
+                return ResourceManager.GetString("PrepInvalidYamlZip", resourceCulture);
             }
         }
 
@@ -4539,6 +4566,24 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string PrepManage {
             get {
                 return ResourceManager.GetString("PrepManage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago cannot load the requested game. Check that its APWorld is installed, compatible and loads correctly. Generator details:.
+        /// </summary>
+        internal static string PrepMissingWorld {
+            get {
+                return ResourceManager.GetString("PrepMissingWorld", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Select several YAML files at once, or a ZIP containing them (up to 20 files, 1 MiB each). On Discord, send the ZIP using /send-yaml, /ast or /organize-room in this preparation channel..
+        /// </summary>
+        internal static string PrepMultiUploadHelp {
+            get {
+                return ResourceManager.GetString("PrepMultiUploadHelp", resourceCulture);
             }
         }
 
@@ -5021,7 +5066,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Upload or replace my YAML.
+        ///   Recherche une chaîne localisée semblable à Upload or replace my YAML files.
         /// </summary>
         internal static string PrepUpload {
             get {
@@ -5053,6 +5098,33 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string PrepValid {
             get {
                 return ResourceManager.GetString("PrepValid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago validation in progress.
+        /// </summary>
+        internal static string PrepValidatingFile {
+            get {
+                return ResourceManager.GetString("PrepValidatingFile", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Archipelago validation failed.
+        /// </summary>
+        internal static string PrepValidationError {
+            get {
+                return ResourceManager.GetString("PrepValidationError", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Check the diagnostic above, your YAML settings and the game&apos;s APWorld installation. After correction, upload this file again to retry validation..
+        /// </summary>
+        internal static string PrepValidationHelp {
+            get {
+                return ResourceManager.GetString("PrepValidationHelp", resourceCulture);
             }
         }
 
@@ -5089,6 +5161,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string PrepYamlReceived {
             get {
                 return ResourceManager.GetString("PrepYamlReceived", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0} YAML files added to your preparation. Each file will be validated separately; your readiness was reset..
+        /// </summary>
+        internal static string PrepYamlsReceived {
+            get {
+                return ResourceManager.GetString("PrepYamlsReceived", resourceCulture);
             }
         }
 
@@ -5678,7 +5759,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Upload a YAML file.
+        ///   Recherche une chaîne localisée semblable à Upload a YAML file, or a ZIP of YAML files in a preparation.
         /// </summary>
         internal static string SCSendYamlChooseDescription {
             get {

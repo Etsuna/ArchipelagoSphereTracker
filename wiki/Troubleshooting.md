@@ -107,6 +107,28 @@ Application-level database encryption and its recovery commands have been remove
 
 These features exist only in `--ArchipelagoMode`. If **Archipelago tools** is missing while that mode is active, a server administrator may have restricted your account under **AST Administration → Archipelago access restrictions**. In Normal mode, `/ast file:` accepts only `.txt`/`.json` spoilers in a tracked room.
 
+### `/send-yaml` succeeds but the file is missing from a preparation
+
+Run the command in the same channel/thread as the preparation message, after selecting **Register**. On an updated bot, its receipt names the file added to the preparation. A plain historical “Sent / File … sent” response indicates the old generation-folder path, not a preparation upload: check the channel and restart with the updated binary. Files previously sent through that older path must be uploaded again into the preparation.
+
+Use **My YAML files** on the preparation page, or `/organize-room` status, to inspect filenames. The player table lists slot names/games instead; the legacy `/list-yamls` lists the older generation folder. Preparation files must be UTF-8 `.yaml`/`.yml`, at most 1 MiB each, and are validated by the installed Archipelago environment.
+
+### Preparation validation is pending or fails because of a missing APWorld
+
+**Pending** is the queue state; **Archipelago validation in progress** is the running state. On failure, **My YAML files** shows the generator diagnostic under the affected file. An unavailable game points to an absent, incompatible or broken APWorld, or an incorrect game name; inspect the actual message before changing the installation. Correct the YAML or install the appropriate APWorld and reupload the file. Being marked **Ready** requires every file to validate. If an older bot stays pending after a fatal error, update/restart it and reupload the file: current validation does not wait for Archipelago's interactive exit confirmation.
+
+### A completed preparation or ZIP download has disappeared
+
+This is expected after cancellation or successful ZIP/link publication: preparation records and working files are deleted, and the channel is reusable. The ZIP is in the same Discord channel, either attached or behind a link valid for 24 hours. After expiry, the temporary link no longer works. If publication fails, the organizer can use **Retry delivery**; check **Send Messages**, **Attach Files**, `ENABLE_WEB_PORTAL` and the public `WEB_BASE_URL`. A failed generation retains the preparation.
+
+### Readiness reminders mention nobody or are refused
+
+Only the organizer can use **Remind unready players**. It targets registered players with at least one uploaded YAML who are not ready; ready players and players without files are excluded. Wait five minutes between reminders. That cooldown survives restarts, including after a failed or partial send.
+
+### Automatic polling still shows an old configured frequency
+
+The stored fixed-mode frequency does not control automatic polling. The current automatic base is one minute, slowing only on known inactivity to at most five minutes. Errors and upstream WebHost caching can add delay. Update/restart the bot and check the displayed mode and last successful synchronization. See [[Room tracking|Room-tracking]].
+
 ### Getting help
 
 Open a [GitHub issue](https://github.com/Etsuna/ArchipelagoSphereTracker/issues) or join the [AST Discord](https://discord.gg/PJfWRKVyEW). Include the AST version, operating system, mode, time, and relevant error lines. Always redact tokens, portal URLs, and private room identifiers.
@@ -217,6 +239,28 @@ Le chiffrement applicatif de la base et ses commandes de récupération ont ét�
 ### YAML, APWorld ou génération invisibles
 
 Ces fonctions n’existent qu’en `--ArchipelagoMode`. Si **Outils Archipelago** n’apparaît pas alors que ce mode est actif, un administrateur du serveur a peut-être interdit votre compte depuis **Administration AST → Restrictions d’accès Archipelago**. En mode Normal, `/ast file:` accepte uniquement les spoilers `.txt`/`.json` dans une room suivie.
+
+### `/send-yaml` réussit mais le fichier n’apparaît pas dans la préparation
+
+Lancez la commande dans le même salon/thread que le message de préparation, après avoir cliqué sur **S’inscrire**. Sur un bot mis à jour, la confirmation nomme le fichier ajouté à la préparation. Une réponse historique « Envoyé / Fichier … envoyé » correspond à l’ancien dossier de génération : vérifiez le salon et redémarrez avec le binaire mis à jour. Les fichiers déjà envoyés par cet ancien parcours doivent être redéposés dans la préparation.
+
+Consultez **Mes fichiers YAML** sur la page ou le statut de `/organize-room` pour voir les noms de fichiers. Le tableau des joueurs affiche les slots/jeux ; `/list-yamls` liste l’ancien dossier. Les fichiers de préparation doivent être UTF-8 `.yaml`/`.yml`, de 1 Mio maximum chacun, et sont validés par l’installation Archipelago du bot.
+
+### Validation en attente ou échec lié à un APWorld absent
+
+**Validation en attente** correspond à la file ; **Validation Archipelago en cours** correspond au processus lancé. En cas d’échec, **Mes fichiers YAML** affiche le diagnostic du générateur sous le fichier concerné. Un jeu indisponible peut indiquer un APWorld absent, incompatible ou défaillant, ou un mauvais nom de jeu : consultez le message réel avant de modifier l’installation. Corrigez le YAML ou installez l’APWorld approprié, puis renvoyez le fichier. Tous les fichiers doivent être valides pour devenir **Prêt**. Si un ancien bot reste en attente après une erreur fatale, mettez-le à jour/redémarrez et renvoyez le fichier : la validation actuelle n’attend pas la confirmation interactive de fermeture d’Archipelago.
+
+### Une préparation terminée ou son téléchargement ZIP a disparu
+
+C’est attendu après annulation ou publication réussie du ZIP/lien : les données et fichiers de travail sont supprimés et le salon devient réutilisable. Retrouvez le ZIP dans le même salon Discord, en pièce jointe ou via un lien valable 24 heures. Après expiration, le lien temporaire ne fonctionne plus. Si la publication échoue, l’organisateur peut utiliser **Réessayer la transmission** ; vérifiez **Envoyer des messages**, **Joindre des fichiers**, `ENABLE_WEB_PORTAL` et le `WEB_BASE_URL` public. Un échec de génération conserve la préparation.
+
+### La relance des non-prêts ne mentionne personne ou est refusée
+
+Seul l’organisateur peut utiliser **Relancer les non-prêts**. La relance cible les inscrits ayant au moins un YAML et n’étant pas prêts ; elle exclut les joueurs prêts ou sans fichier. Attendez cinq minutes entre deux relances. Ce délai persiste après redémarrage, y compris après un envoi échoué ou partiel.
+
+### Le polling automatique affiche encore une ancienne fréquence configurée
+
+La fréquence mémorisée pour le mode fixe ne pilote pas le mode automatique. La cadence automatique actuelle est une minute, avec ralentissement uniquement sur inactivité connue, au plus jusqu’à cinq minutes. Erreurs et cache WebHost peuvent ajouter du délai. Mettez à jour/redémarrez le bot et consultez le mode affiché et la dernière synchronisation réussie. Voir [[Suivi des rooms|Room-tracking]].
 
 ### Demander de l’aide
 

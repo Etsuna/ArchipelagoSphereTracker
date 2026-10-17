@@ -203,6 +203,34 @@ public sealed class PreparationTests
     }
 
     [Fact]
+    public async Task Failed_file_validation_is_visible_to_its_owner_and_blocks_readiness_until_reuploaded()
+    {
+        using var scope = new TestDatabaseScope();
+        var generator = new FakeGenerator(); var service = Service(scope, generator); await Create(service);
+        await AddReady(service, "alice", Alice);
+        generator.Fail = true;
+        generator.FailureMessage = "APWorld unavailable: No world found to handle game Ocarina of Time.";
+        await service.UploadAsync("guild", "thread", "alice", "oot.yaml", "name: AliceOOT\ngame: Ocarina of Time\nOcarina of Time: {}\n");
+        await service.WaitForJobsAsync();
+        var room = (await service.GetAsync("guild", "thread"))!;
+        var failed = room.Files.Single(file => file.FileName == "oot.yaml");
+        Assert.Equal("Invalid", failed.Validation); Assert.Contains("Ocarina of Time", failed.Error);
+        Assert.False(service.IsValidating(failed.Id));
+        using (var view = JsonDocument.Parse(JsonSerializer.Serialize(PreparationWeb.View(room, "alice", service))))
+        {
+            var file = view.RootElement.GetProperty("files").EnumerateArray().Single(file => file.GetProperty("fileName").GetString() == "oot.yaml");
+            Assert.True(file.GetProperty("invalid").GetBoolean()); Assert.False(file.GetProperty("pending").GetBoolean());
+            Assert.Contains("APWorld", file.GetProperty("error").GetString());
+        }
+        Assert.DoesNotContain("APWorld unavailable", JsonSerializer.Serialize(PreparationWeb.View(room, "bob", service)));
+        await Assert.ThrowsAsync<PreparationException>(() => service.ReadyAsync("guild", "thread", "alice", true));
+        generator.Fail = false;
+        await service.UploadAsync("guild", "thread", "alice", "oot.yaml", "name: AliceOOT\ngame: Ocarina of Time\nOcarina of Time: {}\n");
+        await service.WaitForJobsAsync(); await service.ReadyAsync("guild", "thread", "alice", true);
+        Assert.Null((await service.GetAsync("guild", "thread"))!.Files.Single(file => file.FileName == "oot.yaml").Error);
+    }
+
+    [Fact]
     public async Task Readiness_requires_actual_validation_and_replacing_files_resets_only_their_owner()
     {
         using var scope = new TestDatabaseScope();
@@ -214,6 +242,7 @@ public sealed class PreparationTests
         generator.BeforeRun = async (_,_,_) => { entered.TrySetResult(true); await release.Task; };
         await service.UploadAsync("guild","thread","alice","player.yaml",Alice);
         await entered.Task;
+        Assert.True(service.IsValidating((await service.GetAsync("guild", "thread"))!.Files.Single().Id));
         await Assert.ThrowsAsync<PreparationException>(() => service.ReadyAsync("guild","thread","alice",true));
         release.SetResult(true); await service.WaitForJobsAsync(); generator.BeforeRun = null;
         await service.ReadyAsync("guild","thread","alice",true);
@@ -400,6 +429,7 @@ public sealed class PreparationTests
     private sealed class FakeGenerator : IPreparationGenerator
     {
         public bool Fail {get;set;}
+        public string FailureMessage {get;set;} = "test failure";
         public int Generations {get;private set;}
         public bool SkipBalancing {get;private set;}
         public string[] GeneratedContents {get;private set;}=[];
@@ -407,7 +437,7 @@ public sealed class PreparationTests
         public async Task<PreparationGenerationResult> RunAsync(string input,string output,bool testOnly,bool skipBalancing)
         {
             if(BeforeRun!=null) await BeforeRun(input,output,testOnly);
-            if(Fail) return new(false,"test failure");
+            if(Fail) return new(false,FailureMessage);
             if(testOnly) return new(true,"validated");
             Generations++; SkipBalancing=skipBalancing;
             GeneratedContents=Directory.GetFiles(input,"*.yaml").Select(File.ReadAllText).ToArray();
@@ -460,12 +490,20 @@ public sealed class PreparationTests
             using (var upload = new MultipartFormDataContent())
             {
                 upload.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(Alice)), "file", "player.yaml");
+                upload.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(Bob)), "file", "extra.yml");
                 Assert.Equal(HttpStatusCode.OK, (await http.PostAsync(Route("alice") + "/upload", upload)).StatusCode);
             }
             await service.WaitForJobsAsync();
             room = (await service.GetAsync("guild", "thread"))!;
-            Assert.Single(room.Files, file => file.UserId == "alice");
-            Assert.Equal("Alice", room.Files.Single(file => file.UserId == "alice").Slots.Single().Name);
+            Assert.Equal(2, room.Files.Count(file => file.UserId == "alice"));
+            Assert.Equal("Alice", room.Files.Single(file => file.UserId == "alice" && file.FileName == "player.yaml").Slots.Single().Name);
+            using (var invalidBatch = new MultipartFormDataContent())
+            {
+                invalidBatch.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(Alice)), "file", "new.yaml");
+                invalidBatch.Add(new ByteArrayContent(Encoding.UTF8.GetBytes("name: MissingGame")), "file", "broken.yaml");
+                Assert.Equal(HttpStatusCode.BadRequest, (await http.PostAsync(Route("alice") + "/upload", invalidBatch)).StatusCode);
+            }
+            Assert.Equal(2, (await service.GetAsync("guild", "thread"))!.Files.Count(file => file.UserId == "alice"));
             using var remove=new FormUrlEncodedContent(new Dictionary<string,string>{{"fileId",bobFile.Id}});
             Assert.Equal(HttpStatusCode.BadRequest,(await http.PostAsync(Route("alice")+"/remove",remove)).StatusCode);
             using var generate=new FormUrlEncodedContent(new Dictionary<string,string>());

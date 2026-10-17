@@ -30,6 +30,10 @@ AST can separately install or update the local environment with `--install`. The
 
 ### Recommended workflow
 
+For a group session, use [[Room preparation|Room-preparation]]: `/organize-room` posts the board in the current channel, supports command and Web YAML uploads, and waits for all players to be ready before generation. New preparations use a fixed limit of 200 players and 200 total slots. After cancellation or successful ZIP/link delivery, their data is deleted automatically. Organizers can remind unready players who have uploaded YAML files.
+
+The standalone YAML/generation tools below remain available independently. Their older generation folders are separate from preparation files.
+
 ```mermaid
 flowchart TD
     A[/"Prepare YAML and APWorld files"/] --> B{"File type"}
@@ -65,11 +69,11 @@ The restored direct alternatives are `/send-yaml`, `/generate-with-zip`, and `/s
 
 ### File validation and quarantine
 
-Uploads are first written to `extern/upload-quarantine/` and are not installed before validation succeeds. AST checks the extension, file signature and structure, normalizes archive paths, and rejects traversal or symbolic-link entries.
+Standalone file uploads use `extern/upload-quarantine/` and are not installed before validation succeeds. AST checks the extension, file signature and structure, normalizes archive paths, and rejects traversal or symbolic-link entries. Preparation YAML files instead use their dedicated database and validation directories, with the limits documented under [[Room preparation|Room-preparation]].
 
 A YAML ZIP archive may contain at most 500 entries. An APWorld may contain up to 5,000 entries. Both archive types are limited to 256 MiB of uncompressed data. The normal `WEB_MAX_UPLOAD_BYTES` and Discord attachment limits still apply before these archive checks.
 
-Protected downloads are placed under `extern/portal-downloads/` and require a valid private token.
+Standalone protected downloads are placed under `extern/portal-downloads/` and require a valid private portal token. Preparation generation first sends the ZIP to Discord; its fallback download link uses a separate temporary archive valid for 24 hours, independently of the deleted preparation.
 
 ### APWorld trust warning
 
@@ -111,6 +115,10 @@ AST peut installer ou mettre à jour séparément l’environnement local avec `
 
 ### Workflow conseillé
 
+Pour une session de groupe, utilisez [[Préparation des rooms|Room-preparation]] : `/organize-room` publie le tableau dans le salon courant, accepte les YAML par commande ou page Web, puis attend que tous les joueurs soient prêts pour générer. Les nouvelles préparations sont limitées à 200 joueurs et 200 slots au total. Après annulation ou transmission réussie du ZIP/lien, leurs données sont supprimées automatiquement. L’organisateur peut relancer les inscrits ayant un YAML mais pas prêts.
+
+Les outils YAML/génération autonomes ci-dessous restent disponibles indépendamment. Leurs anciens dossiers de génération sont distincts des fichiers de préparation.
+
 ```mermaid
 flowchart TD
     A[/"Préparer les YAML et APWorld"/] --> B{"Type de fichier"}
@@ -146,11 +154,11 @@ Les alternatives directes restaurées sont `/send-yaml`, `/generate-with-zip` et
 
 ### Validation et quarantaine des fichiers
 
-Les uploads sont d’abord écrits dans `extern/upload-quarantine/` et ne sont pas installés avant la réussite de la validation. AST vérifie l’extension, la signature et la structure du fichier, normalise les chemins d’archive et refuse les entrées de traversée ou les liens symboliques.
+Les uploads autonomes utilisent `extern/upload-quarantine/` et ne sont pas installés avant la réussite de la validation. AST vérifie l’extension, la signature et la structure du fichier, normalise les chemins d’archive et refuse les entrées de traversée ou les liens symboliques. Les YAML de préparation utilisent leur base et leurs répertoires de validation dédiés, selon les limites décrites dans [[Préparation des rooms|Room-preparation]].
 
 Une archive ZIP de YAML peut contenir au maximum 500 entrées. Un APWorld peut en contenir jusqu’à 5 000. Les deux types d’archives sont limités à 256 Mio de données décompressées. Les limites habituelles `WEB_MAX_UPLOAD_BYTES` et de pièce jointe Discord s’appliquent toujours avant ces contrôles d’archive.
 
-Les téléchargements protégés sont placés sous `extern/portal-downloads/` et exigent un token privé valide.
+Les téléchargements protégés autonomes sont placés sous `extern/portal-downloads/` et exigent un token de portail privé valide. La génération de préparation envoie d’abord le ZIP sur Discord ; son lien de secours utilise une archive temporaire distincte valable 24 heures, indépendamment de la préparation supprimée.
 
 ### Avertissement de confiance APWorld
 

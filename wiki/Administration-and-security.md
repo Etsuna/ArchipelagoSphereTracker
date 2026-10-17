@@ -43,6 +43,10 @@ In `--ArchipelagoMode`, YAML, APWorld, Generation, and Templates are available t
 
 Only the Discord guild owner, a Discord administrator, a member with **Manage Server**, or the instance owner can change this list. A delegated AST manager cannot change it. The restriction is persisted in SQLite, audited, and enforced for `/ast`, restored direct slash commands, and Archipelago Web-portal actions. The instance owner cannot be restricted.
 
+### Preparation permissions
+
+Creating `/organize-room` requires guild-manager authorization and Archipelago access. Players register themselves and manage only their own YAML files and readiness. Closing/reopening registrations, testing, generation, reminders, cancellation and delivery retry are reserved to the preparation's organizer. Discord buttons and Web actions enforce these checks server-side. The board and ZIP are visible according to the existing channel permissions; temporary fallback ZIP links are usable by anyone possessing the link for 24 hours. See [[Room preparation|Room-preparation]].
+
 ### Delegated AST managers
 
 A Discord owner, administrator, member with **Manage Server**, or the instance owner can open:
@@ -121,6 +125,10 @@ En `--ArchipelagoMode`, YAML, APWorld, Génération et Modèles sont disponibles
 ```
 
 Seuls le propriétaire Discord, un administrateur Discord, un membre ayant **Gérer le serveur** ou l’Owner de l’instance peuvent modifier cette liste. Un responsable AST délégué ne le peut pas. L’interdiction est persistée dans SQLite, auditée et appliquée à `/ast`, aux slash commands directes restaurées et aux actions Archipelago du portail Web. L’Owner de l’instance ne peut pas être interdit.
+
+### Permissions des préparations
+
+Créer `/organize-room` exige un droit de gestionnaire et l’accès aux outils Archipelago. Les joueurs s’inscrivent eux-mêmes et gèrent uniquement leurs YAML et leur disponibilité. Fermeture/réouverture, test, génération, relance, annulation et nouvelle tentative de transmission sont réservés à l’organisateur. Ces droits sont vérifiés côté serveur pour les boutons Discord et le Web. Le tableau et le ZIP suivent la visibilité du salon existant ; les liens ZIP temporaires sont utilisables 24 heures par toute personne qui les possède. Voir [[Préparation des rooms|Room-preparation]].
 
 ### Responsables AST délégués
 

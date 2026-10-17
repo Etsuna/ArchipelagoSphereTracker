@@ -14,6 +14,8 @@ AST publie le tableau et ses boutons directement dans le salon courant. Aucun no
 
 Un changement ou retrait de fichier remet son propriétaire à **Pas prêt**. Chaque joueur ne peut télécharger, remplacer ou supprimer que ses propres YAML. Le tableau expose les slots, jeux et statuts, sans publier le contenu des YAML ou les diagnostics personnels des autres joueurs.
 
+Pour un envoi groupé, sélectionner plusieurs `.yaml`/`.yml` dans le sélecteur de la page, ou envoyer un ZIP avec `/send-yaml file:…`, `/ast file:…` ou `/organize-room fichier:…`. Dans une préparation, le ZIP importe les fichiers sans lancer de génération. Il peut contenir des sous-dossiers sûrs : les noms de fichiers sont conservés sans le chemin. Les noms en double et les fichiers autres que YAML sont refusés. Limites : 20 fichiers par lot et 16 Mio pour le ZIP et son contenu, toujours 1 Mio par YAML. Le lot est vérifié avant toute écriture : un nom, format ou quota invalide ne modifie aucun fichier existant. Chaque YAML accepté est ensuite validé séparément par Archipelago, avec son propre résultat.
+
 Limites : 1 Mio UTF-8 et 20 documents par fichier, 20 fichiers par joueur, 200 slots et 16 Mio de YAML par préparation. Les noms avec variables ou pondérations sont résolus à la génération.
 
 ## Relancer les joueurs

@@ -576,7 +576,7 @@ public static class AstCommandCenter
         }
 
         var extension = Path.GetExtension(attachment.Filename).ToLowerInvariant();
-        if ((extension is ".yaml" or ".yml") && AstAuthorizationService.CanUseArchipelagoTools(authorization) &&
+        if ((extension is ".yaml" or ".yml" or ".zip") && AstAuthorizationService.CanUseArchipelagoTools(authorization) &&
             await PreparationService.Instance.GetAsync(guildIdText, channelIdText) != null)
         {
             string preparationMessage;

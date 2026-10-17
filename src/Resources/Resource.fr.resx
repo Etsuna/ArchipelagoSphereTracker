@@ -1841,7 +1841,7 @@ Objets : **{3}**
     <value>Envoyer ou remplacer un fichier YAML pour la génération</value>
   </data>
   <data name="SCSendYamlChooseDescription" xml:space="preserve">
-    <value>Téléverser un fichier YAML</value>
+    <value>Envoyer un YAML, ou un ZIP de YAML dans une préparation</value>
   </data>
   <data name="SCGenerateWithZipDescription" xml:space="preserve">
     <value>Générer un multiworld à partir d’un fichier ZIP</value>
@@ -2739,7 +2739,7 @@ URL : `{6}`
   <data name="PrepTest" xml:space="preserve"><value>Tester les YAML</value></data>
   <data name="PrepCancel" xml:space="preserve"><value>Annuler la préparation</value></data>
   <data name="PrepPortal" xml:space="preserve"><value>Ouvrir le portail de préparation</value></data>
-  <data name="PrepUpload" xml:space="preserve"><value>Déposer ou remplacer mon YAML</value></data>
+  <data name="PrepUpload" xml:space="preserve"><value>Déposer ou remplacer mes YAML</value></data>
   <data name="PrepRemove" xml:space="preserve"><value>Supprimer</value></data>
   <data name="PrepFiles" xml:space="preserve"><value>Mes fichiers YAML</value></data>
   <data name="PrepPlayers" xml:space="preserve"><value>Joueurs inscrits</value></data>
@@ -2770,7 +2770,7 @@ URL : `{6}`
   <data name="PrepOptionFile" xml:space="preserve"><value>fichier</value></data>
   <data name="PrepOptionUrl" xml:space="preserve"><value>url</value></data>
   <data name="PrepActionDescription" xml:space="preserve"><value>Action dans la préparation actuelle ; créer ouvre l’assistant.</value></data>
-  <data name="PrepFileDescription" xml:space="preserve"><value>Votre fichier YAML Archipelago à déposer ou remplacer.</value></data>
+  <data name="PrepFileDescription" xml:space="preserve"><value>Votre YAML ou ZIP de YAML à déposer ou remplacer.</value></data>
   <data name="PrepOptionNameDescription" xml:space="preserve"><value>Nom de la préparation ; omettez-le pour ouvrir l’assistant.</value></data>
   <data name="PrepPrivateDescription" xml:space="preserve"><value>Créer un thread privé de préparation (public par défaut).</value></data>
   <data name="PrepCapacityDescription" xml:space="preserve"><value>Nombre maximum de joueurs inscrits, de 1 à 200 (20 par défaut).</value></data>
@@ -2804,4 +2804,13 @@ Vos YAML ont été déposés, mais vous n’êtes pas déclarés prêts. Vos ré
   <data name="PrepEnded" xml:space="preserve"><value>Préparation terminée</value></data>
   <data name="PrepDeliveryRetry" xml:space="preserve"><value>Le ZIP ou son lien n’a pas pu être transmis, ou le nettoyage est incomplet. Les fichiers sont conservés. L’organisateur peut réessayer la transmission.</value></data>
   <data name="PrepRetryDelivery" xml:space="preserve"><value>Réessayer la transmission</value></data>
+  <data name="PrepMissingWorld" xml:space="preserve"><value>Archipelago ne peut pas charger le jeu demandé. Vérifiez que son APWorld est installé, compatible et se charge correctement. Détails du générateur :</value></data>
+  <data name="PrepInteractiveValidation" xml:space="preserve"><value>Archipelago a demandé une sélection interactive de fichier, indisponible pendant la validation sur le serveur.</value></data>
+  <data name="PrepValidatingFile" xml:space="preserve"><value>Validation Archipelago en cours</value></data>
+  <data name="PrepValidationError" xml:space="preserve"><value>Erreur de validation Archipelago</value></data>
+  <data name="PrepValidationHelp" xml:space="preserve"><value>Vérifiez le diagnostic ci-dessus, vos réglages YAML et l’installation de l’APWorld du jeu. Après correction, renvoyez ce fichier pour relancer la validation.</value></data>
+  <data name="PrepYamlsReceived" xml:space="preserve"><value>{0} fichiers YAML ajoutés à votre préparation. Chaque fichier sera validé séparément ; votre statut prêt a été réinitialisé.</value></data>
+  <data name="PrepMultiUploadHelp" xml:space="preserve"><value>Sélectionnez plusieurs YAML à la fois ou un ZIP les contenant (20 fichiers maximum, 1 Mio chacun). Sur Discord, envoyez le ZIP avec /send-yaml, /ast ou /organize-room dans ce salon de préparation.</value></data>
+  <data name="PrepInvalidYamlZip" xml:space="preserve"><value>ZIP de YAML invalide. Incluez 1 à 20 .yaml/.yml, de 1 Mio chacun et 16 Mio au total maximum. Chemins sûrs, sans liens ni noms de fichiers en double ; les autres types de fichiers sont refusés.</value></data>
+  <data name="PrepDuplicateYamlNames" xml:space="preserve"><value>Chaque YAML du lot doit avoir un nom de fichier sûr et unique. Aucun fichier n’a été importé.</value></data>
 </root>

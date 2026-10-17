@@ -2094,7 +2094,7 @@ Items: **{3}**
     <comment>Send or replace a YAML file for generation</comment>
   </data>
   <data name="SCSendYamlChooseDescription" xml:space="preserve">
-    <value>Upload a YAML file</value>
+    <value>Upload a YAML file, or a ZIP of YAML files in a preparation</value>
     <comment>Upload a YAML file</comment>
   </data>
   <data name="SCGenerateWithZipDescription" xml:space="preserve">
@@ -3177,7 +3177,7 @@ URL: `{6}`
   <data name="PrepTest" xml:space="preserve"><value>Test YAML files</value></data>
   <data name="PrepCancel" xml:space="preserve"><value>Cancel preparation</value></data>
   <data name="PrepPortal" xml:space="preserve"><value>Open preparation portal</value></data>
-  <data name="PrepUpload" xml:space="preserve"><value>Upload or replace my YAML</value></data>
+  <data name="PrepUpload" xml:space="preserve"><value>Upload or replace my YAML files</value></data>
   <data name="PrepRemove" xml:space="preserve"><value>Remove</value></data>
   <data name="PrepFiles" xml:space="preserve"><value>My YAML files</value></data>
   <data name="PrepPlayers" xml:space="preserve"><value>Registered players</value></data>
@@ -3208,7 +3208,7 @@ URL: `{6}`
   <data name="PrepOptionFile" xml:space="preserve"><value>file</value></data>
   <data name="PrepOptionUrl" xml:space="preserve"><value>url</value></data>
   <data name="PrepActionDescription" xml:space="preserve"><value>Action in the current preparation; create opens the assistant.</value></data>
-  <data name="PrepFileDescription" xml:space="preserve"><value>Your Archipelago YAML file to upload or replace.</value></data>
+  <data name="PrepFileDescription" xml:space="preserve"><value>Your YAML file or ZIP of YAML files to upload or replace.</value></data>
   <data name="PrepOptionNameDescription" xml:space="preserve"><value>Preparation name; omit it to open the creation assistant.</value></data>
   <data name="PrepPrivateDescription" xml:space="preserve"><value>Create a private preparation thread (default: public).</value></data>
   <data name="PrepCapacityDescription" xml:space="preserve"><value>Maximum registered players, from 1 to 200 (default: 20).</value></data>
@@ -3242,4 +3242,13 @@ Your YAML files have been uploaded, but you are not marked ready. Are your setti
   <data name="PrepEnded" xml:space="preserve"><value>Preparation ended</value></data>
   <data name="PrepDeliveryRetry" xml:space="preserve"><value>The ZIP or its link could not be delivered, or cleanup is incomplete. Files are retained. The organizer can retry delivery.</value></data>
   <data name="PrepRetryDelivery" xml:space="preserve"><value>Retry delivery</value></data>
+  <data name="PrepMissingWorld" xml:space="preserve"><value>Archipelago cannot load the requested game. Check that its APWorld is installed, compatible and loads correctly. Generator details:</value></data>
+  <data name="PrepInteractiveValidation" xml:space="preserve"><value>Archipelago requested an interactive file selection, which is unavailable during server-side validation.</value></data>
+  <data name="PrepValidatingFile" xml:space="preserve"><value>Archipelago validation in progress</value></data>
+  <data name="PrepValidationError" xml:space="preserve"><value>Archipelago validation failed</value></data>
+  <data name="PrepValidationHelp" xml:space="preserve"><value>Check the diagnostic above, your YAML settings and the game's APWorld installation. After correction, upload this file again to retry validation.</value></data>
+  <data name="PrepYamlsReceived" xml:space="preserve"><value>{0} YAML files added to your preparation. Each file will be validated separately; your readiness was reset.</value></data>
+  <data name="PrepMultiUploadHelp" xml:space="preserve"><value>Select several YAML files at once, or a ZIP containing them (up to 20 files, 1 MiB each). On Discord, send the ZIP using /send-yaml, /ast or /organize-room in this preparation channel.</value></data>
+  <data name="PrepInvalidYamlZip" xml:space="preserve"><value>Invalid YAML ZIP. Include 1–20 .yaml/.yml files, up to 1 MiB each and 16 MiB total. Paths must be safe, without links or duplicate filenames; other file types are rejected.</value></data>
+  <data name="PrepDuplicateYamlNames" xml:space="preserve"><value>Each uploaded YAML must have a safe, unique filename within the batch. No files were imported.</value></data>
 </root>

@@ -16,8 +16,9 @@ The main storage is the `AST.db` SQLite file, created next to the executable. It
 - delegated AST managers;
 - portal token hashes and expiration dates;
 - the security audit log.
+- active room preparations: players, YAML content and validation, input snapshots, delivery receipts and reminder cooldowns.
 
-Additional files are stored under `extern/`:
+Additional files use `extern/`, with preparation files under `data/`:
 
 ```text
 AST.db
@@ -28,9 +29,21 @@ extern/
 ├── portal/               # shared Web resources
 ├── portal-downloads/     # protected downloads
 └── upload-quarantine/    # temporary uploads being validated
+data/
+└── room-preparations/    # preparation jobs and temporary fallback ZIPs
 ```
 
-Room-specific data—active spoiler, YAML files, and generated downloads—is cleaned up with that room. Global custom worlds are not.
+Standalone room data—active spoiler, generation-folder YAML files and protected downloads—is cleaned up with that tracked room. Global custom worlds are not. Preparations have their own shorter lifecycle below.
+
+### Preparation storage and deletion
+
+Startup creates `RoomPreparations`, `PreparationParticipants`, `PreparationFiles`, `PreparationRuns`, `PreparationArchiveDeliveries` and `PreparationReminders` if absent. This additive initialization uses the existing `AST.db`; it requires no extra database server and does not reset tracking history or existing check dates.
+
+Preparation YAML content and frozen input snapshots are stored in SQLite. Job inputs/outputs use `data/room-preparations/<preparation>/<job>/`. Cancellation deletes the preparation rows with their dependent data and removes its working directory. A successful generation does the same after the ZIP or its download link has actually been posted to Discord, freeing the channel for another preparation.
+
+When Discord cannot accept the archive, a separate ZIP copy under `data/room-preparations/downloads/` remains downloadable for 24 hours without keeping the preparation rows. Its random link grants access to anyone possessing it. Expired copies are removed at startup, hourly while the portal runs, and on attempted access. If delivery itself fails, the preparation remains available for retry.
+
+General portal access records, technical audit logs, existing backups and tracked rooms are not deleted by preparation cleanup. SQLite row deletion is logical deletion, not a rewrite of existing backups. See [[Room preparation|Room-preparation]] for restart behavior and player permissions.
 
 ### Intentional plaintext storage
 
@@ -73,7 +86,7 @@ The old `--generate-data-protection-recovery-key`, `--configure-data-protection-
 For a consistent backup:
 
 1. stop AST cleanly;
-2. copy `AST.db`, `.env`, and `extern/` to protected storage;
+2. copy `AST.db`, `.env`, `extern/` and `data/` to protected storage;
 3. keep the Discord token and any archive containing `.env` out of public repositories;
 4. periodically test a restore in a separate directory.
 
@@ -99,8 +112,9 @@ Le stockage principal est le fichier SQLite `AST.db`, créé à côté de l’ex
 - les responsables AST délégués ;
 - les hashes et expirations des tokens de portail ;
 - le journal d’audit de sécurité.
+- les préparations actives : joueurs, contenu et validation des YAML, instantanés, reçus d’envoi et délais de relance.
 
-Les fichiers complémentaires sont sous `extern/` :
+Les fichiers complémentaires utilisent `extern/`, et les préparations utilisent aussi `data/` :
 
 ```text
 AST.db
@@ -111,9 +125,21 @@ extern/
 ├── portal/               # ressources Web partagées
 ├── portal-downloads/     # téléchargements protégés
 └── upload-quarantine/    # uploads temporaires en validation
+data/
+└── room-preparations/    # tâches de préparation et ZIP de secours temporaires
 ```
 
-Les données spécifiques à une room—spoiler actif, YAML et téléchargements générés—sont nettoyées avec cette room. Les custom worlds globaux ne le sont pas.
+Les données autonomes d’une room suivie—spoiler actif, YAML du dossier de génération et téléchargements protégés—sont nettoyées avec cette room. Les custom worlds globaux ne le sont pas. Les préparations ont leur propre cycle de vie, plus court, décrit ci-dessous.
+
+### Stockage et suppression des préparations
+
+Le démarrage crée `RoomPreparations`, `PreparationParticipants`, `PreparationFiles`, `PreparationRuns`, `PreparationArchiveDeliveries` et `PreparationReminders` si elles sont absentes. Cette initialisation additive utilise `AST.db`, sans serveur de base supplémentaire ni remise à zéro de l’historique de suivi ou des dates de checks existantes.
+
+Le contenu des YAML et les instantanés figés sont stockés dans SQLite. Les entrées/sorties des tâches utilisent `data/room-preparations/<préparation>/<tâche>/`. L’annulation supprime les lignes de préparation et leurs dépendances, ainsi que son répertoire de travail. Une génération réussie fait de même après publication effective du ZIP ou de son lien sur Discord, libérant le salon pour une nouvelle préparation.
+
+Si Discord ne peut pas accepter l’archive, une copie distincte sous `data/room-preparations/downloads/` reste téléchargeable 24 heures sans conserver les lignes de préparation. Son lien aléatoire donne accès à toute personne qui le possède. Les copies expirées sont retirées au démarrage, toutes les heures lorsque le portail tourne et lors d’une tentative d’accès. Si la transmission échoue, la préparation reste disponible pour réessayer.
+
+Les accès généraux au portail, audits techniques, sauvegardes existantes et rooms suivies ne sont pas supprimés par ce nettoyage. La suppression de lignes SQLite est logique et ne réécrit pas les sauvegardes existantes. Voir [[Préparation des rooms|Room-preparation]] pour la reprise après redémarrage et les droits des joueurs.
 
 ### Stockage en clair assumé
 
@@ -156,7 +182,7 @@ Les anciennes commandes `--generate-data-protection-recovery-key`, `--configure-
 Pour une sauvegarde cohérente :
 
 1. arrêtez AST proprement ;
-2. copiez `AST.db`, `.env` et `extern/` vers un stockage protégé ;
+2. copiez `AST.db`, `.env`, `extern/` et `data/` vers un stockage protégé ;
 3. conservez le token Discord et les archives contenant `.env` hors d’un dépôt public ;
 4. testez périodiquement une restauration dans un dossier séparé.
 

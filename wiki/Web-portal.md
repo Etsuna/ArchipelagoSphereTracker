@@ -16,17 +16,24 @@ flowchart LR
     G["New link or revocation"] --> H["Previous token invalidated"]
 ```
 
-### The three portals
+### Portal pages
 
 | Portal | Access | Main features |
 |---|---|---|
 | **Personal** | Member with access to the room | Personal slots, items, hints, recaps, authorized patches, exclusions, shared spoiler |
 | **Room** | `RoomManager` | Health, sync, pause/resume, polling, notifications, progress, patches, spoiler, and deletion |
 | **Administration** | `GuildManager` | Guild rooms, global health, YAML/generation/APWorld depending on mode, audit, and links |
+| **Preparation** | Member with Archipelago access in the preparation channel; organizer-only management | Registration, own YAML upload/download/removal, readiness, player table, testing, reminders, generation and cancellation |
 
 Archipelago operations in the administration portal also honor the guild's Archipelago deny list. A restricted administrator keeps the non-Archipelago administration features but cannot use YAML, APWorld, Generation, or Templates.
 
 Issue links from the **My portal**, **Room portal**, or **AST Administration → Portal** buttons. Never build the URL manually.
+
+Open the **Preparation portal** button on an `/organize-room` message, or from `/ast` in that channel. It uses the same registered players and files as `/send-yaml` and `/organize-room` uploads. New preparations have no capacity field: they use 200 players and 200 total slots. See [[Room preparation|Room-preparation]].
+
+Its YAML selector accepts several files at once or a ZIP of YAML files. Each accepted file has its own validation result. Filename, structure or quota errors reject the batch before any replacement is saved; the existing readiness is preserved on rejection.
+
+Tracking pages use a sidebar, compact tables and search/sorting where available. Freshness is based on the last successful upstream synchronization, not just the time the page was refreshed. Background refresh stops while the tab is hidden. The preparation page refreshes every 15 seconds, or five seconds while validation/generation is pending; after cleanup it clears player/file lists and stops refreshing.
 
 ### How private links work
 
@@ -75,7 +82,9 @@ Match `client_max_body_size` to `WEB_MAX_UPLOAD_BYTES` with a small margin. See 
 
 ### Built-in security measures
 
-Pages use `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, a restrictive Content Security Policy, `X-Frame-Options: DENY`, and `X-Content-Type-Options: nosniff`. Downloads are served through authenticated routes, and former static download paths are blocked.
+Pages use `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, a restrictive Content Security Policy, `X-Frame-Options: DENY`, and `X-Content-Type-Options: nosniff`. Ordinary portal downloads use authenticated routes, and former static download paths are blocked.
+
+Preparation ZIP fallback links are a separate exception: a random download link, published in the preparation channel, remains usable for 24 hours after preparation data has been deleted. It is not bound to a Discord user. Anyone possessing it can download the archive. The public `WEB_BASE_URL` must point to the instance serving the temporary ZIP.
 
 Sensitive actions are checked server-side and audited. Hiding a browser button does not grant or remove a permission.
 
@@ -99,17 +108,24 @@ flowchart LR
     G["Nouveau lien ou révocation"] --> H["Ancien token invalidé"]
 ```
 
-### Les trois portails
+### Pages du portail
 
 | Portail | Accès | Principales fonctions |
 |---|---|---|
 | **Personnel** | Membre ayant accès à la room | Slots personnels, objets, hints, récaps, patchs autorisés, exclusions, spoiler partagé |
 | **Room** | `RoomManager` | Santé, sync, pause/reprise, polling, notifications, progression, patchs, spoiler et suppression |
 | **Administration** | `GuildManager` | Rooms du serveur, santé globale, YAML/génération/APWorld selon le mode, audit et liens |
+| **Préparation** | Membre ayant accès aux outils Archipelago dans le salon ; gestion réservée à l’organisateur | Inscription, envoi/téléchargement/retrait de ses YAML, disponibilité, joueurs, tests, relances, génération et annulation |
 
 Les opérations Archipelago du portail d’administration respectent également la liste d’interdiction du serveur. Un administrateur interdit conserve les fonctions d’administration non liées à Archipelago, mais ne peut plus utiliser YAML, APWorld, Génération ou Modèles.
 
 Créez les liens depuis les boutons **Mon portail**, **Portail de room** ou **Administration AST → Portail**. Ne construisez jamais l’URL à la main.
+
+Ouvrez le bouton **Portail de préparation** du message `/organize-room`, ou celui de `/ast` dans ce salon. Il utilise les mêmes inscrits et fichiers que les envois par `/send-yaml` et `/organize-room`. Les nouvelles préparations n’ont pas de champ de capacité : elles utilisent 200 joueurs et 200 slots au total. Voir [[Préparation des rooms|Room-preparation]].
+
+Le sélecteur de YAML accepte plusieurs fichiers à la fois ou un ZIP de YAML. Chaque fichier accepté possède son propre résultat de validation. Une erreur de nom, structure ou quota refuse le lot avant d’enregistrer les remplacements ; la disponibilité existante est conservée en cas de refus.
+
+Les pages de suivi proposent une navigation latérale, des tableaux compacts et recherche/tri selon la rubrique. La fraîcheur correspond à la dernière synchronisation amont réussie, pas uniquement à l’heure d’actualisation de la page. L’actualisation périodique s’arrête lorsque l’onglet est masqué. La page de préparation se relit toutes les quinze secondes, ou cinq secondes pendant les validations/générations ; après nettoyage elle vide les listes de joueurs/fichiers et arrête ses actualisations.
 
 ### Fonctionnement des liens privés
 
@@ -158,7 +174,9 @@ Adaptez `client_max_body_size` à `WEB_MAX_UPLOAD_BYTES`, avec une petite marge.
 
 ### Mesures de sécurité intégrées
 
-Les pages utilisent `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, une Content Security Policy restrictive, `X-Frame-Options: DENY` et `X-Content-Type-Options: nosniff`. Les téléchargements sont servis par des routes authentifiées ; les anciens chemins statiques de téléchargement sont bloqués.
+Les pages utilisent `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, une Content Security Policy restrictive, `X-Frame-Options: DENY` et `X-Content-Type-Options: nosniff`. Les téléchargements ordinaires utilisent des routes authentifiées ; les anciens chemins statiques sont bloqués.
+
+Les liens ZIP de secours des préparations constituent une exception distincte : un lien aléatoire, publié dans le salon de préparation, reste utilisable 24 heures après suppression des données. Il n’est pas lié à un utilisateur Discord : toute personne qui le possède peut télécharger l’archive. Le `WEB_BASE_URL` public doit désigner l’instance qui sert le ZIP temporaire.
 
 Les actions sensibles sont contrôlées côté serveur et auditées. Masquer un bouton dans le navigateur n’accorde ni ne retire une permission.
 

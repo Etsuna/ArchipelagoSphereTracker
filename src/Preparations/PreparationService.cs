@@ -17,6 +17,8 @@ public sealed class PreparationService
     private readonly SemaphoreSlim _deliveryGate = new(1, 1);
     private readonly SemaphoreSlim _reminderGate = new(1, 1);
     private readonly ConcurrentDictionary<string, Task> _jobs = new();
+    private readonly ConcurrentDictionary<string, byte> _validatingFiles = new();
+    public bool IsValidating(string fileId) => _validatingFiles.ContainsKey(fileId);
     public event Func<string, string, Task>? Changed;
     public event Func<PreparationRoom, bool, Task>? Removed;
     public const int MaximumYamlBytes = 1024 * 1024;
@@ -238,36 +240,54 @@ public sealed class PreparationService
 
     public async Task<string> UploadStreamAsync(string guild, string channel, string actor, string fileName, Stream stream)
     {
-        await UploadAsync(guild, channel, actor, fileName, await ReadYamlAsync(stream));
-        return string.Format(Resource.ResourceManager.GetString("PrepYamlReceived")!, fileName);
+        return await UploadBatchAsync(guild, channel, actor, await PreparationUploadReader.ReadAsync(fileName, stream));
     }
 
     public async Task UploadAsync(string guild, string channel, string actor, string fileName, string content)
     {
-        if (_jobs.Count >= 200) throw new PreparationException(Resource.PrepTooManyFiles);
-        if (!(FileUploadSecurity.TryGetSafeFileName(fileName, ".yaml", out _) || FileUploadSecurity.TryGetSafeFileName(fileName, ".yml", out _)))
-            throw new PreparationException(Resource.PrepInvalidYaml);
-        var slots = ParseSlots(content);
-        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content)));
-        var fileId = Guid.NewGuid().ToString("N");
+        await UploadBatchAsync(guild, channel, actor, [new(fileName, content)]);
+    }
+
+    public async Task<string> UploadBatchAsync(string guild, string channel, string actor, IReadOnlyList<PreparationYamlUpload> uploads)
+    {
+        if (uploads.Count is < 1 or > 20 || _jobs.Count + uploads.Count > 200) throw new PreparationException(Resource.PrepTooManyFiles);
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var candidates = new List<PreparationFile>();
+        foreach (var upload in uploads)
+        {
+            if (!FileUploadSecurity.TryGetSafeFileName(upload.FileName, [".yaml", ".yml"], out _) || !names.Add(upload.FileName))
+                throw new PreparationException(Resource.ResourceManager.GetString("PrepDuplicateYamlNames")!);
+            IReadOnlyList<PreparationSlot> slots;
+            try { slots = ParseSlots(upload.Content); }
+            catch (PreparationException error) { throw new PreparationException(upload.FileName + " : " + error.Message); }
+            candidates.Add(new(Guid.NewGuid().ToString("N"), actor, upload.FileName, upload.Content,
+                Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(upload.Content))), "Pending", null, slots));
+        }
         await MutateAsync(guild, channel, async (connection, room) =>
         {
             Editable(room); Participant(room, actor);
-            await InvalidateTestAsync(connection, room.Id);
-            var own = room.Files.Where(file => file.UserId == actor && file.FileName != fileName).ToArray();
-            if (own.Length >= 20 || room.Files.Where(file => file.UserId != actor || file.FileName != fileName).Sum(file => file.Slots.Count) + slots.Count > 200 ||
-                room.Files.Where(file => file.UserId != actor || file.FileName != fileName).Sum(file => Encoding.UTF8.GetByteCount(file.Content)) + Encoding.UTF8.GetByteCount(content) > 16 * 1024 * 1024)
+            var replacements = candidates.Select(file => file.FileName).ToHashSet(StringComparer.Ordinal);
+            var retained = room.Files.Where(file => file.UserId != actor || !replacements.Contains(file.FileName)).ToArray();
+            if (retained.Count(file => file.UserId == actor) + candidates.Count > 20 ||
+                retained.Sum(file => file.Slots.Count) + candidates.Sum(file => file.Slots.Count) > 200 ||
+                retained.Sum(file => (long)Encoding.UTF8.GetByteCount(file.Content)) + candidates.Sum(file => (long)Encoding.UTF8.GetByteCount(file.Content)) > 16 * 1024 * 1024)
                 throw new PreparationException(Resource.PrepTooManyFiles);
-            await Execute(connection, "DELETE FROM PreparationFiles WHERE PreparationId=@id AND UserId=@u AND FileName=@name",
-                ("@id", room.Id), ("@u", actor), ("@name", fileName));
-            await Execute(connection, """
-                INSERT INTO PreparationFiles(Id,PreparationId,UserId,FileName,Content,Hash,Validation,SlotsJson)
-                VALUES(@f,@id,@u,@name,@content,@hash,'Pending',@slots)
-                """, ("@f", fileId), ("@id", room.Id), ("@u", actor), ("@name", fileName), ("@content", content),
-                ("@hash", hash), ("@slots", JsonSerializer.Serialize(slots)));
+            await InvalidateTestAsync(connection, room.Id);
+            foreach (var file in candidates)
+            {
+                await Execute(connection, "DELETE FROM PreparationFiles WHERE PreparationId=@id AND UserId=@u AND FileName=@name",
+                    ("@id", room.Id), ("@u", actor), ("@name", file.FileName));
+                await Execute(connection, """
+                    INSERT INTO PreparationFiles(Id,PreparationId,UserId,FileName,Content,Hash,Validation,SlotsJson)
+                    VALUES(@f,@id,@u,@name,@content,@hash,'Pending',@slots)
+                    """, ("@f", file.Id), ("@id", room.Id), ("@u", actor), ("@name", file.FileName), ("@content", file.Content),
+                    ("@hash", file.Hash), ("@slots", JsonSerializer.Serialize(file.Slots)));
+            }
             await Execute(connection, "UPDATE PreparationParticipants SET Ready=0 WHERE PreparationId=@id AND UserId=@u", ("@id", room.Id), ("@u", actor));
         });
-        Launch(fileId, () => ValidateFileAsync(guild, channel, fileId, hash));
+        foreach (var file in candidates) Launch(file.Id, () => ValidateFileAsync(guild, channel, file.Id, file.Hash));
+        return candidates.Count == 1 ? string.Format(Text("PrepYamlReceived"), candidates[0].FileName) :
+            string.Format(Text("PrepYamlsReceived"), candidates.Count);
     }
 
     private void Launch(string key, Func<Task> action)
@@ -297,17 +317,19 @@ public sealed class PreparationService
             var room = await GetAsync(guild, channel);
             var file = room?.Files.FirstOrDefault(file => file.Id == fileId && file.Hash == hash);
             if (room == null || file == null || !room.CanEdit) return;
+            _validatingFiles.TryAdd(fileId, 0);
             var directory = JobDirectory(room.Id, fileId);
             var input = Path.Combine(directory, "input");
             temporaryInput = Path.Combine(input, file.Id + ".yaml");
             await WriteInputAsync(input, [file]);
             result = await _generator.RunAsync(input, Path.Combine(directory, "output"), true, false);
         }
-        catch { result = new(false, Resource.PrepGenerationFailed); }
+        catch (Exception error) { result = new(false, Resource.PrepGenerationFailed + "\n" + error.Message); }
         finally
         {
             if (temporaryInput != null)
-                try { File.Delete(temporaryInput); } catch (IOException) { }
+                try { File.Delete(temporaryInput); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            _validatingFiles.TryRemove(fileId, out _);
             _processGate.Release();
         }
         await Db.WriteAsync(async connection =>

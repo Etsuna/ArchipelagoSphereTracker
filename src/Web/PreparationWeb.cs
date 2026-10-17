@@ -32,12 +32,15 @@ public static class PreparationWeb
                     name = player.DisplayName, ready = player.Ready,
                     slots = files.SelectMany(file => file.Slots).Select(slot => new { name = slot.Name, game = slot.Game }),
                     validation = files.Length == 0 ? Resource.PrepNoFiles :
+                        files.Any(file => file.Validation == "Invalid") ? Resource.PrepInvalid :
                         files.Any(file => file.Validation == "Pending") ? Resource.PrepPending :
                         files.All(file => file.Validation == "Valid") ? Resource.PrepValid : Resource.PrepInvalid
                 };
             }),
             files = ownFiles.Select(file => new { id = file.Id, fileName = file.FileName,
-                validation = PreparationTexts.Validation(file.Validation), pending = file.Validation == "Pending", error = file.Error })
+                validation = file.Validation == "Pending" && service.IsValidating(file.Id)
+                    ? Resource.ResourceManager.GetString("PrepValidatingFile") : PreparationTexts.Validation(file.Validation),
+                pending = file.Validation == "Pending", invalid = file.Validation == "Invalid", error = file.Error })
         };
     }
 
@@ -113,11 +116,19 @@ public static class PreparationWeb
                 string message;
                 if (action == "upload")
                 {
-                    var file = form.Files.FirstOrDefault();
-                    if (file == null || file.Length is <= 0 or > PreparationService.MaximumYamlBytes)
-                        throw new PreparationException(Resource.PrepInvalidYaml);
-                    await using var stream = file.OpenReadStream();
-                    message = await service.UploadStreamAsync(guild, channel, actor.UserId, file.FileName, stream);
+                    if (form.Files.Count is < 1 or > 20) throw new PreparationException(Resource.PrepTooManyFiles);
+                    var uploads = new List<PreparationYamlUpload>();
+                    foreach (var file in form.Files)
+                    {
+                        var limit = Path.GetExtension(file.FileName).Equals(".zip", StringComparison.OrdinalIgnoreCase)
+                            ? PreparationUploadReader.MaximumZipBytes : PreparationService.MaximumYamlBytes;
+                        if (file.Length <= 0 || file.Length > limit) throw new PreparationException(limit == PreparationUploadReader.MaximumZipBytes
+                            ? Resource.ResourceManager.GetString("PrepInvalidYamlZip")! : Resource.PrepInvalidYaml);
+                        await using var stream = file.OpenReadStream();
+                        uploads.AddRange(await PreparationUploadReader.ReadAsync(file.FileName, stream));
+                        if (uploads.Count > 20) throw new PreparationException(Resource.PrepTooManyFiles);
+                    }
+                    message = await service.UploadBatchAsync(guild, channel, actor.UserId, uploads);
                 }
                 else if (action == "remove")
                 {

@@ -12,7 +12,7 @@ From a text channel, open `/ast`, then **AST Administration → Configure room**
 2. the exact WebHost URL and thread name;
 3. a private thread, public thread, or public thread with automatic member addition;
 4. normal or silent notifications;
-5. the minimum polling frequency;
+5. automatic polling (default) or a fixed frequency;
 6. final confirmation.
 
 The URL must use the exact `http(s)://host/room/<id>` form, without HTTP credentials, a query string, or a fragment. The wizard summary displays only the validated host and never the full private identifier.
@@ -25,7 +25,7 @@ flowchart LR
     D --> E["URL + thread name"]
     E --> F["Thread type"]
     F --> G["Notifications"]
-    G --> H["Minimum frequency"]
+    G --> H["Automatic or fixed polling"]
     H --> I{"Confirm?"}
     I -->|Yes| J["WebHost validation"]
     J --> K["Thread + data + tracking"]
@@ -34,37 +34,41 @@ flowchart LR
 
 ### Frequencies and adaptive polling
 
-When creating a room, the available minimum frequencies are `5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, and `1d`.
+Automatic polling is the default for the wizard, `/add-url`, and the Web portal. A frequency is requested only for fixed mode; its choices are `5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, and `1d`, with `5m` as the default.
 
 Automatic mode is used by default:
 
-- the first successful poll uses the minimum frequency;
-- after three successful unchanged synchronizations, the interval doubles;
-- each new sequence of three unchanged successes can double it again;
-- any detected change immediately returns it to the minimum;
-- the initial ceiling is `1h`, unless the chosen minimum is longer, in which case that minimum becomes the ceiling.
+- the base interval is **one minute**, including for older automatic rooms with a longer stored frequency;
+- activity or a connection within the last 15 minutes keeps that interval, even when the response content is unchanged;
+- missing or unreadable activity information also keeps the one-minute interval;
+- only known inactivity combined with unchanged responses allows slowdown: every three unchanged successes can advance the interval to two, four, then at most **five minutes**;
+- a content change or recent activity returns to one minute. Older automatic ceilings above five minutes no longer increase this limit.
 
 From **Manage room → Polling**, managers can select:
 
-- automatic mode with a `15m`, `30m`, `1h`, or `6h` ceiling, provided it is at least as long as the minimum;
+- automatic mode, using the activity-aware policy above;
 - fixed mode at `5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, or `1d`.
+
+`/add-url polling-mode:automatic` does not use `Frequency Check` as a minimum. `/update-frequency-check` changes the stored fixed-mode frequency without switching modes. The information views display the automatic policy or fixed interval accordingly. Big Async mode retains its fixed one-hour behavior.
 
 ```mermaid
 flowchart TD
     P["WebHost synchronization"] --> Q{"Successful?"}
     Q -->|No| E["Classified error"]
     E --> B["Backoff · Retry-After · circuit breaker"]
-    Q -->|Yes| C{"Snapshot changed?"}
-    C -->|Yes| N["Publish changes"]
-    N --> M["Return to the minimum frequency"]
-    C -->|No| U["Count unchanged successes"]
-    U --> V{"3 successes?"}
+    Q -->|Yes| C{"Fixed mode?"}
+    C -->|Yes| F["Configured fixed interval"]
+    C -->|No| A{"Change, recent or unknown activity?"}
+    A -->|Yes| M["One minute"]
+    A -->|No| U["Count unchanged successes"]
+    U --> V{"3 unchanged successes?"}
     V -->|No| R["Keep the interval"]
-    V -->|Yes, automatic| D["Double up to the ceiling"]
-    V -->|Yes, fixed| R
+    V -->|Yes| D["Slow down: 2, 4, at most 5 minutes"]
 ```
 
-A small positive jitter can shift the exact time. The scheduler also limits concurrent requests globally and per WebHost origin.
+A positive jitter adds at most five seconds. Intervals start after processing finishes, so HTTP, database work, Discord delivery and queueing add to the observed delay. Pauses, error backoff and `Retry-After` can delay a poll beyond the normal five-minute automatic ceiling. The scheduler also limits concurrent requests globally and per WebHost origin.
+
+Concurrent reads of the same WebHost endpoint are shared, while persistence and notifications remain separate for each room. AST still reads public HTTP APIs: it is not a real-time Archipelago protocol client. A newly received item can therefore wait for upstream WebHost data and AST's next poll.
 
 ### Tracking health and controls
 
@@ -116,7 +120,7 @@ Depuis un salon texte, ouvrez `/ast` puis **Administration AST → Configurer un
 2. l’URL WebHost exacte et le nom du thread ;
 3. un thread privé, public, ou public avec ajout automatique des membres ;
 4. des notifications normales ou silencieuses ;
-5. la fréquence minimale de vérification ;
+5. le polling automatique (par défaut) ou une fréquence fixe ;
 6. une confirmation finale.
 
 L’URL doit avoir la forme exacte `http(s)://hôte/room/<id>`, sans identifiants HTTP, query string ni fragment. Le récapitulatif de l’assistant ne montre que l’hôte, jamais l’identifiant privé complet.
@@ -129,7 +133,7 @@ flowchart LR
     D --> E["URL + nom du thread"]
     E --> F["Type de thread"]
     F --> G["Notifications"]
-    G --> H["Fréquence minimale"]
+    G --> H["Polling automatique ou fixe"]
     H --> I{"Confirmer ?"}
     I -->|Oui| J["Validation WebHost"]
     J --> K["Thread + données + suivi"]
@@ -138,37 +142,41 @@ flowchart LR
 
 ### Fréquences et polling adaptatif
 
-À la création, les choix de fréquence minimale sont : `5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`.
+Le polling automatique est le choix par défaut de l’assistant, de `/add-url` et du portail. La fréquence n’est demandée qu’en mode fixe : `5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`, avec `5m` par défaut.
 
 Par défaut, le mode est automatique :
 
-- le premier succès utilise la fréquence minimale ;
-- après trois synchronisations réussies sans changement, l’intervalle double ;
-- chaque nouvelle série de trois succès inchangés peut le doubler à nouveau ;
-- un changement le ramène immédiatement au minimum ;
-- le plafond initial est `1h`, sauf si le minimum choisi est supérieur : le plafond devient alors ce minimum.
+- la cadence de base est **une minute**, y compris pour les anciennes rooms automatiques ayant une fréquence enregistrée plus longue ;
+- une activité ou une connexion dans les quinze dernières minutes conserve cette cadence, même si le contenu de la réponse est identique ;
+- des informations d’activité absentes ou illisibles conservent également la minute ;
+- seule une inactivité connue avec des réponses identiques autorise le ralentissement : chaque série de trois succès inchangés peut porter l’intervalle à deux, quatre, puis **cinq minutes maximum** ;
+- un changement de contenu ou une activité récente rétablit la minute. Les anciens plafonds automatiques supérieurs à cinq minutes n’augmentent plus cette limite.
 
 Dans **Gérer la room → Polling**, les gestionnaires peuvent sélectionner :
 
-- automatique avec plafond `15m`, `30m`, `1h` ou `6h`, à condition qu’il soit au moins égal au minimum ;
+- automatique, selon la politique d’activité ci-dessus ;
 - fixe à `5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h` ou `1d`.
+
+`/add-url polling-mode:automatic` n’utilise pas `Frequency Check` comme minimum. `/update-frequency-check` modifie la fréquence mémorisée du mode fixe sans changer de mode. Les vues d’information affichent la politique automatique ou l’intervalle fixe selon le cas. Le mode Big Async conserve son suivi fixe à une heure.
 
 ```mermaid
 flowchart TD
     P["Synchronisation WebHost"] --> Q{"Succès ?"}
     Q -->|Non| E["Erreur classifiée"]
     E --> B["Backoff · Retry-After · circuit breaker"]
-    Q -->|Oui| C{"Snapshot modifié ?"}
-    C -->|Oui| N["Publier les changements"]
-    N --> M["Revenir à la fréquence minimale"]
-    C -->|Non| U["Compter les succès inchangés"]
-    U --> V{"3 succès ?"}
+    Q -->|Oui| C{"Mode fixe ?"}
+    C -->|Oui| F["Intervalle fixe configuré"]
+    C -->|Non| A{"Changement, activité récente ou inconnue ?"}
+    A -->|Oui| M["Une minute"]
+    A -->|Non| U["Compter les succès inchangés"]
+    U --> V{"3 succès inchangés ?"}
     V -->|Non| R["Conserver l’intervalle"]
-    V -->|Oui, automatique| D["Doubler jusqu’au plafond"]
-    V -->|Oui, fixe| R
+    V -->|Oui| D["Ralentir : 2, 4, au plus 5 minutes"]
 ```
 
-Un léger jitter positif peut décaler l’heure exacte. Le scheduler limite aussi les requêtes simultanées globalement et par origine WebHost.
+Un jitter positif ajoute au plus cinq secondes. Les intervalles commencent après la fin du traitement : HTTP, base de données, envoi Discord et file d’attente s’ajoutent au délai observé. Les pauses, backoffs d’erreur et `Retry-After` peuvent dépasser le plafond automatique normal de cinq minutes. Le scheduler limite également les requêtes simultanées globalement et par origine WebHost.
+
+Les lectures simultanées du même endpoint WebHost sont mutualisées ; persistance et notifications restent propres à chaque room. AST lit toujours les API HTTP publiques, sans connexion au protocole de jeu Archipelago. Un objet nouvellement reçu peut donc attendre la mise à jour des données WebHost et le prochain poll AST.
 
 ### Santé et commandes de suivi
 

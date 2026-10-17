@@ -11,6 +11,7 @@ public static class WebPortalPreparationPage
 <html lang=""{Declare.Language}""><head><meta charset=""utf-8"" /><meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
 <title>AST · {T("PrepTitle")}</title><style>{WebPortalTheme.Styles}
 pre {{ white-space:pre-wrap; overflow-wrap:anywhere; }} .prep-slots {{ color:var(--muted); font-size:12px; }}
+.prep-file.invalid {{ border-color:#d87878; }} .validation-error {{ color:#f2b8b8; }}
 .prep-files {{ display:grid; gap:12px; }} .prep-file {{ border:1px solid var(--line); padding:12px; border-radius:5px; }}
 </style></head><body>
 <header><div class=""hero""><div class=""title""><h1 id=""prep-title"">{T("PrepTitle")}</h1><span>Archipelago Sphere Tracker</span></div><span class=""badge"" id=""prep-state""></span></div></header>
@@ -21,7 +22,7 @@ pre {{ white-space:pre-wrap; overflow-wrap:anywhere; }} .prep-slots {{ color:var
 <p class=""meta"">{T("PrepInstructions")}</p><div class=""table-wrap""><table class=""tracker-table""><thead><tr><th scope=""col"">{T("PrepPlayer")}</th><th scope=""col"">{T("PrepSlots")}</th><th scope=""col"">YAML</th><th scope=""col"">{T("PrepReadiness")}</th></tr></thead><tbody id=""players""></tbody></table></div>
 <p class=""status"" id=""prep-error""></p><p class=""meta"" id=""prep-validation""></p></section>
 <section class=""panel""><h2>{T("PrepFiles")}</h2><p class=""meta"">{T("PrepValidationNote")}</p>
-<form id=""yaml-form""><label>{T("PrepUpload")}<input type=""file"" name=""file"" accept="".yaml,.yml"" required /></label><button type=""submit"">{T("PrepUpload")}</button></form><div class=""prep-files"" id=""files""></div></section>
+<p class=""meta"">{T("PrepMultiUploadHelp")}</p><form id=""yaml-form""><label>{T("PrepUpload")}<input type=""file"" name=""file"" accept="".yaml,.yml,.zip"" multiple required /></label><button type=""submit"">{T("PrepUpload")}</button></form><div class=""prep-files"" id=""files""></div></section>
 <section class=""panel"" id=""organizer"" hidden><h2>{T("PrepManage")}</h2><div class=""toolbar""><button data-action=""close"">{T("PrepClose")}</button><button data-action=""reopen"">{T("PrepReopen")}</button><button data-action=""remind"">{T("PrepRemind")}</button><button data-action=""test"">{T("PrepTest")}</button><button data-action=""generate"">{T("PrepGenerate")}</button><button data-action=""cancel"" class=""danger"">{T("PrepCancel")}</button></div>
 <label class=""inline-check""><input type=""checkbox"" id=""skip-balancing"" />{T("PrepSkipBalancing")}</label>
 <form id=""invite-form""><label>{T("PrepInviteId")}<input name=""userId"" pattern=""[0-9]+"" required /></label><button type=""submit"">{T("PrepInvite")}</button></form>
@@ -66,10 +67,15 @@ const render = view => {{
   if (!view.participants.length) {{ const row = document.createElement('tr'); const cell = element('td', {Js("PrepNoPlayers")}); cell.colSpan = 4; row.appendChild(cell); players.appendChild(row); }}
   const files = document.getElementById('files'); files.replaceChildren();
   view.files.forEach(file => {{
-    const card = element('div',''); card.className = 'prep-file'; card.appendChild(element('strong', file.fileName));
+    const card = element('div',''); card.className = 'prep-file' + (file.invalid ? ' invalid' : ''); card.appendChild(element('strong', file.fileName));
     card.appendChild(element('p', file.validation));
     const download = element('a', {Js("PrepDownloadYaml")}); download.href = apiBase + '/files/' + encodeURIComponent(file.id); card.appendChild(download);
-    if (file.error) card.appendChild(element('pre', file.error));
+    if (file.error) {{
+      const error = element('div',''); error.className = 'validation-error'; error.setAttribute('role','alert');
+      error.appendChild(element('strong', {Js("PrepValidationError")}));
+      error.appendChild(element('pre', file.error));
+      error.appendChild(element('p', {Js("PrepValidationHelp")})); card.appendChild(error);
+    }}
     if (view.canEdit) {{ const remove = element('button', {Js("PrepRemove")}); remove.type = 'button'; remove.addEventListener('click', () => {{ const data = new FormData(); data.set('fileId',file.id); act('remove', data); }}); card.appendChild(remove); }}
     files.appendChild(card);
   }});
@@ -115,14 +121,17 @@ const act = async (action, data = new FormData()) => {{
   if (action === 'generate' && !confirm({Js("PrepGenerateConfirm")})) return;
   data.set('skipBalancing', String(document.getElementById('skip-balancing').checked));
   actionBusy = true; clearTimeout(timer);
+  let succeeded = false;
   try {{
     const response = await fetch(apiBase + '/' + encodeURIComponent(action), {{method:'POST',body:data}});
     const result = await response.json(); status.textContent = result.message || {Js("PrepSaved")};
+    succeeded = response.ok;
   }} catch {{ status.textContent = {Js("WebUnableToReachServer")}; }}
   finally {{ actionBusy = false; await load(); }}
+  return succeeded;
 }};
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => act(button.dataset.action)));
-document.getElementById('yaml-form').addEventListener('submit', async event => {{ event.preventDefault(); await act('upload',new FormData(event.currentTarget)); }});
+document.getElementById('yaml-form').addEventListener('submit', async event => {{ event.preventDefault(); const form = event.currentTarget; if (await act('upload',new FormData(form))) form.reset(); }});
 document.getElementById('invite-form').addEventListener('submit', async event => {{ event.preventDefault(); await act('invite',new FormData(event.currentTarget)); }});
 document.getElementById('refresh').addEventListener('click',load);
 document.addEventListener('visibilitychange', () => {{ if (document.visibilityState === 'visible') load(); else clearTimeout(timer); }});

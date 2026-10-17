@@ -37,6 +37,7 @@ flowchart TD
 - **Inside a tracked thread**: direct access to My space, The room, Archipelago tools when enabled and allowed, and—depending on your permissions—Manage room or AST Administration.
 - **Inside a regular server channel**: a paginated selector for accessible rooms, Archipelago tools when enabled and allowed, AST Administration, and help.
 - **Inside an untracked thread**: no room is selected; return to a text channel to configure one.
+- **In a preparation channel/thread**: the preparation portal is available independently of tracking. Guild managers can create its message through **Organize a room**; no additional thread is created.
 - **In a direct message**: `/ast` is refused because the guild and permissions cannot be determined.
 
 ### My space
@@ -111,6 +112,8 @@ Discord cannot ask for an attachment from a button. Use the command option inste
 
 In Archipelago mode, `/ast` also provides the `skip-prog-balancing` option for ZIP generation.
 
+When the current channel has a preparation, `/ast file:<player.yaml>` and `/send-yaml file:<player.yaml>` add the file to that player's preparation, using the same validation and readiness rules as the Web page. Registration is required. Preparation uploads also accept `.yml` and ZIPs containing several YAML files; the page supports multiple file selection. In that context `/ast file:<players.zip>` imports the batch without starting generation. Outside a preparation, ZIP uploads keep the standalone generation behavior. Legacy generation-folder YAML uploads use `.yaml`. Use the preparation controls to test/generate these registered players. See [[Room preparation|Room-preparation]].
+
 See [[Slash commands and AST|Legacy-command-migration]] for the complete direct-command catalog.
 
 ---
@@ -150,6 +153,7 @@ flowchart TD
 - **Dans un thread suivi** : accès direct à Mon espace, La room, aux Outils Archipelago lorsqu’ils sont activés et autorisés et, selon vos droits, à Gérer la room ou Administration AST.
 - **Dans un salon normal** : sélection paginée des rooms accessibles, Outils Archipelago lorsqu’ils sont activés et autorisés, Administration AST et aide.
 - **Dans un thread non suivi** : aucune room n’est sélectionnée ; revenez dans un salon texte pour en configurer une.
+- **Dans un salon/thread de préparation** : le portail de préparation est disponible indépendamment du suivi. Les gestionnaires peuvent créer son message depuis **Organiser une room**, sans nouveau thread.
 - **En message privé** : `/ast` est refusé, car le serveur et les permissions ne peuvent pas être déterminés.
 
 ### Mon espace
@@ -223,5 +227,7 @@ Discord ne permet pas à un bouton de demander une pièce jointe. Utilisez donc 
 | `.apworld` | Archipelago | Salon cible | Membre, sauf interdiction |
 
 En mode Archipelago, `/ast` ajoute aussi l’option `skip-prog-balancing` pour les générations ZIP.
+
+Lorsqu’une préparation existe dans le salon courant, `/ast file:<joueur.yaml>` et `/send-yaml file:<joueur.yaml>` y ajoutent le fichier du joueur, avec les mêmes règles de validation et de disponibilité que la page Web. L’inscription est obligatoire. Les préparations acceptent aussi `.yml` et les ZIP contenant plusieurs YAML ; la page permet la sélection multiple. Dans ce contexte, `/ast file:<joueurs.zip>` importe le lot sans lancer de génération. Hors préparation, un ZIP conserve son parcours de génération autonome. Les uploads historiques du dossier de génération utilisent `.yaml`. Utilisez les contrôles de préparation pour tester/générer ses inscrits. Voir [[Préparation des rooms|Room-preparation]].
 
 Voir [[Commandes slash et AST|Legacy-command-migration]] pour le catalogue complet des commandes directes.

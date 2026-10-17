@@ -7,6 +7,7 @@
 - [[🔄 Room tracking / Suivi des rooms|Room-tracking]]
 - [[🌐 Web portal / Portail Web|Web-portal]]
 - [[📦 Archipelago mode / Mode Archipelago|Archipelago-mode]]
+- [[👥 Room preparation / Préparation des rooms|Room-preparation]]
 - [[🛡️ Administration and security / Administration et sécurité|Administration-and-security]]
 - [[🗄️ Data and migrations / Données et migrations|Data-and-migrations]]
 - [[🧰 Troubleshooting / Dépannage|Troubleshooting]]
