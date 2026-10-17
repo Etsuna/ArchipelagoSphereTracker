@@ -2717,7 +2717,7 @@ URL : `{6}`
   <data name="PrepNotEveryoneReady" xml:space="preserve"><value>Tous les joueurs inscrits doivent être prêts avec des YAML validés avant la génération.</value></data>
   <data name="PrepLauncherMissing" xml:space="preserve"><value>Le lanceur de génération Archipelago n’est pas installé sur cette instance AST.</value></data>
   <data name="PrepGenerationFailed" xml:space="preserve"><value>La validation ou la génération Archipelago a échoué.</value></data>
-  <data name="PrepGenerated" xml:space="preserve"><value>Génération terminée. Téléchargez l’archive, hébergez-la, puis associez la room pour démarrer son suivi.</value></data>
+  <data name="PrepGenerated" xml:space="preserve"><value>Génération terminée. Les données seront supprimées dès publication du ZIP ou de son lien sur Discord. Après hébergement de l’archive, utilisez /add-url pour démarrer le suivi.</value></data>
   <data name="PrepInterrupted" xml:space="preserve"><value>Une tâche a été interrompue par un redémarrage d’AST. Inscriptions et YAML conservés ; relancez la validation ou la génération.</value></data>
   <data name="PrepStateOpen" xml:space="preserve"><value>Inscriptions ouvertes</value></data>
   <data name="PrepStateClosed" xml:space="preserve"><value>Inscriptions fermées</value></data>
@@ -2761,7 +2761,7 @@ URL : `{6}`
   <data name="PrepRoomUrl" xml:space="preserve"><value>URL de la room Archipelago hébergée</value></data>
   <data name="PrepTracking" xml:space="preserve"><value>Thread de suivi</value></data>
   <data name="PrepSkipBalancing" xml:space="preserve"><value>Ignorer l’équilibrage de progression</value></data>
-  <data name="PrepCancelConfirm" xml:space="preserve"><value>Annuler cette préparation ? Les inscriptions et YAML seront conservés.</value></data>
+  <data name="PrepCancelConfirm" xml:space="preserve"><value>Annuler cette préparation et supprimer définitivement ses inscriptions, YAML et historiques ?</value></data>
   <data name="PrepCreate" xml:space="preserve"><value>Créer la préparation</value></data>
   <data name="PrepOptionAction" xml:space="preserve"><value>action</value></data>
   <data name="PrepOptionName" xml:space="preserve"><value>nom</value></data>
@@ -2788,7 +2788,20 @@ URL : `{6}`
   <data name="PrepOptionYamlName" xml:space="preserve"><value>nom-yaml</value></data>
   <data name="PrepYamlNameDescription" xml:space="preserve"><value>Nom de votre YAML à supprimer avec l’action supprimer.</value></data>
   <data name="PrepInviteId" xml:space="preserve"><value>Identifiant Discord du joueur à inviter</value></data>
-  <data name="PrepArchiveSent" xml:space="preserve"><value>Génération terminée ! Le ZIP est joint. L’organisateur peut l’héberger, puis rattacher la room depuis le portail de préparation.</value></data>
+  <data name="PrepArchiveSent" xml:space="preserve"><value>Génération terminée ! Le ZIP est joint. Les données de préparation sont supprimées. Après hébergement du ZIP, utilisez /add-url pour démarrer le suivi.</value></data>
   <data name="PrepArchiveTooLarge" xml:space="preserve"><value>Génération terminée ! Le ZIP dépasse la limite d’envoi Discord. L’organisateur et les inscrits peuvent le télécharger depuis le portail de préparation ci-dessous.</value></data>
   <data name="PrepYamlReceived" xml:space="preserve"><value>{0} ajouté à vos fichiers de préparation. Validation Archipelago en attente ; la liste des joueurs et vos fichiers YAML se mettent à jour automatiquement.</value></data>
+  <data name="PrepRemind" xml:space="preserve"><value>Relancer les non-prêts</value></data>
+  <data name="PrepReminderEmpty" xml:space="preserve"><value>Aucun inscrit ayant un YAML n’est en attente de se déclarer prêt.</value></data>
+  <data name="PrepReminderCooldown" xml:space="preserve"><value>Attendez cinq minutes entre deux relances de disponibilité.</value></data>
+  <data name="PrepReminderMessage" xml:space="preserve"><value>{0}
+Vos YAML ont été déposés, mais vous n’êtes pas déclarés prêts. Vos réglages sont-ils définitifs ? Cliquez sur Prêt si tout est bon, ou indiquez à l’organisateur que vous préparez encore vos fichiers.</value></data>
+  <data name="PrepDeletedCancelled" xml:space="preserve"><value>Préparation annulée. Ses inscriptions, YAML, historiques et fichiers de travail ont été supprimés. Une nouvelle préparation peut être créée dans ce salon.</value></data>
+  <data name="PrepDeletedGenerated" xml:space="preserve"><value>Génération terminée. Le ZIP ou son lien de téléchargement a été publié dans ce salon. Toutes les données de préparation sont supprimées ; le salon est disponible pour une nouvelle préparation.</value></data>
+  <data name="PrepDeliveryUnavailable" xml:space="preserve"><value>Le ZIP n’a pas pu être transmis et le portail web est désactivé. La préparation est conservée pour pouvoir retenter l’envoi.</value></data>
+  <data name="PrepArchiveLink" xml:space="preserve"><value>Le ZIP n’a pas pu être joint sur Discord. Téléchargez-le avec le bouton ci-dessous sous 24 heures. Les données de préparation sont supprimées ; seule cette archive temporaire est conservée. Après hébergement du ZIP, utilisez /add-url pour démarrer le suivi.</value></data>
+  <data name="PrepGone" xml:space="preserve"><value>Cette préparation est terminée et ses données ont été supprimées. Si la génération a réussi, le ZIP ou son lien de téléchargement se trouve dans le salon Discord.</value></data>
+  <data name="PrepEnded" xml:space="preserve"><value>Préparation terminée</value></data>
+  <data name="PrepDeliveryRetry" xml:space="preserve"><value>Le ZIP ou son lien n’a pas pu être transmis, ou le nettoyage est incomplet. Les fichiers sont conservés. L’organisateur peut réessayer la transmission.</value></data>
+  <data name="PrepRetryDelivery" xml:space="preserve"><value>Réessayer la transmission</value></data>
 </root>

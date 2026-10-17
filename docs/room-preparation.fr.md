@@ -1,49 +1,55 @@
 # Préparer une room Archipelago
 
-Cette fonctionnalité est disponible uniquement en **Archipelago Mode**. Elle organise les inscriptions et les YAML avant la génération, puis permet de rattacher la room hébergée au suivi AST.
+Disponible uniquement en **Archipelago Mode**. La préparation rassemble les inscriptions, YAML et disponibilités avant génération.
 
-## Démarrer
+## Créer et participer
 
-Depuis un salon texte du serveur, lancer `/organize-room` pour ouvrir l’assistant : nom et nombre maximum de joueurs (20 par défaut). La création exige les permissions de gestion du serveur reconnues par AST. Un bouton équivalent est disponible dans `/ast`, ainsi qu’un formulaire dans le portail d’administration.
+Depuis le salon souhaité, lancer `/organize-room` et choisir un nom. La limite est automatiquement fixée à 200 joueurs et 200 slots, sans champ de capacité à remplir. La création exige les permissions de gestion reconnues par AST. Le bouton correspondant de `/ast` et le formulaire du portail d’administration sont également disponibles.
 
-AST publie un message avec un tableau persistant et des boutons directement dans le salon courant, sans créer de fil. Le ZIP sera envoyé dans ce même salon. La visibilité suit les permissions existantes du salon. Une préparation est associée à chaque salon ; les anciennes préparations déjà créées dans des fils restent accessibles. L’organisateur n’est pas inscrit comme joueur automatiquement : il peut organiser sans jouer. Si la commande est lancée dans un fil privé existant, l’action **Inviter un joueur** ajoute un membre au fil ; ce membre doit ensuite s’inscrire lui-même.
+AST publie le tableau et ses boutons directement dans le salon courant. Aucun nouveau fil n’est créé. La visibilité suit les permissions du salon. L’organisateur peut organiser sans s’inscrire comme joueur. Dans un fil privé existant, il peut inviter un membre, qui devra ensuite s’inscrire.
 
-## Parcours des joueurs
+1. Cliquer **S’inscrire**.
+2. Déposer ses YAML dans ce même salon via `/send-yaml file:…`, `/ast file:…`, `/organize-room fichier:…` (option `file` en anglais), ou le portail. Les commandes et le portail utilisent la même préparation.
+3. Attendre la validation Archipelago, puis cliquer **Prêt**.
 
-1. Cliquer **S’inscrire** sur le message ou dans son portail de préparation.
-2. Déposer ses YAML via `/send-yaml file:…`, `/organize-room fichier:…` (option `file` en anglais), `/ast file:…` dans ce salon, ou le portail. `/send-yaml` utilise la préparation du salon lorsqu’elle existe ; ailleurs, son fonctionnement historique est conservé. Une préparation dans un fil n’exige pas d’URL de suivi pour recevoir les YAML.
-3. Attendre la validation réelle par le générateur Archipelago installé.
-4. Cliquer **Prêt**. Tout remplacement ou retrait d’un fichier remet son propriétaire à **Pas prêt**.
+Un changement ou retrait de fichier remet son propriétaire à **Pas prêt**. Chaque joueur ne peut télécharger, remplacer ou supprimer que ses propres YAML. Le tableau expose les slots, jeux et statuts, sans publier le contenu des YAML ou les diagnostics personnels des autres joueurs.
 
-Un joueur peut apporter plusieurs fichiers et plusieurs slots. Les noms avec variables et les jeux pondérés restent indicatifs avant génération. Chaque joueur peut télécharger, remplacer ou supprimer ses propres YAML. Le tableau expose les slots, jeux et statuts, mais pas le contenu des fichiers ni les diagnostics personnels des autres joueurs.
+Limites : 1 Mio UTF-8 et 20 documents par fichier, 20 fichiers par joueur, 200 slots et 16 Mio de YAML par préparation. Les noms avec variables ou pondérations sont résolus à la génération.
 
-Limites : 1 Mio par fichier UTF-8, 20 documents par fichier, 20 fichiers par joueur, 200 slots et 16 Mio de YAML par préparation. Le nombre de joueurs est réglable de 1 à 200. Les restrictions d’accès aux outils Archipelago d’AST continuent de s’appliquer.
+## Relancer les joueurs
 
-## Organisateur
+L’organisateur dispose du bouton **Relancer les non-prêts**, sur Discord et sur le portail, ainsi que de l’action correspondante de `/organize-room`.
 
-- **Fermer les inscriptions** empêche les nouveaux joueurs de rejoindre. Les inscrits peuvent encore corriger leurs fichiers et leur disponibilité. **Rouvrir** réactive les inscriptions.
-- **Tester les YAML** teste l’ensemble sans produire de ZIP et sans exiger que tous soient prêts. Un changement de fichiers invalide ce résultat.
-- **Générer** exige au moins un joueur, tous prêts, avec au moins un YAML valide chacun. AST fige les fichiers, verrouille les modifications, reteste l’ensemble puis lance la génération. Le portail permet de désactiver l’équilibrage de progression.
-- **Annuler** termine la préparation avant génération. Les données restent conservées ; il faut créer une autre préparation pour recommencer.
+La relance mentionne uniquement les inscrits qui ont au moins un fichier YAML et ne sont pas prêts. Elle leur demande si leurs réglages sont définitifs ou s’ils préparent encore leurs fichiers. Aucun rôle ni `@everyone` n’est mentionné. Un délai de cinq minutes entre deux relances est conservé en DB, y compris après redémarrage. Un échec ou un envoi partiel garde ce délai pour éviter les répétitions.
 
-Le ZIP est envoyé automatiquement dans le salon de préparation. Si sa taille dépasse la limite Discord, un message propose le bouton du portail, où l’organisateur et les inscrits peuvent le télécharger. Le portail reste disponible en complément de la pièce jointe. La pièce jointe Discord est visible par les personnes ayant accès au salon ; utiliser un salon privé pour limiter cet accès.
+## Générer et récupérer le ZIP
 
-L’organisateur l’héberge ensuite sur son serveur Archipelago ou sur archipelago.gg, puis renseigne l’URL dans le portail ou via l’action **Rattacher la room hébergée** de `/organize-room`. AST crée le fil de suivi avec une fréquence automatique et y ajoute les participants lorsque Discord le permet. L’association aux alias suit le parcours habituel du tracker.
+**Fermer les inscriptions** bloque seulement les nouveaux inscrits ; les participants peuvent encore corriger leurs fichiers. **Tester les YAML** teste l’ensemble sans ZIP et sans exiger que tous soient prêts.
 
-L’identifiant du message d’envoi est conservé dans `PreparationArchiveDeliveries` pour éviter de renvoyer l’archive à chaque actualisation ou redémarrage. Un échec d’envoi ne remet pas en cause la génération ; l’envoi est retenté lors d’une prochaine actualisation du tableau. Un arrêt entre l’envoi Discord et l’enregistrement de son identifiant peut entraîner un doublon.
+**Générer** exige au moins un joueur, tous prêts, et au moins un YAML valide par joueur. AST fige les fichiers, bloque les modifications, reteste l’ensemble puis génère le ZIP. Chaque processus est limité à 30 minutes. Les validations et générations de ce parcours sont exécutées une à la fois. Un échec de génération conserve la préparation pour permettre sa correction.
 
-L’hébergement n’est pas automatique. La génération utilise l’installation Archipelago et les apworlds du serveur AST. Chaque processus est limité à 30 minutes ; les validations et générations de ce nouveau parcours sont exécutées une à la fois. Les anciennes commandes de génération restent indépendantes.
+Après réussite :
 
-## Persistance et exploitation
+- Si Discord accepte la pièce jointe, AST envoie le ZIP dans le salon, puis supprime les données et fichiers de préparation.
+- Si la pièce jointe ne peut pas être envoyée, AST publie un bouton de téléchargement valable **24 heures**, puis supprime les données et fichiers de préparation. Seule une copie temporaire du ZIP subsiste, sans inscription, YAML ou historique de préparation en DB. Le lien donne accès à l’archive à toute personne qui le possède, comme la pièce jointe accessible depuis le salon.
+- Si le ZIP et le lien ne peuvent pas être publiés, AST conserve les fichiers. Le bouton **Réessayer la transmission** permet à l’organisateur de reprendre l’envoi sans régénérer.
 
-La migration additive crée `RoomPreparations`, `PreparationParticipants`, `PreparationFiles` et `PreparationRuns` dans SQLite. Les anciens checks et leurs dates ne sont pas modifiés. Les YAML courants, leur empreinte, leur validation et la disponibilité des joueurs sont persistés. Chaque exécution conserve un instantané des fichiers dans `PreparationRuns`.
+Le portail web doit être actif et son URL publique (`WEB_BASE_URL`) correctement configurée pour que le lien soit utilisable à distance. Les archives temporaires expirées sont supprimées au démarrage et toutes les heures lorsque le portail tourne ; un accès à un lien expiré est refusé et retire aussi le fichier.
 
-Les entrées de génération et archives sont isolées sous `data/room-preparations/<préparation>/<exécution>/`, à partir du répertoire de base d’AST. Les fichiers temporaires des validations individuelles sont retirés. Les instantanés, résultats et préparations annulées n’ont pas de purge automatique : prévoir leur conservation dans les sauvegardes et la gestion de l’espace disque. Se désinscrire retire les fichiers courants du joueur, mais pas les instantanés historiques déjà créés.
+Le message de préparation devient un message de fin sans noms de joueurs ni boutons actifs. Le salon est immédiatement disponible pour une nouvelle préparation. Le portail ouvert indique que la préparation est terminée et arrête ses actualisations.
 
-Après un redémarrage, une génération interrompue est signalée et la préparation revient à l’état fermé. Les validations individuelles interrompues doivent être relancées en redéposant les fichiers concernés. Aucune génération n’est relancée automatiquement. Les tableaux Discord sont restaurés lorsque les fils existent encore et que le bot y a accès.
+L’hébergement reste manuel : héberger le ZIP, puis utiliser `/add-url` ou le parcours habituel de `/ast` pour créer le suivi. Le rattachement depuis l’ancienne préparation n’est plus proposé, puisque celle-ci a été supprimée.
 
-Le rattachement évite les lancements simultanés. Une interruption entre la création du fil de suivi Discord et sa sauvegarde SQLite nécessite toutefois de vérifier les fils existants avant de recommencer.
+## Annuler et nettoyer
+
+**Annuler** supprime définitivement les inscriptions, YAML courants, instantanés, historiques de génération, reçus d’envoi, informations de relance et fichiers de travail. Les validations individuelles déjà lancées se terminent avant la suppression de leurs fichiers. Une génération en cours reste verrouillée et ne peut pas être annulée par ce bouton.
+
+Les suppressions sont limitées au répertoire de la préparation concernée sous `data/room-preparations/`. Les fichiers SQLite sont supprimés logiquement par des suppressions de lignes et leurs cascades ; les sauvegardes existantes ne sont pas réécrites. Les journaux d’audit techniques et les accès généraux au portail sont indépendants de la préparation et restent conservés. Le suivi des rooms existantes n’est pas supprimé.
+
+Au redémarrage, AST reprend le nettoyage des préparations annulées et de celles dont la transmission a été enregistrée. Une génération interrompue revient à l’état fermé ; les validations individuelles interrompues doivent être relancées en redéposant les fichiers concernés. Aucune génération n’est relancée automatiquement.
+
+La publication Discord et SQLite ne forment pas une transaction unique : un arrêt entre la publication du ZIP ou du lien et l’enregistrement de son reçu peut entraîner un nouvel envoi à la reprise.
 
 ## Vérification
 
-Les tests couvrent les inscriptions concurrentes, les permissions, la propriété des YAML, la disponibilité, les instantanés, les erreurs et redémarrages, le rattachement et les routes HTTP avec identité liée au jeton. Le générateur est simulé dans les tests. Un essai réel Discord et Archipelago reste nécessaire sur l’instance déployée.
+Les tests couvrent les permissions, inscriptions concurrentes, propriété des YAML, validations, disponibilité, instantanés, suppressions en cascade et sur disque, réutilisation du salon, téléchargement temporaire après suppression, expiration, reprise et relances ciblées avec délai persistant. Le générateur et les envois sont simulés ; un essai réel Discord/Archipelago reste à faire sur l’instance déployée.

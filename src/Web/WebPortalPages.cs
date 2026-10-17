@@ -2,6 +2,7 @@ using System.Text;
 
 public static class WebPortalPages
 {
+    public static string GetPreparationDownloadUrl(string token) => $"{GetPortalBaseUrl()}/downloads/preparations/{token}";
     public static async Task<string?> EnsurePreparationPageAsync(string guildId, string channelId, string userId)
     {
         if (!Declare.EnableWebPortal || !Declare.IsArchipelagoMode) return null;

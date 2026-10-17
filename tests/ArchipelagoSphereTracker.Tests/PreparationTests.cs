@@ -61,7 +61,123 @@ public sealed class PreparationTests
         var restarted = Service(scope, generator);
         await restarted.DeliverArchiveAsync("guild", "thread", Send);
         Assert.Equal(1, sends);
-        Assert.Equal(PreparationState.Generated, (await restarted.GetAsync("guild", "thread"))!.State);
+        Assert.Null(await restarted.GetAsync("guild", "thread"));
+        Assert.Empty(Directory.GetDirectories(Path.Combine(scope.BaseDirectory, "preparations")));
+        Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("PreparationRuns"));
+        Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("PreparationFiles"));
+        Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("PreparationParticipants"));
+        Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("PreparationArchiveDeliveries"));
+        await Create(restarted);
+    }
+
+    [Fact]
+    public async Task Cancellation_waits_for_a_running_validation_before_removing_its_working_files()
+    {
+        using var scope = new TestDatabaseScope();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var generator = new FakeGenerator { BeforeRun = async (_, _, _) => { entered.TrySetResult(); await release.Task; } };
+        var service = Service(scope, generator); var room = await Create(service);
+        await service.JoinAsync("guild", "thread", "alice", "Alice");
+        await service.UploadAsync("guild", "thread", "alice", "player.yaml", Alice);
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var cancellation = service.SetStateAsync("guild", "thread", "owner", PreparationState.Cancelled);
+        try
+        {
+            Assert.False(cancellation.IsCompleted);
+            await Assert.ThrowsAsync<PreparationException>(() => service.JoinAsync("guild", "thread", "other", "Other"));
+        }
+        finally { release.TrySetResult(); }
+        await cancellation.WaitAsync(TimeSpan.FromSeconds(5)); await service.WaitForJobsAsync();
+        Assert.Null(await service.GetAsync("guild", "thread"));
+        Assert.False(Directory.Exists(Path.Combine(scope.BaseDirectory, "preparations", room.Id)));
+    }
+
+    [Fact]
+    public async Task Restart_finishes_cleanup_for_a_generation_whose_delivery_was_recorded()
+    {
+        using var scope = new TestDatabaseScope();
+        var service = Service(scope, new()); await Create(service); await AddReady(service, "alice", Alice);
+        await service.GenerateAsync("guild", "thread", "owner", false); await service.WaitForJobsAsync();
+        var room = (await service.GetAsync("guild", "thread"))!;
+        await Db.WriteAsync(async connection => {
+            using var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO PreparationArchiveDeliveries(RunId,MessageId,DeliveredAtUtc) VALUES(@run,'sent',@now)";
+            command.Parameters.AddWithValue("@run", room.RunId);
+            command.Parameters.AddWithValue("@now", DateTimeOffset.UtcNow.ToString("O"));
+            await command.ExecuteNonQueryAsync();
+        });
+        File.Delete(room.ZipPath!); // Simulates partially completed cleanup after the successful send.
+        var restarted = Service(scope, new()); await restarted.RecoverInterruptedAsync();
+        Assert.Null(await restarted.GetAsync("guild", "thread"));
+        Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("PreparationArchiveDeliveries"));
+        Assert.False(Directory.Exists(Path.Combine(scope.BaseDirectory, "preparations", room.Id)));
+    }
+
+    [Fact]
+    public async Task Cancellation_removes_files_snapshots_reminders_and_frees_the_channel()
+    {
+        using var scope = new TestDatabaseScope();
+        var service = Service(scope, new());
+        var initial = await Create(service);
+        await AddReady(service, "alice", Alice);
+        await service.ReadyAsync("guild", "thread", "alice", false);
+        await service.RemindAsync("guild", "thread", "owner", _ => Task.CompletedTask);
+        await service.GenerateAsync("guild", "thread", "owner", false, testOnly:true);
+        await service.WaitForJobsAsync();
+        Assert.True(Directory.Exists(Path.Combine(scope.BaseDirectory, "preparations", initial.Id)));
+        await service.SetStateAsync("guild", "thread", "owner", PreparationState.Cancelled);
+        Assert.Null(await service.GetAsync("guild", "thread"));
+        Assert.False(Directory.Exists(Path.Combine(scope.BaseDirectory, "preparations", initial.Id)));
+        foreach (var table in new[] { "PreparationParticipants", "PreparationFiles", "PreparationRuns", "PreparationReminders", "PreparationArchiveDeliveries" })
+            Assert.Equal(0, await TestDatabaseScope.CountRowsAsync(table));
+        Assert.NotEqual(initial.Id, (await Create(service)).Id);
+    }
+
+    [Fact]
+    public async Task Fallback_archive_survives_preparation_cleanup_but_expires_after_24_hours()
+    {
+        using var scope = new TestDatabaseScope();
+        var service = Service(scope, new()); await Create(service); await AddReady(service, "alice", Alice);
+        await service.GenerateAsync("guild", "thread", "owner", false); await service.WaitForJobsAsync();
+        string? token = null;
+        await service.DeliverArchiveAsync("guild", "thread", async (_, archive) => {
+            token = await service.CreateTemporaryDownloadAsync(archive);
+            return "link-message";
+        });
+        Assert.Null(await service.GetAsync("guild", "thread"));
+        Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("PreparationRuns"));
+        Assert.Equal(64, token!.Length);
+        var path = service.GetTemporaryDownload(token);
+        Assert.NotNull(path); Assert.Equal("test", await File.ReadAllTextAsync(path));
+        Assert.Null(service.GetTemporaryDownload("../" + token));
+        var restarted = Service(scope, new());
+        Assert.Equal(path, restarted.GetTemporaryDownload(token));
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddHours(-25));
+        restarted.CleanupExpiredDownloads();
+        Assert.Null(restarted.GetTemporaryDownload(token)); Assert.False(File.Exists(path));
+    }
+
+    [Fact]
+    public async Task Reminders_only_target_unready_uploaders_and_enforce_owner_and_persistent_cooldown()
+    {
+        using var scope = new TestDatabaseScope();
+        var service = Service(scope, new()); await Create(service);
+        await AddReady(service, "ready", Alice);
+        await AddReady(service, "waiting", Bob); await service.ReadyAsync("guild", "thread", "waiting", false);
+        await service.JoinAsync("guild", "thread", "empty", "Empty");
+        var sent = new List<string>();
+        Task Send(IReadOnlyList<string> users) { sent.AddRange(users); return Task.CompletedTask; }
+        await Assert.ThrowsAsync<PreparationException>(() => service.RemindAsync("guild", "thread", "waiting", Send));
+        await Assert.ThrowsAsync<PreparationException>(() => service.RemindAsync("other", "thread", "owner", Send));
+        await service.RemindAsync("guild", "thread", "owner", Send);
+        Assert.Equal(new[] { "waiting" }, sent);
+        await Assert.ThrowsAsync<PreparationException>(() => service.RemindAsync("guild", "thread", "owner", Send));
+        var restarted = Service(scope, new());
+        await Assert.ThrowsAsync<PreparationException>(() => restarted.RemindAsync("guild", "thread", "owner", Send));
+        await service.ReadyAsync("guild", "thread", "waiting", true);
+        await Assert.ThrowsAsync<PreparationException>(() => service.RemindAsync("guild", "thread", "owner", Send));
+        Assert.Single(sent);
     }
 
     [Fact]
@@ -245,7 +361,8 @@ public sealed class PreparationTests
         await service.SetStateAsync("guild","thread","owner",PreparationState.Cancelled);
         await Assert.ThrowsAsync<PreparationException>(() => service.JoinAsync("guild","thread","alice","Alice"));
         await Assert.ThrowsAsync<PreparationException>(() => service.SetStateAsync("guild","thread","owner",PreparationState.Open));
-        Assert.Equal(PreparationState.Cancelled,(await service.GetAsync("guild","thread"))!.State);
+        Assert.Null(await service.GetAsync("guild","thread"));
+        await Create(service);
     }
 
     [Fact]
@@ -353,7 +470,15 @@ public sealed class PreparationTests
             Assert.Equal(HttpStatusCode.BadRequest,(await http.PostAsync(Route("alice")+"/remove",remove)).StatusCode);
             using var generate=new FormUrlEncodedContent(new Dictionary<string,string>());
             Assert.Equal(HttpStatusCode.BadRequest,(await http.PostAsync(Route("alice")+"/generate",generate)).StatusCode);
+            var temporaryArchive = Path.Combine(scope.BaseDirectory, "download.zip");
+            await File.WriteAllTextAsync(temporaryArchive, "downloadable");
+            var downloadToken = await service.CreateTemporaryDownloadAsync(temporaryArchive);
+            await service.SetStateAsync("guild", "thread", "owner", PreparationState.Cancelled);
+            Assert.Equal(HttpStatusCode.Gone, (await http.GetAsync(Route("alice"))).StatusCode);
+            Assert.Equal("downloadable", await http.GetStringAsync("/downloads/preparations/" + downloadToken));
+            Assert.Equal(HttpStatusCode.NotFound, (await http.GetAsync("/downloads/preparations/" + new string('0',64))).StatusCode);
             Declare.IsArchipelagoMode=false;
+            Assert.Equal(HttpStatusCode.NotFound, (await http.GetAsync("/downloads/preparations/" + downloadToken)).StatusCode);
             Assert.Equal(HttpStatusCode.NotFound,(await http.GetAsync(Route("alice"))).StatusCode);
             Assert.Equal(HttpStatusCode.NotFound,(await http.GetAsync("/portal/guild/thread/alice/prepare.html")).StatusCode);
         }

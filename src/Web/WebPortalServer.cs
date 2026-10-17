@@ -61,7 +61,8 @@ public static class WebPortalServer
                 "img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'";
 
             if (context.Request.Path.StartsWithSegments("/portal") ||
-                context.Request.Path.StartsWithSegments("/api/portal"))
+                context.Request.Path.StartsWithSegments("/api/portal") ||
+                context.Request.Path.StartsWithSegments("/downloads/preparations"))
             {
                 context.Response.Headers.CacheControl = "no-store";
             }
@@ -1104,9 +1105,8 @@ public static class WebPortalServer
                 case "organize-room":
                     {
                         var title = form["name"].FirstOrDefault() ?? "";
-                        if (!int.TryParse(form["maximumPlayers"].FirstOrDefault(), out var maximum)) maximum = 20;
                         PreparationRoom room;
-                        try { room = await PreparationDiscord.CreateAsync(guildId, channelId, actor.User, title, maximum); }
+                        try { room = await PreparationDiscord.CreateAsync(guildId, channelId, actor.User, title); }
                         catch (PreparationException ex) { return Results.BadRequest(new { message = ex.Message }); }
                         message = string.Format(Resource.PrepCreated, room.ChannelId);
                         downloadUrl = $"https://discord.com/channels/{guildId}/{room.ChannelId}/{room.MessageId}";

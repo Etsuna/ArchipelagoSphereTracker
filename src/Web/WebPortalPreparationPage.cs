@@ -22,18 +22,18 @@ pre {{ white-space:pre-wrap; overflow-wrap:anywhere; }} .prep-slots {{ color:var
 <p class=""status"" id=""prep-error""></p><p class=""meta"" id=""prep-validation""></p></section>
 <section class=""panel""><h2>{T("PrepFiles")}</h2><p class=""meta"">{T("PrepValidationNote")}</p>
 <form id=""yaml-form""><label>{T("PrepUpload")}<input type=""file"" name=""file"" accept="".yaml,.yml"" required /></label><button type=""submit"">{T("PrepUpload")}</button></form><div class=""prep-files"" id=""files""></div></section>
-<section class=""panel"" id=""organizer"" hidden><h2>{T("PrepManage")}</h2><div class=""toolbar""><button data-action=""close"">{T("PrepClose")}</button><button data-action=""reopen"">{T("PrepReopen")}</button><button data-action=""test"">{T("PrepTest")}</button><button data-action=""generate"">{T("PrepGenerate")}</button><button data-action=""cancel"" class=""danger"">{T("PrepCancel")}</button></div>
+<section class=""panel"" id=""organizer"" hidden><h2>{T("PrepManage")}</h2><div class=""toolbar""><button data-action=""close"">{T("PrepClose")}</button><button data-action=""reopen"">{T("PrepReopen")}</button><button data-action=""remind"">{T("PrepRemind")}</button><button data-action=""test"">{T("PrepTest")}</button><button data-action=""generate"">{T("PrepGenerate")}</button><button data-action=""cancel"" class=""danger"">{T("PrepCancel")}</button></div>
 <label class=""inline-check""><input type=""checkbox"" id=""skip-balancing"" />{T("PrepSkipBalancing")}</label>
 <form id=""invite-form""><label>{T("PrepInviteId")}<input name=""userId"" pattern=""[0-9]+"" required /></label><button type=""submit"">{T("PrepInvite")}</button></form>
-<form id=""attach-form"" hidden><label>{T("PrepRoomUrl")}<input type=""url"" name=""url"" placeholder=""https://archipelago.gg/room/…"" required /></label><button type=""submit"">{T("PrepAttach")}</button></form></section>
-<section class=""panel"" id=""generation-result"" hidden><h2>{T("PrepStateGenerated")}</h2><p>{T("PrepGenerated")}</p><a id=""archive"">{T("PrepDownload")}</a><p id=""tracking""></p></section>
+</section>
+<section class=""panel"" id=""generation-result"" hidden><h2>{T("PrepStateGenerated")}</h2><p>{T("PrepGenerated")}</p><a id=""archive"">{T("PrepDownload")}</a><button data-action=""deliver"" id=""retry-delivery"">{T("PrepRetryDelivery")}</button><p id=""tracking""></p></section>
 </main><script>
 const path = window.location.pathname;
 const portalIndex = path.indexOf('/portal/');
 const segments = path.substring(portalIndex + 8).split('/');
 const apiBase = window.location.origin + path.substring(0, portalIndex) + '/api/portal/' + segments.slice(0,3).join('/') + '/preparation';
 const status = document.getElementById('status');
-let current = null, busy = false, timer = null, actionBusy = false;
+let current = null, busy = false, timer = null, actionBusy = false, ended = false;
 const element = (tag, text) => {{ const node = document.createElement(tag); node.textContent = text; return node; }};
 const render = view => {{
   current = view;
@@ -44,9 +44,9 @@ const render = view => {{
   document.getElementById('prep-validation').textContent = view.testPassed ? {Js("PrepTestPassed")} : '';
   document.getElementById('organizer').hidden = !view.canManage;
   document.getElementById('yaml-form').hidden = !view.canEdit || !view.isMember;
-  document.getElementById('attach-form').hidden = !view.canManage || view.state !== 'Generated' || !!view.trackingChannelId;
   document.getElementById('invite-form').hidden = !view.canInvite || view.state !== 'Open';
   document.getElementById('generation-result').hidden = view.state !== 'Generated' && view.state !== 'Attaching';
+  document.getElementById('retry-delivery').hidden = !view.canManage;
   const archive = document.getElementById('archive'); archive.hidden = !view.canDownload; archive.href = apiBase + '/download';
   const tracking = document.getElementById('tracking'); tracking.replaceChildren();
   if (view.trackingChannelId) {{
@@ -81,16 +81,27 @@ const render = view => {{
     else if (action === 'leave') button.disabled = !view.isMember || !view.canEdit;
     else if (action === 'generate') button.disabled = !view.canGenerate;
     else if (action === 'test') button.disabled = !view.canTest;
+    else if (action === 'deliver') button.disabled = !view.canManage || view.state !== 'Generated';
     else if (action === 'close') button.disabled = view.state !== 'Open';
     else if (action === 'reopen') button.disabled = view.state !== 'Closed';
     else button.disabled = !view.canEdit;
   }});
 }};
 const load = async () => {{
-  if (busy || actionBusy) return;
+  if (busy || actionBusy || ended) return;
   clearTimeout(timer); busy = true; let valid = true;
   try {{
     const response = await fetch(apiBase, {{cache:'no-store'}});
+    if (response.status === 410) {{
+      ended = true; valid = false; current = null;
+      status.textContent = (await response.json()).message;
+      document.getElementById('prep-title').textContent = {Js("PrepTitle")};
+      document.getElementById('prep-state').textContent = {Js("PrepEnded")};
+      document.getElementById('players').replaceChildren(); document.getElementById('files').replaceChildren();
+      document.querySelectorAll('main > section').forEach(section => {{ if (!section.contains(status)) section.hidden = true; }});
+      document.querySelectorAll('main button, main input').forEach(control => control.disabled = true);
+      return;
+    }}
     if (!response.ok) {{ valid = ![401,403,404].includes(response.status); throw new Error({Js("WebPortalUnavailable")}); }}
     render(await response.json());
   }} catch(error) {{ status.textContent = error.message; }} finally {{
@@ -112,7 +123,6 @@ const act = async (action, data = new FormData()) => {{
 }};
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => act(button.dataset.action)));
 document.getElementById('yaml-form').addEventListener('submit', async event => {{ event.preventDefault(); await act('upload',new FormData(event.currentTarget)); }});
-document.getElementById('attach-form').addEventListener('submit', async event => {{ event.preventDefault(); await act('attach',new FormData(event.currentTarget)); }});
 document.getElementById('invite-form').addEventListener('submit', async event => {{ event.preventDefault(); await act('invite',new FormData(event.currentTarget)); }});
 document.getElementById('refresh').addEventListener('click',load);
 document.addEventListener('visibilitychange', () => {{ if (document.visibilityState === 'visible') load(); else clearTimeout(timer); }});

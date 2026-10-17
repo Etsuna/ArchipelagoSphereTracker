@@ -15,8 +15,10 @@ public sealed class PreparationService
     private readonly string _root;
     private readonly SemaphoreSlim _processGate = new(1, 1);
     private readonly SemaphoreSlim _deliveryGate = new(1, 1);
+    private readonly SemaphoreSlim _reminderGate = new(1, 1);
     private readonly ConcurrentDictionary<string, Task> _jobs = new();
     public event Func<string, string, Task>? Changed;
+    public event Func<PreparationRoom, bool, Task>? Removed;
     public const int MaximumYamlBytes = 1024 * 1024;
 
     public PreparationService(IPreparationGenerator generator, string root)
@@ -81,7 +83,7 @@ public sealed class PreparationService
         return room with { Participants = participants, Files = files, LastRunStatus = lastRunStatus };
     }
 
-    public async Task<PreparationRoom> CreateAsync(string guild, string parent, string channel, string owner, string title, bool isPrivate, int maximumPlayers)
+    public async Task<PreparationRoom> CreateAsync(string guild, string parent, string channel, string owner, string title, bool isPrivate, int maximumPlayers = 200)
     {
         title = title.Trim();
         if (title.Length is < 1 or > 80 || maximumPlayers is < 1 or > 200) throw new PreparationException(Resource.PrepInvalidSettings);
@@ -147,13 +149,25 @@ public sealed class PreparationService
             ("@ready", ready ? 1 : 0), ("@id", room.Id), ("@u", actor));
     });
 
-    public Task SetStateAsync(string guild, string channel, string actor, PreparationState state) => MutateAsync(guild, channel, async (connection, room) =>
+    public async Task SetStateAsync(string guild, string channel, string actor, PreparationState state)
     {
+        await MutateAsync(guild, channel, async (connection, room) => {
         Owner(room, actor); Editable(room);
         if (state is not (PreparationState.Open or PreparationState.Closed or PreparationState.Cancelled))
             throw new PreparationException(Resource.PrepInvalidSettings);
         await Execute(connection, "UPDATE RoomPreparations SET State=@state,LastError=NULL WHERE Id=@id", ("@state", state.ToString()), ("@id", room.Id));
-    });
+        });
+        if (state == PreparationState.Cancelled)
+        {
+            await _deliveryGate.WaitAsync();
+            try
+            {
+                var room = await GetAsync(guild, channel);
+                if (room?.State == PreparationState.Cancelled) await PurgeAsync(room, true);
+            }
+            finally { _deliveryGate.Release(); }
+        }
+    }
 
     public Task RemoveFileAsync(string guild, string channel, string actor, string fileId) => MutateAsync(guild, channel, async (connection, room) =>
     {
@@ -407,21 +421,36 @@ public sealed class PreparationService
     public async Task DeliverArchiveAsync(string guild, string channel, Func<PreparationRoom, string, Task<string>> send)
     {
         await _deliveryGate.WaitAsync();
+        string? preparationId = null;
         try
         {
             var room = await GetAsync(guild, channel);
             if (room == null) return;
-            var archive = GetArchivePath(room, room.OwnerId);
-            if (archive == null) return;
+            preparationId = room.Id;
             await using (var connection = await Db.OpenReadAsync())
             {
                 using var query = Query(connection, "SELECT MessageId FROM PreparationArchiveDeliveries WHERE RunId=@run", ("@run", room.RunId));
-                if (await query.ExecuteScalarAsync() != null) return;
+                if (await query.ExecuteScalarAsync() != null)
+                {
+                    await PurgeAsync(room, false);
+                    return;
+                }
             }
+            var archive = GetArchivePath(room, room.OwnerId);
+            if (archive == null) return;
             var messageId = await send(room, archive);
             await Db.WriteAsync(connection => Execute(connection,
                 "INSERT INTO PreparationArchiveDeliveries(RunId,MessageId,DeliveredAtUtc) VALUES(@run,@message,@now)",
                 ("@run", room.RunId), ("@message", messageId), ("@now", DateTimeOffset.UtcNow.ToString("O"))));
+            await PurgeAsync(room, false);
+        }
+        catch
+        {
+            if (preparationId != null)
+                await Db.WriteAsync(connection => Execute(connection,
+                    "UPDATE RoomPreparations SET LastError=@error WHERE Id=@id AND State='Generated'",
+                    ("@id", preparationId), ("@error", Text("PrepDeliveryRetry"))));
+            throw;
         }
         finally { _deliveryGate.Release(); }
     }
@@ -436,7 +465,117 @@ public sealed class PreparationService
             await Execute(connection, "UPDATE PreparationParticipants SET Ready=0 WHERE PreparationId IN (SELECT PreparationId FROM PreparationFiles WHERE Validation!='Valid')");
             await Execute(connection, "UPDATE PreparationRuns SET State='Interrupted' WHERE State IN ('Validating','Generating')");
         });
+        var obsolete = new List<(string Guild, string Channel)>();
+        await using (var connection = await Db.OpenReadAsync())
+        {
+            using var query = Query(connection, """
+                SELECT GuildId,ChannelId FROM RoomPreparations WHERE State='Cancelled'
+                OR RunId IN (SELECT RunId FROM PreparationArchiveDeliveries)
+                """);
+            using var reader = await query.ExecuteReaderAsync();
+            while (await reader.ReadAsync()) obsolete.Add((reader.GetString(0),reader.GetString(1)));
+        }
+        foreach (var (guild, channel) in obsolete)
+        {
+            var room = await GetAsync(guild, channel);
+            if (room != null) await PurgeAsync(room, room.State == PreparationState.Cancelled);
+        }
+        CleanupExpiredDownloads();
     }
+
+    private async Task PurgeAsync(PreparationRoom room, bool cancelled)
+    {
+        // Individual validations can still be running when the organizer cancels.
+        await _processGate.WaitAsync();
+        try
+        {
+            var directory = Path.GetFullPath(Path.Combine(_root, Guid.ParseExact(room.Id, "N").ToString("N")));
+            var prefix = _root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!directory.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) throw new IOException("Invalid preparation directory.");
+            if (Directory.Exists(_root) && (File.GetAttributes(_root) & FileAttributes.ReparsePoint) != 0)
+                throw new IOException("Linked preparation root.");
+            DeleteDirectorySafely(directory);
+            await Db.WriteAsync(connection => Execute(connection, "DELETE FROM RoomPreparations WHERE Id=@id", ("@id", room.Id)));
+        }
+        finally { _processGate.Release(); }
+        if (Removed != null)
+            foreach (Func<PreparationRoom,bool,Task> handler in Removed.GetInvocationList())
+                try { await handler(room, cancelled); } catch { /* Discord cannot prevent cleanup of preparation data. */ }
+    }
+
+    private static void DeleteDirectorySafely(string path)
+    {
+        if (!Directory.Exists(path)) return;
+        var directory = new DirectoryInfo(path);
+        if ((directory.Attributes & FileAttributes.ReparsePoint) != 0) throw new IOException("Linked preparation directory.");
+        foreach (var entry in directory.EnumerateFileSystemInfos())
+        {
+            if ((entry.Attributes & FileAttributes.ReparsePoint) != 0) throw new IOException("Linked preparation file.");
+            if (entry is DirectoryInfo child) DeleteDirectorySafely(child.FullName);
+            else entry.Delete();
+        }
+        directory.Delete();
+    }
+
+    public async Task<string> CreateTemporaryDownloadAsync(string archive)
+    {
+        CleanupExpiredDownloads();
+        var directory = Path.Combine(_root, "downloads");
+        Directory.CreateDirectory(directory);
+        var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        var path = Path.Combine(directory, token + ".zip");
+        await using (var input = File.OpenRead(archive))
+        await using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true))
+            await input.CopyToAsync(output);
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow);
+        return token;
+    }
+
+    public string? GetTemporaryDownload(string token)
+    {
+        if (token.Length != 64 || token.Any(character => !Uri.IsHexDigit(character))) return null;
+        var path = Path.Combine(_root, "downloads", token.ToUpperInvariant() + ".zip");
+        if (!File.Exists(path)) return null;
+        if (File.GetLastWriteTimeUtc(path) > DateTime.UtcNow.AddHours(-24)) return path;
+        try { File.Delete(path); } catch (IOException) { }
+        return null;
+    }
+
+    public void CleanupExpiredDownloads()
+    {
+        var directory = Path.Combine(_root, "downloads");
+        if (!Directory.Exists(directory)) return;
+        foreach (var path in Directory.EnumerateFiles(directory, "*.zip"))
+            if (File.GetLastWriteTimeUtc(path) <= DateTime.UtcNow.AddHours(-24))
+                try { File.Delete(path); } catch (IOException) { }
+    }
+
+    public async Task RemindAsync(string guild, string channel, string actor, Func<IReadOnlyList<string>,Task> send)
+    {
+        await _deliveryGate.WaitAsync();
+        await _reminderGate.WaitAsync();
+        try
+        {
+            var users = new List<string>();
+            await Db.WriteAsync(async connection => {
+                var room = await LoadAsync(connection, guild, channel) ?? throw new PreparationException(Resource.PrepNotFound);
+                Owner(room, actor); Editable(room);
+                users = room.Participants.Where(player => !player.Ready && room.Files.Any(file => file.UserId == player.UserId))
+                    .Select(player => player.UserId).ToList();
+                if (users.Count == 0) throw new PreparationException(Text("PrepReminderEmpty"));
+                using var query = Query(connection, "SELECT LastSentAtUtc FROM PreparationReminders WHERE PreparationId=@id", ("@id", room.Id));
+                var last = (await query.ExecuteScalarAsync())?.ToString();
+                if (DateTimeOffset.TryParse(last, out var timestamp) && timestamp > DateTimeOffset.UtcNow.AddMinutes(-5))
+                    throw new PreparationException(Text("PrepReminderCooldown"));
+                await Execute(connection, "INSERT OR REPLACE INTO PreparationReminders(PreparationId,LastSentAtUtc) VALUES(@id,@now)",
+                    ("@id", room.Id), ("@now", DateTimeOffset.UtcNow.ToString("O")));
+            });
+            await send(users);
+        }
+        finally { _reminderGate.Release(); _deliveryGate.Release(); }
+    }
+
+    private static string Text(string key) => Resource.ResourceManager.GetString(key) ?? key;
 
     private async Task NotifyAsync(string guild, string channel)
     {

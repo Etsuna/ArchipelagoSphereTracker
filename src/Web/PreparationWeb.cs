@@ -44,6 +44,21 @@ public static class PreparationWeb
     public static void Map(WebApplication app, Func<string,string,string,Task<AstPortalActor?>> resolve, PreparationService? service = null)
     {
         service ??= PreparationService.Instance;
+        var downloadService = service;
+        app.MapGet("/downloads/preparations/{token}", (string token) => {
+            if (!Declare.IsArchipelagoMode) return Results.NotFound();
+            var archive = downloadService.GetTemporaryDownload(token);
+            return archive == null ? Results.NotFound() : Results.File(archive, "application/zip", "Archipelago.zip", enableRangeProcessing:true);
+        });
+        _ = Task.Run(async () => {
+            try
+            {
+                downloadService.CleanupExpiredDownloads();
+                using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
+                while (await timer.WaitForNextTickAsync(app.Lifetime.ApplicationStopping)) downloadService.CleanupExpiredDownloads();
+            }
+            catch (OperationCanceledException) { }
+        });
         async Task<AstPortalActor?> Actor(string guild, string channel, string token)
         {
             if (!Declare.IsArchipelagoMode) return null;
@@ -63,7 +78,7 @@ public static class PreparationWeb
             var actor = await Actor(guild, channel, token);
             if (actor == null) return Results.NotFound();
             var room = await service.GetAsync(guild, channel);
-            return room == null ? Results.NotFound() : Results.Ok(View(room, actor.UserId, service));
+            return room == null ? Results.Json(new { message = Resource.ResourceManager.GetString("PrepGone") }, statusCode:410) : Results.Ok(View(room, actor.UserId, service));
         });
         app.MapGet(route + "/files/{fileId}", async (string guild, string channel, string token, string fileId) =>
         {
@@ -120,9 +135,14 @@ public static class PreparationWeb
                     await PreparationDiscord.InviteAsync(guild, channel, actor.UserId, form["userId"].FirstOrDefault() ?? "");
                     message = Resource.PrepSaved;
                 }
-                else if (action == "attach")
+                else if (action == "remind")
                 {
-                    await PreparationDiscord.AttachAsync(guild, channel, actor.User, form["url"].FirstOrDefault());
+                    await PreparationDiscord.RemindAsync(guild, channel, actor.UserId);
+                    message = Resource.PrepSaved;
+                }
+                else if (action == "deliver")
+                {
+                    await PreparationDiscord.RetryDeliveryAsync(guild, channel, actor.UserId);
                     message = Resource.PrepSaved;
                 }
                 else message = await service.ApplyActionAsync(guild, channel, actor.UserId, actor.User.Nickname ?? actor.User.Username, action);

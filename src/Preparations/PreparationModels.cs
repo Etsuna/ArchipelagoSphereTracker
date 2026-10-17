@@ -51,5 +51,8 @@ public static class PreparationSchema
         CREATE TABLE IF NOT EXISTS PreparationArchiveDeliveries (
             RunId TEXT PRIMARY KEY REFERENCES PreparationRuns(Id) ON DELETE CASCADE,
             MessageId TEXT NOT NULL, DeliveredAtUtc TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS PreparationReminders (
+            PreparationId TEXT PRIMARY KEY REFERENCES RoomPreparations(Id) ON DELETE CASCADE,
+            LastSentAtUtc TEXT NOT NULL);
         """;
 }

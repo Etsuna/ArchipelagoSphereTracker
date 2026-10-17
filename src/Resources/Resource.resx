@@ -3155,7 +3155,7 @@ URL: `{6}`
   <data name="PrepNotEveryoneReady" xml:space="preserve"><value>Every registered player must be ready with validated YAML files before generation.</value></data>
   <data name="PrepLauncherMissing" xml:space="preserve"><value>The Archipelago generation launcher is not installed on this AST instance.</value></data>
   <data name="PrepGenerationFailed" xml:space="preserve"><value>Archipelago validation or generation failed.</value></data>
-  <data name="PrepGenerated" xml:space="preserve"><value>Generation completed. Download the archive, host it, then link the room to start tracking.</value></data>
+  <data name="PrepGenerated" xml:space="preserve"><value>Generation completed. Preparation data will be deleted once its ZIP or download link is posted in Discord. After hosting the archive, use /add-url to start tracking.</value></data>
   <data name="PrepInterrupted" xml:space="preserve"><value>A task was interrupted by an AST restart. Your registrations and YAML files were retained; retry validation or generation.</value></data>
   <data name="PrepStateOpen" xml:space="preserve"><value>Registrations open</value></data>
   <data name="PrepStateClosed" xml:space="preserve"><value>Registrations closed</value></data>
@@ -3199,7 +3199,7 @@ URL: `{6}`
   <data name="PrepRoomUrl" xml:space="preserve"><value>Hosted Archipelago room URL</value></data>
   <data name="PrepTracking" xml:space="preserve"><value>Tracking thread</value></data>
   <data name="PrepSkipBalancing" xml:space="preserve"><value>Skip progression balancing</value></data>
-  <data name="PrepCancelConfirm" xml:space="preserve"><value>Cancel this preparation? Registrations and YAML files will be retained.</value></data>
+  <data name="PrepCancelConfirm" xml:space="preserve"><value>Cancel this preparation and permanently delete its registrations, YAML files and history?</value></data>
   <data name="PrepCreate" xml:space="preserve"><value>Create preparation</value></data>
   <data name="PrepOptionAction" xml:space="preserve"><value>action</value></data>
   <data name="PrepOptionName" xml:space="preserve"><value>name</value></data>
@@ -3226,7 +3226,20 @@ URL: `{6}`
   <data name="PrepOptionYamlName" xml:space="preserve"><value>yaml-name</value></data>
   <data name="PrepYamlNameDescription" xml:space="preserve"><value>Your YAML filename to remove with the remove action.</value></data>
   <data name="PrepInviteId" xml:space="preserve"><value>Discord user ID to invite</value></data>
-  <data name="PrepArchiveSent" xml:space="preserve"><value>Generation complete! The ZIP is attached. The organizer can host it, then link the room through the preparation portal.</value></data>
+  <data name="PrepArchiveSent" xml:space="preserve"><value>Generation complete! The ZIP is attached. Preparation data is deleted. After hosting the ZIP, use /add-url to start tracking.</value></data>
   <data name="PrepArchiveTooLarge" xml:space="preserve"><value>Generation complete! The ZIP exceeds Discord’s upload limit. The organizer and registered players can download it through the preparation portal below.</value></data>
   <data name="PrepYamlReceived" xml:space="preserve"><value>{0} added to your preparation files. Archipelago validation is queued; the player list and your YAML files update automatically.</value></data>
+  <data name="PrepRemind" xml:space="preserve"><value>Remind unready players</value></data>
+  <data name="PrepReminderEmpty" xml:space="preserve"><value>No registered player with a YAML file is waiting to mark themselves ready.</value></data>
+  <data name="PrepReminderCooldown" xml:space="preserve"><value>Please wait five minutes between readiness reminders.</value></data>
+  <data name="PrepReminderMessage" xml:space="preserve"><value>{0}
+Your YAML files have been uploaded, but you are not marked ready. Are your settings final? Please select Ready when they are, or let the organizer know you are still preparing.</value></data>
+  <data name="PrepDeletedCancelled" xml:space="preserve"><value>Preparation cancelled. Its registrations, YAML files, history and working files have been deleted. A new preparation can be created in this channel.</value></data>
+  <data name="PrepDeletedGenerated" xml:space="preserve"><value>Generation complete. The ZIP or its download link was posted in this channel. All preparation data has been deleted; this channel is available for a new preparation.</value></data>
+  <data name="PrepDeliveryUnavailable" xml:space="preserve"><value>The ZIP could not be delivered and the web portal is disabled. The preparation is retained so delivery can be retried.</value></data>
+  <data name="PrepArchiveLink" xml:space="preserve"><value>The ZIP could not be attached to Discord. Download it using the button below within 24 hours. Preparation data is deleted; only this temporary archive remains. After hosting the ZIP, use /add-url to start tracking.</value></data>
+  <data name="PrepGone" xml:space="preserve"><value>This preparation has ended and its data has been deleted. If generation succeeded, the ZIP or its download link is in the Discord channel.</value></data>
+  <data name="PrepEnded" xml:space="preserve"><value>Preparation ended</value></data>
+  <data name="PrepDeliveryRetry" xml:space="preserve"><value>The ZIP or its link could not be delivered, or cleanup is incomplete. Files are retained. The organizer can retry delivery.</value></data>
+  <data name="PrepRetryDelivery" xml:space="preserve"><value>Retry delivery</value></data>
 </root>

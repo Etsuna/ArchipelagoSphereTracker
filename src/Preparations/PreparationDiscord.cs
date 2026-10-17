@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using ArchipelagoSphereTracker.src.Resources;
@@ -12,7 +11,11 @@ public static class PreparationDiscord
     private static int _subscribed;
     public static void Initialize()
     {
-        if (Interlocked.Exchange(ref _subscribed, 1) == 0) PreparationService.Instance.Changed += UpdateBoardAsync;
+        if (Interlocked.Exchange(ref _subscribed, 1) == 0)
+        {
+            PreparationService.Instance.Changed += UpdateBoardAsync;
+            PreparationService.Instance.Removed += ClearBoardAsync;
+        }
     }
 
     public static async Task RefreshBoardsAsync()
@@ -39,15 +42,14 @@ public static class PreparationDiscord
             (Resource.PrepCreate,"create"), (Resource.PrepRefresh,"status"), (Resource.PrepJoin,"join"),
             (Resource.PrepLeave,"leave"), (Resource.PrepReady,"ready"), (Resource.PrepNotReady,"not-ready"),
             (Resource.PrepClose,"close"), (Resource.PrepReopen,"reopen"), (Resource.PrepTest,"test"),
-            (Resource.PrepGenerate,"generate"), (Resource.PrepCancel,"cancel"), (Resource.PrepAttach,"attach"),
+            (Resource.PrepGenerate,"generate"), (Resource.PrepCancel,"cancel"), (Text("PrepRemind"),"remind"),
+            (Text("PrepRetryDelivery"),"deliver"),
             (Resource.PrepInvite,"invite"), (Resource.PrepRemove,"remove") })
             action.AddChoice(label, value);
         return new SlashCommandBuilder().WithName("organize-room").WithDescription(Resource.PrepDescription)
             .AddOption(action)
             .AddOption(Resource.PrepOptionName, ApplicationCommandOptionType.String, Resource.PrepOptionNameDescription, isRequired:false)
-            .AddOption(Resource.PrepOptionCapacity, ApplicationCommandOptionType.Integer, Resource.PrepCapacityDescription, isRequired:false, minValue:1, maxValue:200)
             .AddOption(Resource.PrepOptionFile, ApplicationCommandOptionType.Attachment, Resource.PrepFileDescription, isRequired:false)
-            .AddOption(Resource.PrepOptionUrl, ApplicationCommandOptionType.String, Resource.PrepUrlDescription, isRequired:false)
             .AddOption(Resource.PrepOptionUser, ApplicationCommandOptionType.User, Resource.PrepUserDescription, isRequired:false)
             .AddOption(Resource.PrepOptionYamlName, ApplicationCommandOptionType.String, Resource.PrepYamlNameDescription, isRequired:false);
     }
@@ -80,8 +82,7 @@ public static class PreparationDiscord
             {
                 if (await AuthorizeAsync(guild, channel, command.User, creating:true) == null) throw new PreparationException(AstAuthorizationService.DeniedMessage);
                 var created = await CreateAsync(guild.ToString(), channel.ToString(), command.User as IGuildUser,
-                    (string)Value(Resource.PrepOptionName)!,
-                    Convert.ToInt32(Value(Resource.PrepOptionCapacity) ?? 20, CultureInfo.InvariantCulture));
+                    (string)Value(Resource.PrepOptionName)!);
                 message = string.Format(Resource.PrepCreated, created.ChannelId);
             }
             else if (action == "upload" && attachment != null)
@@ -157,8 +158,7 @@ public static class PreparationDiscord
         if (await AuthorizeAsync(guild, channel, interaction.User, creating:true) == null)
         { await interaction.RespondAsync(AstAuthorizationService.DeniedMessage, ephemeral:true); return; }
         var modal = new ModalBuilder().WithTitle(Resource.PrepTitle).WithCustomId("astprep-modal")
-            .AddTextInput(Resource.PrepName, "name", TextInputStyle.Short, maxLength:80, required:true)
-            .AddTextInput(Resource.PrepCapacity, "capacity", TextInputStyle.Short, value:"20", maxLength:3, required:true);
+            .AddTextInput(Resource.PrepName, "name", TextInputStyle.Short, maxLength:80, required:true);
         await interaction.RespondWithModalAsync(modal.Build());
     }
 
@@ -171,16 +171,14 @@ public static class PreparationDiscord
             if (modal.GuildId is not { } guild || modal.ChannelId is not { } channel || await AuthorizeAsync(guild, channel, modal.User, creating:true) == null)
                 throw new PreparationException(AstAuthorizationService.DeniedMessage);
             string Value(string name) => modal.Data.Components.FirstOrDefault(field => field.CustomId == name)?.Value ?? string.Empty;
-            if (!int.TryParse(Value("capacity"), out var capacity))
-                throw new PreparationException(Resource.PrepInvalidSettings);
-            var room = await CreateAsync(guild.ToString(), channel.ToString(), modal.User as IGuildUser, Value("name"), capacity);
+            var room = await CreateAsync(guild.ToString(), channel.ToString(), modal.User as IGuildUser, Value("name"));
             await modal.FollowupAsync(string.Format(Resource.PrepCreated, room.ChannelId), ephemeral:true);
         }
         catch (PreparationException error) { await modal.FollowupAsync(error.Message, ephemeral:true, allowedMentions:AllowedMentions.None); }
         catch { await modal.FollowupAsync(Resource.PrepGenerationFailed, ephemeral:true); }
     }
 
-    public static async Task<PreparationRoom> CreateAsync(string guild, string parent, IGuildUser? owner, string title, int maximum)
+    public static async Task<PreparationRoom> CreateAsync(string guild, string parent, IGuildUser? owner, string title)
     {
         if (!Declare.IsArchipelagoMode) throw new PreparationException(Resource.PrepArchOnly);
         if (owner == null || !ulong.TryParse(parent, out var parentId) || Declare.Client.GetChannel(parentId) is not ITextChannel channel ||
@@ -189,7 +187,7 @@ public static class PreparationDiscord
         var authorization = await AstAuthorizationService.CreateDiscordContextAsync(guild, parent, owner.Id, owner);
         if (authorization == null || !AstAuthorizationService.CanUseArchipelagoTools(authorization) || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
             throw new PreparationException(AstAuthorizationService.DeniedMessage);
-        if (string.IsNullOrWhiteSpace(title) || title.Trim().Length > 80 || maximum is < 1 or > 200) throw new PreparationException(Resource.PrepInvalidSettings);
+        if (string.IsNullOrWhiteSpace(title) || title.Trim().Length > 80) throw new PreparationException(Resource.PrepInvalidSettings);
         await using var audit = await SecurityAuditScope.StartAsync(SecurityAuditSource.Discord, owner.Id.ToString(), guild, parent, SecurityAuditAction.RoomAdd);
         var sourceThread = channel as IThreadChannel;
         if (sourceThread?.IsArchived == true)
@@ -200,7 +198,7 @@ public static class PreparationDiscord
             _ => parent
         };
         var room = await PreparationService.Instance.CreateAsync(guild, trackingParent,
-            parent, owner.Id.ToString(), title, sourceThread?.Type == ThreadType.PrivateThread, maximum);
+            parent, owner.Id.ToString(), title, sourceThread?.Type == ThreadType.PrivateThread);
         var message = await channel.SendMessageAsync(embed:Board(room), components:Buttons(room), allowedMentions:AllowedMentions.None);
         await PreparationService.Instance.SaveMessageAsync(guild, room.ChannelId, message.Id.ToString());
         audit.Succeed();
@@ -232,7 +230,8 @@ public static class PreparationDiscord
         await using var audit = await SecurityAuditScope.StartAsync(source, user, guild, channel,
             action is "generate" or "test" ? SecurityAuditAction.Generation : SecurityAuditAction.RoomSettingsUpdate);
         var message = Resource.PrepSaved;
-        if (action == "attach") await AttachAsync(guild, channel, actor, url);
+        if (action == "remind") await RemindAsync(guild, channel, actor.Id.ToString());
+        else if (action == "deliver") await RetryDeliveryAsync(guild, channel, actor.Id.ToString());
         else message = await service.ApplyActionAsync(guild, channel, user, actor.Nickname ?? actor.Username, action, skipBalancing);
         audit.Succeed();
         return message;
@@ -286,6 +285,45 @@ public static class PreparationDiscord
     }
 
     private static string Safe(string text) => Regex.Replace(text.Replace("@", "@\u200b").Replace('\n',' ').Replace('\r',' '), @"([*_`|~])", @"\$1");
+    private static string Text(string key) => Resource.ResourceManager.GetString(key) ?? key;
+
+    public static async Task RemindAsync(string guild, string channel, string organizer)
+    {
+        await PreparationService.Instance.RemindAsync(guild, channel, organizer, async users => {
+            var target = Declare.Client.GetChannel(ulong.Parse(channel)) as IMessageChannel
+                ?? await Declare.Client.Rest.GetChannelAsync(ulong.Parse(channel)) as IMessageChannel
+                ?? throw new PreparationException(Resource.PrepSourceChannel);
+            foreach (var group in users.Chunk(40))
+            {
+                var ids = group.Select(ulong.Parse).ToList();
+                var mentions = string.Join(" ", ids.Select(id => $"<@{id}>"));
+                await target.SendMessageAsync(string.Format(Text("PrepReminderMessage"), mentions),
+                    allowedMentions:new AllowedMentions { UserIds = ids });
+            }
+        });
+    }
+
+    public static async Task RetryDeliveryAsync(string guild, string channel, string organizer)
+    {
+        var room = await PreparationService.Instance.GetAsync(guild, channel) ?? throw new PreparationException(Resource.PrepNotFound);
+        if (room.OwnerId != organizer) throw new PreparationException(Resource.PrepOwnerOnly);
+        if (room.State != PreparationState.Generated) throw new PreparationException(Resource.PrepLocked);
+        await UpdateBoardAsync(guild, channel);
+    }
+
+    private static async Task ClearBoardAsync(PreparationRoom room, bool cancelled)
+    {
+        if (!ulong.TryParse(room.ChannelId, out var channelId) || !ulong.TryParse(room.MessageId, out var messageId)) return;
+        var channel = Declare.Client.GetChannel(channelId) as IMessageChannel
+            ?? await Declare.Client.Rest.GetChannelAsync(channelId) as IMessageChannel;
+        if (channel != null && await channel.GetMessageAsync(messageId) is IUserMessage message)
+            await message.ModifyAsync(properties => {
+                properties.Content = Text(cancelled ? "PrepDeletedCancelled" : "PrepDeletedGenerated");
+                properties.Embeds = Array.Empty<Embed>();
+                properties.Components = new ComponentBuilder().Build();
+                properties.AllowedMentions = AllowedMentions.None;
+            });
+    }
     public static Embed Board(PreparationRoom room)
     {
         var text = new StringBuilder();
@@ -316,6 +354,8 @@ public static class PreparationDiscord
             .WithButton(Resource.PrepToggleReady, Id("ready-toggle"), ButtonStyle.Success, disabled:!room.CanEdit, row:0)
             .WithButton(Resource.PrepLeave, Id("leave"), ButtonStyle.Secondary, disabled:!room.CanEdit, row:0)
             .WithButton(Resource.PrepPortal, Id("portal"), ButtonStyle.Secondary, row:1)
+            .WithButton(Text("PrepRemind"), Id("remind"), ButtonStyle.Secondary, disabled:!room.CanEdit, row:1)
+            .WithButton(Text("PrepRetryDelivery"), Id("deliver"), ButtonStyle.Secondary, disabled:room.State != PreparationState.Generated, row:1)
             .WithButton(room.State == PreparationState.Open ? Resource.PrepClose : Resource.PrepReopen, Id("close-toggle"), ButtonStyle.Secondary, disabled:!room.CanEdit, row:2)
             .WithButton(Resource.PrepTest, Id("test"), ButtonStyle.Secondary, disabled:!room.CanEdit || room.Files.Count == 0, row:2)
             .WithButton(Resource.PrepGenerate, Id("generate"), ButtonStyle.Success, disabled:!room.CanGenerate, row:2)
@@ -338,21 +378,29 @@ public static class PreparationDiscord
             if (target != null)
                 await PreparationService.Instance.DeliverArchiveAsync(guild, channel, async (generated, archive) =>
                 {
-                    var components = new ComponentBuilder().WithButton(Resource.PrepPortal, $"astprep:{generated.Id}:portal", ButtonStyle.Secondary).Build();
                     var server = Declare.Client.GetGuild(ulong.Parse(guild)) as IGuild ?? await Declare.Client.Rest.GetGuildAsync(ulong.Parse(guild));
                     var tooLarge = new FileInfo(archive).Length > (long)server.MaxUploadLimit;
+                    async Task<IUserMessage> PublishDownloadAsync()
+                    {
+                        if (!Declare.EnableWebPortal) throw new PreparationException(Text("PrepDeliveryUnavailable"));
+                        var token = await PreparationService.Instance.CreateTemporaryDownloadAsync(archive);
+                        var url = WebPortalPages.GetPreparationDownloadUrl(token);
+                        return await target.SendMessageAsync(Text("PrepArchiveLink"),
+                            components:new ComponentBuilder().WithButton(Resource.PrepDownload, style:ButtonStyle.Link, url:url).Build(),
+                            allowedMentions:AllowedMentions.None);
+                    }
                     IUserMessage sent;
                     if (tooLarge)
-                        sent = await target.SendMessageAsync(Resource.ResourceManager.GetString("PrepArchiveTooLarge"), components:components, allowedMentions:AllowedMentions.None);
+                        sent = await PublishDownloadAsync();
                     else
                     {
                         try
                         {
-                            sent = await target.SendFileAsync(archive, Resource.ResourceManager.GetString("PrepArchiveSent"), components:components, allowedMentions:AllowedMentions.None);
+                            sent = await target.SendFileAsync(archive, Text("PrepArchiveSent"), allowedMentions:AllowedMentions.None);
                         }
-                        catch (Discord.Net.HttpException error) when ((int)error.HttpCode == 413 || (int?)error.DiscordCode == 40005)
+                        catch (Discord.Net.HttpException)
                         {
-                            sent = await target.SendMessageAsync(Resource.ResourceManager.GetString("PrepArchiveTooLarge"), components:components, allowedMentions:AllowedMentions.None);
+                            sent = await PublishDownloadAsync();
                         }
                     }
                     return sent.Id.ToString();

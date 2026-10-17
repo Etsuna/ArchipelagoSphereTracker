@@ -4156,7 +4156,16 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Generation complete! The ZIP is attached. The organizer can host it, then link the room through the preparation portal..
+        ///   Recherche une chaîne localisée semblable à The ZIP could not be attached to Discord. Download it using the button below within 24 hours. Preparation data is deleted; only this temporary archive remains. After hosting the ZIP, use /add-url to start tracking..
+        /// </summary>
+        internal static string PrepArchiveLink {
+            get {
+                return ResourceManager.GetString("PrepArchiveLink", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Generation complete! The ZIP is attached. Preparation data is deleted. After hosting the ZIP, use /add-url to start tracking..
         /// </summary>
         internal static string PrepArchiveSent {
             get {
@@ -4201,7 +4210,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Cancel this preparation? Registrations and YAML files will be retained..
+        ///   Recherche une chaîne localisée semblable à Cancel this preparation and permanently delete its registrations, YAML files and history?.
         /// </summary>
         internal static string PrepCancelConfirm {
             get {
@@ -4264,6 +4273,42 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Preparation cancelled. Its registrations, YAML files, history and working files have been deleted. A new preparation can be created in this channel..
+        /// </summary>
+        internal static string PrepDeletedCancelled {
+            get {
+                return ResourceManager.GetString("PrepDeletedCancelled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Generation complete. The ZIP or its download link was posted in this channel. All preparation data has been deleted; this channel is available for a new preparation..
+        /// </summary>
+        internal static string PrepDeletedGenerated {
+            get {
+                return ResourceManager.GetString("PrepDeletedGenerated", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The ZIP or its link could not be delivered, or cleanup is incomplete. Files are retained. The organizer can retry delivery..
+        /// </summary>
+        internal static string PrepDeliveryRetry {
+            get {
+                return ResourceManager.GetString("PrepDeliveryRetry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The ZIP could not be delivered and the web portal is disabled. The preparation is retained so delivery can be retried..
+        /// </summary>
+        internal static string PrepDeliveryUnavailable {
+            get {
+                return ResourceManager.GetString("PrepDeliveryUnavailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Open room preparation: registrations, YAML files and readiness..
         /// </summary>
         internal static string PrepDescription {
@@ -4287,6 +4332,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string PrepDownloadYaml {
             get {
                 return ResourceManager.GetString("PrepDownloadYaml", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Preparation ended.
+        /// </summary>
+        internal static string PrepEnded {
+            get {
+                return ResourceManager.GetString("PrepEnded", resourceCulture);
             }
         }
 
@@ -4345,7 +4399,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Generation completed. Download the archive, host it, then link the room to start tracking..
+        ///   Recherche une chaîne localisée semblable à Generation completed. Preparation data will be deleted once its ZIP or download link is posted in Discord. After hosting the archive, use /add-url to start tracking..
         /// </summary>
         internal static string PrepGenerated {
             get {
@@ -4359,6 +4413,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string PrepGenerationFailed {
             get {
                 return ResourceManager.GetString("PrepGenerationFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à This preparation has ended and its data has been deleted. If generation succeeded, the ZIP or its download link is in the Discord channel..
+        /// </summary>
+        internal static string PrepGone {
+            get {
+                return ResourceManager.GetString("PrepGone", resourceCulture);
             }
         }
 
@@ -4732,6 +4795,43 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Remind unready players.
+        /// </summary>
+        internal static string PrepRemind {
+            get {
+                return ResourceManager.GetString("PrepRemind", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Please wait five minutes between readiness reminders..
+        /// </summary>
+        internal static string PrepReminderCooldown {
+            get {
+                return ResourceManager.GetString("PrepReminderCooldown", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No registered player with a YAML file is waiting to mark themselves ready..
+        /// </summary>
+        internal static string PrepReminderEmpty {
+            get {
+                return ResourceManager.GetString("PrepReminderEmpty", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0}
+        ///Your YAML files have been uploaded, but you are not marked ready. Are your settings final? Please select Ready when they are, or let the organizer know you are still preparing..
+        /// </summary>
+        internal static string PrepReminderMessage {
+            get {
+                return ResourceManager.GetString("PrepReminderMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Remove.
         /// </summary>
         internal static string PrepRemove {
@@ -4746,6 +4846,15 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string PrepReopen {
             get {
                 return ResourceManager.GetString("PrepReopen", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Retry delivery.
+        /// </summary>
+        internal static string PrepRetryDelivery {
+            get {
+                return ResourceManager.GetString("PrepRetryDelivery", resourceCulture);
             }
         }
 
