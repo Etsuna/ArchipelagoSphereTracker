@@ -1,6 +1,7 @@
 # ArchipelagoSphereTracker
 <details>
 <summary>🇫🇷 Français</summary>
+
 Un bot Discord pour **suivre des rooms Archipelago**, centraliser les infos de progression des joueurs, et automatiser la gestion des salons/threads.
 
 - Site web : https://www.ast-bot.com/
@@ -24,6 +25,7 @@ Un bot Discord pour **suivre des rooms Archipelago**, centraliser les infos de p
 - [Configuration `.env` complète](#configuration-env-complète)
 - [Permissions Discord requises](#permissions-discord-requises)
 - [Commandes Slash](#commandes-slash)
+- [Préparation des rooms (Archipelago)](#préparation-des-rooms-archipelago)
 - [Portail Web intégré](#portail-web-intégré)
 - [Métriques Prometheus](#métriques-prometheus)
 - [Compilation depuis les sources](#compilation-depuis-les-sources)
@@ -43,7 +45,7 @@ ArchipelagoSphereTracker (AST) surveille une ou plusieurs rooms Archipelago et p
 Le bot existe en **deux modes** :
 
 1. **Normal Mode** : suivi/monitoring uniquement (idéal pour la plupart des serveurs Discord).
-2. **Archipelago Mode** : ajoute les fonctions d’hébergement local liées à Archipelago (gestion YAML/APWorld, génération multiworld, backup, etc.).
+2. **Archipelago Mode** : ajoute la préparation des rooms, la gestion YAML/APWorld, la génération multiworld et les sauvegardes de l’environnement Archipelago local. L’hébergement de la seed générée reste une étape manuelle.
 
 ---
 
@@ -54,25 +56,30 @@ Le bot existe en **deux modes** :
 - Multi-serveurs Discord, multi-salons et multi-threads.
 - Centre de commandes éphémère `/ast` : toute l’interface Discord (configuration, rooms, alias, récaps, exclusions, portails et administration) est accessible depuis une seule commande slash, en complément des commandes historiques.
 - Assistant interactif intégré à `/ast` pour connecter une room, configurer le thread, les notifications et le polling, puis confirmer depuis un aperçu éphémère.
-- Paramétrage de fréquence de polling (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
-- Polling adaptatif : après trois snapshots inchangés, l'intervalle ralentit progressivement jusqu'à une heure et revient immédiatement au minimum configuré dès qu'une activité est détectée.
+- Polling automatique par défaut : une minute lorsque la room est active ou que son activité est inconnue. Une inactivité connue et des réponses inchangées permettent un ralentissement progressif à deux, quatre, puis au maximum cinq minutes.
+- Mode fixe optionnel (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`) : la fréquence n’est demandée que dans ce mode.
 - Santé et contrôle du suivi depuis `/ast` (également disponibles dans le portail de room).
 - Option silencieuse (`silent`) configurable à la création puis via commande.
 - Alias joueurs : ajout/suppression/liste.
 - Gestion des items affichés, items exclus et hints.
 - Fonctions de recap/clean par alias ou globales.
-- Portail web intégré avec pages utilisateur et commandes de thread.
+- Portail web intégré avec navigation latérale, tableaux compacts, recherche et pages utilisateur, room et administration.
 - Automatisation :
   - message lors de nouveaux objets,
   - message de fin d’objectif joueur,
-  - suppression auto des threads inactifs (2 semaines).
+  - avertissement après sept jours sans nouvel objet, puis arrêt du suivi et suppression des données AST de la room après quatorze jours. Le thread Discord est conservé.
+
+Les délais dépendent aussi du WebHost, des files d’attente et des éventuelles erreurs réseau. Voir [le fonctionnement du suivi et du polling](wiki/Room-tracking.md).
 
 ### Spécifiques au mode Archipelago
 
 - Entrée principale `Outils Archipelago` dans `/ast`, avec quatre rubriques séparées : YAML, APWorld, Génération et Modèles.
-- Accès autorisé par défaut à tous les membres ; les administrateurs Discord peuvent interdire individuellement certains utilisateurs.
+- Outils Archipelago accessibles par défaut à tous les membres, avec restrictions individuelles possibles. La création des préparations est réservée aux gestionnaires reconnus par AST ; leurs contrôles de gestion sont réservés à l’organisateur.
 - Backup/restauration des assets liés à la génération.
 - Génération multiworld (`/generate`, `/test-generate`, `/generate-with-zip`).
+- Préparation collaborative via `/organize-room` : inscriptions, YAML personnels, validation Archipelago, disponibilité et relance ciblée des joueurs non prêts.
+- Envoi groupé de YAML : sélection multiple sur le Web ou ZIP via Discord, dans la même préparation.
+- ZIP généré envoyé dans le salon courant, ou lien de téléchargement temporaire ; nettoyage de la préparation après transmission réussie ou annulation.
 - Gestion de compatibilité Linux/Windows autour de l’installation Archipelago.
 - Installation/mise à jour des dépendances Archipelago via le binaire AST.
 
@@ -99,7 +106,7 @@ Au lancement, AST attend un argument :
 - `--NormalMode` : mode de suivi Discord classique.
 - `--ArchipelagoMode` : active les fonctionnalités de génération/fichiers Archipelago.
 - `--UpdateBDD` : exécute la logique de migration BDD puis quitte.
-- `--BigAsync` : active un mode asynchrone renforcé (usage avancé).
+- `--BigAsync` : mode de suivi avancé conservant un polling fixe d’une heure.
 - `--gui` : lance l’interface desktop native d’administration (édition `.env`, test Discord, start/stop bot, logs live).
 
 ---
@@ -220,6 +227,8 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `AST_OWNER_USER_ID` désigne le super-administrateur facultatif de l'instance. Il peut administrer et nettoyer tous les serveurs/salons enregistrés depuis `Instance AST` dans `/ast`. Sans valeur, aucun utilisateur ne reçoit ce pouvoir global ; les administrateurs Discord gardent la gestion complète de leur propre serveur.
 - Depuis la migration SQLite `5.0.12`, les identifiants de room, trackers et liens de patch sont stockés directement en clair. Aucune clé de chiffrement n'est requise. Voir [le stockage SQLite des identifiants](docs/data-protection-at-rest.fr.md).
 - `WEB_MAX_UPLOAD_BYTES` limite la taille des fichiers Web et Discord acceptés.
+- Les préparations imposent aussi leurs propres limites : 1 Mio par YAML, 20 fichiers par joueur, 16 Mio de YAML au total et 16 Mio par ZIP envoyé.
+- Pour publier un lien de secours vers le ZIP généré, le portail doit être actif et `WEB_BASE_URL` doit être une URL publique accessible aux joueurs. Ce lien expire après 24 heures.
 - `UPLOAD_QUARANTINE_RETENTION_MINUTES` fixe le délai de nettoyage des téléversements interrompus placés en quarantaine.
 - `SPOILER_LOG_RETENTION_DAYS` fixe la rétention des fichiers spoiler `.txt` et `.json`.
 - `PORTAL_TOKEN_LIFETIME_DAYS` fixe l'expiration des nouveaux liens du portail.
@@ -264,28 +273,47 @@ AST enregistre `/ast` ainsi que les commandes historiques de la version `v5.6.7`
 
 - `/ast` ouvre un centre de commandes personnel et éphémère, adapté au salon, à la room et aux permissions de l’utilisateur.
 - `/ast file:<fichier>` importe un YAML, un APWorld, un ZIP de génération ou un spoiler selon le mode et les permissions.
+- `/organize-room` crée et gère une préparation en mode Archipelago. Dans son salon, `/send-yaml file:<fichier>` et `/ast file:<fichier>` ajoutent un YAML ou un ZIP de YAML à cette même préparation, sans lancer la génération.
 - Les mêmes fonctions restent disponibles dans les écrans `Mon espace`, `La room`, `Gérer la room`, `Outils Archipelago` et `Administration AST`.
 - Les grandes listes sont paginées ; les exclusions disposent en plus d’une recherche.
 - Les actions sensibles sont revérifiées côté serveur et inscrites dans le journal de sécurité.
 - Les propriétaires, administrateurs et membres ayant `Gérer le serveur` peuvent déléguer la gestion AST à un membre sans lui donner de rôle administrateur Discord. Le responsable délégué ne peut pas redéléguer ce droit.
 
-Voir la [spécification du centre `/ast`](docs/pr9-ast-command-center-spec.fr.md) pour la correspondance complète des anciennes commandes.
+Voir [le centre `/ast`](wiki/AST-command-center.md) et [la correspondance des commandes historiques](wiki/Legacy-command-migration.md).
+
+---
+
+## Préparation des rooms (Archipelago)
+
+1. Lancez `/organize-room` et choisissez un nom. AST publie le message de préparation **dans le salon courant**, ou dans le thread existant. Aucun nouveau thread n’est créé. La capacité est de **200 joueurs et 200 slots au total**.
+2. Les joueurs s’inscrivent puis déposent leurs YAML sur la page Web ou par commande Discord dans ce salon. Le Web accepte plusieurs fichiers à la fois ; Discord accepte un ZIP via `/send-yaml file:<joueurs.zip>`, `/ast file:<joueurs.zip>` ou `/organize-room fichier:<joueurs.zip>` (`file` lorsque le bot est en anglais).
+3. Chaque YAML est validé par Archipelago. La page distingue l’attente, la validation en cours et les erreurs, avec le diagnostic du générateur. Après correction du YAML ou installation d’un APWorld manquant, renvoyez le fichier. Tous les fichiers d’un joueur doivent être valides pour qu’il puisse se déclarer **Prêt**.
+4. L’organisateur peut fermer/rouvrir les inscriptions, tester l’ensemble et relancer les inscrits ayant un YAML mais n’étant pas prêts, au maximum une fois toutes les cinq minutes. Il lance **Générer** lorsque tous les inscrits sont prêts.
+
+Chaque joueur gère ses propres fichiers. Les lots sont contrôlés avant tout remplacement ; un lot refusé conserve les fichiers et la disponibilité existants. Les validations Archipelago sont ensuite réalisées fichier par fichier. Les limites sont de **20 fichiers par joueur**, **1 Mio par YAML** et **16 Mio de YAML par préparation** ; le ZIP et son contenu décompressé sont également limités à 16 Mio chacun.
+
+- **Annulation** : suppression des données de préparation et de ses fichiers de travail.
+- **Génération réussie** : transmission du ZIP dans le même salon, puis suppression des données de préparation. Si la pièce jointe est impossible, AST publie d’abord un lien valable **24 heures** ; seule une copie temporaire du ZIP subsiste jusqu’à expiration. Toute personne possédant ce lien peut télécharger l’archive.
+- **Transmission impossible** : conservation de la préparation et des fichiers, avec une action permettant de réessayer. Un échec de génération permet également de corriger puis relancer.
+
+Hébergez ensuite le ZIP sur votre serveur Archipelago ou archipelago.gg et connectez la room avec `/add-url` ou l’assistant `/ast`. La préparation utilise SQLite et ne demande aucun serveur de base de données supplémentaire.
+
+Voir [le guide complet des préparations](wiki/Room-preparation.md) pour les permissions, limites, validations et règles de nettoyage.
 
 ---
 
 ## Portail Web intégré
 
-Quand `ENABLE_WEB_PORTAL=true`, AST héberge une interface web :
+Quand `ENABLE_WEB_PORTAL=true`, AST héberge des pages sous `/portal` et leurs API sous `/api/portal/...`. Une navigation latérale, des tableaux compacts et des outils de recherche facilitent la consultation des grandes rooms.
 
-- fichiers statiques sous `/portal`
-- endpoints API sous `/api/portal/...`
+- **Utilisateur** : progression, objets, hints, alias et récapitulatifs personnels.
+- **Room** : tableau des joueurs, progression, état du suivi et dernière synchronisation.
+- **Administration** : configuration et contrôles accessibles selon les permissions Discord/AST.
+- **Préparation** (mode Archipelago) : inscriptions, envoi multiple de YAML, erreurs de validation, disponibilité et génération.
 
-Fonctions exposées :
+Les liens personnels du portail sont associés à un utilisateur, un serveur et un salon ; les permissions sont revérifiées côté serveur. Les liens temporaires du ZIP généré utilisent une autorisation distincte et restent valables après suppression de la préparation, jusqu’à leur expiration.
 
-- vue synthétique par utilisateur (recap/items/hints),
-- ajout/suppression d’alias,
-- suppression d’éléments de recap,
-- pages HTML de commandes de room/thread.
+Voir [le guide du portail Web](wiki/Web-portal.md).
 
 ### Sécurité recommandée
 
@@ -339,9 +367,7 @@ sum by (surface, command, option, selection) (increase(ast_command_options_total
 git clone https://github.com/Etsuna/ArchipelagoSphereTracker.git
 cd ArchipelagoSphereTracker
 
-# 2) Configurer .env
-cp .env.example .env 2>/dev/null || true
-# puis éditer .env
+# 2) Créer .env avec la configuration présentée ci-dessus
 
 # 3) Restaurer / compiler
 dotnet restore
@@ -369,9 +395,7 @@ Depuis la racine :
 dotnet test ArchipelagoSphereTracker.sln
 ```
 
-La solution racine exécute les tests unitaires sur le parsing WebHost, les convertisseurs,
-les services DB, les commandes et les fixtures anonymisées. Les workflows Windows et Linux
-exécutent cette suite avant toute publication.
+La solution racine couvre le parsing WebHost, les convertisseurs, les services DB, les commandes et les fixtures anonymisées, ainsi que les préparations : API Web, lots YAML/ZIP, validations, relances et nettoyage. La CI exécute cette suite avant de publier les binaires Windows et Linux.
 
 ---
 
@@ -382,11 +406,12 @@ src/
   Bot/                # commandes Discord, logique principale bot
   SqlCommands/        # accès SQLite + migrations
   Web/                # portail web intégré (pages/API)
+  Preparations/       # inscriptions, YAML, validation et génération
+  Gui/                # GUI desktop native Avalonia (--gui)
   TrackerLib/         # parsing stream, datapackage, modèles
   Install/            # installation/backup Archipelago
 tests/
   ArchipelagoSphereTracker.Tests/
-  Gui/                # GUI desktop native Avalonia (--gui)
 apworld/
   # assets/templates apworld
 Install/
@@ -397,9 +422,13 @@ Install/
 
 ## Stockage et données
 
-- Base SQLite locale : `AST.db`
-- Le bot maintient des tables de channels, alias, statut de jeu, hints, recap, etc.
+- Une base SQLite locale pour l’instance : `AST.db`. Aucun serveur PostgreSQL n’est nécessaire.
+- Le bot maintient des tables de channels, alias, statut de jeu, hints, recap et préparation (inscriptions, contenu YAML, validations, instantanés et reçus de transmission).
 - Les migrations BDD sont gérées automatiquement au démarrage si nécessaire.
+- Les fichiers de travail des préparations se trouvent dans `data/room-preparations/`. L’annulation et la transmission réussie déclenchent le nettoyage de leurs données ; les copies ZIP pour téléchargement expirent après 24 heures. Les audits techniques, sauvegardes et rooms suivies restent indépendants de ce nettoyage.
+- Pour sauvegarder l’instance, arrêtez le bot puis conservez `AST.db`, `.env`, `extern/` et `data/`. Protégez ces copies, qui peuvent contenir des YAML et des identifiants privés.
+
+Voir [les données et migrations](wiki/Data-and-migrations.md).
 
 ---
 
@@ -420,6 +449,7 @@ Install/
 
 - Vérifier les permissions OAuth2/bot sur le serveur.
 - Vérifier que le bot est bien connecté.
+- Après mise à jour, redémarrer le bot pour enregistrer les commandes. `/organize-room` demande le mode Archipelago.
 - Attendre quelques instants après ajout du bot (propagation Discord).
 
 ### Le portail web est inaccessible
@@ -433,6 +463,11 @@ Install/
 - Vérifier que le mode utilisé est `--ArchipelagoMode`.
 - Vérifier la présence des fichiers requis (`yaml`, `apworld`, ROMs selon besoins).
 - Rejouer l’installation avec `--install` si l’environnement Archipelago est incomplet.
+- Dans une préparation, consulter le diagnostic de chaque YAML sur la page Web. Après correction ou ajout d’un APWorld, renvoyer le fichier pour relancer sa validation.
+
+### Un YAML envoyé n’apparaît pas dans `/list-yamls`
+
+Dans un salon de préparation, `/send-yaml` et `/ast file:` alimentent la préparation commune au Web et à Discord. Consultez sa page ou le statut de `/organize-room` ; `/list-yamls` affiche l’ancien dossier de génération utilisé hors préparation.
 
 ---
 
@@ -460,7 +495,7 @@ Ce projet est distribué sous licence MIT. Voir le fichier [LICENSE](LICENSE).
 
 <details open>
 <summary>🇬🇧 English</summary>
-  
+
 ArchipelagoSphereTracker is a Discord bot to **track Archipelago rooms**, centralize player progression data, and automate thread/channel operations.
 
 - Website: https://www.ast-bot.com/
@@ -484,6 +519,7 @@ ArchipelagoSphereTracker is a Discord bot to **track Archipelago rooms**, centra
 - [Full `.env` configuration](#full-env-configuration)
 - [Required Discord permissions](#required-discord-permissions)
 - [Slash commands](#slash-commands)
+- [Room preparation (Archipelago)](#room-preparation-archipelago)
 - [Built-in web portal](#built-in-web-portal)
 - [Prometheus metrics](#prometheus-metrics)
 - [Build from source](#build-from-source)
@@ -492,7 +528,7 @@ ArchipelagoSphereTracker is a Discord bot to **track Archipelago rooms**, centra
 - [Storage and data](#storage-and-data)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq-1)
-- [License](#license-1)
+- [License](#license)
 
 ---
 
@@ -503,7 +539,7 @@ ArchipelagoSphereTracker (AST) monitors one or more Archipelago rooms and posts 
 AST supports **two modes**:
 
 1. **Normal Mode**: tracking/monitoring only (recommended for most Discord servers).
-2. **Archipelago Mode**: adds local hosting capabilities for Archipelago assets (YAML/APWorld management, multiworld generation, backups, etc.).
+2. **Archipelago Mode**: adds room preparation, YAML/APWorld management, multiworld generation, and backups of the local Archipelago environment. Hosting the generated seed remains a manual step.
 
 ---
 
@@ -514,25 +550,30 @@ AST supports **two modes**:
 - Multi-server, multi-channel, multi-thread support.
 - Ephemeral `/ast` command center: all Discord workflows (setup, rooms, aliases, recaps, exclusions, portals, and administration) are accessible from one slash command, alongside the historical commands.
 - Interactive assistant embedded in `/ast` to connect a room, configure its thread, notifications, and polling, then confirm from an ephemeral preview.
-- Configurable polling frequency (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`).
-- Adaptive polling: after three unchanged snapshots, the interval progressively slows down up to one hour and immediately returns to the configured minimum when activity resumes.
+- Automatic polling by default: one minute while the room is active or its activity is unknown. Known inactivity and unchanged responses allow progressive slowdown to two, four, then at most five minutes.
+- Optional fixed mode (`5m`, `15m`, `30m`, `1h`, `6h`, `12h`, `18h`, `1d`): a frequency is requested only in this mode.
 - Tracking health and controls from `/ast` (also available in the room portal).
 - Silent option configurable at room creation and later updates.
 - Player alias management (add/remove/list).
 - Displayed/excluded items and hints management.
 - Recap/cleanup tools by alias or globally.
-- Built-in web portal with user and thread command pages.
+- Built-in web portal with sidebar navigation, compact tables, search, and user, room, and administration pages.
 - Automation:
   - automatic messages for newly received items,
   - completion message when a player reaches their goal,
-  - automatic deletion of inactive threads (2 weeks).
+  - a warning after seven days without a new item, then tracking stops and the room’s AST data is deleted after fourteen days. The Discord thread is retained.
+
+Observed delays also depend on the WebHost, queues, and possible network errors. See [room tracking and polling](wiki/Room-tracking.md).
 
 ### Archipelago mode only
 
 - Top-level `Archipelago tools` entry in `/ast`, with separate YAML, APWorld, Generation, and Templates sections.
-- Access is allowed to every member by default; Discord administrators can explicitly restrict individual users.
+- Archipelago tools are available to every member by default, with individual restrictions possible. Creating preparations requires an AST-recognized manager; their management controls are reserved for the organizer.
 - Backup/restore for generation-related assets.
 - Multiworld generation (`/generate`, `/test-generate`, `/generate-with-zip`).
+- Collaborative preparation through `/organize-room`: registration, personal YAML files, Archipelago validation, readiness, and targeted reminders for unready players.
+- Batch YAML uploads: multiple selection on the Web or a ZIP through Discord, in the same preparation.
+- Generated ZIP delivery in the current channel, or a temporary download link; preparation cleanup after successful delivery or cancellation.
 - Linux/Windows compatibility handling for Archipelago setup.
 - Archipelago install/update orchestration through AST.
 
@@ -559,7 +600,7 @@ AST expects one startup argument:
 - `--NormalMode`: standard Discord tracking mode.
 - `--ArchipelagoMode`: enables generation and Archipelago file management.
 - `--UpdateBDD`: run DB migration logic and exit.
-- `--BigAsync`: enables advanced async behavior.
+- `--BigAsync`: advanced tracking mode retaining fixed one-hour polling.
 - `--gui`: starts the native desktop admin UI (edit `.env`, test Discord, start/stop bot, live logs).
 
 ---
@@ -680,6 +721,8 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `AST_OWNER_USER_ID` designates the optional instance super-administrator. That user can manage and clean every stored guild/channel from `AST instance` in `/ast`. When unset, nobody receives global authority; Discord administrators retain full control of their own guild.
 - Since SQLite migration `5.0.12`, room identifiers, trackers, and patch links are stored directly as plaintext. No encryption key is required. See [SQLite identifier storage](docs/data-protection-at-rest.en.md).
 - `WEB_MAX_UPLOAD_BYTES` limits accepted Web and Discord file sizes.
+- Preparations also enforce their own limits: 1 MiB per YAML, 20 files per player, 16 MiB of YAML in total, and 16 MiB per uploaded ZIP.
+- Publishing a fallback link to the generated ZIP requires an active portal and a public `WEB_BASE_URL` reachable by players. The link expires after 24 hours.
 - `UPLOAD_QUARANTINE_RETENTION_MINUTES` controls cleanup of interrupted uploads left in quarantine.
 - `SPOILER_LOG_RETENTION_DAYS` controls retention of `.txt` and `.json` spoiler files.
 - `PORTAL_TOKEN_LIFETIME_DAYS` controls expiry for newly issued portal links.
@@ -724,28 +767,47 @@ AST registers `/ast` together with the historical commands from version `v5.6.7`
 
 - `/ast` opens a personal ephemeral command center adapted to the channel, room, and user permissions.
 - `/ast file:<file>` imports a YAML, APWorld, generation ZIP, or spoiler according to the current mode and permissions.
+- `/organize-room` creates and manages a preparation in Archipelago mode. In its channel, `/send-yaml file:<file>` and `/ast file:<file>` add a YAML or YAML ZIP to that same preparation without starting generation.
 - Existing capabilities remain available under `My space`, `The room`, `Manage room`, `Archipelago tools`, and `AST administration`.
 - Large lists are paginated; exclusions also provide search.
 - Sensitive actions are authorized again server-side and written to the security audit log.
 - Guild owners, administrators, and members with `Manage Server` can delegate AST management to a member without granting a Discord administrator role. A delegated manager cannot delegate that permission again.
 
-See the [`/ast` command center specification](docs/pr9-ast-command-center-spec.en.md) for the complete legacy-command mapping.
+See [the `/ast` command center](wiki/AST-command-center.md) and [the legacy-command mapping](wiki/Legacy-command-migration.md).
+
+---
+
+## Room preparation (Archipelago)
+
+1. Run `/organize-room` and choose a name. AST posts the preparation message **in the current channel**, or in the existing thread. No new thread is created. Capacity is **200 players and 200 total slots**.
+2. Players register, then upload their YAML files on the Web page or through a Discord command in that channel. The Web accepts multiple files at once; Discord accepts a ZIP through `/send-yaml file:<players.zip>`, `/ast file:<players.zip>`, or `/organize-room file:<players.zip>` (`fichier` when the bot is in French).
+3. Each YAML is validated by Archipelago. The page distinguishes queued validation, validation in progress, and errors, with the generator diagnostic. After correcting a YAML or installing a missing APWorld, upload the file again. All of a player’s files must validate before they can mark themselves **Ready**.
+4. The organizer can close/reopen registrations, test the full set, and remind registered players who have a YAML but are not ready, at most once every five minutes. They select **Generate** when all registered players are ready.
+
+Each player manages their own files. Batches are checked before any replacement; a rejected batch leaves existing files and readiness unchanged. Archipelago validation then runs separately for each file. Limits are **20 files per player**, **1 MiB per YAML**, and **16 MiB of YAML per preparation**; the ZIP and its uncompressed content are also limited to 16 MiB each.
+
+- **Cancellation**: preparation data and working files are deleted.
+- **Successful generation**: the ZIP is delivered in the same channel, then preparation data is deleted. If attaching it is impossible, AST first publishes a link valid for **24 hours**; only a temporary ZIP copy remains until expiry. Anyone possessing that link can download the archive.
+- **Delivery failure**: preparation and files are retained, with an action to retry delivery. A generation failure also allows correction and another attempt.
+
+Then host the ZIP on your Archipelago server or archipelago.gg and connect the room with `/add-url` or the `/ast` wizard. Preparation uses SQLite and requires no extra database server.
+
+See [the full preparation guide](wiki/Room-preparation.md) for permissions, limits, validation, and cleanup rules.
 
 ---
 
 ## Built-in web portal
 
-When `ENABLE_WEB_PORTAL=true`, AST serves a web interface:
+When `ENABLE_WEB_PORTAL=true`, AST serves pages under `/portal` and their APIs under `/api/portal/...`. Sidebar navigation, compact tables, and search tools make large rooms easier to browse.
 
-- static pages under `/portal`
-- API endpoints under `/api/portal/...`
+- **User**: progression, items, hints, aliases, and personal recaps.
+- **Room**: player table, progression, tracking health, and last synchronization.
+- **Administration**: configuration and controls according to Discord/AST permissions.
+- **Preparation** (Archipelago mode): registration, multiple YAML uploads, validation errors, readiness, and generation.
 
-Exposed capabilities include:
+Personal portal links are associated with a user, guild, and channel; permissions are checked again server-side. Temporary generated-ZIP links use separate authorization and remain valid after preparation deletion, until expiry.
 
-- user summary view (recap/items/hints),
-- alias add/remove,
-- recap item removal,
-- room/thread command pages.
+See [the Web portal guide](wiki/Web-portal.md).
 
 ### Recommended security
 
@@ -799,9 +861,7 @@ sum by (surface, command, option, selection) (increase(ast_command_options_total
 git clone https://github.com/Etsuna/ArchipelagoSphereTracker.git
 cd ArchipelagoSphereTracker
 
-# 2) Configure .env
-cp .env.example .env 2>/dev/null || true
-# then edit .env
+# 2) Create .env using the configuration shown above
 
 # 3) Restore / build
 dotnet restore
@@ -829,8 +889,7 @@ From repository root:
 dotnet test ArchipelagoSphereTracker.sln
 ```
 
-The root solution runs unit tests for WebHost parsing, converters, DB services, command
-definitions, and anonymized fixtures. Windows and Linux workflows run this suite before publishing.
+The root solution covers WebHost parsing, converters, DB services, commands, and anonymized fixtures, as well as preparations: Web APIs, YAML/ZIP batches, validation, reminders, and cleanup. CI runs this suite before publishing Windows and Linux binaries.
 
 ---
 
@@ -841,11 +900,12 @@ src/
   Bot/                # Discord commands and core bot logic
   SqlCommands/        # SQLite access + migrations
   Web/                # built-in web portal (pages/API)
+  Preparations/       # registration, YAML, validation, and generation
+  Gui/                # native Avalonia desktop GUI (--gui)
   TrackerLib/         # stream parser, datapackage, models
   Install/            # Archipelago setup/backup flows
 tests/
   ArchipelagoSphereTracker.Tests/
-  Gui/                # native Avalonia desktop GUI (--gui)
 apworld/
   # apworld assets/templates
 Install/
@@ -856,9 +916,13 @@ Install/
 
 ## Storage and data
 
-- Local SQLite database: `AST.db`
-- The bot stores channels, aliases, game status, hints, recap data, etc.
+- One local SQLite database per instance: `AST.db`. No PostgreSQL server is required.
+- The bot stores channels, aliases, game status, hints, recaps, and preparation data (registrations, YAML content, validation, snapshots, and delivery receipts).
 - DB migrations are applied automatically at startup when needed.
+- Preparation working files live under `data/room-preparations/`. Cancellation and successful delivery trigger cleanup of their data; downloadable ZIP copies expire after 24 hours. Technical audits, backups, and tracked rooms remain independent of this cleanup.
+- To back up the instance, stop the bot and save `AST.db`, `.env`, `extern/`, and `data/`. Protect these copies, which may contain YAML files and private identifiers.
+
+See [data and migrations](wiki/Data-and-migrations.md).
 
 ---
 
@@ -879,6 +943,7 @@ Install/
 
 - Check OAuth2/bot permissions on the Discord server.
 - Confirm the bot is online and connected.
+- After updating, restart the bot to register commands. `/organize-room` requires Archipelago mode.
 - Wait a short time after inviting the bot (Discord propagation).
 
 ### Web portal is unreachable
@@ -892,6 +957,11 @@ Install/
 - Ensure launch mode is `--ArchipelagoMode`.
 - Verify required files exist (`yaml`, `apworld`, ROMs when needed).
 - Run `--install` again if the Archipelago environment is incomplete.
+- In a preparation, inspect each YAML’s diagnostic on the Web page. After correcting it or adding an APWorld, upload the file again to restart validation.
+
+### An uploaded YAML does not appear in `/list-yamls`
+
+In a preparation channel, `/send-yaml` and `/ast file:` add files to the preparation shared by Web and Discord. Check its page or `/organize-room` status; `/list-yamls` lists the older generation folder used outside preparations.
 
 ---
 
