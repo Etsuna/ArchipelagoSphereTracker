@@ -39,7 +39,9 @@ public static class WebPortalServer
         EnsureRobotsTxtFile();
 
         var builder = WebApplication.CreateBuilder();
-        builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
+        // Keep framework warnings/errors without logging each portal refresh or response.
+        builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+        builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
         builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
         builder.WebHost.ConfigureKestrel(options =>
         {
