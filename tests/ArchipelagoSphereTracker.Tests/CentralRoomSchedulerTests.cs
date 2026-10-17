@@ -174,7 +174,7 @@ public sealed class CentralRoomSchedulerTests
         var time = new ManualTimeProvider(T0);
         var store = new MemoryScheduleStore([Registration("c", "https://a.example", T0)]);
         var hash = "snapshot-a";
-        var scheduler = Scheduler(store, (_, _) => Task.FromResult(RoomPollResult.Ok(hash)), time, global: 1);
+        var scheduler = Scheduler(store, (_, _) => Task.FromResult(RoomPollResult.Ok(hash, hasRecentActivity: false)), time, global: 1);
         await scheduler.InitializeAsync();
 
         Assert.Equal(1, await scheduler.RunDueOnceAsync()); // establish the baseline
@@ -185,7 +185,7 @@ public sealed class CentralRoomSchedulerTests
         }
 
         var slowed = Assert.IsType<RoomHealthSnapshot>(scheduler.GetHealth("g", "c"));
-        Assert.Equal(TimeSpan.FromMinutes(10), slowed.EffectiveInterval);
+        Assert.Equal(TimeSpan.FromMinutes(2), slowed.EffectiveInterval);
         Assert.Equal(3, slowed.UnchangedSuccessCount);
 
         hash = "snapshot-b";
@@ -193,7 +193,7 @@ public sealed class CentralRoomSchedulerTests
         Assert.Equal(1, await scheduler.RunDueOnceAsync());
 
         var active = Assert.IsType<RoomHealthSnapshot>(scheduler.GetHealth("g", "c"));
-        Assert.Equal(TimeSpan.FromMinutes(5), active.EffectiveInterval);
+        Assert.Equal(TimeSpan.FromMinutes(1), active.EffectiveInterval);
         Assert.Equal(0, active.UnchangedSuccessCount);
         Assert.Equal(time.GetUtcNow(), active.LastChangeAtUtc);
     }
@@ -207,7 +207,7 @@ public sealed class CentralRoomSchedulerTests
         ]);
         var automatic = Scheduler(
             automaticStore,
-            (_, _) => Task.FromResult(RoomPollResult.Ok("unchanged")),
+            (_, _) => Task.FromResult(RoomPollResult.Ok("unchanged", hasRecentActivity: false)),
             automaticTime,
             global: 1);
         await automatic.InitializeAsync();
@@ -219,8 +219,8 @@ public sealed class CentralRoomSchedulerTests
         }
         var capped = automatic.GetHealth("g", "automatic")!;
         Assert.Equal(RoomPollingMode.Automatic, capped.PollingMode);
-        Assert.Equal(TimeSpan.FromMinutes(10), capped.MaximumPollInterval);
-        Assert.Equal(TimeSpan.FromMinutes(10), capped.EffectiveInterval);
+        Assert.Equal(TimeSpan.FromMinutes(5), capped.MaximumPollInterval);
+        Assert.Equal(TimeSpan.FromMinutes(5), capped.EffectiveInterval);
 
         var fixedTime = new ManualTimeProvider(T0);
         var fixedStore = new MemoryScheduleStore([
@@ -228,7 +228,7 @@ public sealed class CentralRoomSchedulerTests
         ]);
         var fixedScheduler = Scheduler(
             fixedStore,
-            (_, _) => Task.FromResult(RoomPollResult.Ok("unchanged")),
+            (_, _) => Task.FromResult(RoomPollResult.Ok("unchanged", hasRecentActivity: false)),
             fixedTime,
             global: 1);
         await fixedScheduler.InitializeAsync();
@@ -340,7 +340,7 @@ public sealed class CentralRoomSchedulerTests
         Assert.Equal(2, observed.Result.NewHintCount);
         Assert.Equal(1, observed.Result.UpdatedHintCount);
         Assert.Equal(1, observed.Result.CompletedGoalCount);
-        Assert.Equal(T0.AddMinutes(5), observed.State!.NextPollAtUtc);
+        Assert.Equal(T0.AddMinutes(1), observed.State!.NextPollAtUtc);
     }
 
     [Fact]
@@ -616,6 +616,166 @@ public sealed class CentralRoomSchedulerTests
         Assert.Equal(T0, registration.Definition.InitialNextPollAtUtc);
         Assert.Equal(RoomPollingMode.Automatic, registration.Definition.PollingMode);
         Assert.Equal(TimeSpan.FromHours(1), registration.Definition.MaximumPollInterval);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(null)]
+    public async Task Active_or_unknown_rooms_keep_minute_cadence_even_when_snapshot_is_unchanged(bool? activity)
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("c", "https://a.example", T0)]);
+        var scheduler = Scheduler(store, (_, _) => Task.FromResult(
+            RoomPollResult.Ok("unchanged", hasRecentActivity: activity)), time);
+        await scheduler.InitializeAsync();
+        for (var i = 0; i < 15; i++)
+        {
+            Assert.Equal(1, await scheduler.RunDueOnceAsync());
+            Assert.Equal(TimeSpan.FromMinutes(1), scheduler.GetHealth("g", "c")!.EffectiveInterval);
+            time.Advance(TimeSpan.FromMinutes(1));
+        }
+    }
+
+    [Fact]
+    public async Task Recent_activity_reaccelerates_an_idle_room_without_a_content_change()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("c", "https://a.example", T0)]);
+        var activity = false;
+        var scheduler = Scheduler(store, (_, _) => Task.FromResult(
+            RoomPollResult.Ok("unchanged", hasRecentActivity: activity)), time);
+        await scheduler.InitializeAsync();
+        for (var i = 0; i < 10; i++)
+        {
+            await scheduler.RunDueOnceAsync();
+            time.Advance(scheduler.GetHealth("g", "c")!.EffectiveInterval);
+        }
+        Assert.Equal(TimeSpan.FromMinutes(5), scheduler.GetHealth("g", "c")!.EffectiveInterval);
+        activity = true;
+        await scheduler.RunDueOnceAsync();
+        Assert.Equal(TimeSpan.FromMinutes(1), scheduler.GetHealth("g", "c")!.EffectiveInterval);
+    }
+
+    [Fact]
+    public async Task Restart_shortens_legacy_hour_delay_but_preserves_failure_backoff()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("ok", "https://a.example", T0),
+            Registration("error", "https://a.example", T0)]);
+        foreach (var channel in new[] { "ok", "error" })
+            store.States[$"g:{channel}"] = new RoomScheduleState("g", channel, T0.AddHours(1), T0, T0,
+                channel == "error" ? 1 : 0, channel == "error" ? PollFailureKind.RateLimited : PollFailureKind.None,
+                null, 0, EffectiveIntervalSeconds: 3600);
+        var scheduler = Scheduler(store, (_, _) => Task.FromResult(RoomPollResult.Ok()), time);
+        await scheduler.InitializeAsync();
+        Assert.Equal(T0.AddMinutes(1), scheduler.GetHealth("g", "ok")!.NextPollAtUtc);
+        Assert.Equal(T0.AddHours(1), scheduler.GetHealth("g", "error")!.NextPollAtUtc);
+    }
+
+    [Fact]
+    public async Task Shared_snapshot_survives_one_consumer_cancelling_and_remains_isolated_by_uri()
+    {
+        var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        using var http = new HttpClient(new DelegateHandler(async (_, _) =>
+        {
+            Interlocked.Increment(ref calls);
+            entered.TrySetResult(true);
+            await release.Task;
+            return Response(HttpStatusCode.OK, "{\"player_status\":[]}", "application/json");
+        }));
+        var client = new ResilientWebHostClient(http);
+        var uri = new Uri("https://a.example/api/tracker/one");
+        using var cancellation = new CancellationTokenSource();
+        var first = client.FetchJsonAsync(uri, WebHostEndpointKind.RuntimeTracker, cancellation.Token);
+        await entered.Task;
+        var second = client.FetchJsonAsync(uri, WebHostEndpointKind.RuntimeTracker, CancellationToken.None);
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first);
+        release.SetResult(true);
+        Assert.True((await second).Success);
+        Assert.True((await client.FetchJsonAsync(uri, WebHostEndpointKind.RuntimeTracker, CancellationToken.None)).Success);
+        Assert.Equal(1, calls);
+        await client.FetchJsonAsync(new Uri("https://b.example/api/tracker/one"), WebHostEndpointKind.RuntimeTracker, CancellationToken.None);
+        await client.FetchJsonAsync(new Uri("https://a.example/api/tracker/two"), WebHostEndpointKind.RuntimeTracker, CancellationToken.None);
+        Assert.Equal(3, calls);
+    }
+
+    [Theory]
+    [InlineData("{}", null)]
+    [InlineData("{\"activity_timers\":[]}", null)]
+    [InlineData("{\"activity_timers\":[null,42]}", null)]
+    [InlineData("{\"activity_timers\":[{\"time\":null}]}", null)]
+    [InlineData("{\"activity_timers\":[{\"time\":\"invalid\"}]}", null)]
+    [InlineData("{\"activity_timers\":[{\"time\":\"Sun, 30 Aug 2026 11:59:00 GMT\"}]}", true)]
+    [InlineData("{\"activity_timers\":[{\"time\":\"Sun, 30 Aug 2026 10:00:00 GMT\"}]}", false)]
+    [InlineData("{\"activity_timers\":[{\"time\":\"Sun, 30 Aug 2026 10:00:00 GMT\"}],\"connection_timers\":[{\"time\":\"Sun, 30 Aug 2026 12:00:00 GMT\"}]}", true)]
+    public void Activity_uses_upstream_timestamps_and_treats_missing_data_as_unknown(string json, bool? expected)
+        => Assert.Equal(expected, WebHostActivity.HasRecentActivity(json, T0));
+
+    [Fact]
+    public async Task Failed_shared_fetch_is_retried_instead_of_replaying_an_error()
+    {
+        var calls = 0;
+        using var http = new HttpClient(new DelegateHandler((_, _) => Task.FromResult(
+            Interlocked.Increment(ref calls) == 1
+                ? Response(HttpStatusCode.ServiceUnavailable, "{}", "application/json")
+                : Response(HttpStatusCode.OK, "{\"player_status\":[]}", "application/json"))));
+        var client = new ResilientWebHostClient(http);
+        var uri = new Uri("https://a.example/api/tracker/one");
+        Assert.False((await client.FetchJsonAsync(uri, WebHostEndpointKind.RuntimeTracker, CancellationToken.None)).Success);
+        Assert.True((await client.FetchJsonAsync(uri, WebHostEndpointKind.RuntimeTracker, CancellationToken.None)).Success);
+        Assert.Equal(2, calls);
+    }
+
+    [Fact]
+    public async Task Portal_refresh_is_shared_throttled_durable_and_cannot_resume_a_paused_room()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("c", "https://a.example", T0.AddHours(1))]);
+        var scheduler = Scheduler(store, (_, _) => Task.FromResult(RoomPollResult.Ok()), time);
+        await scheduler.InitializeAsync();
+        var outcomes = await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => scheduler.RefreshIfStaleAsync("g", "c")));
+        Assert.Single(outcomes, value => value == TrackingControlOutcome.Accepted);
+        Assert.Equal(19, outcomes.Count(value => value == TrackingControlOutcome.RateLimited));
+        Assert.Equal(T0, scheduler.GetHealth("g", "c")!.NextPollAtUtc);
+        var restarted = Scheduler(store, (_, _) => Task.FromResult(RoomPollResult.Ok()), time);
+        await restarted.InitializeAsync();
+        Assert.Equal(TrackingControlOutcome.RateLimited, await restarted.RefreshIfStaleAsync("g", "c"));
+        await restarted.RunDueOnceAsync();
+        time.Advance(TimeSpan.FromSeconds(59));
+        Assert.Equal(TrackingControlOutcome.RateLimited, await restarted.RefreshIfStaleAsync("g", "c"));
+        time.Advance(TimeSpan.FromSeconds(1));
+        Assert.Equal(TrackingControlOutcome.Accepted, await restarted.RefreshIfStaleAsync("g", "c"));
+        await restarted.PauseAsync("g", "c");
+        time.Advance(TimeSpan.FromMinutes(2));
+        Assert.Equal(TrackingControlOutcome.Paused, await restarted.RefreshIfStaleAsync("g", "c"));
+        Assert.Equal(TrackingControlOutcome.NotFound, await restarted.RefreshIfStaleAsync("other", "c"));
+    }
+
+    [Fact]
+    public async Task Portal_refresh_respects_retry_after_and_reports_a_running_sync()
+    {
+        var time = new ManualTimeProvider(T0);
+        var store = new MemoryScheduleStore([Registration("c", "https://a.example", T0)]);
+        var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var scheduler = Scheduler(store, async (_, _) =>
+        {
+            entered.SetResult(true);
+            await release.Task;
+            return RoomPollResult.Failed(PollFailureKind.RateLimited, TimeSpan.FromMinutes(10));
+        }, time);
+        await scheduler.InitializeAsync();
+        var cycle = scheduler.RunDueOnceAsync();
+        await entered.Task;
+        Assert.Equal(TrackingControlOutcome.Busy, await scheduler.RefreshIfStaleAsync("g", "c"));
+        release.SetResult(true);
+        await cycle;
+        time.Advance(TimeSpan.FromMinutes(2));
+        Assert.Equal(TrackingControlOutcome.RateLimited, await scheduler.RefreshIfStaleAsync("g", "c"));
+        Assert.Equal(T0.AddMinutes(10), scheduler.GetHealth("g", "c")!.NextPollAtUtc);
     }
 
     private static CentralRoomScheduler Scheduler(

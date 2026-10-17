@@ -16,18 +16,33 @@ public class UrlClass
         bool AutoAddMembers,
         bool Silent,
         string CheckFrequency,
-        IGuildUser? RequestUser);
+        IGuildUser? RequestUser,
+        string PollingMode = "automatic");
 
     public sealed record UrlAddResult(bool Success, string Message, string? ThreadChannelId = null);
 
+    internal static bool TryResolvePollingPolicy(string? mode, string? frequency,
+        out RoomPollingMode pollingMode, out string fixedFrequency)
+    {
+        pollingMode = RoomPollingMode.Automatic;
+        fixedFrequency = "5m";
+        if (string.IsNullOrWhiteSpace(mode) || mode.Equals("automatic", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (!mode.Equals("fixed", StringComparison.OrdinalIgnoreCase)) return false;
+        pollingMode = RoomPollingMode.Fixed;
+        fixedFrequency = string.IsNullOrWhiteSpace(frequency) ? "5m" : frequency.ToLowerInvariant();
+        return fixedFrequency is "5m" or "15m" or "30m" or "1h" or "6h" or "12h" or "18h" or "1d";
+    }
+
     public static async Task<string> AddUrl(SocketSlashCommand command, IGuildUser? guildUser, string channelId, string guildId, ITextChannel channel)
     {
-        var newUrl = command.Data.Options.ElementAt(0)?.Value as string;
-        var threadTitle = command.Data.Options.ElementAt(1)?.Value as string ?? "Archipelago";
-        var threadType = command.Data.Options.ElementAt(2)?.Value as string ?? "Private";
-        var autoAddMembers = command.Data.Options.ElementAtOrDefault(3)?.Value as bool? ?? false;
-        var silent = command.Data.Options.ElementAtOrDefault(4)?.Value as bool? ?? false;
-        var checkFrequencyStr = command.Data.Options.ElementAtOrDefault(5)?.Value as string ?? "5m";
+        object? Value(string name) => command.Data.Options.FirstOrDefault(option => option.Name == name)?.Value;
+        var newUrl = Value("url") as string;
+        var threadTitle = Value(Resource.SCThreadName) as string ?? "Archipelago";
+        var threadType = Value(Resource.SCThreadType) as string ?? "Private";
+        var autoAddMembers = Value(Resource.SCAutoAddMembers) as bool? ?? false;
+        var silent = Value(Resource.SCSilentOption) as bool? ?? false;
+        var checkFrequencyStr = Value(Resource.CheckFrequency) as string ?? "5m";
         var options = new UrlAddOptions(
             newUrl ?? string.Empty,
             threadTitle,
@@ -35,7 +50,8 @@ public class UrlClass
             autoAddMembers,
             silent,
             checkFrequencyStr,
-            guildUser);
+            guildUser,
+            Value("polling-mode") as string ?? "automatic");
 
         return (await AddUrlInternalAsync(options, channelId, guildId, channel)).Message;
     }
@@ -65,6 +81,8 @@ public class UrlClass
         var autoAddMembers = options.AutoAddMembers;
         var silent = options.Silent;
         var checkFrequencyStr = options.CheckFrequency;
+        if (!TryResolvePollingPolicy(options.PollingMode, checkFrequencyStr, out var pollingMode, out checkFrequencyStr))
+            return new UrlAddResult(false, Resource.PollingInvalidPollingModeOrMaximumFrequency);
         var guildUser = options.RequestUser;
         var message = string.Empty;
         string? createdThreadChannelId = null;
@@ -83,6 +101,7 @@ public class UrlClass
             threadType = "Public";
             threadTitle = "Archipelago Big Async";
             checkFrequencyStr = "1h";
+            pollingMode = RoomPollingMode.Fixed;
         }
 
         if (string.IsNullOrWhiteSpace(newUrl))
@@ -230,7 +249,7 @@ public class UrlClass
                     Declare.AddedChannelId.Add(channelId);
                     try
                     {
-                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr, port);
+                        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr, port, pollingMode);
                         var rootTracker = await TrackerDatapackageFetcher.getRoots(baseUrl, tracker, TrackingDataManager.Http);
                         var checksums = TrackerDatapackageFetcher.GetDatapackageChecksums(rootTracker);
                         await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);

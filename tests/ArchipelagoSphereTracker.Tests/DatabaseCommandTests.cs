@@ -7,6 +7,54 @@ using System.Collections.Generic;
 
 public class DatabaseCommandTests
 {
+    [Theory]
+    [InlineData("fr", false, "Suivi : Automatique", "5m")]
+    [InlineData("en", false, "Polling: Automatic", "5m")]
+    [InlineData("fr", true, "Suivi : Fréquence fixe — 1h", "1h")]
+    [InlineData("en", true, "Polling: Fixed frequency — 1h", "1h")]
+    public async Task RoomInfo_ShowsPersistedPollingModeInsteadOfUnusedAutomaticFrequency(
+        string culture, bool isFixed, string expected, string frequency)
+    {
+        using var scope = new TestDatabaseScope();
+        var previousCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
+            var mode = isFixed ? ArchipelagoSphereTracker.Tracking.Scheduling.RoomPollingMode.Fixed
+                : ArchipelagoSphereTracker.Tracking.Scheduling.RoomPollingMode.Automatic;
+            await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync("g", "c", "https://example.test", "room", "tracker",
+                false, frequency, "0", mode);
+            var info = await HelperClass.GetPollingInfoAsync("g", "c", frequency);
+            Assert.StartsWith(expected, info);
+            if (!isFixed) Assert.DoesNotContain("5m", info);
+        }
+        finally { CultureInfo.CurrentUICulture = previousCulture; }
+    }
+
+    [Theory]
+    [InlineData("automatic", "1h", "Automatic", "5m")]
+    [InlineData(null, null, "Automatic", "5m")]
+    [InlineData("fixed", "1h", "Fixed", "1h")]
+    [InlineData("fixed", null, "Fixed", "5m")]
+    public async Task Creation_PersistsResolvedPollingModeAndFrequency(string? mode, string? frequency, string expectedMode, string expectedFrequency)
+    {
+        using var scope = new TestDatabaseScope();
+        Assert.True(UrlClass.TryResolvePollingPolicy(mode, frequency, out var policy, out var fixedFrequency));
+        await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync("g", "c", "https://example.test", "room", "tracker",
+            false, fixedFrequency, "0", policy);
+        var registration = Assert.Single(await new ArchipelagoSphereTracker.Tracking.Scheduling.SqliteRoomScheduleStore()
+            .LoadAsync(System.Threading.CancellationToken.None));
+        Assert.Equal(expectedMode, registration.Definition.PollingMode.ToString());
+        Assert.Equal(expectedFrequency, (await ChannelsAndUrlsCommands.GetChannelConfigAsync("g", "c")).checkFrequency);
+    }
+
+    [Theory]
+    [InlineData("unknown", "5m")]
+    [InlineData("fixed", "garbage")]
+    [InlineData("fixed", "1s")]
+    public void Creation_RejectsInvalidPollingPolicy(string mode, string frequency)
+        => Assert.False(UrlClass.TryResolvePollingPolicy(mode, frequency, out _, out _));
+
     [Fact]
     public async Task AddOrEditUrlChannelAsync_PersistsConfigAndCache()
     {

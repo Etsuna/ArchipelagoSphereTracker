@@ -1,5 +1,6 @@
 using ArchipelagoSphereTracker.src.Resources;
 using Discord.WebSocket;
+using ArchipelagoSphereTracker.Tracking.Scheduling;
 using System.Data.SQLite;
 using System.Globalization;
 using System.Text;
@@ -10,12 +11,13 @@ public static class ChannelsAndUrlsCommands
 {
     private static string DefaultTrackerValue = Resource.NotFound;
     private static readonly HashSet<string> AllowedMaximumFrequencies =
-        new(["15m", "30m", "1h", "6h", "12h", "18h", "1d"], StringComparer.OrdinalIgnoreCase);
+        new(["5m", "15m", "30m", "1h", "6h", "12h", "18h", "1d"], StringComparer.OrdinalIgnoreCase);
 
     // ==========================
     // 🎯 Channel et URL (WRITE)
     // ==========================
-    public static async Task AddOrEditUrlChannelAsync(string guildId, string channelId, string baseUrl, string room, string? tracker, bool silent, string checkFrequency, string port)
+    public static async Task AddOrEditUrlChannelAsync(string guildId, string channelId, string baseUrl, string room, string? tracker, bool silent, string checkFrequency, string port,
+        RoomPollingMode pollingMode = RoomPollingMode.Automatic)
     {
         try
         {
@@ -24,14 +26,16 @@ public static class ChannelsAndUrlsCommands
                 using var command = conn.CreateCommand();
                 command.CommandText = @"
                         INSERT INTO ChannelsAndUrlsTable
-                            (GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, Silent, Port)
+                            (GuildId, ChannelId, BaseUrl, Room, Tracker, CheckFrequency, Silent, Port, PollingMode, MaximumCheckFrequency)
                         VALUES
-                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent, @Port)
+                            (@GuildId, @ChannelId, @BaseUrl, @Room, @Tracker, @CheckFrequency, @Silent, @Port, @PollingMode, @MaximumCheckFrequency)
                         ON CONFLICT(GuildId, ChannelId) DO UPDATE SET
                             BaseUrl = excluded.BaseUrl,
                             Room = excluded.Room,
                             Tracker = excluded.Tracker,
                             CheckFrequency = excluded.CheckFrequency,
+                            PollingMode = excluded.PollingMode,
+                            MaximumCheckFrequency = excluded.MaximumCheckFrequency,
                             LastCheck = NULL,
                             Silent = excluded.Silent,
                             Port = excluded.Port;";
@@ -42,6 +46,9 @@ public static class ChannelsAndUrlsCommands
                 command.Parameters.AddWithValue("@Room", room);
                 command.Parameters.AddWithValue("@Tracker", tracker ?? DefaultTrackerValue);
                 command.Parameters.AddWithValue("@CheckFrequency", string.IsNullOrWhiteSpace(checkFrequency) ? "5m" : checkFrequency);
+                command.Parameters.AddWithValue("@PollingMode", pollingMode.ToString());
+                command.Parameters.AddWithValue("@MaximumCheckFrequency", pollingMode == RoomPollingMode.Automatic ? "5m" :
+                    (string.IsNullOrWhiteSpace(checkFrequency) ? "5m" : checkFrequency));
                 command.Parameters.AddWithValue("@Silent", silent);
                 command.Parameters.AddWithValue("@Port", port ?? "0");
 
@@ -654,6 +661,17 @@ public static class ChannelsAndUrlsCommands
         return message;
     }
 
+    public static async Task<RoomPollingMode> GetPollingModeAsync(string guildId, string channelId)
+    {
+        await using var connection = await Db.OpenReadAsync().ConfigureAwait(false);
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT PollingMode FROM ChannelsAndUrlsTable WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
+        command.Parameters.AddWithValue("@GuildId", guildId);
+        command.Parameters.AddWithValue("@ChannelId", channelId);
+        var value = await command.ExecuteScalarAsync().ConfigureAwait(false);
+        return Enum.TryParse<RoomPollingMode>(value?.ToString(), true, out var mode) ? mode : RoomPollingMode.Automatic;
+    }
+
     public static Task<string> UpdatePollingPolicy(
         SocketSlashCommand command,
         string channelId,
@@ -696,6 +714,7 @@ public static class ChannelsAndUrlsCommands
             TimeSpan.FromMinutes(5),
             TimeSpan.FromMinutes(5),
             TimeSpan.FromDays(1));
+        if (normalizedMode == "Automatic") minimum = TimeSpan.FromMinutes(1);
         if (!CheckFrequencyParser.TryParse(
                 maximumFrequency,
                 out var maximum,
@@ -723,7 +742,9 @@ public static class ChannelsAndUrlsCommands
         await TrackingDataManager.ReloadTrackingConfigurationAsync().ConfigureAwait(false);
         await TrackingDataManager.PromoteRoomAsync(guildId, channelId).ConfigureAwait(false);
 
-        return string.Format(Resource.PollingTrackingPolicyUpdatedModeMinimumMaximum, normalizedMode, current.checkFrequency, maximumFrequency.ToLowerInvariant());
+        return string.Format(Resource.PollingTrackingPolicyUpdatedModeMinimumMaximum, normalizedMode,
+            normalizedMode == "Automatic" ? "1m" : current.checkFrequency,
+            normalizedMode == "Automatic" && maximum > TimeSpan.FromMinutes(5) ? "5m" : maximumFrequency.ToLowerInvariant());
     }
 
     // =================================================

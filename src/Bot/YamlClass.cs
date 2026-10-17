@@ -36,6 +36,17 @@ public class YamlClass : Declare
         IAttachment? attachment = null)
     {
         attachment ??= SlashCommandAttachmentResolver.GetFile(command);
+        if (Declare.IsArchipelagoMode && command.GuildId is { } guildId &&
+            await PreparationService.Instance.GetAsync(guildId.ToString(), channelId) != null)
+        {
+            if (attachment == null) return Resource.YamlWrongFile;
+            try
+            {
+                return await PreparationDiscord.UploadAttachmentAsync(guildId.ToString(), channelId,
+                    command.User as IGuildUser, attachment);
+            }
+            catch (PreparationException error) { return error.Message; }
+        }
         var message = string.Empty;
         if (attachment == null ||
             attachment.Size <= 0 ||

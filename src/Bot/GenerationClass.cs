@@ -8,6 +8,58 @@ using System.Text;
 
 public class GenerationClass : Declare
 {
+    public static async Task<PreparationGenerationResult> GeneratePreparationAsync(
+        string inputDirectory, string outputDirectory, bool testOnly, bool skipBalancing)
+    {
+        var launcher = GetLauncherPath();
+        if (!File.Exists(launcher))
+            return new(false, Resource.PrepLauncherMissing);
+        Directory.CreateDirectory(outputDirectory);
+        var start = CreateProcessStartInfo(launcher, string.Empty);
+        start.ArgumentList.Add("--player_files_path");
+        start.ArgumentList.Add(inputDirectory);
+        if (testOnly) start.ArgumentList.Add("--skip_output");
+        else
+        {
+            start.ArgumentList.Add("--outputpath");
+            start.ArgumentList.Add(outputDirectory);
+        }
+        if (skipBalancing) start.ArgumentList.Add("--skip_prog_balancing");
+        using var process = new Process { StartInfo = start };
+        var diagnostics = new StringBuilder();
+        void Capture(object sender, DataReceivedEventArgs args)
+        {
+            if (args.Data == null) return;
+            lock (diagnostics)
+                if (diagnostics.Length < 6000) diagnostics.AppendLine(args.Data[..Math.Min(args.Data.Length, 1000)]);
+        }
+        process.OutputDataReceived += Capture;
+        process.ErrorDataReceived += Capture;
+        try
+        {
+            if (!process.Start()) return new(false, Resource.PrepGenerationFailed);
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(30));
+            try { await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false); }
+            catch (OperationCanceledException)
+            {
+                if (!process.HasExited) process.Kill(entireProcessTree: true);
+                await process.WaitForExitAsync().ConfigureAwait(false);
+                return new(false, Resource.GenerationTimeout);
+            }
+            if (process.ExitCode != 0)
+                return new(false, Resource.PrepGenerationFailed + "\n" + diagnostics.ToString());
+            if (testOnly) return new(true, Resource.GenerationTestSuccessful);
+            var zip = Directory.EnumerateFiles(outputDirectory, "*.zip").FirstOrDefault();
+            return zip == null ? new(false, Resource.GenerationZipNotFound) : new(true, Resource.PrepGenerated, zip);
+        }
+        catch (Exception exception) when (exception is System.ComponentModel.Win32Exception or IOException or InvalidOperationException)
+        {
+            return new(false, Resource.PrepGenerationFailed);
+        }
+    }
+
     public record GenerationResult(string Message, string? ZipPath);
 
     private static string GetLauncherPath()

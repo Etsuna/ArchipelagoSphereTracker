@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace ArchipelagoSphereTracker.Tracking.Scheduling;
 
@@ -33,6 +34,8 @@ public sealed class ResilientWebHostClient
     private readonly WebHostClientOptions _options;
     private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _globalGate;
+    private readonly MemoryCache _snapshots = new(new MemoryCacheOptions { SizeLimit = 128L * 1024 * 1024 });
+    private readonly ConcurrentDictionary<(Uri, WebHostEndpointKind), Lazy<Task<WebHostFetchResult>>> _inflight = new();
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _originGates =
         new(StringComparer.OrdinalIgnoreCase);
 
@@ -61,6 +64,46 @@ public sealed class ResilientWebHostClient
         ArgumentNullException.ThrowIfNull(uri);
         if (!uri.IsAbsoluteUri || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             return Failed(PollFailureKind.Network);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var key = (uri, endpointKind);
+        if (_snapshots.TryGetValue(key, out WebHostFetchResult? cached) && cached != null)
+            return cached;
+        var fetch = _inflight.GetOrAdd(key, _ => new Lazy<Task<WebHostFetchResult>>(
+            () => FetchAndCacheAsync(uri, endpointKind), LazyThreadSafetyMode.ExecutionAndPublication));
+        // Each consumer may stop waiting without cancelling a snapshot needed by another room.
+        return await fetch.Value.WaitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<WebHostFetchResult> FetchAndCacheAsync(Uri uri, WebHostEndpointKind endpointKind)
+    {
+        var key = (uri, endpointKind);
+        try
+        {
+            // Recheck after a competing request has published its snapshot.
+            if (_snapshots.TryGetValue(key, out WebHostFetchResult? cached) && cached != null)
+                return cached;
+            var result = await FetchWithGatesAsync(uri, endpointKind, CancellationToken.None).ConfigureAwait(false);
+            if (result.Success)
+            {
+                _snapshots.Set(key, result, new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = endpointKind == WebHostEndpointKind.StaticTracker
+                        ? TimeSpan.FromMinutes(5) : TimeSpan.FromSeconds(5),
+                    Size = (long)result.Json!.Length * sizeof(char) + 512
+                });
+            }
+            return result;
+        }
+        finally
+        {
+            _inflight.TryRemove(key, out _);
+        }
+    }
+
+    private async Task<WebHostFetchResult> FetchWithGatesAsync(
+        Uri uri, WebHostEndpointKind endpointKind, CancellationToken cancellationToken)
+    {
 
         var origin = uri.GetLeftPart(UriPartial.Authority);
         var originGate = _originGates.GetOrAdd(

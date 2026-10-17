@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Text.Json;
 using ArchipelagoSphereTracker.src.Resources;
 
@@ -25,6 +25,14 @@ public static class WebPortalCommandsPage
         var modeLabel = Declare.IsArchipelagoMode ? "Archipelago" : "Standard";
         var archipelagoSections = Declare.IsArchipelagoMode
             ? $@"
+    <section class=""panel"">
+      <h2>{T("PrepTitle")}</h2>
+      <form data-command=""organize-room"">
+        <label>{T("PrepName")}<input name=""name"" maxlength=""80"" required /></label>
+        <label>{T("PrepCapacity")}<input type=""number"" name=""maximumPlayers"" min=""1"" max=""200"" value=""20"" required /></label>
+        <button type=""submit"">{T("PrepCreate")}</button><div class=""result"" data-result></div>
+      </form>
+    </section>
     <section class=""panel"">
       <h2>YAML</h2>
       <form data-command=""list-yamls"">
@@ -141,206 +149,14 @@ public static class WebPortalCommandsPage
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
-  <title>{T("WebDiscordCommands")}</title>
-  <style>
-    :root {{
-      color-scheme: dark;
-      --bg: #0b0f1f;
-      --bg-2: #13172b;
-      --panel: rgba(18, 22, 40, 0.88);
-      --accent: #b77bff;
-      --accent-2: #5ee1ff;
-      --text: #e8ecff;
-      --muted: #9aa3c7;
-      --glow: 0 0 16px rgba(183, 123, 255, 0.35);
-    }}
-
-    * {{ box-sizing: border-box; }}
-
-    body {{
-      margin: 0;
-      font-family: ""Segoe UI"", system-ui, sans-serif;
-      background: radial-gradient(circle at top, #1a1f3d 0%, var(--bg) 50%), linear-gradient(145deg, #0b0f1f, #13172b);
-      color: var(--text);
-      min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
-    }}
-
-    body::before {{
-      content: """";
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(#fff3 1px, transparent 1px);
-      background-size: 120px 120px;
-      opacity: 0.2;
-      pointer-events: none;
-    }}
-
-    header {{
-      position: sticky;
-      top: 0;
-      background: rgba(10, 12, 24, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 24px;
-      z-index: 2;
-    }}
-
-    .hero {{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
-    }}
-
-    .title {{
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }}
-
-    .title h1 {{
-      margin: 0;
-      font-size: 28px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }}
-
-    .title span {{
-      color: var(--muted);
-      font-size: 14px;
-    }}
-
-    .badge {{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: linear-gradient(120deg, rgba(183, 123, 255, 0.2), rgba(94, 225, 255, 0.2));
-      border: 1px solid rgba(183, 123, 255, 0.35);
-      font-size: 12px;
-      color: var(--text);
-      box-shadow: var(--glow);
-    }}
-
-    main {{
-      padding: 32px 24px 64px;
-      display: grid;
-      gap: 24px;
-      max-width: 1200px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }}
-
-    .panel {{
-      background: var(--panel);
-      border-radius: 20px;
-      padding: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-      display: grid;
-      gap: 12px;
-    }}
-
-    .panel h2 {{
-      margin-top: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 20px;
-    }}
-
-    .mode {{
-      color: var(--muted);
-      margin-top: -4px;
-      margin-bottom: 8px;
-    }}
-
-    .meta {{
-      color: var(--muted);
-      font-size: 14px;
-    }}
-
-    form {{
-      display: grid;
-      gap: 10px;
-      padding: 14px;
-      border-radius: 16px;
-      background: rgba(9, 11, 24, 0.55);
-    }}
-
-    label {{
-      display: grid;
-      gap: 6px;
-      font-size: 14px;
-      color: var(--muted);
-    }}
-
-    input, select, button {{
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(6, 8, 20, 0.8);
-      color: var(--text);
-      font-size: 14px;
-    }}
-
-    button {{
-      cursor: pointer;
-      background: linear-gradient(135deg, rgba(183, 123, 255, 0.35), rgba(94, 225, 255, 0.35));
-      border: 1px solid rgba(183, 123, 255, 0.45);
-      font-weight: 600;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }}
-
-    button:hover {{
-      transform: translateY(-1px);
-      box-shadow: var(--glow);
-    }}
-
-    .result {{
-      font-size: 13px;
-      color: var(--muted);
-      white-space: pre-wrap;
-    }}
-
-    .result a {{
-      color: var(--accent);
-      text-decoration: none;
-    }}
-
-    .room-links-list {{
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      gap: 8px;
-    }}
-
-    .room-links-list li {{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: rgba(9, 11, 24, 0.55);
-    }}
-
-    .room-links-list a {{
-      color: var(--accent-2);
-    }}
-  </style>
+  <title>AST · {T("WebAdminPortalTitle")}</title>
+  <style>{WebPortalTheme.Styles}</style>
 </head>
 <body>
   <header>
     <div class=""hero"">
       <div class=""title"">
-        <h1>AST Portal</h1>
+        <h1>AST · {T("WebAdminPortalTitle")}</h1>
         <span>⚙️ {T("WebDiscordCommands")}</span>
       </div>
       <div class=""badge"">Mode: {WebUtility.HtmlEncode(modeLabel)}</div>
@@ -348,13 +164,12 @@ public static class WebPortalCommandsPage
     <div class=""meta"" id=""channel-meta"">Channel ID: —</div>
   </header>
 
-  <main>
+  <main class=""management-layout"">
     <section class=""panel"">
-      <h2>AST Room Portals (Guild)</h2>
+      <h2>{T("TrackerRooms")}</h2>
       <p class=""mode"">{T("WebAvailableLinksForGuild")}</p>
-      <ul id=""room-links"" class=""room-links-list"">
-        <li>{T("WebLoadingAstRoomPortals")}</li>
-      </ul>
+      <label>{T("TrackerSearch")}<input id=""room-search"" type=""search"" placeholder=""{T("WebThreadName")}"" /></label>
+      <div id=""room-links"" class=""table-wrap""><p class=""empty"">{T("WebLoadingAstRoomPortals")}</p></div>
     </section>
 
     <section class=""panel"">
@@ -384,8 +199,14 @@ public static class WebPortalCommandsPage
             <option value=""true"">{T("WebYes")}</option>
           </select>
         </label>
-        <label>{T("WebCheckFrequency")}
-          <select name=""checkFrequency"">
+        <label>{T("WebPollingMode")}
+          <select name=""pollingMode"">
+            <option value=""automatic"">{T("WebPollingAutomatic")}</option>
+            <option value=""fixed"">{T("WebPollingFixedFrequency")}</option>
+          </select>
+        </label>
+        <label data-fixed-frequency hidden>{T("WebPollingFixedFrequency")}
+          <select name=""checkFrequency"" disabled>
             <option value=""5m"">{T("WebEvery5Minutes")}</option>
             <option value=""15m"">{T("WebEvery15Minutes")}</option>
             <option value=""30m"">{T("WebEvery30Minutes")}</option>
@@ -432,7 +253,19 @@ public static class WebPortalCommandsPage
     {archipelagoSections}
   </main>
 
-  <script>
+<script>
+  const addUrlForm = document.querySelector('form[data-command=""add-url""]');
+  const pollingModeSelect = addUrlForm.querySelector('[name=""pollingMode""]');
+  const fixedFrequencyField = addUrlForm.querySelector('[data-fixed-frequency]');
+  const fixedFrequencySelect = addUrlForm.querySelector('[name=""checkFrequency""]');
+  const updatePollingFields = () => {{
+    const fixed = pollingModeSelect.value === 'fixed';
+    fixedFrequencyField.hidden = !fixed;
+    fixedFrequencySelect.disabled = !fixed;
+    fixedFrequencySelect.required = fixed;
+  }};
+  pollingModeSelect.addEventListener('change', updatePollingFields);
+  updatePollingFields();
   const params = new URLSearchParams(window.location.search);
   if (window.__astPortalCommandsInitialized) {{
     console.debug('AST portal commands page already initialized; skipping duplicate init.');
@@ -561,14 +394,39 @@ public static class WebPortalCommandsPage
     }});
   }};
 
+  let portalRooms = [];
+  const roomSearch = document.getElementById('room-search');
+  const showRoomMessage = message => {{
+    const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = message;
+    roomLinksRoot.replaceChildren(empty);
+  }};
+  const renderRoomLinks = () => {{
+    const query = roomSearch.value.trim().toLocaleLowerCase();
+    const rooms = portalRooms.filter(room => (room.threadName || '').toLocaleLowerCase().includes(query));
+    if (!rooms.length) {{ showRoomMessage({Js("WebNoAstRoomPortalForGuild")}); return; }}
+    const table = document.createElement('table'); table.className = 'tracker-table rooms-table';
+    const head = table.createTHead().insertRow();
+    [{Js("WebThreadName")}, {Js("WebOpen")}].forEach(text => {{
+      const th = document.createElement('th'); th.scope = 'col'; th.textContent = text; head.appendChild(th);
+    }});
+    const body = table.createTBody();
+    rooms.slice().sort((a,b) => (a.threadName || '').localeCompare(b.threadName || '')).forEach(room => {{
+      const row = body.insertRow(); row.insertCell().textContent = room.threadName || ('Thread ' + (room.channelId || '?'));
+      const link = document.createElement('a'); link.href = normalizeDownloadUrl(room.url || '') || '#';
+      link.textContent = {Js("WebOpen")}; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      row.insertCell().appendChild(link);
+    }});
+    roomLinksRoot.replaceChildren(table);
+  }};
+  roomSearch.addEventListener('input', renderRoomLinks);
   const loadRoomLinks = async () => {{
     if (!roomLinksRoot) return;
     if (!guildId) {{
-      roomLinksRoot.innerHTML = '<li>' + {Js("WebGuildIdMissingInUrl")} + '</li>';
+      showRoomMessage({Js("WebGuildIdMissingInUrl")});
       return;
     }}
 
-    roomLinksRoot.innerHTML = '<li>{T("WebLoadingAstRoomPortals")}</li>';
+    showRoomMessage({Js("WebLoadingAstRoomPortals")});
 
     try {{
       const response = await fetch(roomLinksApi);
@@ -578,29 +436,14 @@ public static class WebPortalCommandsPage
         : [];
 
       if (!response.ok || links.length === 0) {{
-        roomLinksRoot.innerHTML = '<li>' + {Js("WebNoAstRoomPortalForGuild")} + '</li>';
+        showRoomMessage({Js("WebNoAstRoomPortalForGuild")});
         return;
       }}
 
-      roomLinksRoot.innerHTML = '';
-      links.forEach((entry) => {{
-        const item = document.createElement('li');
-
-        const name = document.createElement('strong');
-        name.textContent = entry.threadName || ('Thread ' + (entry.channelId || '?'));
-        item.appendChild(name);
-
-        const link = document.createElement('a');
-        link.href = normalizeDownloadUrl(entry.url || '') || '#';
-        link.textContent = {Js("WebOpen")};
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        item.appendChild(link);
-
-        roomLinksRoot.appendChild(item);
-      }});
+      portalRooms = links;
+      renderRoomLinks();
     }} catch {{
-      roomLinksRoot.innerHTML = '<li>' + {Js("WebUnableToLoadAstRoomPortals")} + '</li>';
+      showRoomMessage({Js("WebUnableToLoadAstRoomPortals")});
     }}
   }};
 
@@ -753,6 +596,7 @@ public static class WebPortalCommandsPage
     loadAuditEntries();
   }}
 </script>
+<script>{WebPortalTheme.NavigationScript}</script>
 </body>
 </html>";
     }

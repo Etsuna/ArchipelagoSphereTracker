@@ -82,12 +82,13 @@ public class AstSetupWizardTests
         Assert.True(AstSetupWizard.IsReady(draft));
         Assert.Contains("archipelago.example", summary, StringComparison.Ordinal);
         Assert.Contains("<#3>", summary, StringComparison.Ordinal);
-        Assert.Contains("`1h`", summary, StringComparison.Ordinal);
+        Assert.Contains("`1m–5m`", summary, StringComparison.Ordinal);
         Assert.DoesNotContain("private-room-token", summary, StringComparison.Ordinal);
         Assert.DoesNotContain("private-room-token", draft.ToString(), StringComparison.Ordinal);
         Assert.Equal(7, customIds.Count);
         Assert.DoesNotContain(customIds, customId => customId!.EndsWith(":preview", StringComparison.Ordinal));
-        Assert.Equal(8, frequencyMenu.Options.Count);
+        Assert.Equal(9, frequencyMenu.Options.Count);
+        Assert.True(frequencyMenu.Options.Single(option => option.Value == "automatic").IsDefault);
         Assert.All(frequencyMenu.Options, option => Assert.False(string.IsNullOrWhiteSpace(option.Description)));
         Assert.All(customIds, customId => Assert.StartsWith(
             $"{AstSetupWizard.CustomIdPrefix}:{draft.SessionId}:",
@@ -102,6 +103,22 @@ public class AstSetupWizardTests
     public void CustomIdParser_RejectsForeignOrMalformedIds(string customId)
     {
         Assert.False(AstSetupWizard.TryParseCustomId(customId, out _, out _));
+    }
+
+    [Fact]
+    public void FixedSetup_ConfirmsTheSelectedFrequencyAndMode()
+    {
+        var draft = new AstSetupDraft("session", 1, 2, 3, 3, DateTimeOffset.UtcNow.AddMinutes(15),
+            "https://archipelago.example/room/private-token", "Room", CheckFrequency: "1h",
+            PollingMode: ArchipelagoSphereTracker.Tracking.Scheduling.RoomPollingMode.Fixed);
+        var summary = AstSetupWizard.BuildSummary(draft);
+        Assert.Contains("`1h`", summary);
+        Assert.DoesNotContain("1m–5m", summary);
+        var selected = AstSetupWizard.BuildComponents(draft).Components.OfType<ActionRowComponent>()
+            .SelectMany(row => row.Components).OfType<SelectMenuComponent>()
+            .Single(menu => menu.CustomId.EndsWith(":frequency", StringComparison.Ordinal))
+            .Options.Single(option => option.IsDefault == true);
+        Assert.Equal("1h", selected.Value);
     }
 
     private sealed class MutableTimeProvider(DateTimeOffset now) : TimeProvider

@@ -139,6 +139,11 @@ public static class TrackingDataManager
     public static RoomHealthSnapshot? GetRoomHealth(string guildId, string channelId)
         => GetCentralScheduler()?.GetHealth(guildId, channelId);
 
+    public static Task<TrackingControlOutcome> RefreshRoomIfStaleAsync(
+        string guildId, string channelId, CancellationToken cancellationToken = default)
+        => GetCentralScheduler()?.RefreshIfStaleAsync(guildId, channelId, cancellationToken)
+           ?? Task.FromResult(TrackingControlOutcome.Unavailable);
+
     public static IReadOnlyList<RoomHealthSnapshot>? GetGuildHealth(string guildId)
         => GetCentralScheduler()?.GetGuildHealth(guildId);
 
@@ -806,6 +811,7 @@ public static class TrackingDataManager
         if (!runtime.Success)
             return runtime.PollResult;
         var json = runtime.Json!;
+        var hasRecentActivity = WebHostActivity.HasRecentActivity(json, DateTimeOffset.UtcNow);
 
         string? jsonStatic = null;
         if (isAddUrl)
@@ -860,13 +866,13 @@ public static class TrackingDataManager
         var hints = TrackerStreamParser.ParseHints(ctx, json);
         var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, totalsBySlot);
         if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0)
-            return RoomPollResult.Ok(normalizedSnapshot?.ContentHash);
+            return RoomPollResult.Ok(normalizedSnapshot?.ContentHash, hasRecentActivity: hasRecentActivity);
 
-        var completedGoalCount = statuses.Count > 0
-            ? await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false)
-            : 0;
         var newItemCount = items.Count > 0
             ? await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false)
+            : 0;
+        var completedGoalCount = statuses.Count > 0
+            ? await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false)
             : 0;
         var hintChanges = hints.Count > 0
             ? await ProcessHintTableAsync(guild, channel, hints, silent, ctChan, isAddUrl).ConfigureAwait(false)
@@ -901,7 +907,8 @@ public static class TrackingDataManager
             newItemCount,
             hintChanges.Added,
             hintChanges.Updated,
-            completedGoalCount);
+            completedGoalCount,
+            hasRecentActivity);
     }
 
     private static async Task TryPersistTrackingV2Async(

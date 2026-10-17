@@ -1,5 +1,7 @@
 # PR 6 — Polling adaptatif et santé des rooms
 
+> Historique de la politique initiale. Voir [Réactivité des checks](check-latency.fr.md) pour la politique actuelle : une minute en activité et plafond de cinq minutes sur inactivité connue.
+
 ## Problème traité
 
 Une room calme était interrogée aussi souvent qu'une room active et l'état interne du scheduler n'était pas directement consultable ou contrôlable. Cette évolution conserve le scheduler central de la PR 5 et lui ajoute une politique adaptative, une pause durable et des commandes d'exploitation.

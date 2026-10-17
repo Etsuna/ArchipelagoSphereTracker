@@ -60,10 +60,13 @@ public static class BotCommands
                 Declare.Client.AutocompleteExecuted += HandleAutocompleteAsync;
                 Declare.Client.ButtonExecuted += AstSetupWizard.HandleComponentAsync;
                 Declare.Client.ButtonExecuted += AstCommandCenter.HandleButtonAsync;
+                Declare.Client.ButtonExecuted += PreparationDiscord.HandleButtonAsync;
+                PreparationDiscord.Initialize();
                 Declare.Client.SelectMenuExecuted += AstSetupWizard.HandleComponentAsync;
                 Declare.Client.SelectMenuExecuted += AstCommandCenter.HandleSelectMenuAsync;
                 Declare.Client.ModalSubmitted += AstSetupWizard.HandleModalAsync;
                 Declare.Client.ModalSubmitted += AstCommandCenter.HandleModalAsync;
+                Declare.Client.ModalSubmitted += PreparationDiscord.HandleModalAsync;
                 _handlersRegistered = true;
             }
         }
@@ -153,6 +156,15 @@ public static class BotCommands
     public static async Task HandleSlashCommandAsync(SocketSlashCommand command)
     {
         var telemetry = CommandTelemetry.BeginSlash(command);
+        if (command.CommandName == "organize-room")
+        {
+            using (telemetry)
+            {
+                await PreparationDiscord.HandleSlashAsync(command);
+                telemetry.Complete();
+            }
+            return;
+        }
         if (command.CommandName == "ast")
         {
             using (telemetry)
@@ -192,7 +204,7 @@ public static class BotCommands
         var isThread = command.Channel is IThreadChannel;
         try
         {
-            await command.DeferAsync(ephemeral: isThread);
+            await command.DeferAsync(ephemeral: isThread || command.CommandName == "send-yaml");
         }
         catch
         {
@@ -285,7 +297,12 @@ public static class BotCommands
                 const int maxLength = 1999;
                 string message;
 
-                if (isThread)
+                if (command.CommandName == "send-yaml")
+                {
+                    message = await YamlClass.SendYaml(command, channelId);
+                    await command.FollowupAsync(message, ephemeral:true, allowedMentions:AllowedMentions.None);
+                }
+                else if (isThread)
                 {
                     message = await HandleThreadedCommand(command, guildUser, alias, realAlias, channelId, guildId);
                     await SendPaginatedMessageAsync(command, message, maxLength);

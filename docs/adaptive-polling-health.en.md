@@ -1,5 +1,7 @@
 # PR 6 — Adaptive polling and room health
 
+> Historical design. The current automatic policy polls every minute while active or activity is unknown, and slows down only on known inactivity, capped at five minutes. See [the updated analysis](check-latency.fr.md).
+
 ## Problem addressed
 
 Quiet rooms were polled as often as active rooms, while the scheduler's internal state could not be directly inspected or controlled. This change keeps the PR 5 central scheduler and adds an adaptive policy, durable pauses, and operational commands.

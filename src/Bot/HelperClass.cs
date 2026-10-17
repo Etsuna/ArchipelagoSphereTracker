@@ -61,7 +61,7 @@ public class HelperClass
             message += string.Format(Resource.HelperUrlTracker, $"{baseUrl}/tracker/{tracker}") + "\n";
             message += string.Format(Resource.HelperUrlSphereTracker, $"{baseUrl}/sphere_tracker/{tracker}") + "\n";
             message += string.Format(Resource.HelperSilent, TranslateBool(silent)) + "\n";
-            message += string.Format(Resource.HelperCheckFrequency, CheckFrequency) + "\n";
+            message += await GetPollingInfoAsync(guildId, channelId, CheckFrequency) + "\n";
             message += string.Format(Resource.HelperLastCheck, LastCheck) + "\n";
             message += string.Format(Resource.HelperPort, Port) + "\n";
         }
@@ -70,6 +70,15 @@ public class HelperClass
             message = Resource.NoUrlRegistered;
         }
         return message;
+    }
+
+    internal static async Task<string> GetPollingInfoAsync(string guildId, string channelId, string fixedFrequency)
+    {
+        var mode = await ChannelsAndUrlsCommands.GetPollingModeAsync(guildId, channelId);
+        var description = mode == ArchipelagoSphereTracker.Tracking.Scheduling.RoomPollingMode.Automatic
+            ? Resource.WebPollingAutomatic
+            : $"{Resource.WebPollingFixedFrequency} — {fixedFrequency}";
+        return string.Format(Resource.HelperCheckFrequency, description);
     }
 
     public static async Task<string> StatusGameList(string channelId, string guildId)

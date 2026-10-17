@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Text.Json;
 using ArchipelagoSphereTracker.src.Resources;
 
@@ -18,345 +18,17 @@ public static class WebPortalUserPage
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
-  <title>AST Recap Portal</title>
-  <style>
-    :root {{
-      color-scheme: dark;
-      --bg: #0b0f1f;
-      --bg-2: #13172b;
-      --panel: rgba(18, 22, 40, 0.88);
-      --accent: #b77bff;
-      --accent-2: #5ee1ff;
-      --text: #e8ecff;
-      --muted: #9aa3c7;
-      --danger: #ff6b7a;
-      --glow: 0 0 16px rgba(183, 123, 255, 0.35);
-    }}
-
-    * {{ box-sizing: border-box; }}
-
-    body {{
-      margin: 0;
-      font-family: ""Segoe UI"", system-ui, sans-serif;
-      background: radial-gradient(circle at top, #1a1f3d 0%, var(--bg) 50%), linear-gradient(145deg, #0b0f1f, #13172b);
-      color: var(--text);
-      min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
-    }}
-
-    body::before {{
-      content: """";
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(#fff3 1px, transparent 1px);
-      background-size: 120px 120px;
-      opacity: 0.2;
-      pointer-events: none;
-    }}
-
-    header {{
-      position: sticky;
-      top: 0;
-      background: rgba(10, 12, 24, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 24px;
-      z-index: 2;
-    }}
-
-    .hero {{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
-    }}
-
-    .title {{
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }}
-
-    .title h1 {{
-      margin: 0;
-      font-size: 28px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }}
-
-    .title span {{
-      color: var(--muted);
-      font-size: 14px;
-    }}
-
-    .badge {{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: linear-gradient(120deg, rgba(183, 123, 255, 0.2), rgba(94, 225, 255, 0.2));
-      border: 1px solid rgba(183, 123, 255, 0.35);
-      font-size: 12px;
-      color: var(--text);
-      box-shadow: var(--glow);
-    }}
-
-    main {{
-      padding: 32px 24px 64px;
-      display: grid;
-      gap: 24px;
-      max-width: 1200px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }}
-
-    details.panel {{
-      padding: 0;
-      overflow: hidden;
-    }}
-
-    details.panel[open] {{
-      box-shadow: 0 22px 42px rgba(0, 0, 0, 0.28);
-    }}
-
-    details.panel > summary {{
-      list-style: none;
-      cursor: pointer;
-      padding: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      user-select: none;
-    }}
-
-    details.panel > summary::-webkit-details-marker {{ display: none; }}
-
-    details.panel > summary::after {{
-      content: ""▾"";
-      font-size: 18px;
-      color: var(--accent-2);
-      transition: transform 0.2s ease;
-    }}
-
-    details.panel[open] > summary::after {{ transform: rotate(180deg); }}
-
-    .panel-content {{
-      padding: 0 24px 24px;
-      display: grid;
-      gap: 16px;
-    }}
-
-    .panel {{
-      background: var(--panel);
-      border-radius: 20px;
-      padding: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-    }}
-
-    .panel h2 {{
-      margin-top: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 20px;
-    }}
-
-    .grid {{ display: grid; gap: 16px; }}
-
-    .alias-card {{
-      border: 1px solid rgba(183, 123, 255, 0.3);
-      border-radius: 16px;
-      padding: 16px;
-      background: rgba(15, 18, 33, 0.8);
-    }}
-
-    .alias-header {{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
-    }}
-
-    .alias-header h3 {{
-      margin: 0;
-      font-size: 18px;
-      color: var(--accent);
-    }}
-
-    .button {{
-      background: linear-gradient(135deg, rgba(183, 123, 255, 0.35), rgba(94, 225, 255, 0.35));
-      border: 1px solid rgba(183, 123, 255, 0.45);
-      border-radius: 10px;
-      color: var(--text);
-      padding: 6px 14px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }}
-
-    .button:hover {{ transform: translateY(-1px); box-shadow: var(--glow); }}
-
-    .button:disabled {{
-      cursor: not-allowed;
-      opacity: 0.45;
-      transform: none;
-      box-shadow: none;
-    }}
-
-    .button.danger {{
-      background: rgba(255, 107, 122, 0.15);
-      border-color: rgba(255, 107, 122, 0.5);
-      color: #ffd7dc;
-    }}
-
-    .actions-grid {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-      margin-top: 12px;
-    }}
-
-    .action-group {{
-      display: grid;
-      gap: 8px;
-    }}
-
-    .action-group label {{
-      font-size: 13px;
-      color: var(--muted);
-    }}
-
-    .companion-group {{
-      grid-column: 1 / -1;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-    }}
-
-    .companion-actions {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }}
-
-    .companion-help {{
-      color: var(--muted);
-      font-size: 12px;
-    }}
-
-    .action-group select,
-    .action-group input {{
-      width: 100%;
-      border-radius: 10px;
-      padding: 8px 10px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(11, 15, 31, 0.85);
-      color: var(--text);
-    }}
-
-    .result {{
-      color: var(--accent-2);
-      font-size: 13px;
-      white-space: pre-wrap;
-    }}
-
-    .compact-upload {{
-      align-self: start;
-      align-content: start;
-    }}
-
-    .compact-upload .button {{
-      justify-self: start;
-      width: auto;
-      padding: 8px 18px;
-    }}
-
-    .spoiler-status {{ grid-column: 1 / -1; }}
-
-    .list {{
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: 8px;
-    }}
-
-    .list li {{
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.04);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      align-items: center;
-    }}
-
-    .group-title {{
-      margin: 12px 0 6px;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-    }}
-
-    .tag {{
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      border: 1px solid rgba(94, 225, 255, 0.4);
-      color: var(--accent-2);
-    }}
-
-    .meta {{ color: var(--muted); font-size: 12px; }}
-
-    .hero-details {{
-      margin-top: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      background: rgba(9, 11, 24, 0.55);
-      padding: 8px 12px;
-    }}
-
-    .hero-details summary {{
-      cursor: pointer;
-      color: var(--accent-2);
-      font-size: 13px;
-      user-select: none;
-    }}
-
-    .hero-info {{
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-    }}
-
-    .hero-info a {{
-      color: var(--accent-2);
-    }}
-
-    .status {{ margin-top: 8px; color: var(--accent-2); font-size: 13px; }}
-
-    .empty {{ color: var(--muted); font-style: italic; }}
-  </style>
+  <title>AST · Sphere Tracker</title>
+  <style>{WebPortalTheme.Styles}</style>
 </head>
 <body data-guild=""{safeGuildId}"" data-channel=""{safeChannelId}"" data-token=""{safeToken}"">
   <header>
     <div class=""hero"">
       <div class=""title"">
-        <h1>AST User Portal</h1>
-        <span>🌌 Sphere Tracker · {T("WebPersonalPortal")}</span>
+        <h1 id=""room-title"">AST · Sphere Tracker</h1>
+        <span>Archipelago Sphere Tracker · {T("WebPersonalPortal")}</span>
       </div>
-      <div class=""badge"">{T("WebAccess")}: {safeToken}</div>
     </div>
-    <div class=""meta"">Guild: {safeGuildId} · Channel: {safeChannelId}</div>
     <details class=""hero-details"">
       <summary>{T("WebShowInfo")}</summary>
       <div class=""hero-info"" id=""hero-info"">{T("WebLoadingInfo")}</div>
@@ -364,15 +36,52 @@ public static class WebPortalUserPage
   </header>
 
   <main>
-    <section class=""panel"">
-      <h2>🔭 {T("WebQuickActions")}</h2>
+    <section class=""panel toolbar"">
+      <h2>{T("WebQuickActions")}</h2>
       <button class=""button"" id=""refresh"">{T("WebRefreshData")}</button>
       <button class=""button danger"" id=""revoke-portal-button"">{T("AstCenterRevokePortal")}</button>
+      <div id=""tracking-status"" class=""meta"" role=""status"" aria-live=""polite""></div>
       <div id=""status"" class=""status""></div>
     </section>
-   
+
+    <section class=""panel"" id=""room-overview"">
+      <h2>{T("AstCenterProgress")}</h2>
+      <div class=""room-stats"">
+        <div class=""room-stat""><span>{T("TrackerSlots")}</span><strong id=""stat-slots"">—</strong></div>
+        <div class=""room-stat""><span>{T("TrackerGames")}</span><strong id=""stat-games"">—</strong></div>
+        <div class=""room-stat""><span>{T("TrackerChecks")}</span><strong id=""stat-checks"">—</strong></div>
+        <div class=""room-stat""><span>{T("TrackerProgress")}</span><strong id=""stat-progress"">—</strong></div>
+      </div>
+      <div class=""tracker-filters"">
+        <label>{T("TrackerSearch")}<input id=""slot-search"" type=""search"" placeholder=""{T("TrackerSearchPlaceholder")}"" /></label>
+        <label>{T("TrackerGame")}<select id=""slot-game-filter""><option value="""">{T("TrackerAllGames")}</option></select></label>
+        <label>{T("TrackerStatus")}<select id=""slot-progress-filter""><option value="""">{T("TrackerAllSlots")}</option><option value=""incomplete"">{T("TrackerIncomplete")}</option><option value=""complete"">{T("TrackerComplete")}</option></select></label>
+        <label>{T("TrackerSort")}<select id=""slot-sort""><option value=""name"">{T("TrackerSlot")}</option><option value=""game"">{T("TrackerGame")}</option><option value=""progress-desc"">{T("TrackerMostProgress")}</option><option value=""progress-asc"">{T("TrackerLeastProgress")}</option></select></label>
+      </div>
+      <div class=""tracker-filter-footer""><label class=""inline-check""><input id=""only-my-slots"" type=""checkbox"" />{T("TrackerOnlyMine")}</label><span id=""slots-shown"" class=""meta"" role=""status""></span></div>
+      <div id=""game-status-root""></div>
+    </section>
+
+    <details class=""panel"" open>
+      <summary><h2>{T("WebCurrentRecap")}</h2></summary>
+      <div class=""panel-content"">
+        <button class=""button danger"" id=""clear-all-recaps-button"">{T("AstCenterClearAll")}</button>
+        <div id=""recap-root"" class=""grid""></div>
+      </div>
+    </details>
+
+    <details class=""panel"" open>
+      <summary><h2>{T("WebActiveHints")}</h2></summary>
+      <div id=""hints-root"" class=""grid panel-content""></div>
+    </details>
+
     <details class=""panel"" close>
-      <summary><h2>🧑‍🚀 {T("WebYourAliases")}</h2></summary>
+      <summary><h2>{T("WebReceivedItems")}</h2></summary>
+      <div id=""items-root"" class=""grid panel-content""></div>
+    </details>
+
+    <details class=""panel"" close>
+      <summary><h2>{T("WebYourAliases")}</h2></summary>
       <div class=""actions-grid panel-content"">
         <div class=""action-group"">
           <label for=""add-alias-select"">{T("WebAddExistingAliasInThread")}</label>
@@ -405,13 +114,35 @@ public static class WebPortalUserPage
       </div>
     </details>
 
-    <details class=""panel"" open>
-      <summary><h2>📊 {T("AstCenterProgress")}</h2></summary>
-      <div id=""game-status-root"" class=""grid panel-content""></div>
+    <details class=""panel"" close>
+      <summary><h2>{T("AstCenterMyPatch")}</h2></summary>
+      <div class=""action-group panel-content"">
+        <label for=""personal-patch-alias-select"">{T("WebSelectAliasForPatch")}</label>
+        <select id=""personal-patch-alias-select""></select>
+        <div class=""result"" id=""personal-patch-result""></div>
+      </div>
     </details>
 
-    <details class=""panel"" open>
-      <summary><h2>🔎 {T("AstCenterSpoilerAnalysis")}</h2></summary>
+    <details class=""panel"" close>
+      <summary><h2>{T("AstCenterMyExclusions")}</h2></summary>
+      <div class=""actions-grid panel-content"">
+        <div class=""action-group"">
+          <label for=""exclusion-alias-select"">{T("AstCenterChooseASlot")}</label>
+          <select id=""exclusion-alias-select""></select>
+          <label for=""available-exclusion-item-select"">{T("AstCenterChooseAnItem")}</label>
+          <select id=""available-exclusion-item-select""></select>
+          <button class=""button"" id=""add-exclusion-button"">{T("AstCenterAddAnExclusionForSlot")}</button>
+        </div>
+        <div class=""action-group"">
+          <label for=""excluded-item-select"">{T("AstCenterMyExclusions")}</label>
+          <select id=""excluded-item-select""></select>
+          <button class=""button danger"" id=""delete-exclusion-button"">{T("AstCenterRemoveAnExclusionFromSlot")}</button>
+        </div>
+      </div>
+    </details>
+
+    <details class=""panel"">
+      <summary><h2>{T("AstCenterSpoilerAnalysis")}</h2></summary>
       <div class=""actions-grid panel-content"">
         <div class=""result spoiler-status"" id=""spoiler-log-status"">{T("WebCheckingSpoilerLog")}</div>
         <form class=""action-group compact-upload"" id=""spoiler-upload-form"">
@@ -446,51 +177,6 @@ public static class WebPortalUserPage
           <div class=""result"" data-result></div>
         </form>
       </div>
-    </details>
-
-    <details class=""panel"" close>
-      <summary><h2>🩹 {T("AstCenterMyPatch")}</h2></summary>
-      <div class=""action-group panel-content"">
-        <label for=""personal-patch-alias-select"">{T("WebSelectAliasForPatch")}</label>
-        <select id=""personal-patch-alias-select""></select>
-        <div class=""result"" id=""personal-patch-result""></div>
-      </div>
-    </details>
-
-    <details class=""panel"" close>
-      <summary><h2>🚫 {T("AstCenterMyExclusions")}</h2></summary>
-      <div class=""actions-grid panel-content"">
-        <div class=""action-group"">
-          <label for=""exclusion-alias-select"">{T("AstCenterChooseASlot")}</label>
-          <select id=""exclusion-alias-select""></select>
-          <label for=""available-exclusion-item-select"">{T("AstCenterChooseAnItem")}</label>
-          <select id=""available-exclusion-item-select""></select>
-          <button class=""button"" id=""add-exclusion-button"">{T("AstCenterAddAnExclusionForSlot")}</button>
-        </div>
-        <div class=""action-group"">
-          <label for=""excluded-item-select"">{T("AstCenterMyExclusions")}</label>
-          <select id=""excluded-item-select""></select>
-          <button class=""button danger"" id=""delete-exclusion-button"">{T("AstCenterRemoveAnExclusionFromSlot")}</button>
-        </div>
-      </div>
-    </details>
-
-    <details class=""panel"" open>
-      <summary><h2>📜 {T("WebCurrentRecap")}</h2></summary>
-      <div class=""panel-content"">
-        <button class=""button danger"" id=""clear-all-recaps-button"">{T("AstCenterClearAll")}</button>
-        <div id=""recap-root"" class=""grid""></div>
-      </div>
-    </details>
-
-    <details class=""panel"" open>
-      <summary><h2>✨ {T("WebActiveHints")}</h2></summary>
-      <div id=""hints-root"" class=""grid panel-content""></div>
-    </details>
-
-    <details class=""panel"" close>
-      <summary><h2>🎁 {T("WebReceivedItems")}</h2></summary>
-      <div id=""items-root"" class=""grid panel-content""></div>
     </details>
 
     <details class=""panel"" close>
@@ -617,34 +303,84 @@ public static class WebPortalUserPage
       return card;
     }};
 
-    const renderGameStatuses = (gameStatuses) => {{
-      gameStatusRoot.innerHTML = '';
-      if (!Array.isArray(gameStatuses) || gameStatuses.length === 0) {{
-        gameStatusRoot.innerHTML = '<p class=""empty"">' + {Js("WebNoInfoAvailable")} + '</p>';
-        return;
-      }}
+    let roomSlots = [];
+    let mySlotNames = new Set();
+    const slotSearch = document.getElementById('slot-search');
+    const slotGameFilter = document.getElementById('slot-game-filter');
+    const slotProgressFilter = document.getElementById('slot-progress-filter');
+    const slotSort = document.getElementById('slot-sort');
+    const onlyMySlots = document.getElementById('only-my-slots');
+    const numericCount = value => Math.max(0, Number.parseInt(value, 10) || 0);
+    const slotProgress = slot => slot.total > 0 ? Math.min(100, slot.checks / slot.total * 100) : 0;
+    const slotComplete = slot => slot.total > 0 && slot.checks >= slot.total;
 
-      gameStatuses.forEach(statusEntry => {{
-        const content = document.createElement('div');
-        const game = document.createElement('div');
-        game.className = 'meta';
-        game.textContent = statusEntry.game || '';
-        content.appendChild(game);
-
-        const progress = document.createElement('strong');
-        progress.textContent = (statusEntry.checks || '0') + ' / ' + (statusEntry.total || '0');
-        content.appendChild(progress);
-
-        if (statusEntry.lastActivity) {{
-          const activity = document.createElement('div');
-          activity.className = 'meta';
-          activity.textContent = statusEntry.lastActivity;
-          content.appendChild(activity);
-        }}
-
-        gameStatusRoot.appendChild(createAliasCard(statusEntry.name || '?', content));
+    const renderSlotTable = () => {{
+      const search = slotSearch.value.trim().toLocaleLowerCase();
+      const slots = roomSlots.filter(slot =>
+        (!search || (slot.name + ' ' + slot.game).toLocaleLowerCase().includes(search)) &&
+        (!slotGameFilter.value || slot.game === slotGameFilter.value) &&
+        (!slotProgressFilter.value || slotComplete(slot) === (slotProgressFilter.value === 'complete')) &&
+        (!onlyMySlots.checked || mySlotNames.has(slot.name.toLocaleLowerCase())));
+      slots.sort((a, b) => {{
+        if (slotSort.value === 'progress-desc') return slotProgress(b) - slotProgress(a) || a.name.localeCompare(b.name);
+        if (slotSort.value === 'progress-asc') return slotProgress(a) - slotProgress(b) || a.name.localeCompare(b.name);
+        if (slotSort.value === 'game') return a.game.localeCompare(b.game) || a.name.localeCompare(b.name);
+        return a.name.localeCompare(b.name);
       }});
+      document.getElementById('slots-shown').textContent = {Js("TrackerSlotsShown")}.replace('{{0}}', slots.length).replace('{{1}}', roomSlots.length);
+      const table = document.createElement('table');
+      table.className = 'tracker-table';
+      const caption = document.createElement('caption');
+      caption.className = 'sr-only';
+      caption.textContent = {Js("AstCenterProgress")};
+      table.appendChild(caption);
+      const head = table.createTHead().insertRow();
+      [{Js("TrackerSlot")}, {Js("TrackerGame")}, {Js("TrackerStatus")}, {Js("TrackerChecks")}, {Js("TrackerActivity")}].forEach(label => {{
+        const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; head.appendChild(th);
+      }});
+      const body = table.createTBody();
+      slots.forEach(slot => {{
+        const row = body.insertRow();
+        row.insertCell().textContent = slot.name;
+        row.insertCell().textContent = slot.game;
+        const state = document.createElement('span');
+        state.className = 'state-label' + (slotComplete(slot) ? ' complete' : '');
+        state.textContent = slotComplete(slot) ? {Js("TrackerComplete")} : {Js("TrackerIncomplete")};
+        row.insertCell().appendChild(state);
+        const checks = row.insertCell(); checks.className = 'checks';
+        checks.textContent = slot.checks.toLocaleString() + ' / ' + slot.total.toLocaleString();
+        const bar = document.createElement('progress'); bar.max = 100; bar.value = slotProgress(slot);
+        bar.setAttribute('aria-label', slot.name + ' · ' + {Js("TrackerChecks")}); checks.appendChild(bar);
+        const activity = row.insertCell(); activity.className = 'activity';
+        const date = Date.parse(slot.lastActivity);
+        activity.textContent = Number.isNaN(date) ? (slot.lastActivity || '—') : new Date(date).toLocaleString();
+      }});
+      if (!slots.length) {{
+        const cell = body.insertRow().insertCell(); cell.colSpan = 5; cell.className = 'empty';
+        cell.textContent = roomSlots.length ? {Js("TrackerNoMatches")} : {Js("WebNoInfoAvailable")};
+      }}
+      const wrap = document.createElement('div'); wrap.className = 'table-wrap'; wrap.appendChild(table);
+      gameStatusRoot.replaceChildren(wrap);
     }};
+    const renderGameStatuses = (gameStatuses) => {{
+      roomSlots = (Array.isArray(gameStatuses) ? gameStatuses : []).map(slot => ({{
+        name: slot.name || '?', game: slot.game || '—', checks: numericCount(slot.checks),
+        total: numericCount(slot.total), lastActivity: slot.lastActivity || ''
+      }}));
+      const selectedGame = slotGameFilter.value;
+      slotGameFilter.replaceChildren(new Option({Js("TrackerAllGames")}, ''));
+      [...new Set(roomSlots.map(slot => slot.game))].sort((a,b) => a.localeCompare(b)).forEach(game => slotGameFilter.add(new Option(game, game)));
+      if ([...slotGameFilter.options].some(option => option.value === selectedGame)) slotGameFilter.value = selectedGame;
+      const checks = roomSlots.reduce((sum,slot) => sum + slot.checks, 0);
+      const total = roomSlots.reduce((sum,slot) => sum + slot.total, 0);
+      document.getElementById('stat-slots').textContent = roomSlots.length.toLocaleString();
+      document.getElementById('stat-games').textContent = new Set(roomSlots.map(slot => slot.game)).size.toLocaleString();
+      document.getElementById('stat-checks').textContent = checks.toLocaleString() + ' / ' + total.toLocaleString();
+      document.getElementById('stat-progress').textContent = (total > 0 ? Math.min(100,checks / total * 100) : 0).toLocaleString(undefined, {{maximumFractionDigits:1}}) + '%';
+      renderSlotTable();
+    }};
+    slotSearch.addEventListener('input', renderSlotTable);
+    [slotGameFilter, slotProgressFilter, slotSort, onlyMySlots].forEach(control => control.addEventListener('change', renderSlotTable));
 
     const renderRecaps = (recaps) => {{
       recapRoot.innerHTML = '';
@@ -1106,6 +842,7 @@ public static class WebPortalUserPage
         const payload = await response.json();
         const link = (payload.links || []).find(item => String(item.channelId) === String(ctx.channelId));
         companionPortalName = link && link.threadName ? link.threadName : '';
+        if (companionPortalName) document.getElementById('room-title').textContent = companionPortalName;
       }} catch {{
         companionPortalName = '';
       }}
@@ -1175,23 +912,60 @@ public static class WebPortalUserPage
       setStatus(payload.message || {Js("WebUnableToDeleteAlias")});
     }};
 
+    let summaryLoading = false;
+    let refreshTimer;
+    let pendingRefreshPolls = 0;
+    const refreshButton = document.getElementById('refresh');
+    const trackingStatus = document.getElementById('tracking-status');
     const loadData = async () => {{
-      setStatus({Js("WebSyncingDatabase")});
-      const res = await fetch(apiBase + '/summary');
-      if (!res.ok) {{
-        await loadAliasLists();
+      if (summaryLoading) return;
+      clearTimeout(refreshTimer);
+      summaryLoading = true;
+      refreshButton.disabled = true;
+      let nextRefreshDelay = 60000;
+      try {{
+        const res = await fetch(apiBase + '/summary', {{ cache: 'no-store' }});
+        if (!res.ok) {{
+          setStatus({Js("WebPortalUnavailable")});
+          // A revoked or expired link should not keep making background requests.
+          if (res.status === 401 || res.status === 403 || res.status === 404) nextRefreshDelay = 0;
+          return;
+        }}
+        const data = await res.json();
+        setStatus('');
+        const tracking = data.tracking || {{ isUnavailable: true }};
+        let freshness = {Js("WebLastArchipelagoSync")} + ': ' +
+          (tracking.lastSuccessAtUtc ? new Date(tracking.lastSuccessAtUtc).toLocaleString() : {Js("WebSyncNever")});
+        if (tracking.isPaused) freshness += ' · ' + {Js("WebSyncPaused")};
+        else if (tracking.isUnavailable) freshness += ' · ' + {Js("WebSyncUnavailable")};
+        else if (tracking.isSyncing) freshness += ' · ' + {Js("WebSyncPending")};
+        else if (tracking.lastFailureKind && tracking.lastFailureKind !== 'None') freshness += ' · ' + {Js("WebSyncFailed")};
+        trackingStatus.textContent = freshness;
+        if (tracking.isSyncing && pendingRefreshPolls < 4) {{
+          pendingRefreshPolls++;
+          nextRefreshDelay = 5000;
+        }} else if (!tracking.isSyncing) pendingRefreshPolls = 0;
+        mySlotNames = new Set((data.receivedItems || []).map(slot => (slot.alias || '').toLocaleLowerCase()));
+        renderGameStatuses(data.gameStatuses || []);
+        renderRecaps(data.recaps || []);
+        renderItems(data.receivedItems || []);
+        renderHints(data.hints || []);
+        await Promise.all([loadAliasLists(), loadPersonalPatches(), loadExclusions(), loadSpoilerStatus()]);
+      }} catch {{
         setStatus({Js("WebPortalUnavailable")});
-        return;
+      }} finally {{
+        summaryLoading = false;
+        refreshButton.disabled = false;
+        if (nextRefreshDelay > 0) refreshTimer = setTimeout(() => {{
+          if (document.visibilityState === 'visible') loadData();
+        }}, nextRefreshDelay);
       }}
-
-      const data = await res.json();
-      renderGameStatuses(data.gameStatuses || []);
-      renderRecaps(data.recaps || []);
-      renderItems(data.receivedItems || []);
-      renderHints(data.hints || []);
-      await Promise.all([loadAliasLists(), loadPersonalPatches(), loadExclusions(), loadSpoilerStatus()]);
-      setStatus({Js("WebLastUpdate")} + ': ' + new Date(data.lastUpdated).toLocaleString());
     }};
+
+    document.addEventListener('visibilitychange', () => {{
+      if (document.visibilityState === 'visible') loadData();
+      else clearTimeout(refreshTimer);
+    }});
 
     document.getElementById('refresh').addEventListener('click', loadData);
     addAliasButton.addEventListener('click', addAliasFromPortal);
@@ -1216,6 +990,7 @@ public static class WebPortalUserPage
     loadPortalThreadName();
     loadData();
   </script>
+<script>{WebPortalTheme.NavigationScript}</script>
 </body>
 </html>";
     }

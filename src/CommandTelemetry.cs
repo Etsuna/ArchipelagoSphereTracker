@@ -39,7 +39,7 @@ public static class CommandTelemetry
         "send-spoiler-log", "apworlds-info", "discord", "excluded-item", "excluded-item-list",
         "delete-excluded-item", "ast-user-portal", "ast-room-portal", "ast-portal", "list-yamls",
         "list-apworld", "backup-yamls", "backup-apworld", "download-template", "delete-yaml",
-        "clean-yamls", "send-yaml", "generate-with-zip", "send-apworld", "generate", "test-generate"
+        "clean-yamls", "send-yaml", "generate-with-zip", "send-apworld", "generate", "test-generate", "organize-room"
     ];
 
     private static readonly HashSet<string> KnownCommandCenterActions =

@@ -462,6 +462,12 @@ CREATE INDEX IF NOT EXISTS idx_hintstatus_gcf_item
 ";
         cmd.ExecuteNonQuery();
 
+        using (var preparations = conn.CreateCommand())
+        {
+            preparations.CommandText = PreparationSchema.Sql;
+            preparations.ExecuteNonQuery();
+        }
+
         using (var analyze = conn.CreateCommand())
         {
             analyze.CommandText = "ANALYZE;";

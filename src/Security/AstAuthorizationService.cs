@@ -72,7 +72,7 @@ public static class AstAuthorizationService
 
     public static bool IsArchipelagoToolCommand(string commandName)
         => commandName is
-            "list-yamls" or "backup-yamls" or "download-yaml" or "download-template" or "delete-yaml" or "clean-yamls" or
+            "organize-room" or "list-yamls" or "backup-yamls" or "download-yaml" or "download-template" or "delete-yaml" or "clean-yamls" or
             "send-yaml" or "generate-with-zip" or "generate" or "test-generate" or
             "list-apworld" or "backup-apworld" or "send-apworld";
 
@@ -105,11 +105,12 @@ public static class AstAuthorizationService
         if (user == null)
             return null;
 
-        if (!ulong.TryParse(channelId, out var channelIdValue) ||
-            Declare.Client.GetChannel(channelIdValue) is not IGuildChannel guildChannel)
-        {
-            return null;
-        }
+        if (!ulong.TryParse(channelId, out var channelIdValue)) return null;
+        var guildChannel = Declare.Client.GetChannel(channelIdValue) as IGuildChannel;
+        if (guildChannel == null)
+            try { guildChannel = await Declare.Client.Rest.GetChannelAsync(channelIdValue) as IGuildChannel; }
+            catch (Discord.Net.HttpException) { return null; }
+        if (guildChannel == null || guildChannel.GuildId != guildIdValue) return null;
 
         var thread = guildChannel as IThreadChannel;
         var isThreadOwner = thread?.OwnerId == userId;

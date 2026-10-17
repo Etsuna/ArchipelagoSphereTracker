@@ -4,9 +4,61 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Xunit;
+using ArchipelagoSphereTracker.src.Resources;
 
 public class SlashCommandDefinitionsTests
 {
+    [Theory]
+    [InlineData("fr")]
+    [InlineData("en")]
+    public void OrganizeRoom_IsAValidLocalizedDiscordCommand(string culture)
+    {
+        var previousCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
+            var command = PreparationDiscord.Command();
+            Assert.NotNull(command.Build());
+            Assert.InRange(command.Description.Length, 1, 100);
+            Assert.All(command.Options, option => {
+                Assert.Matches("^[a-z0-9-]{1,32}$", option.Name);
+                Assert.InRange(option.Description.Length, 1, 100);
+                Assert.All(option.Choices, choice => Assert.InRange(choice.Name.Length, 1, 100));
+            });
+        }
+        finally { CultureInfo.CurrentUICulture = previousCulture; }
+    }
+
+    [Theory]
+    [InlineData("fr", "ajout-auto-membres", "Ajouter automatiquement")]
+    [InlineData("en", "auto-add-members", "Automatically add")]
+    public void AddUrl_LocalizesAutoAddMembersNameAndDescription(string culture, string name, string description)
+    {
+        var previousCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
+            var command = SlashCommandDefinitions.GetAll().Single(command => command.Name == "add-url");
+            var option = command.Options.Single(option => option.Name == name);
+            Assert.StartsWith(description, option.Description);
+            Assert.Equal(Resource.SCAutoAddMembers, option.Name);
+            Assert.InRange(option.Description.Length, 1, 100);
+        }
+        finally { CultureInfo.CurrentUICulture = previousCulture; }
+    }
+
+    [Fact]
+    public void AddUrl_DefaultsToAutomaticAndFrequencyIsOptional()
+    {
+        var command = SlashCommandDefinitions.GetAll().Single(command => command.Name == "add-url");
+        var mode = command.Options.Single(option => option.Name == "polling-mode");
+        Assert.False(mode.IsRequired);
+        Assert.Equal(new[] { "automatic", "fixed" }, mode.Choices.Select(choice => choice.Value.ToString()));
+        var frequency = command.Options.Single(option => option.Name == Resource.CheckFrequency);
+        Assert.False(frequency.IsRequired);
+        Assert.Equal(8, frequency.Choices.Count);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -32,7 +84,7 @@ public class SlashCommandDefinitionsTests
             {
                 "list-yamls", "list-apworld", "backup-yamls", "backup-apworld", "download-template",
                 "delete-yaml", "clean-yamls", "send-yaml", "generate-with-zip", "send-apworld",
-                "generate", "test-generate"
+                "generate", "test-generate", "organize-room"
             });
         }
 

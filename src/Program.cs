@@ -133,6 +133,7 @@ if (args.Length == 0)
         }
 
         await DatabaseInitializer.InitializeDatabaseAsync();
+        await PreparationService.Instance.RecoverInterruptedAsync();
         FileUploadSecurity.CleanupExpiredQuarantineFiles();
 
         if (SetBddVersion)
@@ -314,6 +315,7 @@ if (args.Length == 0)
             await WebPortalPages.EnsureSharedCommandsPagesAsync();
             await WebPortalPages.EnsureMissingUserPagesAsync();
             WebPortalServer.Start();
+            await PreparationDiscord.RefreshBoardsAsync();
 
             if (Declare.ExportMetrics && !string.IsNullOrEmpty(Declare.MetricsPort))
             {

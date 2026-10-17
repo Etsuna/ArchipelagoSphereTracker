@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Discord;
 using Discord.WebSocket;
 using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.Tracking.Scheduling;
 
 public sealed record AstSetupDraft(
     string SessionId,
@@ -15,7 +16,8 @@ public sealed record AstSetupDraft(
     string ThreadType = "Private",
     bool AutoAddMembers = false,
     bool Silent = false,
-    string CheckFrequency = "5m")
+    string CheckFrequency = "5m",
+    RoomPollingMode PollingMode = RoomPollingMode.Automatic)
 {
     public override string ToString()
         => $"AstSetupDraft(Session={SessionId}, Guild={GuildId}, Channel={SourceChannelId}, Owner={OwnerUserId})";
@@ -311,9 +313,12 @@ public static class AstSetupWizard
             "notifications" when value is "normal" or "silent" =>
                 Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
                     current => current with { Silent = value == "silent" }, out updated),
+            "frequency" when value == "automatic" =>
+                Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
+                    current => current with { PollingMode = RoomPollingMode.Automatic }, out updated),
             "frequency" when value is "5m" or "15m" or "30m" or "1h" or "6h" or "12h" or "18h" or "1d" =>
                 Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
-                    current => current with { CheckFrequency = value }, out updated),
+                    current => current with { CheckFrequency = value, PollingMode = RoomPollingMode.Fixed }, out updated),
             _ => false
         };
 
@@ -407,8 +412,8 @@ public static class AstSetupWizard
             title,
             thread,
             notifications,
-            draft.CheckFrequency,
-            GetInitialMaximumFrequency(draft.CheckFrequency),
+            draft.PollingMode == RoomPollingMode.Automatic ? Resource.WebPollingAutomatic : Resource.WebPollingFixedFrequency,
+            draft.PollingMode == RoomPollingMode.Automatic ? "1m–5m" : draft.CheckFrequency,
             Resource.AstSetupHighIntervalWarning,
             ready);
     }
@@ -496,7 +501,8 @@ public static class AstSetupWizard
                     draft.AutoAddMembers,
                     draft.Silent,
                     draft.CheckFrequency,
-                    component.User as IGuildUser),
+                    component.User as IGuildUser,
+                    draft.PollingMode.ToString()),
                 channelId.ToString(),
                 guildId.ToString(),
                 channel);
@@ -598,33 +604,14 @@ public static class AstSetupWizard
             .WithCustomId(CustomId(draft.SessionId, "frequency"))
             .WithPlaceholder(Resource.AstSetupMinimumFrequency)
             .WithMinValues(1)
-            .WithMaxValues(1);
+            .WithMaxValues(1)
+            .AddOption(Option(Resource.WebPollingAutomatic, "automatic", draft.PollingMode == RoomPollingMode.Automatic)
+                .WithDescription(string.Format(Resource.AstSetupAdaptiveFrequencyDescription, "1m", "5m")));
         foreach (var frequency in new[] { "5m", "15m", "30m", "1h", "6h", "12h", "18h", "1d" })
-            menu.AddOption(Option(frequency, frequency, draft.CheckFrequency == frequency)
-                .WithDescription(FrequencyDescription(frequency)));
+            menu.AddOption(Option($"{Resource.WebPollingFixedFrequency} · {frequency}", frequency,
+                    draft.PollingMode == RoomPollingMode.Fixed && draft.CheckFrequency == frequency)
+                .WithDescription(string.Format(Resource.AstSetupSlowFrequencyDescription, frequency)));
         return menu;
-    }
-
-    private static string GetInitialMaximumFrequency(string minimumFrequency)
-    {
-        var minimum = TrackingDataManager.CheckFrequencyParser.ParseOrDefault(
-            minimumFrequency,
-            TimeSpan.FromMinutes(5),
-            TimeSpan.FromMinutes(5),
-            TimeSpan.FromDays(1));
-        return minimum > TimeSpan.FromHours(1) ? minimumFrequency : "1h";
-    }
-
-    private static string FrequencyDescription(string frequency)
-    {
-        var interval = TrackingDataManager.CheckFrequencyParser.ParseOrDefault(
-            frequency,
-            TimeSpan.FromMinutes(5),
-            TimeSpan.FromMinutes(5),
-            TimeSpan.FromDays(1));
-        return interval < TimeSpan.FromHours(1)
-            ? string.Format(Resource.AstSetupAdaptiveFrequencyDescription, frequency, "1h")
-            : string.Format(Resource.AstSetupSlowFrequencyDescription, frequency);
     }
 
     private static SelectMenuOptionBuilder Option(string label, string value, bool isDefault)

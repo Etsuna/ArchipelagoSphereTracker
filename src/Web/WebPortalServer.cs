@@ -1,4 +1,5 @@
 using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.Tracking.Scheduling;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Builder;
@@ -97,6 +98,7 @@ public static class WebPortalServer
 
 
         app.MapGet("/", () => Results.Redirect("/portal/"));
+        PreparationWeb.Map(app, (guild, channel, token) => AuthorizePortalAsync(guild, channel, token, AstAuthorizationLevel.GuildMember));
         app.MapGet("/portal", () => Results.Redirect("/portal/"));
 
         app.MapGet("/portal/{guildId}/{channelId}/commands.html", () =>
@@ -137,12 +139,16 @@ public static class WebPortalServer
             return Results.File(threadCommandsPath, "text/html; charset=utf-8");
         });
 
-        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/summary", async (string guildId, string channelId, string token) =>
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/summary", async (string guildId, string channelId, string token, HttpContext context) =>
         {
             var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildMember);
             if (actor == null)
                 return Results.NotFound(new { message = "Invalid token." });
             var userId = actor.UserId;
+
+            context.Response.Headers.CacheControl = "no-store";
+            var refresh = await TrackingDataManager.RefreshRoomIfStaleAsync(guildId, channelId, context.RequestAborted);
+            var healthBeforeRead = TrackingDataManager.GetRoomHealth(guildId, channelId);
 
             var aliases = await RecapListCommands.GetAliasesForUserAsync(guildId, channelId, userId);
             var recapMap = await ReceiverAliasesCommands.GetUserAliasesWithItemsAsync(guildId, channelId, userId);
@@ -170,6 +176,16 @@ public static class WebPortalServer
                     finderHints.Select(h => new PortalHintItem(h.Finder, h.Receiver, h.Item, h.Location, h.Game)).ToList()));
             }
 
+            var health = TrackingDataManager.GetRoomHealth(guildId, channelId);
+            var tracking = new PortalTrackingFreshness(
+                healthBeforeRead?.LastSuccessAtUtc,
+                health?.NextPollAtUtc,
+                health?.IsPaused ?? false,
+                health?.IsRunning == true || refresh == TrackingControlOutcome.Accepted ||
+                    healthBeforeRead?.LastSuccessAtUtc != health?.LastSuccessAtUtc ||
+                    (health is { IsPaused: false } && health.NextPollAtUtc <= DateTimeOffset.UtcNow),
+                health == null,
+                health?.LastFailureKind.ToString() ?? "None");
             var summary = new PortalSummary(
                 guildId,
                 channelId,
@@ -178,7 +194,8 @@ public static class WebPortalServer
                 gameStatuses,
                 recaps,
                 receivedItems,
-                hints
+                hints,
+                tracking
             );
 
             return Results.Ok(summary);
@@ -1084,6 +1101,17 @@ public static class WebPortalServer
 
             switch (command)
             {
+                case "organize-room":
+                    {
+                        var title = form["name"].FirstOrDefault() ?? "";
+                        if (!int.TryParse(form["maximumPlayers"].FirstOrDefault(), out var maximum)) maximum = 20;
+                        PreparationRoom room;
+                        try { room = await PreparationDiscord.CreateAsync(guildId, channelId, actor.User, title, maximum); }
+                        catch (PreparationException ex) { return Results.BadRequest(new { message = ex.Message }); }
+                        message = string.Format(Resource.PrepCreated, room.ChannelId);
+                        downloadUrl = $"https://discord.com/channels/{guildId}/{room.ChannelId}/{room.MessageId}";
+                        break;
+                    }
                 case "ast-health":
                     message = TrackingControlCommands.GetGuildHealth(guildId);
                     break;
@@ -1096,6 +1124,7 @@ public static class WebPortalServer
                         var autoAddMembers = form["autoAddMembers"].FirstOrDefault() == "true";
                         var silent = form["silent"].FirstOrDefault() == "true";
                         var checkFrequency = form["checkFrequency"].FirstOrDefault() ?? "5m";
+                        var pollingMode = form["pollingMode"].FirstOrDefault() ?? "automatic";
                         if (!ulong.TryParse(channelId, out var channelIdValue))
                             return Results.BadRequest(new { message = "Invalid channelId." });
 
@@ -1110,7 +1139,8 @@ public static class WebPortalServer
                             autoAddMembers,
                             silent,
                             checkFrequency,
-                            actor.User);
+                            actor.User,
+                            pollingMode);
 
                         message = await UrlClass.AddUrlFromWebAsync(options, channelId, guildId, channel);
                         break;
@@ -1321,7 +1351,16 @@ public static class WebPortalServer
         List<GameStatus> GameStatuses,
         List<PortalRecap> Recaps,
         List<PortalAliasItems> ReceivedItems,
-        List<PortalAliasHints> Hints);
+        List<PortalAliasHints> Hints,
+        PortalTrackingFreshness Tracking);
+
+    private record PortalTrackingFreshness(
+        DateTimeOffset? LastSuccessAtUtc,
+        DateTimeOffset? NextPollAtUtc,
+        bool IsPaused,
+        bool IsSyncing,
+        bool IsUnavailable,
+        string LastFailureKind);
 
     private record PortalRecap(string Alias, List<PortalRecapGroup> Groups);
     private record PortalRecapItem(string Item, int Count);

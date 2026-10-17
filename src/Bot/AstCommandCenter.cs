@@ -576,6 +576,15 @@ public static class AstCommandCenter
         }
 
         var extension = Path.GetExtension(attachment.Filename).ToLowerInvariant();
+        if ((extension is ".yaml" or ".yml") && AstAuthorizationService.CanUseArchipelagoTools(authorization) &&
+            await PreparationService.Instance.GetAsync(guildIdText, channelIdText) != null)
+        {
+            string preparationMessage;
+            try { preparationMessage = await PreparationDiscord.UploadAttachmentAsync(guildIdText, channelIdText, command.User as IGuildUser, attachment); }
+            catch (PreparationException error) { preparationMessage = error.Message; }
+            await command.FollowupAsync(preparationMessage, ephemeral:true, allowedMentions:AllowedMentions.None);
+            return;
+        }
         if (!IsUploadExtensionAvailable(extension, Declare.IsArchipelagoMode))
         {
             await command.FollowupAsync(Resource.AstCenterThisFileTypeIsOnlyAvailableInArchipelagoMode,
@@ -1906,7 +1915,14 @@ public static class AstCommandCenter
                 components.WithButton(Resource.AstCenterManage, Id(session, "manage"), ButtonStyle.Secondary, emote: new Emoji("⚙️"));
         }
         if (AstAuthorizationService.CanUseArchipelagoTools(authorization))
+        {
             components.WithButton(Resource.AstCenterArchipelagoTools, Id(session, "archipelago-tools"), ButtonStyle.Secondary, emote: new Emoji("🧰"));
+            if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
+                components.WithButton(Resource.PrepTitle, "astprep-create", ButtonStyle.Primary);
+            var preparation = await PreparationService.Instance.GetAsync(session.GuildId.ToString(), session.SourceChannelId.ToString());
+            if (preparation != null)
+                components.WithButton(Resource.PrepPortal, $"astprep:{preparation.Id}:portal", ButtonStyle.Primary);
+        }
         if (AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
             components.WithButton(Resource.AstCenterAdministration, Id(session, "admin"), ButtonStyle.Secondary, emote: new Emoji("🛠️"));
         if (authorization.IsInstanceOwner)
@@ -2298,10 +2314,7 @@ public static class AstCommandCenter
         var menu = new SelectMenuBuilder()
             .WithCustomId(Id(session, "poll-policy"))
             .WithPlaceholder(Resource.AstCenterChooseModeAndInterval)
-            .AddOption(Resource.AstCenterAutomatic15MinMax, "automatic|15m")
-            .AddOption(Resource.AstCenterAutomatic30MinMax, "automatic|30m")
-            .AddOption(Resource.AstCenterAutomatic1HMax, "automatic|1h")
-            .AddOption(Resource.AstCenterAutomatic6HMax, "automatic|6h")
+            .AddOption(Resource.WebPollingAutomatic, "automatic|5m")
             .AddOption(Resource.AstCenterFixed5Min, "fixed|5m")
             .AddOption(Resource.AstCenterFixed15Min, "fixed|15m")
             .AddOption(Resource.AstCenterFixed30Min, "fixed|30m")

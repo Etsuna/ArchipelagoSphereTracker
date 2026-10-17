@@ -6,6 +6,7 @@ public static class SlashCommandDefinitions
     public static IEnumerable<SlashCommandBuilder> GetAll()
     {
         yield return BuildAstCommand();
+        if (Declare.IsArchipelagoMode) yield return PreparationDiscord.Command();
 
         foreach (var command in GetLegacyCommands())
             yield return command;
@@ -81,9 +82,16 @@ public static class SlashCommandDefinitions
                     .WithRequired(true)
                     .AddChoice(Resource.SCThreadPublic, "Public")
                     .AddChoice(Resource.SCThreadPrivate, "Private"))
-                .AddOption(BooleanOption("auto-add-members", "Auto-add all channel members to the thread (public only)"))
+                .AddOption(BooleanOption(Resource.SCAutoAddMembers, Resource.SCAutoAddMembersDescription))
                 .AddOption(BooleanOption(Resource.SCSilentOption, Resource.SCSilentDescription))
-                .AddOption(FrequencyOption()),
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("polling-mode")
+                    .WithDescription(Resource.PollingModeDescription)
+                    .WithType(ApplicationCommandOptionType.String)
+                    .WithRequired(false)
+                    .AddChoice(Resource.WebPollingAutomatic, "automatic")
+                    .AddChoice(Resource.WebPollingFixedFrequency, "fixed"))
+                .AddOption(FrequencyOption(required: false)),
 
             new SlashCommandBuilder()
                 .WithName("update-silent-option")
@@ -287,13 +295,13 @@ public static class SlashCommandDefinitions
             .WithRequired(true);
     }
 
-    private static SlashCommandOptionBuilder FrequencyOption()
+    private static SlashCommandOptionBuilder FrequencyOption(bool required = true)
     {
         return new SlashCommandOptionBuilder()
             .WithName(Resource.CheckFrequency)
             .WithDescription(Resource.CheckFrequencyDesc)
             .WithType(ApplicationCommandOptionType.String)
-            .WithRequired(true)
+            .WithRequired(required)
             .AddChoice($"{Resource.Every} 5 minutes", "5m")
             .AddChoice($"{Resource.Every} 15 minutes", "15m")
             .AddChoice($"{Resource.Every} 30 minutes", "30m")

@@ -2,6 +2,12 @@ using System.Text;
 
 public static class WebPortalPages
 {
+    public static async Task<string?> EnsurePreparationPageAsync(string guildId, string channelId, string userId)
+    {
+        if (!Declare.EnableWebPortal || !Declare.IsArchipelagoMode) return null;
+        var token = await PortalAccessCommands.IssuePortalTokenAsync(guildId, channelId, userId);
+        return $"{GetPortalBaseUrl()}/portal/{guildId}/{channelId}/{token}/prepare.html";
+    }
     private static string GetUserPortalUrl(string guildId, string channelId, string token)
     {
         var baseUrl = GetPortalBaseUrl();

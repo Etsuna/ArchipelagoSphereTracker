@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -673,7 +673,7 @@
     <value>Vérification ignorée pour: {0} ({1} minutes).</value>
   </data>
   <data name="CheckFrequencyUpdated" xml:space="preserve">
-    <value>La fréquence de vérification a été mise à jour : {0}</value>
+    <value>Fréquence fixe enregistrée : {0}. Appliquée lorsque le mode fixe est sélectionné.</value>
   </data>
   <data name="ErrorCheckFrequencyUpdate" xml:space="preserve">
     <value>Erreur lors de la mise à jour de la fréquence de vérification.</value>
@@ -703,7 +703,7 @@
     <value>L'item **{0}** se trouve à **{1}** dans le monde de **{2}**.</value>
   </data>
   <data name="HelperCheckFrequency" xml:space="preserve">
-    <value>Frequency Check: {0}.</value>
+    <value>Suivi : {0}.</value>
   </data>
   <data name="HelperLastCheck" xml:space="preserve">
     <value>Dernière Vérification: {0}.</value>
@@ -1466,7 +1466,7 @@ Salon cible : &lt;#{0}&gt;
 Hôte WebHost : `{1}`
 Thread : `{2}` ({3})
 Notifications : {4}
-Polling initial : automatique — minimum `{5}` — maximum `{6}`
+Suivi : {5} — intervalle `{6}`
 ℹ️ {7}
 
 {8}
@@ -1488,16 +1488,16 @@ La session expire après 15 minutes d’inactivité.</value>
     <value>format invalide</value>
   </data>
   <data name="AstSetupMinimumFrequency" xml:space="preserve">
-    <value>Minimum du polling automatique</value>
+    <value>Suivi automatique ou fixe</value>
   </data>
   <data name="AstSetupHighIntervalWarning" xml:space="preserve">
     <value>Un intervalle élevé peut fortement retarder les mises à jour et notifications.</value>
   </data>
   <data name="AstSetupAdaptiveFrequencyDescription" xml:space="preserve">
-    <value>Active : {0} ; calme : jusqu’à {1} (+ 1 min max.)</value>
+    <value>Actif : {0} ; inactif : jusqu’à {1} ; plus délais amont et envoi</value>
   </data>
   <data name="AstSetupSlowFrequencyDescription" xml:space="preserve">
-    <value>Très lent : changement détecté sous {0} (+ 1 min max.)</value>
+    <value>Fixe : toutes les {0} ; plus délais amont et envoi</value>
   </data>
   <data name="AstSetupNormal" xml:space="preserve">
     <value>normales</value>
@@ -1880,7 +1880,7 @@ Objets : **{3}**
     <value>frequence-check</value>
   </data>
   <data name="CheckFrequencyDesc" xml:space="preserve">
-    <value>Fréquence de vérification, 5m par défaut.</value>
+    <value>Mode fixe uniquement : fréquence, 5m par défaut. Ignorée en automatique.</value>
   </data>
   <data name="UpdateAvailable" xml:space="preserve">
     <value>Mise à jour disponible :</value>
@@ -1943,7 +1943,7 @@ Objets : **{3}**
     <value>Liens disponibles pour ce Guild ID avec les noms de thread.</value>
   </data>
   <data name="WebCheckFrequency" xml:space="preserve">
-    <value>Fréquence de vérification</value>
+    <value>Fréquence du suivi fixe</value>
   </data>
   <data name="WebCleanAllYamls" xml:space="preserve">
     <value>Nettoyer tous les YAML</value>
@@ -2303,13 +2303,13 @@ Objets : **{3}**
     <value>Suspendre le suivi</value>
   </data>
   <data name="WebPollingAutomatic" xml:space="preserve">
-    <value>Automatique</value>
+    <value>Automatique (1 min actif, maximum 5 min inactif)</value>
   </data>
   <data name="WebPollingFixedFrequency" xml:space="preserve">
     <value>Fréquence fixe</value>
   </data>
   <data name="WebPollingMaximumInterval" xml:space="preserve">
-    <value>Intervalle maximal</value>
+    <value>Limite inactive (automatique plafonné à 5 min)</value>
   </data>
   <data name="WebPollingMode" xml:space="preserve">
     <value>Mode d’interrogation</value>
@@ -2664,4 +2664,131 @@ URL : `{6}`
   <data name="SCSpoilerFileDescription" xml:space="preserve">
     <value>Fichier spoiler log (.txt/.json)</value>
   </data>
+  <data name="WebLastArchipelagoSync" xml:space="preserve"><value>Dernière synchronisation depuis Archipelago</value></data>
+  <data name="WebSyncNever" xml:space="preserve"><value>Aucune synchronisation réussie pour le moment</value></data>
+  <data name="WebSyncPaused" xml:space="preserve"><value>Suivi suspendu</value></data>
+  <data name="WebSyncUnavailable" xml:space="preserve"><value>Actualisation en direct indisponible</value></data>
+  <data name="WebSyncPending" xml:space="preserve"><value>Synchronisation en attente ou en cours</value></data>
+  <data name="WebSyncFailed" xml:space="preserve"><value>Échec de synchronisation ; dernières données disponibles affichées</value></data>
+  <data name="PollingModeDescription" xml:space="preserve"><value>Mode de suivi : automatique par défaut, ou fixe avec une fréquence choisie.</value></data>
+  <data name="SCAutoAddMembers" xml:space="preserve"><value>ajout-auto-membres</value></data>
+  <data name="SCAutoAddMembersDescription" xml:space="preserve"><value>Ajouter automatiquement les membres du salon au thread (threads publics uniquement).</value></data>
+  <data name="TrackerSlots" xml:space="preserve"><value>Slots</value></data>
+  <data name="TrackerGames" xml:space="preserve"><value>Jeux</value></data>
+  <data name="TrackerChecks" xml:space="preserve"><value>Checks</value></data>
+  <data name="TrackerProgress" xml:space="preserve"><value>Progression globale</value></data>
+  <data name="TrackerSearch" xml:space="preserve"><value>Rechercher</value></data>
+  <data name="TrackerSearchPlaceholder" xml:space="preserve"><value>Nom du slot ou du jeu</value></data>
+  <data name="TrackerGame" xml:space="preserve"><value>Jeu</value></data>
+  <data name="TrackerAllGames" xml:space="preserve"><value>Tous les jeux</value></data>
+  <data name="TrackerStatus" xml:space="preserve"><value>Progression</value></data>
+  <data name="TrackerAllSlots" xml:space="preserve"><value>Tous les slots</value></data>
+  <data name="TrackerIncomplete" xml:space="preserve"><value>Checks restants</value></data>
+  <data name="TrackerComplete" xml:space="preserve"><value>Tous les checks faits</value></data>
+  <data name="TrackerSort" xml:space="preserve"><value>Trier par</value></data>
+  <data name="TrackerSlot" xml:space="preserve"><value>Slot</value></data>
+  <data name="TrackerMostProgress" xml:space="preserve"><value>Plus avancés en premier</value></data>
+  <data name="TrackerLeastProgress" xml:space="preserve"><value>Moins avancés en premier</value></data>
+  <data name="TrackerOnlyMine" xml:space="preserve"><value>Mes slots uniquement</value></data>
+  <data name="TrackerSlotsShown" xml:space="preserve"><value>Slots affichés : {0} / {1}</value></data>
+  <data name="TrackerActivity" xml:space="preserve"><value>Dernière activité</value></data>
+  <data name="TrackerNoMatches" xml:space="preserve"><value>Aucun slot ne correspond aux filtres.</value></data>
+  <data name="WebRoomPortalTitle" xml:space="preserve"><value>Gestion de la room</value></data>
+  <data name="WebAdminPortalTitle" xml:space="preserve"><value>Administration</value></data>
+  <data name="TrackerPatches" xml:space="preserve"><value>Patchs des slots</value></data>
+  <data name="TrackerRooms" xml:space="preserve"><value>Rooms suivies</value></data>
+  <data name="PrepTitle" xml:space="preserve"><value>Organiser une room</value></data>
+  <data name="PrepDescription" xml:space="preserve"><value>Préparer une room : inscriptions, YAML et joueurs prêts.</value></data>
+  <data name="PrepName" xml:space="preserve"><value>Nom de la room</value></data>
+  <data name="PrepVisibility" xml:space="preserve"><value>Thread privé ? (oui/non)</value></data>
+  <data name="PrepCapacity" xml:space="preserve"><value>Joueurs maximum (1–200)</value></data>
+  <data name="PrepInvalidSettings" xml:space="preserve"><value>Nom, visibilité ou limite de joueurs invalide.</value></data>
+  <data name="PrepAlreadyExists" xml:space="preserve"><value>Ce salon possède déjà une préparation.</value></data>
+  <data name="PrepNotFound" xml:space="preserve"><value>Aucune préparation dans ce thread.</value></data>
+  <data name="PrepOwnerOnly" xml:space="preserve"><value>Cette action est réservée à l’organisateur.</value></data>
+  <data name="PrepJoinFirst" xml:space="preserve"><value>Inscrivez-vous avant de gérer vos YAML ou votre statut.</value></data>
+  <data name="PrepLocked" xml:space="preserve"><value>Cette préparation est verrouillée ou terminée.</value></data>
+  <data name="PrepRegistrationsClosed" xml:space="preserve"><value>Les inscriptions sont fermées.</value></data>
+  <data name="PrepFull" xml:space="preserve"><value>La limite de joueurs est atteinte.</value></data>
+  <data name="PrepNeedValidYaml" xml:space="preserve"><value>Déposez au moins un YAML et attendez la validation de tous vos fichiers avant de vous déclarer prêt.</value></data>
+  <data name="PrepInvalidYaml" xml:space="preserve"><value>YAML invalide. Utilisez un fichier UTF-8 .yaml/.yml de moins de 1 Mio avec 1 à 20 documents joueur Archipelago.</value></data>
+  <data name="PrepTooManyFiles" xml:space="preserve"><value>Limite : 20 fichiers YAML par joueur, 200 slots et 16 Mio de YAML par préparation.</value></data>
+  <data name="PrepFileNotFound" xml:space="preserve"><value>Ce YAML ne vous appartient pas ou n’existe plus.</value></data>
+  <data name="PrepNotEveryoneReady" xml:space="preserve"><value>Tous les joueurs inscrits doivent être prêts avec des YAML validés avant la génération.</value></data>
+  <data name="PrepLauncherMissing" xml:space="preserve"><value>Le lanceur de génération Archipelago n’est pas installé sur cette instance AST.</value></data>
+  <data name="PrepGenerationFailed" xml:space="preserve"><value>La validation ou la génération Archipelago a échoué.</value></data>
+  <data name="PrepGenerated" xml:space="preserve"><value>Génération terminée. Téléchargez l’archive, hébergez-la, puis associez la room pour démarrer son suivi.</value></data>
+  <data name="PrepInterrupted" xml:space="preserve"><value>Une tâche a été interrompue par un redémarrage d’AST. Inscriptions et YAML conservés ; relancez la validation ou la génération.</value></data>
+  <data name="PrepStateOpen" xml:space="preserve"><value>Inscriptions ouvertes</value></data>
+  <data name="PrepStateClosed" xml:space="preserve"><value>Inscriptions fermées</value></data>
+  <data name="PrepStateValidating" xml:space="preserve"><value>Validation des YAML figés</value></data>
+  <data name="PrepStateGenerating" xml:space="preserve"><value>Génération en cours</value></data>
+  <data name="PrepStateGenerated" xml:space="preserve"><value>Générée</value></data>
+  <data name="PrepStateCancelled" xml:space="preserve"><value>Annulée</value></data>
+  <data name="PrepPending" xml:space="preserve"><value>Validation en attente</value></data>
+  <data name="PrepValid" xml:space="preserve"><value>Validé</value></data>
+  <data name="PrepInvalid" xml:space="preserve"><value>Invalide</value></data>
+  <data name="PrepJoin" xml:space="preserve"><value>S’inscrire</value></data>
+  <data name="PrepLeave" xml:space="preserve"><value>Se désinscrire</value></data>
+  <data name="PrepReady" xml:space="preserve"><value>Prêt</value></data>
+  <data name="PrepNotReady" xml:space="preserve"><value>Pas prêt</value></data>
+  <data name="PrepToggleReady" xml:space="preserve"><value>Prêt / pas prêt</value></data>
+  <data name="PrepClose" xml:space="preserve"><value>Fermer les inscriptions</value></data>
+  <data name="PrepReopen" xml:space="preserve"><value>Rouvrir les inscriptions</value></data>
+  <data name="PrepGenerate" xml:space="preserve"><value>Générer</value></data>
+  <data name="PrepTest" xml:space="preserve"><value>Tester les YAML</value></data>
+  <data name="PrepCancel" xml:space="preserve"><value>Annuler la préparation</value></data>
+  <data name="PrepPortal" xml:space="preserve"><value>Ouvrir le portail de préparation</value></data>
+  <data name="PrepUpload" xml:space="preserve"><value>Déposer ou remplacer mon YAML</value></data>
+  <data name="PrepRemove" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="PrepFiles" xml:space="preserve"><value>Mes fichiers YAML</value></data>
+  <data name="PrepPlayers" xml:space="preserve"><value>Joueurs inscrits</value></data>
+  <data name="PrepPlayer" xml:space="preserve"><value>Joueur</value></data>
+  <data name="PrepSlots" xml:space="preserve"><value>Slots / jeux</value></data>
+  <data name="PrepReadiness" xml:space="preserve"><value>Disponibilité</value></data>
+  <data name="PrepSummary" xml:space="preserve"><value>{0}/{1} joueurs · {2} prêts · {3} slots</value></data>
+  <data name="PrepInstructions" xml:space="preserve"><value>Inscrivez-vous, déposez vos YAML via /organize-room ou le portail, puis déclarez-vous prêt. Modifier un fichier remet votre statut à « pas prêt ».</value></data>
+  <data name="PrepQueued" xml:space="preserve"><value>Tâche en attente. Le message de préparation et le portail se mettent à jour automatiquement.</value></data>
+  <data name="PrepSaved" xml:space="preserve"><value>Préparation mise à jour.</value></data>
+  <data name="PrepCreated" xml:space="preserve"><value>Préparation créée : &lt;#{0}&gt;</value></data>
+  <data name="PrepNoPlayers" xml:space="preserve"><value>Aucun joueur inscrit pour le moment.</value></data>
+  <data name="PrepNoFiles" xml:space="preserve"><value>Aucun fichier YAML déposé pour le moment.</value></data>
+  <data name="PrepArchOnly" xml:space="preserve"><value>La préparation de room est disponible uniquement en Archipelago Mode.</value></data>
+  <data name="PrepSourceChannel" xml:space="preserve"><value>Créez la préparation depuis un salon textuel du serveur.</value></data>
+  <data name="PrepDownload" xml:space="preserve"><value>Télécharger l’archive générée</value></data>
+  <data name="PrepDownloadYaml" xml:space="preserve"><value>Télécharger mon YAML</value></data>
+  <data name="PrepAttach" xml:space="preserve"><value>Associer la room hébergée</value></data>
+  <data name="PrepRoomUrl" xml:space="preserve"><value>URL de la room Archipelago hébergée</value></data>
+  <data name="PrepTracking" xml:space="preserve"><value>Thread de suivi</value></data>
+  <data name="PrepSkipBalancing" xml:space="preserve"><value>Ignorer l’équilibrage de progression</value></data>
+  <data name="PrepCancelConfirm" xml:space="preserve"><value>Annuler cette préparation ? Les inscriptions et YAML seront conservés.</value></data>
+  <data name="PrepCreate" xml:space="preserve"><value>Créer la préparation</value></data>
+  <data name="PrepOptionAction" xml:space="preserve"><value>action</value></data>
+  <data name="PrepOptionName" xml:space="preserve"><value>nom</value></data>
+  <data name="PrepOptionPrivate" xml:space="preserve"><value>prive</value></data>
+  <data name="PrepOptionCapacity" xml:space="preserve"><value>max-joueurs</value></data>
+  <data name="PrepOptionFile" xml:space="preserve"><value>fichier</value></data>
+  <data name="PrepOptionUrl" xml:space="preserve"><value>url</value></data>
+  <data name="PrepActionDescription" xml:space="preserve"><value>Action dans la préparation actuelle ; créer ouvre l’assistant.</value></data>
+  <data name="PrepFileDescription" xml:space="preserve"><value>Votre fichier YAML Archipelago à déposer ou remplacer.</value></data>
+  <data name="PrepOptionNameDescription" xml:space="preserve"><value>Nom de la préparation ; omettez-le pour ouvrir l’assistant.</value></data>
+  <data name="PrepPrivateDescription" xml:space="preserve"><value>Créer un thread privé de préparation (public par défaut).</value></data>
+  <data name="PrepCapacityDescription" xml:space="preserve"><value>Nombre maximum de joueurs inscrits, de 1 à 200 (20 par défaut).</value></data>
+  <data name="PrepUrlDescription" xml:space="preserve"><value>URL de la room hébergée à associer après la génération.</value></data>
+  <data name="PrepDefaultSlot" xml:space="preserve"><value>Joueur {0}</value></data>
+  <data name="PrepRefresh" xml:space="preserve"><value>Actualiser la préparation</value></data>
+  <data name="PrepNoMatch" xml:space="preserve"><value>Aucune préparation disponible dans ce salon.</value></data>
+  <data name="PrepValidationNote" xml:space="preserve"><value>Chaque fichier est testé par Archipelago. L’ensemble figé est retesté avant génération. Les noms avec variables ou pondérations sont résolus à la génération.</value></data>
+  <data name="PrepTestPassed" xml:space="preserve"><value>L’ensemble des YAML a passé la validation.</value></data>
+  <data name="PrepManage" xml:space="preserve"><value>Commandes de l’organisateur</value></data>
+  <data name="PrepGenerateConfirm" xml:space="preserve"><value>Générer avec les joueurs prêts et leurs YAML figés actuels ?</value></data>
+  <data name="PrepInvite" xml:space="preserve"><value>Inviter un joueur</value></data>
+  <data name="PrepOptionUser" xml:space="preserve"><value>joueur</value></data>
+  <data name="PrepUserDescription" xml:space="preserve"><value>Membre du serveur à inviter dans un thread privé de préparation.</value></data>
+  <data name="PrepOptionYamlName" xml:space="preserve"><value>nom-yaml</value></data>
+  <data name="PrepYamlNameDescription" xml:space="preserve"><value>Nom de votre YAML à supprimer avec l’action supprimer.</value></data>
+  <data name="PrepInviteId" xml:space="preserve"><value>Identifiant Discord du joueur à inviter</value></data>
+  <data name="PrepArchiveSent" xml:space="preserve"><value>Génération terminée ! Le ZIP est joint. L’organisateur peut l’héberger, puis rattacher la room depuis le portail de préparation.</value></data>
+  <data name="PrepArchiveTooLarge" xml:space="preserve"><value>Génération terminée ! Le ZIP dépasse la limite d’envoi Discord. L’organisateur et les inscrits peuvent le télécharger depuis le portail de préparation ci-dessous.</value></data>
+  <data name="PrepYamlReceived" xml:space="preserve"><value>{0} ajouté à vos fichiers de préparation. Validation Archipelago en attente ; la liste des joueurs et vos fichiers YAML se mettent à jour automatiquement.</value></data>
 </root>

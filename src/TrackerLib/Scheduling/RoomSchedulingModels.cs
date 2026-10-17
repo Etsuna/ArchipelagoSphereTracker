@@ -31,21 +31,24 @@ public sealed record RoomPollResult(
     int NewItemCount = 0,
     int NewHintCount = 0,
     int UpdatedHintCount = 0,
-    int CompletedGoalCount = 0)
+    int CompletedGoalCount = 0,
+    bool? HasRecentActivity = null)
 {
     public static RoomPollResult Ok(
         string? contentHash = null,
         int newItemCount = 0,
         int newHintCount = 0,
         int updatedHintCount = 0,
-        int completedGoalCount = 0)
+        int completedGoalCount = 0,
+        bool? hasRecentActivity = null)
         => new(
             true,
             ContentHash: contentHash,
             NewItemCount: newItemCount,
             NewHintCount: newHintCount,
             UpdatedHintCount: updatedHintCount,
-            CompletedGoalCount: completedGoalCount);
+            CompletedGoalCount: completedGoalCount,
+            HasRecentActivity: hasRecentActivity);
     public static RoomPollResult Removed() => new(true, RemoveRoom: true);
 
     public static RoomPollResult Failed(

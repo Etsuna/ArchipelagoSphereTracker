@@ -10,13 +10,13 @@ public sealed record CentralRoomSchedulerOptions
     public int BreakerFailureThreshold { get; init; } = 5;
     public TimeSpan BreakerDuration { get; init; } = TimeSpan.FromMinutes(2);
     public TimeSpan MaximumBackoff { get; init; } = TimeSpan.FromMinutes(15);
-    public TimeSpan MaximumJitter { get; init; } = TimeSpan.FromSeconds(60);
+    public TimeSpan MaximumJitter { get; init; } = TimeSpan.FromSeconds(5);
     public TimeSpan ReloadInterval { get; init; } = TimeSpan.FromMinutes(1);
     public TimeSpan PromotionCooldown { get; init; } = TimeSpan.FromSeconds(30);
     public TimeSpan MaximumIdleDelay { get; init; } = TimeSpan.FromSeconds(5);
     public int UnchangedPollsBeforeSlowdown { get; init; } = 3;
     public double AdaptiveIntervalMultiplier { get; init; } = 2;
-    public TimeSpan MaximumAdaptiveInterval { get; init; } = TimeSpan.FromHours(1);
+    public TimeSpan MaximumAdaptiveInterval { get; init; } = TimeSpan.FromMinutes(5);
 }
 
 public sealed class CentralRoomScheduler
@@ -292,6 +292,32 @@ public sealed class CentralRoomScheduler
         return TrackingControlOutcome.Accepted;
     }
 
+    public async Task<TrackingControlOutcome> RefreshIfStaleAsync(
+        string guildId, string channelId, CancellationToken cancellationToken = default)
+    {
+        RoomScheduleState state;
+        lock (_sync)
+        {
+            if (!_rooms.TryGetValue($"{guildId}:{channelId}", out var room))
+                return TrackingControlOutcome.NotFound;
+            if (room.State.IsPaused) return TrackingControlOutcome.Paused;
+            if (room.Running) return TrackingControlOutcome.Busy;
+            var now = _timeProvider.GetUtcNow();
+            // Readers may accelerate idle rooms, but must respect failure delays and
+            // one shared refresh budget per room, including across process restarts.
+            if ((room.State.ConsecutiveFailures > 0 && room.State.NextPollAtUtc > now) ||
+                TryGetOpenBreakerUntilLocked(room.Definition.Origin, now, out _) ||
+                (room.State.LastAttemptAtUtc is { } attempted && now - attempted < TimeSpan.FromMinutes(1)) ||
+                (room.State.LastForcedSyncAtUtc is { } requested && now - requested < TimeSpan.FromMinutes(1)))
+                return TrackingControlOutcome.RateLimited;
+            state = room.State = room.State with { NextPollAtUtc = now, LastForcedSyncAtUtc = now };
+            EnqueueLocked(room);
+            UpdateMetricsLocked(now);
+        }
+        await _store.SaveStateAsync(state, cancellationToken).ConfigureAwait(false);
+        return TrackingControlOutcome.Accepted;
+    }
+
     public RoomHealthSnapshot? GetHealth(string guildId, string channelId)
     {
         var key = $"{guildId}:{channelId}";
@@ -320,7 +346,7 @@ public sealed class CentralRoomScheduler
     {
         var effective = room.State.EffectiveIntervalSeconds > 0
             ? TimeSpan.FromSeconds(room.State.EffectiveIntervalSeconds)
-            : room.Definition.PollInterval;
+            : GetBaseInterval(room.Definition);
         return new RoomHealthSnapshot(
             room.Definition.GuildId,
             room.Definition.ChannelId,
@@ -332,7 +358,7 @@ public sealed class CentralRoomScheduler
             room.State.ConsecutiveFailures,
             room.State.LastFailureKind,
             room.State.BreakerOpenUntilUtc,
-            room.Definition.PollInterval,
+            GetBaseInterval(room.Definition),
             effective,
             room.State.UnchangedSuccessCount,
             room.State.LastChangeAtUtc,
@@ -363,7 +389,7 @@ public sealed class CentralRoomScheduler
                         existing.State = existing.State with
                         {
                             NextPollAtUtc = now,
-                            EffectiveIntervalSeconds = registration.Definition.PollInterval.TotalSeconds,
+                            EffectiveIntervalSeconds = GetBaseInterval(registration.Definition).TotalSeconds,
                             UnchangedSuccessCount = 0
                         };
                         if (!existing.State.IsPaused && !existing.Running)
@@ -383,19 +409,26 @@ public sealed class CentralRoomScheduler
                     PollFailureKind.None,
                     null,
                     0,
-                    EffectiveIntervalSeconds: registration.Definition.PollInterval.TotalSeconds);
+                    EffectiveIntervalSeconds: GetBaseInterval(registration.Definition).TotalSeconds);
                 if (state.EffectiveIntervalSeconds <= 0)
-                    state = state with { EffectiveIntervalSeconds = registration.Definition.PollInterval.TotalSeconds };
+                    state = state with { EffectiveIntervalSeconds = GetBaseInterval(registration.Definition).TotalSeconds };
                 if (registration.Definition.PollingMode == RoomPollingMode.Fixed ||
-                    state.EffectiveIntervalSeconds < registration.Definition.PollInterval.TotalSeconds ||
+                    state.EffectiveIntervalSeconds < GetBaseInterval(registration.Definition).TotalSeconds ||
                     state.EffectiveIntervalSeconds > GetMaximumInterval(registration.Definition).TotalSeconds)
                 {
                     state = state with
                     {
-                        EffectiveIntervalSeconds = registration.Definition.PollInterval.TotalSeconds,
+                        EffectiveIntervalSeconds = GetBaseInterval(registration.Definition).TotalSeconds,
+                        NextPollAtUtc = registration.Definition.PollingMode == RoomPollingMode.Automatic &&
+                                        state.ConsecutiveFailures == 0 && !state.IsPaused &&
+                                        state.NextPollAtUtc > now.Add(GetBaseInterval(registration.Definition))
+                            ? now.Add(GetBaseInterval(registration.Definition)) : state.NextPollAtUtc,
                         UnchangedSuccessCount = 0
                     };
                 }
+                if (registration.State == null && registration.Definition.PollingMode == RoomPollingMode.Automatic &&
+                    state.NextPollAtUtc > now.Add(GetBaseInterval(registration.Definition)))
+                    state = state with { NextPollAtUtc = now.Add(GetBaseInterval(registration.Definition)) };
                 var room = new RuntimeRoom(registration.Definition, state);
                 _rooms.Add(registration.Definition.Key, room);
                 if (state.BreakerOpenUntilUtc is { } persistedBreaker && persistedBreaker > now)
@@ -566,7 +599,7 @@ public sealed class CentralRoomScheduler
                 var unchangedSuccesses = room.State.UnchangedSuccessCount;
                 var effectiveInterval = room.State.EffectiveIntervalSeconds > 0
                     ? TimeSpan.FromSeconds(room.State.EffectiveIntervalSeconds)
-                    : room.Definition.PollInterval;
+                    : GetBaseInterval(room.Definition);
                 var lastChangeAt = room.State.LastChangeAtUtc;
 
                 if (result.Success)
@@ -577,21 +610,21 @@ public sealed class CentralRoomScheduler
                         if (string.IsNullOrWhiteSpace(lastContentHash))
                         {
                             unchangedSuccesses = 0;
-                            effectiveInterval = room.Definition.PollInterval;
+                            effectiveInterval = GetBaseInterval(room.Definition);
                             lastChangeAt ??= now;
                         }
                         else if (string.Equals(lastContentHash, result.ContentHash, StringComparison.Ordinal))
                         {
                             if (room.Definition.PollingMode == RoomPollingMode.Automatic)
                             {
-                                unchangedSuccesses++;
+                                unchangedSuccesses = Math.Min(unchangedSuccesses + 1, 60);
                                 effectiveInterval = ComputeAdaptiveInterval(room.Definition, unchangedSuccesses);
                             }
                         }
                         else
                         {
                             unchangedSuccesses = 0;
-                            effectiveInterval = room.Definition.PollInterval;
+                            effectiveInterval = GetBaseInterval(room.Definition);
                             lastChangeAt = now;
                         }
                         lastContentHash = result.ContentHash;
@@ -599,12 +632,12 @@ public sealed class CentralRoomScheduler
                     else
                     {
                         unchangedSuccesses = 0;
-                        effectiveInterval = room.Definition.PollInterval;
+                        effectiveInterval = GetBaseInterval(room.Definition);
                     }
-                    if (room.Definition.PollingMode == RoomPollingMode.Fixed)
+                    if (room.Definition.PollingMode == RoomPollingMode.Fixed || result.HasRecentActivity != false)
                     {
                         unchangedSuccesses = 0;
-                        effectiveInterval = room.Definition.PollInterval;
+                        effectiveInterval = GetBaseInterval(room.Definition);
                     }
                     nextPoll = now
                         .Add(effectiveInterval)
@@ -618,8 +651,8 @@ public sealed class CentralRoomScheduler
                     var delay = ComputeBackoff(failures);
                     if (result.RetryAfter is { } retryAfter && retryAfter > delay)
                         delay = retryAfter;
-                    if (result.FailureKind == PollFailureKind.NotFound && room.Definition.PollInterval > delay)
-                        delay = room.Definition.PollInterval;
+                    if (result.FailureKind == PollFailureKind.NotFound && GetBaseInterval(room.Definition) > delay)
+                        delay = GetBaseInterval(room.Definition);
                     if (breakerUntil is { } openUntil && openUntil > now.Add(delay))
                         delay = openUntil - now;
                     nextPoll = now.Add(delay).Add(ComputePositiveJitter(room.Definition.Key, now));
@@ -717,18 +750,25 @@ public sealed class CentralRoomScheduler
     {
         var steps = unchangedSuccesses / _options.UnchangedPollsBeforeSlowdown;
         if (steps <= 0)
-            return room.PollInterval;
+            return GetBaseInterval(room);
         var factor = Math.Pow(_options.AdaptiveIntervalMultiplier, Math.Min(steps, 20));
         var seconds = Math.Min(
-            room.PollInterval.TotalSeconds * factor,
+            GetBaseInterval(room).TotalSeconds * factor,
             GetMaximumInterval(room).TotalSeconds);
-        return TimeSpan.FromSeconds(Math.Max(room.PollInterval.TotalSeconds, seconds));
+        return TimeSpan.FromSeconds(Math.Max(GetBaseInterval(room).TotalSeconds, seconds));
     }
+
+    private static TimeSpan GetBaseInterval(ScheduledRoomDefinition room)
+        => room.PollingMode == RoomPollingMode.Automatic
+            ? TimeSpan.FromSeconds(Math.Min(60, room.PollInterval.TotalSeconds))
+            : room.PollInterval;
 
     private TimeSpan GetMaximumInterval(ScheduledRoomDefinition room)
     {
+        if (room.PollingMode == RoomPollingMode.Fixed) return room.PollInterval;
         var configuredMaximum = room.MaximumPollInterval ?? _options.MaximumAdaptiveInterval;
-        return configuredMaximum < room.PollInterval ? room.PollInterval : configuredMaximum;
+        if (configuredMaximum > _options.MaximumAdaptiveInterval) configuredMaximum = _options.MaximumAdaptiveInterval;
+        return configuredMaximum < GetBaseInterval(room) ? GetBaseInterval(room) : configuredMaximum;
     }
 
     private TimeSpan ComputePositiveJitter(string key, DateTimeOffset now)
