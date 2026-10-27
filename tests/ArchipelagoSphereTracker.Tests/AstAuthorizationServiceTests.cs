@@ -127,6 +127,34 @@ public class AstAuthorizationServiceTests
     }
 
     [Theory]
+    [InlineData("recap", AstAuthorizationLevel.GuildMember)]
+    [InlineData("add-alias", AstAuthorizationLevel.GuildMember)]
+    [InlineData("info", AstAuthorizationLevel.GuildMember)]
+    [InlineData("get-patch", AstAuthorizationLevel.GuildMember)]
+    [InlineData("delete-url", AstAuthorizationLevel.RoomManager)]
+    [InlineData("update-silent-option", AstAuthorizationLevel.RoomManager)]
+    [InlineData("ast-sync-now", AstAuthorizationLevel.RoomManager)]
+    [InlineData("add-url", AstAuthorizationLevel.GuildManager)]
+    [InlineData("ast-portal", AstAuthorizationLevel.GuildManager)]
+    [InlineData("ast-health", AstAuthorizationLevel.GuildManager)]
+    public void TrackedTextChannel_UsesRoomCommandPermissions(string command, AstAuthorizationLevel expected)
+    {
+        Assert.Equal(expected, AstAuthorizationService.RequiredForDiscordCommand(command, isThread: false, isTrackedRoom: true));
+    }
+
+    [Fact]
+    public void TextChannelManagement_DoesNotInheritThreadOnlyAuthority()
+    {
+        var threadManager = Context(canManageThreads: true) with { IsThreadChannel = false };
+        Assert.False(AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, threadManager));
+        var channelManager = Context() with { IsThreadChannel = false, CanManageChannel = true };
+        Assert.True(AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager, channelManager));
+        Assert.False(AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, channelManager));
+        Assert.False(AstAuthorizationService.IsAllowed(AstAuthorizationLevel.RoomManager,
+            channelManager with { IsGuildMember = false }));
+    }
+
+    [Theory]
     [InlineData("ast-sync-now")]
     [InlineData("ast-pause")]
     [InlineData("ast-resume")]

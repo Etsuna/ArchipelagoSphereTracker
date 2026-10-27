@@ -18,7 +18,9 @@ public sealed record AstAuthorizationContext(
     bool IsGuildOwner,
     bool IsInstanceOwner,
     bool IsDelegatedGuildManager = false,
-    bool IsArchipelagoAccessDenied = false);
+    bool IsArchipelagoAccessDenied = false,
+    bool IsThreadChannel = true,
+    bool CanManageChannel = false);
 
 public sealed record AstPortalActor(string UserId, IGuildUser User, AstAuthorizationContext Authorization);
 
@@ -35,16 +37,19 @@ public static class AstAuthorizationService
         {
             AstAuthorizationLevel.GuildMember => true,
             AstAuthorizationLevel.RoomManager =>
-                context.IsThreadOwner || context.CanManageThreads || IsGuildManager(context),
+                (context.IsThreadChannel ? context.IsThreadOwner || context.CanManageThreads : context.CanManageChannel) ||
+                IsGuildManager(context),
             AstAuthorizationLevel.GuildManager => IsGuildManager(context),
             AstAuthorizationLevel.InstanceOwner => context.IsInstanceOwner,
             _ => false
         };
     }
 
-    public static AstAuthorizationLevel RequiredForDiscordCommand(string commandName, bool isThread)
+    public static AstAuthorizationLevel RequiredForDiscordCommand(string commandName, bool isThread, bool isTrackedRoom = false)
     {
-        if (isThread)
+        if (commandName is "add-url" or "ast-portal" || (!isThread && commandName == "ast-health"))
+            return AstAuthorizationLevel.GuildManager;
+        if (isThread || isTrackedRoom)
         {
             return commandName switch
             {
@@ -149,7 +154,9 @@ public static class AstAuthorizationService
             IsGuildOwner: isGuildOwner,
             IsInstanceOwner: isInstanceOwner,
             IsDelegatedGuildManager: isDelegatedGuildManager,
-            IsArchipelagoAccessDenied: isArchipelagoAccessDenied);
+            IsArchipelagoAccessDenied: isArchipelagoAccessDenied,
+            IsThreadChannel: thread != null,
+            CanManageChannel: thread == null && channelPermissions.ManageChannel);
     }
 
     public static async Task<AstPortalActor?> ResolvePortalActorAsync(

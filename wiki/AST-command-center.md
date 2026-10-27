@@ -34,8 +34,8 @@ flowchart TD
 
 ### Context-sensitive home screen
 
-- **Inside a tracked thread**: direct access to My space, The room, Archipelago tools when enabled and allowed, and—depending on your permissions—Manage room or AST Administration.
-- **Inside a regular server channel**: a paginated selector for accessible rooms, Archipelago tools when enabled and allowed, AST Administration, and help.
+- **Inside a tracked thread or a directly tracked text channel**: direct access to My space, The room, Archipelago tools when enabled and allowed, and—depending on your permissions—Manage room or AST Administration.
+- **Inside an untracked server channel**: a paginated selector for accessible rooms, Archipelago tools when enabled and allowed, AST Administration, and help.
 - **Inside an untracked thread**: no room is selected; return to a text channel to configure one.
 - **In a preparation channel/thread**: the preparation portal is available independently of tracking. Guild managers can create its message through **Organize a room**; no additional thread is created.
 - **In a direct message**: `/ast` is refused because the guild and permissions cannot be determined.
@@ -61,7 +61,7 @@ Displays tracking health, game progress, public information, and available assoc
 
 ### Manage room
 
-Restricted to the thread owner, members with **Manage Threads**, guild managers, and delegated AST managers:
+Restricted to guild managers and delegated AST managers, plus the thread owner or members with **Manage Threads** in thread mode, or members with **Manage Channels** on the tracked channel in direct-channel mode:
 
 - synchronize immediately;
 - pause or resume tracking;
@@ -150,8 +150,8 @@ flowchart TD
 
 ### Accueil contextuel
 
-- **Dans un thread suivi** : accès direct à Mon espace, La room, aux Outils Archipelago lorsqu’ils sont activés et autorisés et, selon vos droits, à Gérer la room ou Administration AST.
-- **Dans un salon normal** : sélection paginée des rooms accessibles, Outils Archipelago lorsqu’ils sont activés et autorisés, Administration AST et aide.
+- **Dans un thread suivi ou un salon texte suivi directement** : accès direct à Mon espace, La room, aux Outils Archipelago lorsqu’ils sont activés et autorisés et, selon vos droits, à Gérer la room ou Administration AST.
+- **Dans un salon non suivi** : sélection paginée des rooms accessibles, Outils Archipelago lorsqu’ils sont activés et autorisés, Administration AST et aide.
 - **Dans un thread non suivi** : aucune room n’est sélectionnée ; revenez dans un salon texte pour en configurer une.
 - **Dans un salon/thread de préparation** : le portail de préparation est disponible indépendamment du suivi. Les gestionnaires peuvent créer son message depuis **Organiser une room**, sans nouveau thread.
 - **En message privé** : `/ast` est refusé, car le serveur et les permissions ne peuvent pas être déterminés.
@@ -177,7 +177,7 @@ Affiche la santé du suivi, la progression des jeux, les informations publiques 
 
 ### Gérer la room
 
-Réservé au propriétaire du thread, aux membres ayant **Gérer les fils**, aux gestionnaires du serveur et aux responsables AST délégués :
+Réservé aux gestionnaires du serveur et aux responsables AST délégués, ainsi qu’au propriétaire du thread ou aux membres ayant **Gérer les fils** en mode thread, ou **Gérer les salons** sur le salon suivi en mode salon direct :
 
 - synchroniser immédiatement ;
 - suspendre ou reprendre le suivi ;

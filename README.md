@@ -53,7 +53,7 @@ Le bot existe en **deux modes** :
 
 ### Communes (Normal + Archipelago)
 
-- Multi-serveurs Discord, multi-salons et multi-threads.
+- Multi-serveurs Discord, multi-salons et multi-threads. Destination au choix : thread privé (par défaut), thread public ou salon directement, avec une room par destination.
 - Centre de commandes éphémère `/ast` : toute l’interface Discord (configuration, rooms, alias, récaps, exclusions, portails et administration) est accessible depuis une seule commande slash, en complément des commandes historiques.
 - Assistant interactif intégré à `/ast` pour connecter une room, configurer le thread, les notifications et le polling, puis confirmer depuis un aperçu éphémère.
 - Polling automatique par défaut : une minute lorsque la room est active ou que son activité est inconnue. Une inactivité connue et des réponses inchangées permettent un ralentissement progressif à deux, quatre, puis au maximum cinq minutes.
@@ -544,6 +544,8 @@ AST supports **two modes**:
 ---
 
 ## Features
+
+Choose a private thread (default), public thread, or the channel directly, with one room per destination.
 
 ### Shared (Normal + Archipelago)
 

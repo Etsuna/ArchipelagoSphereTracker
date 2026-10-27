@@ -54,6 +54,7 @@ public sealed class CommandTelemetryTests
 
     [Theory]
     [InlineData("thread-type", "Public", "public")]
+    [InlineData("thread-type", "Channel", "channel")]
     [InlineData("check-frequency", "15m", "15m")]
     [InlineData("missing-mode", "full", "full")]
     [InlineData("silent", "true", "true")]

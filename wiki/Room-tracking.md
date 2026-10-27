@@ -8,9 +8,9 @@
 
 From a text channel, open `/ast`, then **AST Administration → Configure room**. The wizard asks for:
 
-1. the text channel that will host the thread;
-2. the exact WebHost URL and thread name;
-3. a private or public thread (members join public threads through Discord);
+1. the text channel that will host tracking or the new thread;
+2. the exact WebHost URL and a thread name when using a thread;
+3. a private thread (default), public thread, or the channel directly without creating a thread;
 4. normal or silent notifications;
 5. automatic polling (default) or a fixed frequency;
 6. final confirmation.
@@ -22,15 +22,21 @@ flowchart LR
     A["/ast"] --> B["AST Administration"]
     B --> C["Configure room"]
     C --> D["Target channel"]
-    D --> E["URL + thread name"]
-    E --> F["Thread type"]
+    D --> E["URL + optional thread name"]
+    E --> F["Private thread / public thread / channel"]
     F --> G["Notifications"]
     G --> H["Automatic or fixed polling"]
     H --> I{"Confirm?"}
     I -->|Yes| J["WebHost validation"]
-    J --> K["Thread + data + tracking"]
+    J --> K["Chosen destination + data + tracking"]
     I -->|No| L["Cancel without writing"]
 ```
+
+In channel mode, all room notifications and files are posted directly in the selected text channel. Only one room may be tracked per destination; a configured channel is never silently replaced. The existing rule preventing the same Archipelago room from being tracked twice on one server still applies. A parent channel may host a direct room and separate tracked threads for other rooms.
+
+`/ast`, personal commands, recaps and portals recognize the tracked text channel as a room. Members with access can use personal/read actions. Guild managers or users with **Manage Channels** on that channel can manage its tracking; **Manage Threads** alone does not grant management of a direct channel room. Creating a new tracking setup still requires an AST-recognized guild manager.
+
+Stopping tracking removes AST's room data and local files, preserving the Discord channel and messages. The existing seven/fourteen-day inactivity policy remains specific to threads; it is not applied to direct channels. Public/private thread behavior is preserved. No privileged intents are required.
 
 ### Frequencies and adaptive polling
 
@@ -116,9 +122,9 @@ At 14 days, AST removes the URL/configuration, items, hints, aliases, recaps, ex
 
 Depuis un salon texte, ouvrez `/ast` puis **Administration AST → Configurer une room**. L’assistant demande :
 
-1. le salon texte qui hébergera le thread ;
-2. l’URL WebHost exacte et le nom du thread ;
-3. un thread privé ou public (les membres rejoignent les fils publics via Discord) ;
+1. le salon texte qui accueillera le suivi ou le nouveau thread ;
+2. l’URL WebHost exacte et un nom de thread si un thread est utilisé ;
+3. un thread privé (par défaut), un thread public ou le salon directement, sans création de thread ;
 4. des notifications normales ou silencieuses ;
 5. le polling automatique (par défaut) ou une fréquence fixe ;
 6. une confirmation finale.
@@ -130,15 +136,21 @@ flowchart LR
     A["/ast"] --> B["Administration AST"]
     B --> C["Configurer une room"]
     C --> D["Salon cible"]
-    D --> E["URL + nom du thread"]
-    E --> F["Type de thread"]
+    D --> E["URL + nom du thread si utilisé"]
+    E --> F["Thread privé / public / salon"]
     F --> G["Notifications"]
     G --> H["Polling automatique ou fixe"]
     H --> I{"Confirmer ?"}
     I -->|Oui| J["Validation WebHost"]
-    J --> K["Thread + données + suivi"]
+    J --> K["Destination choisie + données + suivi"]
     I -->|Non| L["Annulation sans écriture"]
 ```
+
+En mode salon, les notifications et fichiers de la room sont publiés directement dans le salon texte choisi. Une seule room peut être suivie par destination ; un suivi existant n'est jamais remplacé silencieusement. La règle empêchant le suivi de la même room Archipelago deux fois sur un serveur reste applicable. Un salon parent peut accueillir un suivi direct et des threads de suivi pour d'autres rooms.
+
+`/ast`, les commandes personnelles, les récapitulatifs et les portails reconnaissent le salon suivi comme une room. Les membres ayant accès au salon peuvent utiliser les actions personnelles et de consultation. La gestion du suivi est réservée aux gestionnaires de serveur reconnus par AST ou aux membres ayant **Gérer les salons** sur ce salon ; **Gérer les fils** seul ne suffit pas en mode salon. La création d'un nouveau suivi reste réservée aux gestionnaires reconnus par AST.
+
+L'arrêt du suivi supprime les données AST et les fichiers locaux de la room, en conservant le salon Discord et ses messages. La règle d'inactivité de sept/quatorze jours reste propre aux threads ; elle n'est pas appliquée aux salons suivis directement. Les modes thread public et privé sont conservés. Aucun intent privilégié n'est requis.
 
 ### Fréquences et polling adaptatif
 

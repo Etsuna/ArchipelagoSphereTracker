@@ -79,7 +79,7 @@ public static class CommandTelemetry
 
     private static readonly HashSet<string> SafeSelections =
     [
-        "0", "1", "16", "17", "21", "27", "31", "first", "full", "public", "private",
+        "0", "1", "16", "17", "21", "27", "31", "first", "full", "public", "private", "channel",
         "automatic", "fixed", "automatic|15m", "automatic|30m", "automatic|1h", "automatic|6h",
         "fixed|5m", "fixed|15m", "fixed|30m", "fixed|1h", "fixed|6h", "fixed|12h", "fixed|18h",
         "fixed|1d", "5m", "15m", "30m", "1h", "6h", "12h", "18h", "1d"

@@ -652,13 +652,13 @@
     <value>Non trouvé.</value>
   </data>
   <data name="PatchSetForThisThread" xml:space="preserve">
-    <value>**Patches configurés pour ce fil.**</value>
+    <value>**Patchs de cette room suivie.**</value>
   </data>
   <data name="NoPatchForThisThread" xml:space="preserve">
-    <value>Aucun patch configuré pour ce fil.</value>
+    <value>Aucun patch pour cette room suivie.</value>
   </data>
   <data name="CompletListForThisThread" xml:space="preserve">
-    <value>Liste complète des patches pour ce canal.</value>
+    <value>Liste complète des patchs de cette room suivie.</value>
   </data>
   <data name="NoRecordFoundForGuilChannel" xml:space="preserve">
     <value>Aucun enregistrement trouvé pour le GuildId et le ChannelId spécifiés.</value>
@@ -772,7 +772,7 @@
     <value>Liste complète des joueurs pour cette room.</value>
   </data>
   <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
-    <value>La salle existe déjà dans un autre fil de discussion, supprimez d'abord le fil de discussion pour ajouter la même salle et attendez au moins une minute pour faire un autre ajout (le temps de nettoyer complètement les infos de la base de donnée).</value>
+    <value>Cette room est déjà suivie dans &lt;#{0}&gt;. Arrêtez ce suivi avant de l’ajouter ailleurs.</value>
   </data>
   <data name="SilentModeEnabled" xml:space="preserve">
     <value>Mode silencieux activé.</value>
@@ -829,7 +829,7 @@
     <value>Nom du thread</value>
   </data>
   <data name="WebThreadType" xml:space="preserve">
-    <value>Type de thread</value>
+    <value>Destination du suivi</value>
   </data>
   <data name="AstCenterASTAdministration" xml:space="preserve">
     <value>🛠️ Administration AST</value>
@@ -1464,7 +1464,8 @@ Récap vidé.</value>
     <value>**Assistant de configuration AST**
 Salon cible : &lt;#{0}&gt;
 Hôte WebHost : `{1}`
-Thread : `{2}` ({3})
+Destination : {3}
+Nom du thread : `{2}`
 Notifications : {4}
 Suivi : {5} — intervalle `{6}`
 ℹ️ {7}
@@ -1482,7 +1483,7 @@ La session expire après 15 minutes d’inactivité.</value>
     <value>Configurer la room</value>
   </data>
   <data name="AstSetupConfigureTheURLAndThreadName" xml:space="preserve">
-    <value>🟡 Configurez l’URL et le nom du thread</value>
+    <value>Configurez l’URL et les options de destination</value>
   </data>
   <data name="AstSetupInvalidFormat" xml:space="preserve">
     <value>format invalide</value>
@@ -1551,7 +1552,7 @@ La session expire après 15 minutes d’inactivité.</value>
     <value>Utilisez `/ast-setup` dans le salon texte qui accueillera la room.</value>
   </data>
   <data name="AstSetupValidatingTheRoomAndCreatingTheThread" xml:space="preserve">
-    <value>⏳ Validation de la room et création du thread…</value>
+    <value>Validation de la room et configuration du suivi...</value>
   </data>
   <data name="AuthorizationYouDoNotHavePermissionToPerformThisAction" xml:space="preserve">
     <value>Vous n’avez pas les permissions requises pour cette action.</value>
@@ -1739,16 +1740,16 @@ Objets : **{3}**
     <value>Choisissez un alias</value>
   </data>
   <data name="SCAddUrlDescription" xml:space="preserve">
-    <value>Ajoutez une URL et créez un fil de discussion.</value>
+    <value>Suivez une room Archipelago dans un thread ou directement dans un salon.</value>
   </data>
   <data name="SCUrlToTrack" xml:space="preserve">
     <value>L’URL à suivre</value>
   </data>
   <data name="SCThreadNameDescription" xml:space="preserve">
-    <value>Nom du fil de discussion à créer</value>
+    <value>Nom du thread (facultatif ; ignoré en mode salon).</value>
   </data>
   <data name="SCThreadTypeDescription" xml:space="preserve">
-    <value>Indiquez si le fil de discussion est public ou privé</value>
+    <value>Destination : thread privé (par défaut), thread public ou ce salon.</value>
   </data>
   <data name="SCSilentOption" xml:space="preserve">
     <value>silencieux</value>
@@ -1955,10 +1956,10 @@ Objets : **{3}**
     <value>Commande exécutée.</value>
   </data>
   <data name="WebCreateThread" xml:space="preserve">
-    <value>Créer le thread</value>
+    <value>Démarrer le suivi</value>
   </data>
   <data name="WebCreateThreadViaAddUrl" xml:space="preserve">
-    <value>Créer un thread via /add-url</value>
+    <value>Connecter une room via /add-url</value>
   </data>
   <data name="WebCurrentRecap" xml:space="preserve">
     <value>Recap en cours</value>
@@ -2813,4 +2814,7 @@ Vos YAML ont été déposés, mais vous n’êtes pas déclarés prêts. Vos ré
   <data name="PrepMultiUploadHelp" xml:space="preserve"><value>Sélectionnez plusieurs YAML à la fois ou un ZIP les contenant (20 fichiers maximum, 1 Mio chacun). Sur Discord, envoyez le ZIP avec /send-yaml, /ast ou /organize-room dans ce salon de préparation.</value></data>
   <data name="PrepInvalidYamlZip" xml:space="preserve"><value>ZIP de YAML invalide. Incluez 1 à 20 .yaml/.yml, de 1 Mio chacun et 16 Mio au total maximum. Chemins sûrs, sans liens ni noms de fichiers en double ; les autres types de fichiers sont refusés.</value></data>
   <data name="PrepDuplicateYamlNames" xml:space="preserve"><value>Chaque YAML du lot doit avoir un nom de fichier sûr et unique. Aucun fichier n’a été importé.</value></data>
+  <data name="RoomDestinationChannel" xml:space="preserve"><value>Salon directement (sans thread)</value></data>
+  <data name="RoomDestinationChannelNotice" xml:space="preserve"><value>En mode salon, les notifications sont publiées directement dans le salon choisi. Une seule room peut y être suivie ; arrêter le suivi conserve le salon et ses messages.</value></data>
+  <data name="RoomDestinationInvalid" xml:space="preserve"><value>Choisissez un thread privé, un thread public ou le salon directement.</value></data>
 </root>

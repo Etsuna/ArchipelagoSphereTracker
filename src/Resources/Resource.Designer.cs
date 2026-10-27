@@ -8979,5 +8979,17 @@ namespace ArchipelagoSphereTracker.src.Resources {
                 return ResourceManager.GetString("YamlWrongFile", resourceCulture);
             }
         }
+        internal static string RoomDestinationChannel {
+            get { return ResourceManager.GetString("RoomDestinationChannel", resourceCulture); }
+        }
+
+        internal static string RoomDestinationChannelNotice {
+            get { return ResourceManager.GetString("RoomDestinationChannelNotice", resourceCulture); }
+        }
+
+        internal static string RoomDestinationInvalid {
+            get { return ResourceManager.GetString("RoomDestinationInvalid", resourceCulture); }
+        }
+
     }
 }

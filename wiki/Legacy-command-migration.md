@@ -17,7 +17,7 @@ Discord shows the registered direct commands to every member who has **Use Appli
 
 `/ast` behaves differently: it is visible to everyone, but its private buttons and sections are filtered according to the user's role. Permissions are checked again server-side for every action.
 
-Direct tracking commands must be run inside a tracked room thread. Server and standalone Archipelago administration commands use a regular guild text channel. `/organize-room` operates in its current channel or existing thread, and `/send-yaml` also accepts preparation uploads there without a registered tracking URL.
+Direct tracking commands must be run inside a tracked room, either a thread or a directly tracked text channel. Server and standalone Archipelago administration commands use a regular guild text channel. `/organize-room` operates in its current channel or existing thread, and `/send-yaml` also accepts preparation uploads there without a registered tracking URL.
 
 ### General direct commands
 
@@ -109,7 +109,7 @@ Discord affiche les commandes directes enregistrées à tous les membres posséd
 
 `/ast` fonctionne différemment : la commande est visible par tous, mais ses sections et boutons privés sont filtrés selon le rôle. Les droits sont de nouveau contrôlés côté serveur pour chaque action.
 
-Les commandes de suivi doivent être lancées dans le thread d’une room suivie. Les commandes d’administration du serveur et les outils Archipelago autonomes utilisent un salon texte normal. `/organize-room` agit dans le salon ou thread courant, et `/send-yaml` y accepte aussi les YAML d’une préparation sans URL de suivi enregistrée.
+Les commandes de suivi doivent être lancées dans une room suivie, qu’il s’agisse d’un thread ou d’un salon texte suivi directement. Les commandes d’administration du serveur et les outils Archipelago autonomes utilisent un salon texte normal. `/organize-room` agit dans le salon ou thread courant, et `/send-yaml` y accepte aussi les YAML d’une préparation sans URL de suivi enregistrée.
 
 ### Commandes directes générales
 

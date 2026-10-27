@@ -551,8 +551,7 @@ public static class AstCommandCenter
             return;
         }
 
-        var isRoom = command.Channel is IThreadChannel &&
-                     await IsTrackedRoomAsync(guildId, channelId).ConfigureAwait(false);
+        var isRoom = await IsTrackedRoomAsync(guildId, channelId).ConfigureAwait(false);
         var session = Sessions.Start(command.User.Id, guildId, channelId, isRoom ? channelId : null);
         var view = await RenderAsync(session, authorization).ConfigureAwait(false);
         await command.RespondAsync(view.Content, embed: view.Embed, components: view.Components, ephemeral: true);
@@ -608,7 +607,6 @@ public static class AstCommandCenter
                 break;
             case ".txt" or ".json" when
                 AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildMember, authorization) &&
-                command.Channel is IThreadChannel &&
                 await IsTrackedRoomAsync(guildId, channelId).ConfigureAwait(false):
                 result = await AuditedAsync(command.User.Id, guildId, channelId, SecurityAuditAction.SpoilerUpload,
                     () => SpoilerLogClass.SendSpoilerLog(command, channelIdText, attachment)).ConfigureAwait(false);

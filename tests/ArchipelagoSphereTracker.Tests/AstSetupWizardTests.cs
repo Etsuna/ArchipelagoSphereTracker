@@ -107,15 +107,31 @@ public class AstSetupWizardTests
     [Theory]
     [InlineData("Private", "private")]
     [InlineData("Public", "public")]
-    public void ThreadMenu_OnlyOffersNativePrivateOrPublicThreads(string threadType, string selectedValue)
+    [InlineData("Channel", "channel")]
+    public void DestinationMenu_OffersPrivatePublicAndChannelModes(string threadType, string selectedValue)
     {
         var draft = new AstSetupDraft("session", 1, 2, 3, 3, DateTimeOffset.UtcNow.AddMinutes(15),
             ThreadType: threadType);
         var menu = AstSetupWizard.BuildComponents(draft).Components.OfType<ActionRowComponent>()
             .SelectMany(row => row.Components).OfType<SelectMenuComponent>()
             .Single(value => value.CustomId.EndsWith(":thread", StringComparison.Ordinal));
-        Assert.Equal(new[] { "private", "public" }, menu.Options.Select(option => option.Value));
+        Assert.Equal(new[] { "private", "public", "channel" }, menu.Options.Select(option => option.Value));
         Assert.Equal(selectedValue, menu.Options.Single(option => option.IsDefault == true).Value);
+    }
+
+    [Fact]
+    public void ChannelSetup_DoesNotRequireAThreadNameAndExplainsWhereMessagesGo()
+    {
+        var draft = new AstSetupDraft("session", 1, 2, 3, 4, DateTimeOffset.UtcNow.AddMinutes(15),
+            RoomUrl: "https://archipelago.example/room/private-token", ThreadType: "Channel");
+        Assert.True(AstSetupWizard.IsReady(draft));
+        Assert.False(AstSetupWizard.IsReady(draft with { ThreadType = "Private" }));
+        Assert.False(AstSetupWizard.IsReady(draft with { ThreadType = "Public" }));
+        Assert.False(AstSetupWizard.IsReady(draft with { ThreadType = "unknown" }));
+        Assert.Contains("<#4>", AstSetupWizard.BuildSummary(draft));
+        Assert.Contains(ArchipelagoSphereTracker.src.Resources.Resource.RoomDestinationChannelNotice,
+            AstSetupWizard.BuildSummary(draft));
+        Assert.DoesNotContain("private-token", AstSetupWizard.BuildSummary(draft));
     }
 
     [Fact]

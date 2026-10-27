@@ -806,15 +806,15 @@
     <comment>Not Found.</comment>
   </data>
   <data name="PatchSetForThisThread" xml:space="preserve">
-    <value>**Patch set for this thread.**</value>
+    <value>**Patches for this tracked room.**</value>
     <comment>**Patch set for this thread.**</comment>
   </data>
   <data name="NoPatchForThisThread" xml:space="preserve">
-    <value>No patch found for this thread.</value>
+    <value>No patch found for this tracked room.</value>
     <comment>No patch found for this thread.</comment>
   </data>
   <data name="CompletListForThisThread" xml:space="preserve">
-    <value>Complet list of patches for this thread.</value>
+    <value>Complete list of patches for this tracked room.</value>
     <comment>Complet list of patches for this thread.</comment>
   </data>
   <data name="NoRecordFoundForGuilChannel" xml:space="preserve">
@@ -966,7 +966,7 @@
     <comment>Complete list of players for this room.</comment>
   </data>
   <data name="RoomAlreadyExistInOtherThread" xml:space="preserve">
-    <value>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</value>
+    <value>This room is already tracked in &lt;#{0}&gt;. Stop that tracking before adding it elsewhere.</value>
     <comment>The room already exists in another discussion thread, first delete the discussion thread to add the same room and wait at least a minute to make another addition (time to completely clean the information from the database).</comment>
   </data>
   <data name="SilentModeEnabled" xml:space="preserve">
@@ -1042,7 +1042,7 @@
     <comment>Thread name</comment>
   </data>
   <data name="WebThreadType" xml:space="preserve">
-    <value>Thread type</value>
+    <value>Tracking destination</value>
     <comment>Thread type</comment>
   </data>
   <data name="AstCenterASTAdministration" xml:space="preserve">
@@ -1679,7 +1679,8 @@ Recap cleared.</value>
     <value>**AST setup assistant**
 Target channel: &lt;#{0}&gt;
 WebHost: `{1}`
-Thread: `{2}` ({3})
+Destination: {3}
+Thread name: `{2}`
 Notifications: {4}
 Polling: {5} — interval `{6}`
 ℹ️ {7}
@@ -1697,7 +1698,7 @@ The session expires after 15 minutes of inactivity.</value>
     <value>Configure room</value>
   </data>
   <data name="AstSetupConfigureTheURLAndThreadName" xml:space="preserve">
-    <value>🟡 Configure the URL and thread name</value>
+    <value>Configure the URL and destination options</value>
   </data>
   <data name="AstSetupInvalidFormat" xml:space="preserve">
     <value>invalid format</value>
@@ -1766,7 +1767,7 @@ The session expires after 15 minutes of inactivity.</value>
     <value>Use `/ast-setup` in the text channel that will host the room.</value>
   </data>
   <data name="AstSetupValidatingTheRoomAndCreatingTheThread" xml:space="preserve">
-    <value>⏳ Validating the room and creating the thread…</value>
+    <value>Validating the room and configuring tracking...</value>
   </data>
   <data name="AuthorizationYouDoNotHavePermissionToPerformThisAction" xml:space="preserve">
     <value>You do not have permission to perform this action.</value>
@@ -1958,7 +1959,7 @@ Items: **{3}**
     <comment>Choose an alias</comment>
   </data>
   <data name="SCAddUrlDescription" xml:space="preserve">
-    <value>Add a URL and create a thread.</value>
+    <value>Track an Archipelago room in a thread or directly in a channel.</value>
     <comment>Add a URL and create a thread.</comment>
   </data>
   <data name="SCUrlToTrack" xml:space="preserve">
@@ -1966,11 +1967,11 @@ Items: **{3}**
     <comment>The URL to track</comment>
   </data>
   <data name="SCThreadNameDescription" xml:space="preserve">
-    <value>Name of the thread to create</value>
+    <value>Thread name (optional; ignored when tracking directly in a channel).</value>
     <comment>Name of the thread to create</comment>
   </data>
   <data name="SCThreadTypeDescription" xml:space="preserve">
-    <value>Specify if the thread is public or private</value>
+    <value>Tracking destination: private thread (default), public thread, or this channel.</value>
     <comment>Specify if the thread is public or private</comment>
   </data>
   <data name="SCSilentOption" xml:space="preserve">
@@ -2246,11 +2247,11 @@ Items: **{3}**
     <comment>Command executed.</comment>
   </data>
   <data name="WebCreateThread" xml:space="preserve">
-    <value>Create thread</value>
+    <value>Start tracking</value>
     <comment>Create thread</comment>
   </data>
   <data name="WebCreateThreadViaAddUrl" xml:space="preserve">
-    <value>Create a thread via /add-url</value>
+    <value>Connect a room via /add-url</value>
     <comment>Create a thread via /add-url</comment>
   </data>
   <data name="WebCurrentRecap" xml:space="preserve">
@@ -3251,4 +3252,7 @@ Your YAML files have been uploaded, but you are not marked ready. Are your setti
   <data name="PrepMultiUploadHelp" xml:space="preserve"><value>Select several YAML files at once, or a ZIP containing them (up to 20 files, 1 MiB each). On Discord, send the ZIP using /send-yaml, /ast or /organize-room in this preparation channel.</value></data>
   <data name="PrepInvalidYamlZip" xml:space="preserve"><value>Invalid YAML ZIP. Include 1–20 .yaml/.yml files, up to 1 MiB each and 16 MiB total. Paths must be safe, without links or duplicate filenames; other file types are rejected.</value></data>
   <data name="PrepDuplicateYamlNames" xml:space="preserve"><value>Each uploaded YAML must have a safe, unique filename within the batch. No files were imported.</value></data>
+  <data name="RoomDestinationChannel" xml:space="preserve"><value>Channel directly (no thread)</value></data>
+  <data name="RoomDestinationChannelNotice" xml:space="preserve"><value>In channel mode, notifications are posted directly in the selected channel. Only one room can be tracked there; stopping tracking keeps the channel and its messages.</value></data>
+  <data name="RoomDestinationInvalid" xml:space="preserve"><value>Choose a private thread, a public thread, or the channel directly.</value></data>
 </root>

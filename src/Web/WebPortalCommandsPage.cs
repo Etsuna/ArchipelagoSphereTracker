@@ -184,8 +184,10 @@ public static class WebPortalCommandsPage
           <select name=""threadType"">
             <option value=""Private"">{T("WebPrivate")}</option>
             <option value=""Public"">Public</option>
+            <option value=""Channel"">{T("RoomDestinationChannel")}</option>
           </select>
         </label>
+        <p class=""mode"">{T("RoomDestinationChannelNotice")}</p>
         <label>{T("WebSilentMode")}
           <select name=""silent"">
             <option value=""false"">{T("WebNo")}</option>
@@ -248,6 +250,14 @@ public static class WebPortalCommandsPage
 
 <script>
   const addUrlForm = document.querySelector('form[data-command=""add-url""]');
+  const destinationSelect = addUrlForm.querySelector('[name=""threadType""]');
+  const threadNameInput = addUrlForm.querySelector('[name=""threadName""]');
+  function updateDestinationFields() {{
+    threadNameInput.disabled = destinationSelect.value === 'Channel';
+    threadNameInput.closest('label').hidden = threadNameInput.disabled;
+  }}
+  destinationSelect.addEventListener('change', updateDestinationFields);
+  updateDestinationFields();
   const pollingModeSelect = addUrlForm.querySelector('[name=""pollingMode""]');
   const fixedFrequencyField = addUrlForm.querySelector('[data-fixed-frequency]');
   const fixedFrequencySelect = addUrlForm.querySelector('[name=""checkFrequency""]');

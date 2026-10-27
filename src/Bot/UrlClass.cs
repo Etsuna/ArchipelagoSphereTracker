@@ -3,12 +3,43 @@ using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using ArchipelagoSphereTracker.Tracking.Scheduling;
 using Discord;
 using Discord.WebSocket;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using TrackerLib.Models;
 
+public enum RoomDestinationMode { PrivateThread, PublicThread, Channel }
+
 public class UrlClass
 {
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> CreationGates = new(StringComparer.Ordinal);
+
+    internal static bool TryResolveDestination(string? value, out RoomDestinationMode mode)
+    {
+        mode = value switch
+        {
+            null or "" or "Private" => RoomDestinationMode.PrivateThread,
+            "Public" => RoomDestinationMode.PublicThread,
+            "Channel" => RoomDestinationMode.Channel,
+            _ => (RoomDestinationMode)(-1)
+        };
+        return (int)mode >= 0;
+    }
+
+    internal static async Task<IMessageChannel> CreateDestinationAsync(
+        RoomDestinationMode mode, ITextChannel source, string title, IGuildUser? creator)
+    {
+        if (mode == RoomDestinationMode.Channel) return source;
+        if (mode is not (RoomDestinationMode.PrivateThread or RoomDestinationMode.PublicThread))
+            throw new ArgumentOutOfRangeException(nameof(mode));
+        var thread = await source.CreateThreadAsync(title,
+            autoArchiveDuration: ThreadArchiveDuration.OneWeek,
+            type: mode == RoomDestinationMode.PublicThread ? ThreadType.PublicThread : ThreadType.PrivateThread);
+        await thread.SendMessageAsync(string.Format(Resource.UrlThredCreated, thread.Name));
+        if (creator != null) await thread.AddUserAsync(creator);
+        return thread;
+    }
+
     public record UrlAddOptions(
         string Url,
         string ThreadTitle,
@@ -18,7 +49,7 @@ public class UrlClass
         IGuildUser? RequestUser,
         string PollingMode = "automatic");
 
-    public sealed record UrlAddResult(bool Success, string Message, string? ThreadChannelId = null);
+    public sealed record UrlAddResult(bool Success, string Message, string? TrackingChannelId = null);
 
     internal static bool TryResolvePollingPolicy(string? mode, string? frequency,
         out RoomPollingMode pollingMode, out string fixedFrequency)
@@ -67,6 +98,15 @@ public class UrlClass
 
     private static async Task<UrlAddResult> AddUrlInternalAsync(UrlAddOptions options, string channelId, string guildId, ITextChannel channel)
     {
+        // Serialize creation in a guild so concurrent requests cannot replace a channel's room.
+        var gate = CreationGates.GetOrAdd(guildId, _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync();
+        try { return await AddUrlCoreAsync(options, channelId, guildId, channel); }
+        finally { gate.Release(); }
+    }
+
+    private static async Task<UrlAddResult> AddUrlCoreAsync(UrlAddOptions options, string channelId, string guildId, ITextChannel channel)
+    {
         string baseUrl = string.Empty;
         string? tracker = string.Empty;
         string? room = string.Empty;
@@ -81,7 +121,7 @@ public class UrlClass
             return new UrlAddResult(false, Resource.PollingInvalidPollingModeOrMaximumFrequency);
         var guildUser = options.RequestUser;
         var message = string.Empty;
-        string? createdThreadChannelId = null;
+        string? trackingChannelId = null;
         var succeeded = false;
 
         if (Declare.IsBigAsync)
@@ -93,11 +133,19 @@ public class UrlClass
             }
 
             silent = true;
-            threadType = "Public";
+            threadType = threadType == "Channel" ? "Channel" : "Public";
             threadTitle = "Archipelago Big Async";
             checkFrequencyStr = "1h";
             pollingMode = RoomPollingMode.Fixed;
         }
+
+        if (!TryResolveDestination(threadType, out var destinationMode))
+            return new UrlAddResult(false, Resource.RoomDestinationInvalid);
+        if (channel is IThreadChannel || channel.Id.ToString() != channelId || channel.GuildId.ToString() != guildId)
+            return new UrlAddResult(false, AstAuthorizationService.DeniedMessage);
+        if (destinationMode == RoomDestinationMode.Channel &&
+            await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable"))
+            return new UrlAddResult(false, Resource.URLAlreadySet);
 
         if (string.IsNullOrWhiteSpace(newUrl))
         {
@@ -123,7 +171,7 @@ public class UrlClass
 
         var existingChannelForRoom = await ChannelsAndUrlsCommands.GetChannelIdForRoomAsync(guildId, baseUrl, room);
 
-        if (!string.IsNullOrEmpty(existingChannelForRoom) && existingChannelForRoom != channelId)
+        if (!string.IsNullOrEmpty(existingChannelForRoom))
         {
             Console.WriteLine("Room Already Exist In Other Thread");
             message = string.Format(Resource.RoomAlreadyExistInOtherThread, existingChannelForRoom);
@@ -162,7 +210,7 @@ public class UrlClass
             return (true, string.Empty);
         }
 
-        if (await CanAddUrlAsync(guildId, channelId))
+        if (destinationMode != RoomDestinationMode.Channel || await CanAddUrlAsync(guildId, channelId))
         {
             var (isValid, errorMessage) = await IsAllUrlIsValidAsync();
             if (!isValid)
@@ -171,29 +219,9 @@ public class UrlClass
             }
             else
             {
-                ThreadType type = threadType switch
-                {
-                    "Private" => ThreadType.PrivateThread,
-                    "Public" => ThreadType.PublicThread,
-                    _ => ThreadType.PrivateThread
-                };
-
-                var thread = await channel.CreateThreadAsync(
-                    threadTitle,
-                    autoArchiveDuration: ThreadArchiveDuration.OneWeek,
-                    type: type
-                );
-
-                await thread.SendMessageAsync(string.Format(Resource.UrlThredCreated, thread.Name));
-                channelId = thread.Id.ToString();
-                createdThreadChannelId = channelId;
-
-                // The command/portal already supplies the requesting member.
-                // Other members join public threads through Discord instead of a guild-wide scan.
-                if (guildUser != null)
-                    await thread.AddUserAsync(guildUser);
-                else
-                    message = Resource.UrlPrivateThreadUserNotFound;
+                var destination = await CreateDestinationAsync(destinationMode, channel, threadTitle, guildUser);
+                channelId = destination.Id.ToString();
+                trackingChannelId = channelId;
 
                 var patchLinkList = new List<Patch>();
                 var aliasList = new List<(int slot, string alias, string game)>();
@@ -234,7 +262,7 @@ public class UrlClass
                         await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
                         var info = await HelperClass.Info(channelId, guildId);
                         await BotCommands.SendMessageAsync(info, channelId);
-                        using MemoryStream playersStream = await SendPlayersInfoAsync(channelId, thread, aliasList, roomInfo, room);
+                        using MemoryStream playersStream = await SendPlayersInfoAsync(channelId, destination, aliasList, roomInfo, room);
                         await ChannelsAndUrlsCommands.SendAllPatchesFileForChannelAsync(guildId, channelId);
                         await TrackingDataManager.GetTableDataAsync(guildId, channelId, baseUrl, tracker, silent, true);
                         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guildId, channelId);
@@ -259,9 +287,9 @@ public class UrlClass
             message = Resource.URLAlreadySet;
         }
 
-        return new UrlAddResult(succeeded, message, createdThreadChannelId);
+        return new UrlAddResult(succeeded, message, trackingChannelId);
 
-        static async Task<MemoryStream> SendPlayersInfoAsync(string channelId, IThreadChannel thread, List<(int slot, string alias, string game)> aliasList, RoomStatus roomInfo, string room)
+        static async Task<MemoryStream> SendPlayersInfoAsync(string channelId, IMessageChannel destination, List<(int slot, string alias, string game)> aliasList, RoomStatus roomInfo, string room)
         {
             var sb = new StringBuilder();
             sb.AppendLine(Resource.PlayerAndGameList);
@@ -279,7 +307,7 @@ public class UrlClass
 
             var playersFileName = $"players_{channelId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
 
-            var playersMessage = await thread.SendFileAsync(
+            var playersMessage = await destination.SendFileAsync(
                 playersStream,
                 playersFileName,
                 Resource.PlayerList

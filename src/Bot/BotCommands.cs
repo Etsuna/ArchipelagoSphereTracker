@@ -176,9 +176,12 @@ public static class BotCommands
         }
 
         var isThread = command.Channel is IThreadChannel;
+        var isTrackedRoom = command.GuildId is { } guild && command.ChannelId is { } channel &&
+            await DatabaseCommands.CheckIfChannelExistsAsync(guild.ToString(), channel.ToString(), "ChannelsAndUrlsTable");
+        var isRoom = isThread || isTrackedRoom;
         try
         {
-            await command.DeferAsync(ephemeral: isThread || command.CommandName == "send-yaml");
+            await command.DeferAsync(ephemeral: isRoom || command.CommandName == "send-yaml");
         }
         catch
         {
@@ -218,7 +221,7 @@ public static class BotCommands
                     channelId,
                     command.User.Id,
                     guildUser);
-                var requiredAuthorization = AstAuthorizationService.RequiredForDiscordCommand(command.CommandName, isThread);
+                var requiredAuthorization = AstAuthorizationService.RequiredForDiscordCommand(command.CommandName, isThread, isTrackedRoom);
                 if (authorization == null || !AstAuthorizationService.IsAllowed(requiredAuthorization, authorization))
                 {
                     if (auditAction != null)
@@ -276,9 +279,9 @@ public static class BotCommands
                     message = await YamlClass.SendYaml(command, channelId);
                     await command.FollowupAsync(message, ephemeral:true, allowedMentions:AllowedMentions.None);
                 }
-                else if (isThread)
+                else if (UsesRoomCommandRoute(command.CommandName, isThread, isTrackedRoom))
                 {
-                    message = await HandleThreadedCommand(command, guildUser, alias, realAlias, channelId, guildId);
+                    message = await HandleRoomCommand(command, guildUser, alias, realAlias, channelId, guildId);
                     await SendPaginatedMessageAsync(command, message, maxLength);
                 }
                 else
@@ -334,7 +337,12 @@ public static class BotCommands
         });
     }
 
-    private static async Task<string> HandleThreadedCommand(SocketSlashCommand command, IGuildUser? user, string? alias, string? realAlias, string channelId, string guildId)
+    internal static bool UsesRoomCommandRoute(string commandName, bool isThread, bool isTrackedRoom)
+        => isThread || (isTrackedRoom &&
+            commandName is not ("add-url" or "ast-portal" or "ast-health" or "discord" or "apworlds-info") &&
+            !AstAuthorizationService.IsArchipelagoToolCommand(commandName));
+
+    private static async Task<string> HandleRoomCommand(SocketSlashCommand command, IGuildUser? user, string? alias, string? realAlias, string channelId, string guildId)
     {
         var checkChannel = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
 

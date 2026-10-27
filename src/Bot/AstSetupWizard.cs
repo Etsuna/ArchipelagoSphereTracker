@@ -302,11 +302,11 @@ public static class AstSetupWizard
                            targetChannel is not IThreadChannel =>
                 Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
                     current => current with { TargetChannelId = targetChannelId }, out updated),
-            "thread" when value is "private" or "public" =>
+            "thread" when value is "private" or "public" or "channel" =>
                 Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
                     current => current with
                     {
-                        ThreadType = value == "private" ? "Private" : "Public"
+                        ThreadType = value switch { "channel" => "Channel", "public" => "Public", _ => "Private" }
                     }, out updated),
             "notifications" when value is "normal" or "silent" =>
                 Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
@@ -388,12 +388,15 @@ public static class AstSetupWizard
                 : Resource.AstSetupInvalidFormat;
         }
 
-        var title = string.IsNullOrWhiteSpace(draft.ThreadTitle)
+        var title = draft.ThreadType == "Channel" ? "-" : string.IsNullOrWhiteSpace(draft.ThreadTitle)
             ? Resource.AstSetupNotConfigured2
             : SafePreviewValue(draft.ThreadTitle);
-        var thread = draft.ThreadType == "Private"
-            ? Resource.AstSetupPrivate
-            : Resource.AstSetupPublic;
+        var thread = draft.ThreadType switch
+        {
+            "Channel" => Resource.RoomDestinationChannel,
+            "Public" => Resource.AstSetupPublic,
+            _ => Resource.AstSetupPrivate
+        };
         var notifications = draft.Silent
             ? Resource.AstSetupSilent
             : Resource.AstSetupNormal;
@@ -401,7 +404,7 @@ public static class AstSetupWizard
             ? Resource.AstSetupReadyToConfirm
             : Resource.AstSetupConfigureTheURLAndThreadName;
 
-        return string.Format(
+        var summary = string.Format(
             Resource.AstSetupASTSetupAssistantTargetChannelWebHostThreadNotificationsMinimum,
             draft.TargetChannelId,
             urlStatus,
@@ -412,6 +415,7 @@ public static class AstSetupWizard
             draft.PollingMode == RoomPollingMode.Automatic ? "1m–5m" : draft.CheckFrequency,
             Resource.AstSetupHighIntervalWarning,
             ready);
+        return draft.ThreadType == "Channel" ? summary + "\n\n" + Resource.RoomDestinationChannelNotice : summary;
     }
 
     public static MessageComponent BuildComponents(AstSetupDraft draft)
@@ -429,8 +433,8 @@ public static class AstSetupWizard
     }
 
     public static bool IsReady(AstSetupDraft draft)
-        => !string.IsNullOrWhiteSpace(draft.ThreadTitle) &&
-           draft.ThreadTitle.Length <= 100 &&
+        => UrlClass.TryResolveDestination(draft.ThreadType, out _) &&
+           (draft.ThreadType == "Channel" || (!string.IsNullOrWhiteSpace(draft.ThreadTitle) && draft.ThreadTitle.Length <= 100)) &&
            !string.IsNullOrWhiteSpace(draft.RoomUrl) &&
            ArchipelagoUrlSecurity.TryParseRoomUrl(draft.RoomUrl, out _);
 
@@ -492,7 +496,7 @@ public static class AstSetupWizard
             var result = await UrlClass.AddUrlFromSetupAsync(
                 new UrlClass.UrlAddOptions(
                     draft.RoomUrl!,
-                    draft.ThreadTitle!,
+                    draft.ThreadTitle ?? "Archipelago",
                     draft.ThreadType,
                     draft.Silent,
                     draft.CheckFrequency,
@@ -507,7 +511,7 @@ public static class AstSetupWizard
                 SecurityAuditSource.Discord,
                 component.User.Id.ToString(),
                 guildId.ToString(),
-                result.ThreadChannelId ?? channelId.ToString(),
+                result.TrackingChannelId ?? channelId.ToString(),
                 SecurityAuditAction.RoomAdd,
                 result.Success ? SecurityAuditOutcome.Succeeded : SecurityAuditOutcome.Failed);
             await component.ModifyOriginalResponseAsync(properties => properties.Content = result.Message);
@@ -553,7 +557,7 @@ public static class AstSetupWizard
             .WithPlaceholder("Archipelago")
             .WithMinLength(1)
             .WithMaxLength(100)
-            .WithRequired(true);
+            .WithRequired(draft.ThreadType != "Channel");
         if (!string.IsNullOrWhiteSpace(draft.ThreadTitle)) titleInput.WithValue(draft.ThreadTitle);
 
         return new ModalBuilder()
@@ -571,7 +575,8 @@ public static class AstSetupWizard
             .WithMinValues(1)
             .WithMaxValues(1)
             .AddOption(Option(Resource.SCThreadPrivate, "private", draft.ThreadType == "Private"))
-            .AddOption(Option(Resource.SCThreadPublic, "public", draft.ThreadType == "Public"));
+            .AddOption(Option(Resource.SCThreadPublic, "public", draft.ThreadType == "Public"))
+            .AddOption(Option(Resource.RoomDestinationChannel, "channel", draft.ThreadType == "Channel"));
 
     private static SelectMenuBuilder ChannelMenu(AstSetupDraft draft)
         => new SelectMenuBuilder()

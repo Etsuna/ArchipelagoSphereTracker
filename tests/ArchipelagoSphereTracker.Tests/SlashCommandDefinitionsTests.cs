@@ -65,6 +65,25 @@ public class SlashCommandDefinitionsTests
     }
 
     [Theory]
+    [InlineData("fr")]
+    [InlineData("en")]
+    public void AddUrl_OffersEveryDestinationAndDefaultsToAPrivateThread(string culture)
+    {
+        var previous = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
+            var command = SlashCommandDefinitions.GetAll().Single(value => value.Name == "add-url");
+            var destination = command.Options.Single(option => option.Name == Resource.SCThreadType);
+            Assert.False(destination.IsRequired);
+            Assert.Equal(new[] { "Private", "Public", "Channel" }, destination.Choices.Select(choice => choice.Value.ToString()));
+            Assert.False(command.Options.Single(option => option.Name == Resource.SCThreadName).IsRequired);
+            Assert.NotNull(command.Build());
+        }
+        finally { CultureInfo.CurrentUICulture = previous; }
+    }
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void GetAll_publishes_ast_and_the_v5_6_7_commands(bool archipelagoMode)

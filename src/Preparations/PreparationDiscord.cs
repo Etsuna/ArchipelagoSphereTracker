@@ -253,8 +253,8 @@ public static class PreparationDiscord
         {
             var result = await UrlClass.AddUrlFromSetupAsync(new(url, room.Title, room.IsPrivate ? "Private" : "Public",
                 false, "5m", actor, "automatic"), room.ParentChannelId, guild, parent);
-            if (!result.Success || result.ThreadChannelId == null) throw new PreparationException(result.Message);
-            tracking = result.ThreadChannelId;
+            if (!result.Success || result.TrackingChannelId == null) throw new PreparationException(result.Message);
+            tracking = result.TrackingChannelId;
         }
         finally { await service.CompleteAttachAsync(guild, channel, actor.Id.ToString(), tracking); }
         if (tracking != null && ulong.TryParse(tracking, out var trackingId))
