@@ -13,7 +13,6 @@ public class UrlClass
         string Url,
         string ThreadTitle,
         string ThreadType,
-        bool AutoAddMembers,
         bool Silent,
         string CheckFrequency,
         IGuildUser? RequestUser,
@@ -40,14 +39,12 @@ public class UrlClass
         var newUrl = Value("url") as string;
         var threadTitle = Value(Resource.SCThreadName) as string ?? "Archipelago";
         var threadType = Value(Resource.SCThreadType) as string ?? "Private";
-        var autoAddMembers = Value(Resource.SCAutoAddMembers) as bool? ?? false;
         var silent = Value(Resource.SCSilentOption) as bool? ?? false;
         var checkFrequencyStr = Value(Resource.CheckFrequency) as string ?? "5m";
         var options = new UrlAddOptions(
             newUrl ?? string.Empty,
             threadTitle,
             threadType,
-            autoAddMembers,
             silent,
             checkFrequencyStr,
             guildUser,
@@ -78,7 +75,6 @@ public class UrlClass
         var newUrl = options.Url;
         var threadTitle = options.ThreadTitle;
         var threadType = options.ThreadType;
-        var autoAddMembers = options.AutoAddMembers;
         var silent = options.Silent;
         var checkFrequencyStr = options.CheckFrequency;
         if (!TryResolvePollingPolicy(options.PollingMode, checkFrequencyStr, out var pollingMode, out checkFrequencyStr))
@@ -97,7 +93,6 @@ public class UrlClass
             }
 
             silent = true;
-            autoAddMembers = false;
             threadType = "Public";
             threadTitle = "Archipelago Big Async";
             checkFrequencyStr = "1h";
@@ -193,31 +188,12 @@ public class UrlClass
                 channelId = thread.Id.ToString();
                 createdThreadChannelId = channelId;
 
-                if (type == ThreadType.PrivateThread)
-                {
-                    if (guildUser != null)
-                        await thread.AddUserAsync(guildUser);
-                    else
-                        message = Resource.UrlPrivateThreadUserNotFound;
-                }
+                // The command/portal already supplies the requesting member.
+                // Other members join public threads through Discord instead of a guild-wide scan.
+                if (guildUser != null)
+                    await thread.AddUserAsync(guildUser);
                 else
-                {
-                    if (autoAddMembers)
-                    {
-                        await foreach (var memberBatch in channel.GetUsersAsync())
-                        {
-                            foreach (var member in memberBatch)
-                                await thread.AddUserAsync(member);
-                        }
-                    }
-                    else
-                    {
-                        if (guildUser != null)
-                            await thread.AddUserAsync(guildUser);
-                        else
-                            message = Resource.UrlPrivateThreadUserNotFound;
-                    }
-                }
+                    message = Resource.UrlPrivateThreadUserNotFound;
 
                 var patchLinkList = new List<Patch>();
                 var aliasList = new List<(int slot, string alias, string game)>();

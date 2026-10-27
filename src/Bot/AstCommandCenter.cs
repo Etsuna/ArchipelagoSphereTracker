@@ -1292,8 +1292,7 @@ public static class AstCommandCenter
             }
 
             var guild = Declare.Client.GetGuild(guildId);
-            IGuildUser? targetUser = guild?.GetUser(selectedUserId);
-            targetUser ??= component.Data.Members?.FirstOrDefault(member => member.Id == selectedUserId);
+            IGuildUser? targetUser = component.Data.Members?.FirstOrDefault(member => member.Id == selectedUserId);
             if (action == "access-grant" && (targetUser == null || targetUser.IsBot))
             {
                 await SetErrorAsync(component, Resource.AstCenterAccountNotHumanGuildMember).ConfigureAwait(false);
@@ -1350,9 +1349,7 @@ public static class AstCommandCenter
             var targetUserText = selectedUserId.ToString(CultureInfo.InvariantCulture);
             if (action == "arch-access-deny")
             {
-                var guild = Declare.Client.GetGuild(guildId);
-                IGuildUser? targetUser = guild?.GetUser(selectedUserId);
-                targetUser ??= component.Data.Members?.FirstOrDefault(member => member.Id == selectedUserId);
+                IGuildUser? targetUser = component.Data.Members?.FirstOrDefault(member => member.Id == selectedUserId);
                 if (targetUser == null || targetUser.IsBot)
                 {
                     await SetErrorAsync(component, Resource.AstCenterAccountNotHumanGuildMember).ConfigureAwait(false);

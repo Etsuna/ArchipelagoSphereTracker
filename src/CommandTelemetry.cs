@@ -72,7 +72,7 @@ public static class CommandTelemetry
 
     private static readonly HashSet<string> KnownWebOptions =
     [
-        "alias", "autoAddMembers", "checkFrequency", "file", "fileName", "hideItems", "maximumFrequency",
+        "alias", "checkFrequency", "file", "fileName", "hideItems", "maximumFrequency",
         "missingMode", "mode", "resetValidation", "silent", "skipProgBalancing", "sphere", "template",
         "threadName", "threadType", "url", "validateSphere"
     ];
@@ -87,7 +87,7 @@ public static class CommandTelemetry
 
     private static readonly HashSet<string> BooleanOptions =
     [
-        "auto-add-members", "hide-items", "reset-validation", "silent", "skip-prog-balancing"
+        "hide-items", "reset-validation", "silent", "skip-prog-balancing"
     ];
 
     private static readonly HashSet<string> ChoiceOptions =
@@ -234,7 +234,6 @@ public static class CommandTelemetry
             "frequence-check" => "check-frequency",
             "ignorer_mentions_items" => "skip-mention-items",
             "skip_mention_items" => "skip-mention-items",
-            "autoAddMembers" => "auto-add-members",
             "checkFrequency" => "check-frequency",
             "fileName" => "file-name",
             "hideItems" => "hide-items",

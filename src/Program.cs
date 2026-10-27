@@ -1,6 +1,5 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 using DotNetEnv;
 using Prometheus;
@@ -182,23 +181,13 @@ if (args.Length == 0)
 
         Console.WriteLine(string.Format(Resource.ProgramStartingBot, version));
 
-        var config = new DiscordSocketConfig
-        {
-            GatewayIntents =
-            GatewayIntents.Guilds |
-            GatewayIntents.GuildMessages |
-            GatewayIntents.MessageContent,
-            UseInteractionSnowflakeDate = false,
-            ResponseInternalTimeCheck = false
-        };
+        var config = CreateDiscordConfig();
 
         Declare.Client = new DiscordSocketClient(config);
-        Declare.CommandService = new CommandService();
         MetricsExporter.SetDiscordConnected(false);
 
         Declare.Client.Log += LogAsync;
         Declare.Client.Ready += ReadyAsync;
-        Declare.Client.MessageReceived += BotCommands.MessageReceivedAsync;
         Declare.Client.JoinedGuild += OnGuildJoined;
         Declare.Client.Connected += OnConnected;
         Declare.Client.Disconnected += OnDisconnected;
@@ -231,8 +220,6 @@ if (args.Length == 0)
         }
 
         await Declare.Client.SetCustomStatusAsync(version);
-
-        await BotCommands.InstallCommandsAsync();
 
         await Declare.Client.LoginAsync(TokenType.Bot, Declare.DiscordToken);
         await Declare.Client.StartAsync();
@@ -345,6 +332,14 @@ if (args.Length == 0)
         });
         return Task.CompletedTask;
     }
+
+    internal static DiscordSocketConfig CreateDiscordConfig()
+        => new()
+        {
+            GatewayIntents = GatewayIntents.Guilds,
+            UseInteractionSnowflakeDate = false,
+            ResponseInternalTimeCheck = false
+        };
 
     private static async Task CheckBdd()
     {

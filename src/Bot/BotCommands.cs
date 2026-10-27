@@ -1,8 +1,6 @@
 using ArchipelagoSphereTracker.src.Resources;
 using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using System.Data;
 using System.Text.RegularExpressions;
 
@@ -17,15 +15,6 @@ public static class BotCommands
     private static bool _handlersRegistered;
 
     #region Setup
-
-    public static Task InstallCommandsAsync()
-    {
-        Declare.Services = new ServiceCollection()
-            .AddSingleton(Declare.Client)
-            .BuildServiceProvider();
-
-        return Task.CompletedTask;
-    }
 
     public static async Task RegisterCommandsAsync()
     {
@@ -101,21 +90,6 @@ public static class BotCommands
     #endregion
 
     #region Message Handling
-
-    public static async Task MessageReceivedAsync(SocketMessage arg)
-    {
-        if (arg is not SocketUserMessage message || message.Author.IsBot) return;
-
-        int argPos = 0;
-        if (message.HasStringPrefix("/", ref argPos))
-        {
-            var context = new SocketCommandContext(Declare.Client, message);
-            var result = await Declare.CommandService.ExecuteAsync(context, message.Content[argPos..], Declare.Services);
-
-            if (!result.IsSuccess)
-                Console.WriteLine(string.Format(Resource.BotCommandFailed, result.ErrorReason));
-        }
-    }
 
     public static async Task SendMessageAsync(string message, string channelIdStr)
     {

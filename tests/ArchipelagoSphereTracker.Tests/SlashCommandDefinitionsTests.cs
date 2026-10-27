@@ -30,21 +30,26 @@ public class SlashCommandDefinitionsTests
     }
 
     [Theory]
-    [InlineData("fr", "ajout-auto-membres", "Ajouter automatiquement")]
-    [InlineData("en", "auto-add-members", "Automatically add")]
-    public void AddUrl_LocalizesAutoAddMembersNameAndDescription(string culture, string name, string description)
+    [InlineData("fr")]
+    [InlineData("en")]
+    public void AddUrl_DoesNotOfferBulkMemberSubscription(string culture)
     {
         var previousCulture = CultureInfo.CurrentUICulture;
         try
         {
             CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
             var command = SlashCommandDefinitions.GetAll().Single(command => command.Name == "add-url");
-            var option = command.Options.Single(option => option.Name == name);
-            Assert.StartsWith(description, option.Description);
-            Assert.Equal(Resource.SCAutoAddMembers, option.Name);
-            Assert.InRange(option.Description.Length, 1, 100);
+            Assert.DoesNotContain(command.Options, option =>
+                option.Name is "auto-add-members" or "ajout-auto-membres");
+            Assert.NotNull(command.Build());
         }
         finally { CultureInfo.CurrentUICulture = previousCulture; }
+    }
+
+    [Fact]
+    public void DiscordGateway_DoesNotRequestPrivilegedIntentsOrHumanMessages()
+    {
+        Assert.Equal(GatewayIntents.Guilds, Program.CreateDiscordConfig().GatewayIntents);
     }
 
     [Fact]

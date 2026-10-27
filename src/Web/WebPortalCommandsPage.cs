@@ -186,12 +186,6 @@ public static class WebPortalCommandsPage
             <option value=""Public"">Public</option>
           </select>
         </label>
-        <label>{T("WebAutoAddMembersPublic")}
-          <select name=""autoAddMembers"">
-            <option value=""false"">{T("WebNo")}</option>
-            <option value=""true"">{T("WebYes")}</option>
-          </select>
-        </label>
         <label>{T("WebSilentMode")}
           <select name=""silent"">
             <option value=""false"">{T("WebNo")}</option>

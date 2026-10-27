@@ -10,7 +10,7 @@ From a text channel, open `/ast`, then **AST Administration → Configure room**
 
 1. the text channel that will host the thread;
 2. the exact WebHost URL and thread name;
-3. a private thread, public thread, or public thread with automatic member addition;
+3. a private or public thread (members join public threads through Discord);
 4. normal or silent notifications;
 5. automatic polling (default) or a fixed frequency;
 6. final confirmation.
@@ -118,7 +118,7 @@ Depuis un salon texte, ouvrez `/ast` puis **Administration AST → Configurer un
 
 1. le salon texte qui hébergera le thread ;
 2. l’URL WebHost exacte et le nom du thread ;
-3. un thread privé, public, ou public avec ajout automatique des membres ;
+3. un thread privé ou public (les membres rejoignent les fils publics via Discord) ;
 4. des notifications normales ou silencieuses ;
 5. le polling automatique (par défaut) ou une fréquence fixe ;
 6. une confirmation finale.

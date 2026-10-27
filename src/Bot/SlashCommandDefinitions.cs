@@ -82,7 +82,6 @@ public static class SlashCommandDefinitions
                     .WithRequired(true)
                     .AddChoice(Resource.SCThreadPublic, "Public")
                     .AddChoice(Resource.SCThreadPrivate, "Private"))
-                .AddOption(BooleanOption(Resource.SCAutoAddMembers, Resource.SCAutoAddMembersDescription))
                 .AddOption(BooleanOption(Resource.SCSilentOption, Resource.SCSilentDescription))
                 .AddOption(new SlashCommandOptionBuilder()
                     .WithName("polling-mode")

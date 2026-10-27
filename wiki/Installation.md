@@ -19,7 +19,7 @@ The public bot runs in Normal mode and requires no installation:
 
 1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and create a **New Application**.
 2. Open **Bot**, create the bot, and copy its token. Never publish this token.
-3. Enable **Message Content Intent**, which is used by the current Discord client configuration.
+3. Leave all **Privileged Gateway Intents** disabled. AST uses slash commands and individual member lookups.
 4. Enable **Public Bot** only if other people should be able to invite your instance.
 5. Under **OAuth2 → URL Generator**, select the `bot` and `applications.commands` scopes.
 6. Use permission integer `395137117248`, or manually grant: View Channels, Send Messages, create/manage public and private threads, send messages in threads, Embed Links, Attach Files, Add Reactions, Manage Messages, and Read Message History.
@@ -137,7 +137,7 @@ Le bot public fonctionne en mode Normal et ne demande aucune installation :
 
 1. Ouvrez le [Discord Developer Portal](https://discord.com/developers/applications) et créez une **New Application**.
 2. Dans **Bot**, créez le bot puis copiez son token. Ne publiez jamais ce token.
-3. Activez **Message Content Intent**, utilisé par la configuration actuelle du client Discord.
+3. Laissez tous les **Privileged Gateway Intents** désactivés. AST utilise les commandes slash et les recherches individuelles de membres.
 4. Activez **Public Bot** seulement si d’autres personnes doivent pouvoir inviter votre instance.
 5. Dans **OAuth2 → URL Generator**, sélectionnez les scopes `bot` et `applications.commands`.
 6. Utilisez les permissions `395137117248`, ou accordez manuellement : voir les salons, envoyer des messages, créer/gérer des threads publics et privés, envoyer dans les threads, intégrer des liens, joindre des fichiers, ajouter des réactions, gérer les messages et lire l’historique.

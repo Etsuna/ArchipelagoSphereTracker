@@ -1123,7 +1123,6 @@ public static class WebPortalServer
                         var url = form["url"].FirstOrDefault() ?? string.Empty;
                         var threadName = form["threadName"].FirstOrDefault() ?? "Archipelago";
                         var threadType = form["threadType"].FirstOrDefault() ?? "Private";
-                        var autoAddMembers = form["autoAddMembers"].FirstOrDefault() == "true";
                         var silent = form["silent"].FirstOrDefault() == "true";
                         var checkFrequency = form["checkFrequency"].FirstOrDefault() ?? "5m";
                         var pollingMode = form["pollingMode"].FirstOrDefault() ?? "automatic";
@@ -1138,7 +1137,6 @@ public static class WebPortalServer
                             url,
                             threadName,
                             threadType,
-                            autoAddMembers,
                             silent,
                             checkFrequency,
                             actor.User,

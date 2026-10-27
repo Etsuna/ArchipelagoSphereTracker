@@ -252,7 +252,7 @@ public static class PreparationDiscord
         try
         {
             var result = await UrlClass.AddUrlFromSetupAsync(new(url, room.Title, room.IsPrivate ? "Private" : "Public",
-                false, false, "5m", actor, "automatic"), room.ParentChannelId, guild, parent);
+                false, "5m", actor, "automatic"), room.ParentChannelId, guild, parent);
             if (!result.Success || result.ThreadChannelId == null) throw new PreparationException(result.Message);
             tracking = result.ThreadChannelId;
         }

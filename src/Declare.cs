@@ -1,5 +1,4 @@
-﻿using Discord.Commands;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 using System.Reflection;
 
 public class Declare
@@ -44,8 +43,6 @@ public class Declare
 
     public static CancellationTokenSource Cts = new CancellationTokenSource();
     public static DiscordSocketClient Client = new DiscordSocketClient();
-    public static CommandService CommandService = new CommandService();
-    public static IServiceProvider Services = default!;
     public static HashSet<string> WarnedThreads = new HashSet<string>();
     public const string DatabaseFile = "AST.db";
     public static HttpClient HttpClient = new HttpClient();

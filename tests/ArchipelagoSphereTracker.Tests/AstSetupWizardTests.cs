@@ -57,7 +57,6 @@ public class AstSetupWizardTests
             "Weekly Multiworld",
             "Private",
             false,
-            false,
             "15m");
 
         var summary = AstSetupWizard.BuildSummary(draft);
@@ -103,6 +102,20 @@ public class AstSetupWizardTests
     public void CustomIdParser_RejectsForeignOrMalformedIds(string customId)
     {
         Assert.False(AstSetupWizard.TryParseCustomId(customId, out _, out _));
+    }
+
+    [Theory]
+    [InlineData("Private", "private")]
+    [InlineData("Public", "public")]
+    public void ThreadMenu_OnlyOffersNativePrivateOrPublicThreads(string threadType, string selectedValue)
+    {
+        var draft = new AstSetupDraft("session", 1, 2, 3, 3, DateTimeOffset.UtcNow.AddMinutes(15),
+            ThreadType: threadType);
+        var menu = AstSetupWizard.BuildComponents(draft).Components.OfType<ActionRowComponent>()
+            .SelectMany(row => row.Components).OfType<SelectMenuComponent>()
+            .Single(value => value.CustomId.EndsWith(":thread", StringComparison.Ordinal));
+        Assert.Equal(new[] { "private", "public" }, menu.Options.Select(option => option.Value));
+        Assert.Equal(selectedValue, menu.Options.Single(option => option.IsDefault == true).Value);
     }
 
     [Fact]

@@ -90,7 +90,6 @@ public static class AstAuthorizationService
             return null;
 
         IGuildUser? user = knownUser;
-        user ??= guild.GetUser(userId);
         if (user == null)
         {
             try
@@ -167,7 +166,7 @@ public static class AstAuthorizationService
         if (guild == null)
             return null;
 
-        IGuildUser? user = guild?.GetUser(userIdValue);
+        IGuildUser? user = null; // Refresh membership and roles through REST for each portal access.
         if (user == null)
         {
             try
@@ -210,17 +209,12 @@ public static class AstAuthorizationService
     {
         try
         {
-            await foreach (var batch in thread.GetUsersAsync())
-            {
-                if (batch.Any(user => user.Id == userId))
-                    return true;
-            }
+            var current = await Declare.Client.Rest.GetChannelAsync(thread.Id) as Discord.Rest.RestThreadChannel;
+            return current != null && await current.GetUserAsync(userId) != null;
         }
         catch (Discord.Net.HttpException)
         {
             return false;
         }
-
-        return false;
     }
 }

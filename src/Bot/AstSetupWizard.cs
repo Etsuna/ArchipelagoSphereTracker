@@ -14,7 +14,6 @@ public sealed record AstSetupDraft(
     string? RoomUrl = null,
     string? ThreadTitle = null,
     string ThreadType = "Private",
-    bool AutoAddMembers = false,
     bool Silent = false,
     string CheckFrequency = "5m",
     RoomPollingMode PollingMode = RoomPollingMode.Automatic)
@@ -303,12 +302,11 @@ public static class AstSetupWizard
                            targetChannel is not IThreadChannel =>
                 Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
                     current => current with { TargetChannelId = targetChannelId }, out updated),
-            "thread" when value is "private" or "public" or "public-auto" =>
+            "thread" when value is "private" or "public" =>
                 Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
                     current => current with
                     {
-                        ThreadType = value == "private" ? "Private" : "Public",
-                        AutoAddMembers = value == "public-auto"
+                        ThreadType = value == "private" ? "Private" : "Public"
                     }, out updated),
             "notifications" when value is "normal" or "silent" =>
                 Sessions.TryUpdate(sessionId, component.User.Id, guildId, channelId,
@@ -395,9 +393,7 @@ public static class AstSetupWizard
             : SafePreviewValue(draft.ThreadTitle);
         var thread = draft.ThreadType == "Private"
             ? Resource.AstSetupPrivate
-            : draft.AutoAddMembers
-                ? Resource.AstSetupPublicMembersAdded
-                : Resource.AstSetupPublic;
+            : Resource.AstSetupPublic;
         var notifications = draft.Silent
             ? Resource.AstSetupSilent
             : Resource.AstSetupNormal;
@@ -498,7 +494,6 @@ public static class AstSetupWizard
                     draft.RoomUrl!,
                     draft.ThreadTitle!,
                     draft.ThreadType,
-                    draft.AutoAddMembers,
                     draft.Silent,
                     draft.CheckFrequency,
                     component.User as IGuildUser,
@@ -576,8 +571,7 @@ public static class AstSetupWizard
             .WithMinValues(1)
             .WithMaxValues(1)
             .AddOption(Option(Resource.SCThreadPrivate, "private", draft.ThreadType == "Private"))
-            .AddOption(Option(Resource.SCThreadPublic, "public", draft.ThreadType == "Public" && !draft.AutoAddMembers))
-            .AddOption(Option(Resource.AstSetupPublicAddMembers, "public-auto", draft.ThreadType == "Public" && draft.AutoAddMembers));
+            .AddOption(Option(Resource.SCThreadPublic, "public", draft.ThreadType == "Public"));
 
     private static SelectMenuBuilder ChannelMenu(AstSetupDraft draft)
         => new SelectMenuBuilder()
