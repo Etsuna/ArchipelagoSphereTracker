@@ -24,11 +24,12 @@ AST loads the `.env` file located next to the executable. Restart the process af
 | `TRACKING_GLOBAL_CONCURRENCY` | `10` | Maximum concurrent WebHost reads for the process, from 1 to 100 |
 | `TRACKING_ORIGIN_CONCURRENCY` | `2` | Maximum concurrent reads per origin, from 1 to 20 |
 | `USE_LEGACY_TRACKING_SCHEDULER` | `false` | Temporary rollback to the former scheduler |
-| `ENABLE_TRACKING_V2` | `false` | Experimental V2 tracking dual-write; leave disabled in production unless performing a targeted test |
 | `EXPORT_METRICS` | `false` | Enables Prometheus export |
 | `METRICS_PORT` | empty | Prometheus port when export is enabled |
 | `ALLOW_DISCORD` | empty | Guild ID allowed in the advanced `--BigAsync` mode |
 | `USER_ID_FOR_BIG_ASYNC` | empty | User ID used by the advanced `--BigAsync` mode |
+
+`ENABLE_TRACKING_V2` is obsolete and ignored: tracking, command reads and notifications always use native V2. `USE_LEGACY_TRACKING_SCHEDULER` only selects the scheduling strategy.
 
 The former `AST_DATA_PROTECTION_KEY` and recovery variables are no longer used during normal operation. See [[Data and migrations|Data-and-migrations]].
 
@@ -161,13 +162,14 @@ AST charge le fichier `.env` placé à côté de l’exécutable. Redémarrez le
 | `TRACKING_GLOBAL_CONCURRENCY` | `10` | Nombre maximal de lectures WebHost simultanées dans le processus, de 1 à 100 |
 | `TRACKING_ORIGIN_CONCURRENCY` | `2` | Nombre maximal de lectures simultanées par origine, de 1 à 20 |
 | `USE_LEGACY_TRACKING_SCHEDULER` | `false` | Rollback temporaire vers l’ancien scheduler |
-| `ENABLE_TRACKING_V2` | `false` | Dual-write expérimental des données de suivi V2 ; laisser désactivé en production sauf test ciblé |
 | `EXPORT_METRICS` | `false` | Active l’export Prometheus |
 | `METRICS_PORT` | vide | Port Prometheus lorsque l’export est actif |
 | `ALLOW_DISCORD` | vide | Guild ID autorisé en mode avancé `--BigAsync` |
 | `USER_ID_FOR_BIG_ASYNC` | vide | User ID utilisé par le mode avancé `--BigAsync` |
 
 Les anciennes variables `AST_DATA_PROTECTION_KEY` et de récupération ne sont plus utilisées en fonctionnement normal. Voir [[Données et migrations|Data-and-migrations]].
+
+`ENABLE_TRACKING_V2` est obsolète et ignoré : le suivi, les lectures des commandes et les notifications utilisent toujours le V2 natif. `USE_LEGACY_TRACKING_SCHEDULER` ne choisit que la stratégie de planification.
 
 ### Exemple — mode Normal avec portail
 

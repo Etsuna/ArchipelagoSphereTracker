@@ -1,5 +1,7 @@
 # PR 4 — V2 persistence, idempotent ledger, and outbox
 
+> Historical design document. V2 tracking now publishes Discord notifications and is enabled by default. See [cutover and rollback](tracking-v2-notifications.en.md).
+
 ## Result
 
 The database version is now `5.0.7`. The migration keeps every V1 table and adds `TrackedRooms`, `RoomSnapshots`, `TrackingEvents`, and `EventDeliveries`. Before creating the required V1 unique constraints, it deterministically keeps the greatest `ChannelsAndUrlsTable.Id`, reattaches useful patch rows to it, and keeps the greatest hint `Id` for each complete identity including `Entrance`.

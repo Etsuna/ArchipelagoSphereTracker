@@ -98,73 +98,69 @@ namespace ArchipelagoSphereTracker.src.TrackerLib.Services
     public static class ProcessingContextLoader
     {
         /// <summary>
-        /// Charge 1) slots (AliasChoicesTable), 2) mapping Game→DatasetKey (DatapackageGameMap),
+        /// Charge 1) slots (TrackingSlots), 2) mapping Game→DatasetKey (DatapackageGameMap),
         /// 3) dictionnaires Items/Locations par Dataset depuis les tables Datapackage*.
         /// </summary>
-        public static async Task<ProcessingContext> LoadOneShotAsync(string guildId, string channelId, bool silent)
+        public static async Task<ProcessingContext> LoadOneShotAsync(string guildId, string channelId, bool silent, ProcessingContext? initialContext = null)
         {
-            var ctx = new ProcessingContext { GuildId = guildId, ChannelId = channelId, Silent = silent };
+            var ctx = initialContext ?? new ProcessingContext { GuildId = guildId, ChannelId = channelId, Silent = silent };
 
             await using var cn = await Db.OpenReadAsync().ConfigureAwait(false);
 
-            var games = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var games = new HashSet<string>(ctx.SlotIndex.Select(slot => slot.Game), StringComparer.OrdinalIgnoreCase);
+            if (initialContext == null)
             {
-                const string sql = @"SELECT Slot, Alias, Game
-                                     FROM AliasChoicesTable
-                                     WHERE GuildId=@G AND ChannelId=@C
-                                     ORDER BY Slot;";
-                await using var cmd = new SQLiteCommand(sql, cn);
-                cmd.Parameters.AddWithValue("@G", guildId);
-                cmd.Parameters.AddWithValue("@C", channelId);
-
-                var rows = new List<(int Slot, string Alias, string Game)>();
-                await using var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-                while (await r.ReadAsync().ConfigureAwait(false))
                 {
-                    var slot = (int)(r["Slot"] is long L ? L : Convert.ToInt64(r["Slot"]));
-                    var alias = r["Alias"]?.ToString() ?? $"Player{slot}";
-                    var game = r["Game"]?.ToString() ?? "";
-                    rows.Add((slot, alias, game));
-                    if (!string.IsNullOrWhiteSpace(game)) games.Add(game);
-                }
+                    const string sql = @"SELECT Slot, Alias, Game
+                                         FROM TrackingSlots
+                                         WHERE GuildId=@G AND ChannelId=@C
+                                         ORDER BY Slot;";
+                    await using var cmd = new SQLiteCommand(sql, cn);
+                    cmd.Parameters.AddWithValue("@G", guildId);
+                    cmd.Parameters.AddWithValue("@C", channelId);
 
-                if (rows.Count > 0)
-                {
-                    var maxSlot = rows[^1].Slot;
-                    ctx.SlotIndex.Capacity = maxSlot;
-                    for (int i = 1; i <= maxSlot; i++) ctx.SlotIndex.Add(($"Player{i}", ""));
-                    foreach (var row in rows) ctx.SlotIndex[row.Slot - 1] = (row.Alias, row.Game);
-                }
-            }
-
-
-            {
-                const string sql = @"
-                    SELECT Name, IFNULL(Total, '0') AS Total
-                    FROM GameStatusTable
-                    WHERE GuildId=@G AND ChannelId=@C;";
-                await using var cmd = new SQLiteCommand(sql, cn);
-                cmd.Parameters.AddWithValue("@G", guildId);
-                cmd.Parameters.AddWithValue("@C", channelId);
-
-                await using var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-                while (await r.ReadAsync().ConfigureAwait(false))
-                {
-                    var alias = r["Name"]?.ToString() ?? string.Empty;
-                    if (!int.TryParse(r["Total"]?.ToString(), out var total))
-                        continue;
-
-                    for (int i = 0; i < ctx.SlotIndex.Count; i++)
+                    var rows = new List<(int Slot, string Alias, string Game)>();
+                    await using var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                    while (await r.ReadAsync().ConfigureAwait(false))
                     {
-                        if (!string.Equals(ctx.SlotIndex[i].Alias, alias, StringComparison.Ordinal))
-                            continue;
+                        var slot = (int)(r["Slot"] is long L ? L : Convert.ToInt64(r["Slot"]));
+                        var alias = r["Alias"]?.ToString() ?? $"Player{slot}";
+                        var game = r["Game"]?.ToString() ?? "";
+                        rows.Add((slot, alias, game));
+                        if (!string.IsNullOrWhiteSpace(game)) games.Add(game);
+                    }
 
-                        ctx.SetPlayerLocationsTotal(i + 1, total);
-                        break;
+                    if (rows.Count > 0)
+                    {
+                        var maxSlot = rows[^1].Slot;
+                        ctx.SlotIndex.Capacity = maxSlot;
+                        for (int i = 1; i <= maxSlot; i++) ctx.SlotIndex.Add(($"Player{i}", ""));
+                        foreach (var row in rows) ctx.SlotIndex[row.Slot - 1] = (row.Alias, row.Game);
                     }
                 }
-            }
 
+
+                {
+                    const string sql = @"
+                        SELECT Slot, Total
+                        FROM TrackingPlayerStates
+                        WHERE GuildId=@G AND ChannelId=@C AND Slot > 0 AND Total IS NOT NULL;";
+                    await using var cmd = new SQLiteCommand(sql, cn);
+                    cmd.Parameters.AddWithValue("@G", guildId);
+                    cmd.Parameters.AddWithValue("@C", channelId);
+
+                    await using var r = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                    while (await r.ReadAsync().ConfigureAwait(false))
+                    {
+                        var slot = Convert.ToInt32(r["Slot"]);
+                        if (!int.TryParse(r["Total"]?.ToString(), out var total))
+                            continue;
+
+                        ctx.SetPlayerLocationsTotal(slot, total);
+                    }
+                }
+
+            }
             if (games.Count == 0) return ctx;
 
             var datasetKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

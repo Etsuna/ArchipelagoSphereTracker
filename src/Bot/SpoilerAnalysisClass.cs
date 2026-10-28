@@ -197,7 +197,7 @@ public static class SpoilerAnalysisClass
         using var command = connection.CreateCommand();
         command.CommandText = @"
             SELECT Finder, Receiver, Item, Location
-            FROM DisplayedItemTable
+            FROM TrackingItems
             WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
@@ -224,7 +224,7 @@ public static class SpoilerAnalysisClass
         command.CommandText = @"
             SELECT a.Alias AS PlayerAlias, l.Name AS EntryName,
                    CASE WHEN l.Id < 0 THEN 'location' ELSE 'known-location' END AS EntryType
-            FROM AliasChoicesTable a
+            FROM TrackingSlots a
             JOIN DatapackageGameMap gm
               ON gm.GuildId = a.GuildId
              AND gm.ChannelId = a.ChannelId
@@ -239,7 +239,7 @@ public static class SpoilerAnalysisClass
             UNION ALL
 
             SELECT a.Alias AS PlayerAlias, '' AS EntryName, 'location-catalog' AS EntryType
-            FROM AliasChoicesTable a
+            FROM TrackingSlots a
             JOIN DatapackageGameMap gm
               ON gm.GuildId = a.GuildId
              AND gm.ChannelId = a.ChannelId
@@ -258,7 +258,7 @@ public static class SpoilerAnalysisClass
 
             SELECT a.Alias AS PlayerAlias, i.Name AS EntryName,
                    CASE WHEN i.Id < 0 THEN 'item' ELSE 'known-item' END AS EntryType
-            FROM AliasChoicesTable a
+            FROM TrackingSlots a
             JOIN DatapackageGameMap gm
               ON gm.GuildId = a.GuildId
              AND gm.ChannelId = a.ChannelId
@@ -273,7 +273,7 @@ public static class SpoilerAnalysisClass
             UNION ALL
 
             SELECT a.Alias AS PlayerAlias, '' AS EntryName, 'item-catalog' AS EntryType
-            FROM AliasChoicesTable a
+            FROM TrackingSlots a
             JOIN DatapackageGameMap gm
               ON gm.GuildId = a.GuildId
              AND gm.ChannelId = a.ChannelId

@@ -231,7 +231,7 @@ public class HelperClass
             return sb.ToString();
         }
 
-        var checkIfChannelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "DisplayedItemTable");
+        var checkIfChannelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable");
         if (!checkIfChannelExists)
         {
             await command.FollowupAsync(Resource.NoUrlRegistered);

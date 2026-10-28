@@ -14,15 +14,15 @@ public static class AliasChoicesCommands
 
             const string query = @"
                 SELECT Game
-                FROM AliasChoicesTable
+                FROM TrackingSlots
                 WHERE GuildId   = @GuildId
                   AND ChannelId = @ChannelId
-                  AND Alias LIKE @Alias;";
+                  AND Alias = @Alias;";
 
             using var command = new SQLiteCommand(query, connection);
             command.Parameters.AddWithValue("@GuildId", guildId);
             command.Parameters.AddWithValue("@ChannelId", channelId);
-            command.Parameters.AddWithValue("@Alias", $"%{alias}%");
+            command.Parameters.AddWithValue("@Alias", alias);
 
             var result = await command.ExecuteScalarAsync().ConfigureAwait(false);
             return result?.ToString();
@@ -34,45 +34,29 @@ public static class AliasChoicesCommands
         }
     }
 
-    public static async Task AddOrReplaceAliasChoiceAsync(
-        string guildId,
-        string channelId,
-        List<(int slot, string alias, string game)> gameStatus
-        )
-    {
-        try
+    public static Task AddOrReplaceAliasChoiceAsync(string guildId, string channelId,
+        List<(int slot, string alias, string game)> slots)
+        => Db.WriteAsync(async connection =>
         {
-            await Db.WriteAsync(async conn =>
+            await ArchipelagoSphereTracker.Tracking.Persistence.TrackingReadModel.EnsureRoomAsync(
+                connection, guildId, channelId, CancellationToken.None);
+            using var command = connection.CreateCommand();
+            command.CommandText = @"INSERT INTO TrackingSlots(GuildId,ChannelId,Slot,Alias,DisplayAlias,Game)
+                VALUES(@G,@C,@Slot,@Alias,@Alias,@Game)
+                ON CONFLICT(GuildId,ChannelId,Slot) DO UPDATE SET Alias=excluded.Alias,Game=excluded.Game;";
+            command.Parameters.AddWithValue("@G", guildId);
+            command.Parameters.AddWithValue("@C", channelId);
+            command.Parameters.Add("@Slot", System.Data.DbType.Int32);
+            command.Parameters.Add("@Alias", System.Data.DbType.String);
+            command.Parameters.Add("@Game", System.Data.DbType.String);
+            foreach (var slot in slots)
             {
-                using var command = conn.CreateCommand();
-                command.CommandText = @"
-                    INSERT OR REPLACE INTO AliasChoicesTable (GuildId, ChannelId, Slot, Alias, Game)
-                    VALUES (@GuildId, @ChannelId, @Slot, @Alias, @Game);";
-
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                command.Parameters.AddWithValue("@ChannelId", channelId);
-
-                var slotParam = command.Parameters.Add("@Slot", System.Data.DbType.Int32);
-                var aliasParam = command.Parameters.Add("@Alias", System.Data.DbType.String);
-                var gameParam = command.Parameters.Add("@Game", System.Data.DbType.String);
-
-                command.Prepare();
-
-                foreach (var games in gameStatus)
-                {
-                    command.Parameters.AddWithValue("@Slot", games.slot);
-                    command.Parameters.AddWithValue("@Alias", games.alias);
-                    command.Parameters.AddWithValue("@Game", games.game);
-
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error while adding or replacing the alias choice: {ex.Message}");
-        }
-    }
+                command.Parameters["@Slot"].Value = slot.slot;
+                command.Parameters["@Alias"].Value = slot.alias;
+                command.Parameters["@Game"].Value = slot.game;
+                await command.ExecuteNonQueryAsync();
+            }
+        });
 
     public static async Task<List<string>> GetAliasesForGuildAndChannelAsync(
         string guildId,
@@ -87,7 +71,7 @@ public static class AliasChoicesCommands
 
             const string query = @"
                 SELECT Alias
-                FROM AliasChoicesTable
+                FROM TrackingSlots
                 WHERE GuildId   = @GuildId
                   AND ChannelId = @ChannelId;";
 

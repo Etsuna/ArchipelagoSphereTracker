@@ -1,5 +1,7 @@
 # PR 3 — Snapshots et événements normalisés V2
 
+> Document historique. Le suivi V2 publie maintenant les notifications Discord et est activé par défaut. Voir [la bascule et le rollback](tracking-v2-notifications.fr.md).
+
 ## Problème
 
 Le pipeline historique mélange parsing WebHost, comparaison, SQLite, rendu Discord et livraison. Ses identités reposent souvent sur des noms affichés, donc un alias ou une traduction peut modifier artificiellement l'identité d'un item ou d'un hint.

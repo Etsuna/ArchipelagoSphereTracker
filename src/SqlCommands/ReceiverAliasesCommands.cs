@@ -275,9 +275,10 @@ public static class ReceiverAliasesCommands
                 SELECT i.Item,
                 (
                     SELECT d.Flag
-                    FROM DisplayedItemTable AS d
+                    FROM TrackingItems AS d
                     WHERE d.GuildId = @GuildId
                     AND d.ChannelId = @ChannelId
+                    AND d.Receiver = @Alias
                     AND d.Item = i.Item
                     ORDER BY d.Flag DESC
                     LIMIT 1
@@ -289,6 +290,7 @@ public static class ReceiverAliasesCommands
             itemCommand.Parameters.AddWithValue("@RecapListTableId", recapListTableId);
             itemCommand.Parameters.AddWithValue("@GuildId", guildId);
             itemCommand.Parameters.AddWithValue("@ChannelId", channelId);
+            itemCommand.Parameters.AddWithValue("@Alias", alias);
 
             using var itemReader = await itemCommand.ExecuteReaderAsync().ConfigureAwait(false);
             while (await itemReader.ReadAsync().ConfigureAwait(false))

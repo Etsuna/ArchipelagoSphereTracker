@@ -168,7 +168,7 @@ public sealed class TrackingV2PersistenceTests
     [Fact]
     public async Task Migration_5_0_7_deduplicates_v1_rows_preserves_patches_and_is_idempotent()
     {
-        using var scope = new TestDatabaseScope();
+        using var scope = new TestDatabaseScope(includeLegacyTrackingTables: true);
         await Db.WriteAsync(async connection =>
         {
             using var command = connection.CreateCommand();

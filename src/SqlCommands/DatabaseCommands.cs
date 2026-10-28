@@ -243,37 +243,9 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@ChannelId", channelId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.Parameters.Clear();
-                command.CommandText = @"
-                    DELETE FROM DisplayedItemTable
-                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                command.Parameters.AddWithValue("@ChannelId", channelId);
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.Parameters.Clear();
-                command.CommandText = @"
-                    DELETE FROM AliasChoicesTable
-                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                command.Parameters.AddWithValue("@ChannelId", channelId);
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.Parameters.Clear();
-                command.CommandText = @"
-                    DELETE FROM GameStatusTable
-                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                command.Parameters.AddWithValue("@ChannelId", channelId);
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.Parameters.Clear();
-                command.CommandText = @"
-                    DELETE FROM HintStatusTable
-                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                command.Parameters.AddWithValue("@ChannelId", channelId);
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                 command.Parameters.Clear();
                 command.CommandText = @"
@@ -424,25 +396,9 @@ public static class DatabaseCommands
                 command.Parameters.AddWithValue("@GuildId", guildId);
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.Parameters.Clear();
-                command.CommandText = @"DELETE FROM DisplayedItemTable WHERE GuildId = @GuildId;";
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.Parameters.Clear();
-                command.CommandText = @"DELETE FROM AliasChoicesTable WHERE GuildId = @GuildId;";
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.Parameters.Clear();
-                command.CommandText = @"DELETE FROM GameStatusTable WHERE GuildId = @GuildId;";
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.Parameters.Clear();
-                command.CommandText = @"DELETE FROM HintStatusTable WHERE GuildId = @GuildId;";
-                command.Parameters.AddWithValue("@GuildId", guildId);
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                 command.Parameters.Clear();
                 command.CommandText = @"DELETE FROM DatapackageGameMap WHERE GuildId = @GuildId;";

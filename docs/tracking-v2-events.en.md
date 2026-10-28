@@ -1,5 +1,7 @@
 # PR 3 — Normalized V2 snapshots and events
 
+> Historical design document. V2 tracking now publishes Discord notifications and is enabled by default. See [cutover and rollback](tracking-v2-notifications.en.md).
+
 ## Problem
 
 The legacy pipeline mixes WebHost parsing, comparison, SQLite, Discord rendering, and delivery. Its identities often rely on display names, so an alias or translation can accidentally change the identity of an item or hint.

@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS TrackedRooms (
     LastSuccessfulSyncUtc TEXT,
     CurrentSnapshotHash TEXT,
     IsBaselineInitialized INTEGER NOT NULL DEFAULT 0 CHECK (IsBaselineInitialized IN (0, 1)),
+    NotificationsV2Initialized INTEGER NOT NULL DEFAULT 0 CHECK (NotificationsV2Initialized IN (0, 1)),
     PRIMARY KEY (GuildId, ChannelId)
 );
 
@@ -183,6 +184,14 @@ CREATE TABLE IF NOT EXISTS EventDeliveries (
     FOREIGN KEY (EventId) REFERENCES TrackingEvents(Id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS DiscordNotificationBatches (
+    BatchKey TEXT PRIMARY KEY,
+    SnapshotId INTEGER NOT NULL,
+    ChannelId TEXT NOT NULL,
+    PayloadJson TEXT NOT NULL,
+    FOREIGN KEY (SnapshotId) REFERENCES RoomSnapshots(Id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS RoomPollState (
     GuildId TEXT NOT NULL,
     ChannelId TEXT NOT NULL,
@@ -214,63 +223,6 @@ CREATE TABLE IF NOT EXISTS ReceiverAliasesTable (
     Receiver  TEXT NOT NULL,
     UserId    TEXT NOT NULL,
     Flag      TEXT NOT NULL
-);
-
--- ==========================
--- 🎯 AliasChoicesTable
--- ==========================
-CREATE TABLE IF NOT EXISTS AliasChoicesTable (
-    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId   TEXT NOT NULL,
-    ChannelId TEXT NOT NULL,
-    Slot      INTEGER NOT NULL,
-    Alias     TEXT NOT NULL,
-    Game      TEXT
-);
-
--- ==========================
--- 🎯 DisplayedItemTable
--- ==========================
-CREATE TABLE IF NOT EXISTS DisplayedItemTable (
-    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId   TEXT NOT NULL,
-    ChannelId TEXT NOT NULL,
-    Finder    TEXT,
-    Receiver  TEXT,
-    Item      TEXT,
-    Location  TEXT,
-    Game      TEXT,
-    Flag      TEXT
-);
-
--- ==========================
--- 🎯 GameStatusTable
--- ==========================
-CREATE TABLE IF NOT EXISTS GameStatusTable (
-    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId      TEXT NOT NULL,
-    ChannelId    TEXT NOT NULL,
-    Name         TEXT,
-    Game         TEXT,
-    Checks       TEXT,
-    Total        TEXT,
-    LastActivity TEXT
-);
-
--- ==========================
--- 🎯 HintStatusTable
--- ==========================
-CREATE TABLE IF NOT EXISTS HintStatusTable (
-    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    GuildId   TEXT NOT NULL,
-    ChannelId TEXT NOT NULL,
-    Finder    TEXT,
-    Receiver  TEXT,
-    Item      TEXT,
-    Location  TEXT,
-    Game      TEXT,
-    Entrance  TEXT,
-    Flag     TEXT
 );
 
 -- =====================================================================
@@ -386,27 +338,13 @@ CREATE TABLE IF NOT EXISTS ExcludedItemTable (
 -- Uniques
 CREATE UNIQUE INDEX IF NOT EXISTS uq_recalias
   ON RecapListTable(GuildId, ChannelId, UserId, Alias);
-CREATE UNIQUE INDEX IF NOT EXISTS uq_aliaschoices
-  ON AliasChoicesTable(GuildId, ChannelId, Alias);
-CREATE UNIQUE INDEX IF NOT EXISTS uq_gamestatus_name
-  ON GameStatusTable(GuildId, ChannelId, Name);
+
 CREATE UNIQUE INDEX IF NOT EXISTS uq_url_patch
   ON UrlAndChannelPatchTable(ChannelsAndUrlsTableId, Alias);
-CREATE UNIQUE INDEX IF NOT EXISTS uq_displayeditem_unique
-  ON DisplayedItemTable(GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag);
+
 CREATE UNIQUE INDEX IF NOT EXISTS uq_channels_guild_channel
   ON ChannelsAndUrlsTable(GuildId, ChannelId);
-CREATE UNIQUE INDEX IF NOT EXISTS uq_hintstatus_unique
-  ON HintStatusTable(
-      GuildId,
-      ChannelId,
-      IFNULL(Finder, ''),
-      IFNULL(Receiver, ''),
-      IFNULL(Item, ''),
-      IFNULL(Location, ''),
-      IFNULL(Game, ''),
-      IFNULL(Entrance, '')
-  );
+
 CREATE UNIQUE INDEX IF NOT EXISTS IX_LastItemsCheck_Guild_Channel
 ON LastItemsCheckTable (GuildId, ChannelId);
 
@@ -420,14 +358,6 @@ CREATE INDEX IF NOT EXISTS idx_excludeditem_gc
 -- Accès de base
 CREATE INDEX IF NOT EXISTS idx_channels_guild_channel
   ON ChannelsAndUrlsTable(GuildId, ChannelId);
-
--- DisplayedItem (requêtes principales)
-CREATE INDEX IF NOT EXISTS idx_displayeditem_gci_flag
-  ON DisplayedItemTable(GuildId, ChannelId, Item, Flag DESC);
-CREATE INDEX IF NOT EXISTS idx_displayeditem_rcv_item
-  ON DisplayedItemTable(GuildId, ChannelId, Receiver, Item);
-CREATE INDEX IF NOT EXISTS idx_displayeditem_finder_item
-  ON DisplayedItemTable(GuildId, ChannelId, Finder, Item);
 
 -- RecapListItems (sélection + join sur Item)
 CREATE INDEX IF NOT EXISTS idx_recapitems_tableid_item
@@ -452,15 +382,14 @@ CREATE INDEX IF NOT EXISTS idx_eventdeliveries_due
   ON EventDeliveries(Status, NextAttemptAtUtc, LeaseUntilUtc, Id);
 CREATE INDEX IF NOT EXISTS idx_roompollstate_due
   ON RoomPollState(NextPollAtUtc, GuildId, ChannelId);
-
--- HintStatusTable: mêmes patterns que DisplayedItemTable
-CREATE INDEX IF NOT EXISTS idx_hintstatus_gcr_item
-  ON HintStatusTable(GuildId, ChannelId, Receiver, Item);
-
-CREATE INDEX IF NOT EXISTS idx_hintstatus_gcf_item
-  ON HintStatusTable(GuildId, ChannelId, Finder, Item); 
 ";
         cmd.ExecuteNonQuery();
+        using (var tracking = conn.CreateCommand())
+        {
+            tracking.CommandText = ArchipelagoSphereTracker.Tracking.Persistence.TrackingReadModel.Schema
+                + ArchipelagoSphereTracker.Tracking.Notifications.TrackingReplayService.Schema;
+            tracking.ExecuteNonQuery();
+        }
 
         using (var preparations = conn.CreateCommand())
         {

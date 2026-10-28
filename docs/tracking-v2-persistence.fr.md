@@ -1,5 +1,7 @@
 # PR 4 — Persistance V2, ledger idempotent et outbox
 
+> Document historique. Le suivi V2 publie maintenant les notifications Discord et est activé par défaut. Voir [la bascule et le rollback](tracking-v2-notifications.fr.md).
+
 ## Résultat
 
 La version de base passe à `5.0.7`. La migration conserve toutes les tables V1 et ajoute `TrackedRooms`, `RoomSnapshots`, `TrackingEvents` et `EventDeliveries`. Avant de créer les contraintes uniques V1 indispensables, elle conserve déterministement la ligne `ChannelsAndUrlsTable` au plus grand `Id`, lui rattache les patches encore utiles, et conserve le hint au plus grand `Id` pour chaque identité complète incluant `Entrance`.

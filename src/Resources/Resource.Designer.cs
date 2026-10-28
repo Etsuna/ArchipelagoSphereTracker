@@ -8991,5 +8991,53 @@ namespace ArchipelagoSphereTracker.src.Resources {
             get { return ResourceManager.GetString("RoomDestinationInvalid", resourceCulture); }
         }
 
+        internal static string TrackingItemsTitle {
+            get { return ResourceManager.GetString("TrackingItemsTitle", resourceCulture); }
+        }
+
+        internal static string TrackingHintsNewTitle {
+            get { return ResourceManager.GetString("TrackingHintsNewTitle", resourceCulture); }
+        }
+
+        internal static string TrackingHintsUpdatedTitle {
+            get { return ResourceManager.GetString("TrackingHintsUpdatedTitle", resourceCulture); }
+        }
+
+        internal static string TrackingItemDetails {
+            get { return ResourceManager.GetString("TrackingItemDetails", resourceCulture); }
+        }
+
+        internal static string TrackingHintDetails {
+            get { return ResourceManager.GetString("TrackingHintDetails", resourceCulture); }
+        }
+
+        internal static string TrackingGoalTitle {
+            get { return ResourceManager.GetString("TrackingGoalTitle", resourceCulture); }
+        }
+
+        internal static string TrackingGoalDescription {
+            get { return ResourceManager.GetString("TrackingGoalDescription", resourceCulture); }
+        }
+
+        internal static string DatabaseMigrationTrackingNotifications {
+            get { return ResourceManager.GetString("DatabaseMigrationTrackingNotifications", resourceCulture); }
+        }
+
+        internal static string DatabaseMigrationNotificationBatches {
+            get { return ResourceManager.GetString("DatabaseMigrationNotificationBatches", resourceCulture); }
+        }
+
+        internal static string DatabaseMigrationNativeTracking {
+            get { return ResourceManager.GetString("DatabaseMigrationNativeTracking", resourceCulture); }
+        }
+
+        internal static string DatabaseMigrationItemReplay {
+            get { return ResourceManager.GetString("DatabaseMigrationItemReplay", resourceCulture); }
+        }
+
+        internal static string DatabaseMigrationLegacyTrackingRetirement {
+            get { return ResourceManager.GetString("DatabaseMigrationLegacyTrackingRetirement", resourceCulture); }
+        }
+
     }
 }

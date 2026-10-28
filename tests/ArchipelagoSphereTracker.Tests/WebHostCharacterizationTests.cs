@@ -93,13 +93,14 @@ public sealed class WebHostCharacterizationTests
         var context = CreateContext();
         var items = TrackerStreamParser.ParseItems(context, ReadFixture("tracker-runtime-current.json"));
 
-        await DisplayItemCommands.AddItemsAsync(items, "guild-fixture", "channel-fixture");
-        await DisplayItemCommands.AddItemsAsync(items, "guild-fixture", "channel-fixture");
-
-        Assert.Equal(items.Count, await TestDatabaseScope.CountRowsAsync(
-            "DisplayedItemTable",
-            "guild-fixture",
-            "channel-fixture"));
+        var native = new ProcessingContext { GuildId = "guild-fixture", ChannelId = "channel-fixture" };
+        native.SlotIndex.AddRange(context.SlotIndex);
+        var snapshot = ArchipelagoSphereTracker.Tracking.V2.WebHostSnapshotParser.FromWebHostResponse(native,
+            ReadFixture("tracker-runtime-current.json"), new System.Collections.Generic.Dictionary<int,int>(), DateTimeOffset.UtcNow);
+        var store = new ArchipelagoSphereTracker.Tracking.Persistence.TrackingV2Store();
+        await store.ApplySnapshotAsync(snapshot);
+        await store.ApplySnapshotAsync(snapshot);
+        Assert.Equal(items.Count, await TestDatabaseScope.CountRowsAsync("TrackingItems", "guild-fixture", "channel-fixture"));
     }
 
     private static ProcessingContext CreateContext()

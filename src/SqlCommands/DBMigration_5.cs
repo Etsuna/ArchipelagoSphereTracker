@@ -825,6 +825,60 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
     }
 
 
+    public static async Task Migrate_5_0_14(CancellationToken ct = default)
+    {
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationTrackingNotifications);
+
+        await Db.WriteAsync(async connection =>
+        {
+            var columns = await GetColumnsAsync(connection, "TrackedRooms", ct);
+            if (columns.Contains("NotificationsV2Initialized")) return 0;
+            using var command = connection.CreateCommand();
+            command.CommandText = @"ALTER TABLE TrackedRooms ADD COLUMN
+                NotificationsV2Initialized INTEGER NOT NULL DEFAULT 0
+                CHECK (NotificationsV2Initialized IN (0, 1));";
+            await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            return 0;
+        }, ct);
+    }
+
+    public static Task Migrate_5_0_15(CancellationToken ct = default)
+    {
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationNotificationBatches);
+
+        return Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"CREATE TABLE IF NOT EXISTS DiscordNotificationBatches (
+    BatchKey TEXT PRIMARY KEY,
+    SnapshotId INTEGER NOT NULL,
+    ChannelId TEXT NOT NULL,
+    PayloadJson TEXT NOT NULL,
+    FOREIGN KEY (SnapshotId) REFERENCES RoomSnapshots(Id) ON DELETE CASCADE
+);
+";
+            return await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+        }, ct);
+    }
+
+    public static Task Migrate_5_0_16(CancellationToken ct = default)
+    {
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationNativeTracking);
+        return ArchipelagoSphereTracker.Tracking.Persistence.TrackingReadModel.MigrateAsync(ct);
+    }
+
+    public static Task Migrate_5_0_17(CancellationToken ct = default)
+    {
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationItemReplay);
+        return ArchipelagoSphereTracker.Tracking.Notifications.TrackingReplayService.InitializeAsync(ct);
+    }
+
+    public static Task Migrate_5_0_18(CancellationToken ct = default)
+    {
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationLegacyTrackingRetirement);
+        return ArchipelagoSphereTracker.Tracking.Persistence.TrackingLegacyRetirement.MigrateAsync(ct);
+    }
+
     private static async Task<HashSet<string>> GetColumnsAsync(
         System.Data.Common.DbConnection connection,
         string tableName,

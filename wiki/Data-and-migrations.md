@@ -45,6 +45,10 @@ When Discord cannot accept the archive, a separate ZIP copy under `data/room-pre
 
 General portal access records, technical audit logs, existing backups and tracked rooms are not deleted by preparation cleanup. SQLite row deletion is logical deletion, not a rewrite of existing backups. See [[Room preparation|Room-preparation]] for restart behavior and player permissions.
 
+### Native V2 tracking migration
+
+Migration `5.0.18` imports the latest V1 tracking rows into the native V2 tables, then drops `AliasChoicesTable`, `DisplayedItemTable`, `GameStatusTable` and `HintStatusTable` in the same transaction. Active V2 snapshots remain authoritative. Startup backs up the database first and does not recreate the old tables. Configuration, subscriptions, exclusions and personal recaps are preserved. See [the migration guide](../docs/tracking-v2-native.en.md).
+
 ### Intentional plaintext storage
 
 Since SQLite migration `5.0.12`, the `Room`, `Tracker`, and `Patch` fields are stored in plaintext. No key, PEM pair, or recovery procedure is required for normal operation.
@@ -140,6 +144,10 @@ Le contenu des YAML et les instantanés figés sont stockés dans SQLite. Les en
 Si Discord ne peut pas accepter l’archive, une copie distincte sous `data/room-preparations/downloads/` reste téléchargeable 24 heures sans conserver les lignes de préparation. Son lien aléatoire donne accès à toute personne qui le possède. Les copies expirées sont retirées au démarrage, toutes les heures lorsque le portail tourne et lors d’une tentative d’accès. Si la transmission échoue, la préparation reste disponible pour réessayer.
 
 Les accès généraux au portail, audits techniques, sauvegardes existantes et rooms suivies ne sont pas supprimés par ce nettoyage. La suppression de lignes SQLite est logique et ne réécrit pas les sauvegardes existantes. Voir [[Préparation des rooms|Room-preparation]] pour la reprise après redémarrage et les droits des joueurs.
+
+### Migration du suivi natif V2
+
+La migration `5.0.18` importe les dernières données de suivi V1 dans les tables V2, puis supprime `AliasChoicesTable`, `DisplayedItemTable`, `GameStatusTable` et `HintStatusTable` dans la même transaction. Les snapshots V2 actifs gardent la priorité. Le démarrage sauvegarde d'abord la base et ne recrée plus les anciennes tables. Les configurations, abonnements, exclusions et récapitulatifs personnels sont conservés. Voir [le guide de migration](../docs/tracking-v2-native.fr.md).
 
 ### Stockage en clair assumé
 

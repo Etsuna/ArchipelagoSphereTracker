@@ -59,6 +59,21 @@ internal static class TrackingSnapshotJson
         return JsonSerializer.Serialize(trackingEvent, trackingEvent.GetType(), Options);
     }
 
+    public static NormalizedTrackingEvent DeserializeEvent(string eventType, string json)
+    {
+        var type = eventType switch
+        {
+            "ItemReceived" => typeof(ItemReceivedEvent),
+            "ItemsReplayRequested" => typeof(ItemsReplayRequestedEvent),
+            "HintCreated" => typeof(HintCreatedEvent),
+            "HintUpdated" => typeof(HintUpdatedEvent),
+            "GoalReached" => typeof(GoalReachedEvent),
+            _ => throw new JsonException("Unsupported Discord notification event.")
+        };
+        return (NormalizedTrackingEvent)(JsonSerializer.Deserialize(json, type, Options)
+            ?? throw new JsonException("Empty notification event."));
+    }
+
     private sealed record StoredSnapshot(
         string GuildId,
         string ChannelId,

@@ -10,14 +10,17 @@ public sealed record TrackingDeliveryEnvelope(
     string EventPayloadJson,
     string DestinationType,
     string DestinationId,
-    int AttemptNumber);
+    int AttemptNumber,
+    string SnapshotPayloadJson = "",
+    long SnapshotId = 0);
 
 public sealed record TrackingPublicationResult(string? ExternalReceiptId = null);
 
 public interface ITrackingEventPublisher
 {
     /// <summary>
-    /// Publishes using EventKey as the idempotency key. Retrying the same key must not create a second publication.
+    /// Publishes using EventKey as the recovery key. Publishers must recover an existing
+    /// publication before retrying after an uncertain transport result.
     /// </summary>
     Task<TrackingPublicationResult> PublishAsync(
         TrackingDeliveryEnvelope delivery,
@@ -29,15 +32,19 @@ public sealed class TrackingDeliveryWorker
     private readonly ITrackingEventPublisher _publisher;
     private readonly TimeProvider _timeProvider;
     private readonly TimeSpan _leaseDuration;
+    private readonly string? _destinationType;
 
     public TrackingDeliveryWorker(
         ITrackingEventPublisher publisher,
         TimeProvider? timeProvider = null,
-        TimeSpan? leaseDuration = null)
+        TimeSpan? leaseDuration = null,
+        string? destinationType = null)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _timeProvider = timeProvider ?? TimeProvider.System;
         _leaseDuration = leaseDuration ?? TimeSpan.FromMinutes(2);
+        if (_leaseDuration <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(leaseDuration));
+        _destinationType = destinationType;
     }
 
     public async Task<bool> RunOnceAsync(CancellationToken cancellationToken = default)
@@ -48,8 +55,10 @@ public sealed class TrackingDeliveryWorker
 
         try
         {
-            var result = await _publisher.PublishAsync(delivery, cancellationToken);
-            await MarkDeliveredAsync(delivery.DeliveryId, result.ExternalReceiptId, cancellationToken);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(_leaseDuration / 2);
+            var result = await _publisher.PublishAsync(delivery, timeout.Token);
+            await MarkDeliveredAsync(delivery.DeliveryId, delivery.AttemptNumber, result.ExternalReceiptId, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -83,10 +92,20 @@ public sealed class TrackingDeliveryWorker
                     delivery.DestinationId,
                     event.EventKey,
                     event.EventType,
-                    event.PayloadJson
+                    event.PayloadJson,
+                    snapshot.PayloadJson AS SnapshotPayloadJson,
+                    snapshot.Id AS SnapshotId
                 FROM EventDeliveries delivery
                 JOIN TrackingEvents event ON event.Id = delivery.EventId
-                WHERE
+                JOIN RoomSnapshots snapshot ON snapshot.Id = event.SnapshotId
+                WHERE (@DestinationType IS NULL OR delivery.DestinationType = @DestinationType)
+                  AND NOT EXISTS (
+                    SELECT 1 FROM EventDeliveries earlier
+                    WHERE earlier.DestinationType = delivery.DestinationType
+                      AND earlier.DestinationId = delivery.DestinationId
+                      AND earlier.Id < delivery.Id AND earlier.Status <> 'Delivered'
+                  )
+                  AND (
                     (
                         delivery.Status IN ('Pending', 'Failed')
                         AND delivery.NextAttemptAtUtc <= @Now
@@ -97,9 +116,11 @@ public sealed class TrackingDeliveryWorker
                         AND delivery.LeaseUntilUtc IS NOT NULL
                         AND delivery.LeaseUntilUtc <= @Now
                     )
+                  )
                 ORDER BY delivery.NextAttemptAtUtc, delivery.Id
                 LIMIT 1;";
             select.Parameters.AddWithValue("@Now", TrackingV2Store.Format(now));
+            select.Parameters.AddWithValue("@DestinationType", (object?)_destinationType ?? DBNull.Value);
 
             long id;
             int attemptCount;
@@ -108,6 +129,8 @@ public sealed class TrackingDeliveryWorker
             string eventKey;
             string eventType;
             string eventPayload;
+            string snapshotPayload;
+            long snapshotId;
             using (var reader = await select.ExecuteReaderAsync(cancellationToken))
             {
                 if (!await reader.ReadAsync(cancellationToken))
@@ -120,6 +143,8 @@ public sealed class TrackingDeliveryWorker
                 eventKey = reader["EventKey"].ToString() ?? string.Empty;
                 eventType = reader["EventType"].ToString() ?? string.Empty;
                 eventPayload = reader["PayloadJson"].ToString() ?? string.Empty;
+                snapshotPayload = reader["SnapshotPayloadJson"].ToString() ?? string.Empty;
+                snapshotId = Convert.ToInt64(reader["SnapshotId"], CultureInfo.InvariantCulture);
             }
 
             using var update = connection.CreateCommand();
@@ -143,12 +168,15 @@ public sealed class TrackingDeliveryWorker
                 eventPayload,
                 destinationType,
                 destinationId,
-                attemptCount + 1);
+                attemptCount + 1,
+                snapshotPayload,
+                snapshotId);
         }, cancellationToken);
     }
 
     private Task MarkDeliveredAsync(
         long deliveryId,
+        int attemptNumber,
         string? externalReceiptId,
         CancellationToken cancellationToken)
     {
@@ -163,14 +191,16 @@ public sealed class TrackingDeliveryWorker
                     LeaseUntilUtc = NULL,
                     LastErrorCode = NULL,
                     ExternalReceiptId = @ExternalReceiptId
-                WHERE Id = @Id AND Status = 'Delivering';";
+                WHERE Id = @Id AND Status = 'Delivering' AND AttemptCount = @AttemptNumber;";
             command.Parameters.AddWithValue("@Now", TrackingV2Store.Format(now));
             command.Parameters.AddWithValue(
                 "@ExternalReceiptId",
                 string.IsNullOrWhiteSpace(externalReceiptId) ? DBNull.Value : externalReceiptId);
             command.Parameters.AddWithValue("@Id", deliveryId);
+            command.Parameters.AddWithValue("@AttemptNumber", attemptNumber);
             await command.ExecuteNonQueryAsync(cancellationToken);
-        });
+            return 0;
+        }, cancellationToken);
     }
 
     private Task MarkFailedAsync(
@@ -192,11 +222,13 @@ public sealed class TrackingDeliveryWorker
                     NextAttemptAtUtc = @NextAttemptAtUtc,
                     LeaseUntilUtc = NULL,
                     LastErrorCode = @LastErrorCode
-                WHERE Id = @Id AND Status = 'Delivering';";
+                WHERE Id = @Id AND Status = 'Delivering' AND AttemptCount = @AttemptNumber;";
             command.Parameters.AddWithValue("@NextAttemptAtUtc", TrackingV2Store.Format(nextAttempt));
             command.Parameters.AddWithValue("@LastErrorCode", errorCode);
             command.Parameters.AddWithValue("@Id", deliveryId);
+            command.Parameters.AddWithValue("@AttemptNumber", attemptNumber);
             await command.ExecuteNonQueryAsync(cancellationToken);
-        });
+            return 0;
+        }, cancellationToken);
     }
 }

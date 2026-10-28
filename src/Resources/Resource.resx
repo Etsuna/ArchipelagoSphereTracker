@@ -3255,4 +3255,17 @@ Your YAML files have been uploaded, but you are not marked ready. Are your setti
   <data name="RoomDestinationChannel" xml:space="preserve"><value>Channel directly (no thread)</value></data>
   <data name="RoomDestinationChannelNotice" xml:space="preserve"><value>In channel mode, notifications are posted directly in the selected channel. Only one room can be tracked there; stopping tracking keeps the channel and its messages.</value></data>
   <data name="RoomDestinationInvalid" xml:space="preserve"><value>Choose a private thread, a public thread, or the channel directly.</value></data>
+  <data name="TrackingItemsTitle" xml:space="preserve"><value>📦 **Items for {0}** · **({1})**</value></data>
+  <data name="TrackingHintsNewTitle" xml:space="preserve"><value>🔎 **New hints · {0}** · **({1})**</value></data>
+  <data name="TrackingHintsUpdatedTitle" xml:space="preserve"><value>🧭 **Updated hints · {0}** · **({1})**</value></data>
+  <data name="TrackingItemDetails" xml:space="preserve"><value>From **{0}** · *{1}*</value></data>
+  <data name="TrackingHintDetails" xml:space="preserve"><value>*{0}* · World: **{1}**{2}</value></data>
+  <data name="TrackingGoalTitle" xml:space="preserve"><value>🏁 **Goal completed!**</value></data>
+  <data name="TrackingGoalDescription" xml:space="preserve"><value>**{0}** has completed their goal.
+🎮 *{1}*</value></data>
+  <data name="DatabaseMigrationTrackingNotifications" xml:space="preserve"><value>Migrating to DB version 5.0.14: per-room Discord V2 notification initialization.</value></data>
+  <data name="DatabaseMigrationNotificationBatches" xml:space="preserve"><value>Migrating to DB version 5.0.15: persisted notification groups, pages and delivery receipts.</value></data>
+  <data name="DatabaseMigrationNativeTracking" xml:space="preserve"><value>Migrating to DB version 5.0.16: importing V1 tracking data into native V2 tables.</value></data>
+  <data name="DatabaseMigrationItemReplay" xml:space="preserve"><value>Migrating to DB version 5.0.17: per-player item notification replay queue.</value></data>
+  <data name="DatabaseMigrationLegacyTrackingRetirement" xml:space="preserve"><value>Migrating to DB version 5.0.18: final V1 import and transactional removal of the four legacy tracking tables.</value></data>
 </root>

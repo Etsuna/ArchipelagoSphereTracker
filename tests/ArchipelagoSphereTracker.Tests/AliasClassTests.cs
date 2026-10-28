@@ -28,18 +28,13 @@ public sealed class AliasClassTests
     public async Task Shared_slot_history_is_added_only_to_the_new_users_recap()
     {
         using var scope = new TestDatabaseScope();
-        await DisplayItemCommands.AddItemsAsync(
-            [new DisplayedItem
-            {
-                Finder = "Sender",
-                Receiver = "Shared Slot",
-                Item = "Existing Item",
-                Location = "Location",
-                Game = "Game",
-                Flag = "0"
-            }],
-            "g",
-            "c");
+        await new ArchipelagoSphereTracker.Tracking.Persistence.TrackingV2Store().ApplySnapshotAsync(
+            ArchipelagoSphereTracker.Tracking.V2.NormalizedRoomSnapshot.Create("g", "c",
+                [new(1, "Shared Slot", "Shared Slot", "Game"), new(2, "Sender", "Sender", "Game")],
+                [new(2, 1, 100, 200, 0, "Sender", "Shared Slot", "Existing Item", "Location", "Game", "Game")],
+                [], [], [], [], null, System.DateTimeOffset.UtcNow, null,
+                ArchipelagoSphereTracker.Tracking.V2.TrackingObservationState.Healthy, null,
+                ArchipelagoSphereTracker.Tracking.V2.SnapshotSections.All));
 
         await AliasClass.AddAliasForUserAsync("Shared Slot", "0", "c", "g", "user-1");
         await AliasClass.AddAliasForUserAsync("Shared Slot", "0", "c", "g", "user-2");

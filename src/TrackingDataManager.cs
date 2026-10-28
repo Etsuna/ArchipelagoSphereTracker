@@ -1,6 +1,7 @@
 ﻿using ArchipelagoSphereTracker.src.Resources;
 using ArchipelagoSphereTracker.src.TrackerLib.Services;
 using ArchipelagoSphereTracker.Tracking.Persistence;
+using ArchipelagoSphereTracker.Tracking.Notifications;
 using ArchipelagoSphereTracker.Tracking.Scheduling;
 using ArchipelagoSphereTracker.Tracking.V2;
 using Discord;
@@ -11,7 +12,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-public static class TrackingDataManager
+public static partial class TrackingDataManager
 {
     public static class RateLimitGuards
     {
@@ -35,6 +36,7 @@ public static class TrackingDataManager
     private static readonly object SchedulerLifecycleLock = new();
     private static CentralRoomScheduler? _centralScheduler;
     private static Task? _trackingTask;
+    private static Task? _deliveryTask;
 
     public static void StartTracking()
     {
@@ -58,6 +60,7 @@ public static class TrackingDataManager
             Declare.Cts?.Dispose();
             Declare.Cts = new CancellationTokenSource();
             var token = Declare.Cts.Token;
+            StartDeliveryWorker(token);
             _centralScheduler = new CentralRoomScheduler(
                 new SqliteRoomScheduleStore(),
                 ProcessScheduledRoomAsync,
@@ -88,7 +91,7 @@ public static class TrackingDataManager
         lock (SchedulerLifecycleLock)
         {
             Declare.Cts?.Cancel();
-            task = _trackingTask;
+            task = Task.WhenAll(_trackingTask ?? Task.CompletedTask, _deliveryTask ?? Task.CompletedTask);
         }
 
         if (task != null)
@@ -99,6 +102,43 @@ public static class TrackingDataManager
             }
             catch (OperationCanceledException)
             {
+            }
+        }
+    }
+
+    private static void StartDeliveryWorker(CancellationToken token)
+    {
+        _deliveryTask = Task.Run(() => RunDeliveryWorkerAsync(token), CancellationToken.None);
+    }
+
+    private static async Task RunDeliveryWorkerAsync(CancellationToken token)
+    {
+        var worker = new TrackingDeliveryWorker(
+            new DiscordTrackingEventPublisher(new DiscordTrackingTransport(Declare.Client)),
+            destinationType: TrackingDestination.NotificationDestinationType);
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                if (Declare.Client.ConnectionState == ConnectionState.Connected)
+                {
+                    try { await TrackingReplayService.PrepareNextAsync(token).ConfigureAwait(false); }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
+                    catch (Exception exception)
+                    {
+                        Console.WriteLine($"[TDM][Replay] Preparation retry ({exception.GetType().Name}).");
+                    }
+                }
+                if (Declare.Client.ConnectionState != ConnectionState.Connected ||
+                    !await worker.RunOnceAsync(token).ConfigureAwait(false))
+                    await Task.Delay(TimeSpan.FromSeconds(2), token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested) { break; }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"[TDM][V2] Delivery worker retry ({exception.GetType().Name}).");
+                try { await Task.Delay(TimeSpan.FromSeconds(5), token).ConfigureAwait(false); }
+                catch (OperationCanceledException) when (token.IsCancellationRequested) { break; }
             }
         }
     }
@@ -166,6 +206,7 @@ public static class TrackingDataManager
 
         Declare.Cts = new CancellationTokenSource();
         var token = Declare.Cts.Token;
+        StartDeliveryWorker(token);
 
         _trackingTask = Task.Run(async () =>
         {
@@ -797,6 +838,15 @@ public static class TrackingDataManager
         bool isAddUrl = false)
     {
         var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
+        if (ctx.SlotIndex.Count == 0)
+        {
+            var configuration = await ChannelsAndUrlsCommands.GetChannelConfigAsync(guild, channel);
+            var room = await UrlClass.RoomInfo(baseUrl, configuration.room, ctChan);
+            if (room == null || room.Players.Count == 0) return RoomPollResult.Failed(PollFailureKind.PartialResponse);
+            var slots = room.Players.Select((player, index) => (index + 1, player.Name, player.Game)).ToList();
+            await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guild, channel, slots);
+            ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
+        }
 
         if (!Uri.TryCreate(baseUrl.TrimEnd('/') + "/", UriKind.Absolute, out var rootUri) ||
             !Uri.TryCreate(rootUri, $"api/tracker/{tracker}", out var runtimeUri))
@@ -811,10 +861,11 @@ public static class TrackingDataManager
         if (!runtime.Success)
             return runtime.PollResult;
         var json = runtime.Json!;
-        var hasRecentActivity = WebHostActivity.HasRecentActivity(json, DateTimeOffset.UtcNow);
 
         string? jsonStatic = null;
-        if (isAddUrl)
+        var needsStatic = isAddUrl || Enumerable.Range(1, ctx.SlotIndex.Count)
+            .Any(slot => !ctx.TryGetPlayerLocationsTotal(slot, out _));
+        if (needsStatic)
         {
             var staticUri = new Uri(rootUri, $"api/static_tracker/{tracker}");
             var staticResult = await WebHostClient.FetchJsonAsync(
@@ -827,7 +878,7 @@ public static class TrackingDataManager
         }
 
         IReadOnlyDictionary<int, int> totalsBySlot;
-        if (isAddUrl)
+        if (needsStatic)
         {
             totalsBySlot = TrackerStreamParser.ParsePlayerLocationTotals(jsonStatic!);
             foreach (var kvp in totalsBySlot)
@@ -845,10 +896,25 @@ public static class TrackingDataManager
             totalsBySlot = map;
         }
 
+        return await ProcessTrackerResponseAsync(ctx, json, totalsBySlot, silent, isAddUrl,
+            ctChan).ConfigureAwait(false);
+    }
+
+    internal static async Task<RoomPollResult> ProcessTrackerResponseAsync(
+        ProcessingContext ctx,
+        string json,
+        IReadOnlyDictionary<int, int> totalsBySlot,
+        bool silent,
+        bool isAddUrl,
+        CancellationToken ctChan = default)
+    {
+        var guild = ctx.GuildId;
+        var channel = ctx.ChannelId;
+        var hasRecentActivity = WebHostActivity.HasRecentActivity(json, DateTimeOffset.UtcNow);
         NormalizedRoomSnapshot? normalizedSnapshot = null;
         try
         {
-            normalizedSnapshot = LegacySnapshotAdapter.FromWebHostResponse(
+            normalizedSnapshot = WebHostSnapshotParser.FromWebHostResponse(
                 ctx,
                 json,
                 totalsBySlot,
@@ -859,30 +925,31 @@ public static class TrackingDataManager
             Console.WriteLine($"[TDM][Adaptive] Snapshot hash unavailable ({exception.GetType().Name}).");
         }
 
-        if (Declare.EnableTrackingV2 && normalizedSnapshot != null)
-            await TryPersistTrackingV2Async(normalizedSnapshot, channel, ctChan).ConfigureAwait(false);
-
-        var items = TrackerStreamParser.ParseItems(ctx, json);
-        var hints = TrackerStreamParser.ParseHints(ctx, json);
-        var statuses = TrackerStreamParser.ParseGameStatus(ctx, json, totalsBySlot);
-        if (items.Count == 0 && hints.Count == 0 && statuses.Count == 0)
-            return RoomPollResult.Ok(normalizedSnapshot?.ContentHash, hasRecentActivity: hasRecentActivity);
-
-        var newItemCount = items.Count > 0
-            ? await ProcessItemsTableAsync(guild, channel, items, silent, ctChan).ConfigureAwait(false)
-            : 0;
-        var completedGoalCount = statuses.Count > 0
-            ? await ProcessGameStatusTableAsync(guild, channel, statuses, silent, ctChan).ConfigureAwait(false)
-            : 0;
-        var hintChanges = hints.Count > 0
-            ? await ProcessHintTableAsync(guild, channel, hints, silent, ctChan, isAddUrl).ConfigureAwait(false)
-            : (Added: 0, Updated: 0);
+        if (normalizedSnapshot == null || ctx.SlotIndex.Count == 0)
+            return RoomPollResult.Failed(PollFailureKind.PartialResponse);
+        var v2Result = await new TrackingV2Store().ApplySnapshotAsync(
+            normalizedSnapshot, [TrackingDestination.DiscordNotification(channel)], ctChan,
+            enableNotifications: true).ConfigureAwait(false);
+        if (isAddUrl && !silent && normalizedSnapshot.Hints.Length > 0)
+        {
+            var lines = normalizedSnapshot.Hints.Where(hint => hint.FinderSlot != hint.ReceiverSlot)
+                .Select(hint => $"{Resource.HintNew}: {hint.ReceiverDisplayName}: " +
+                    string.Format(Resource.HintItemNew, hint.ItemDisplayName, hint.LocationDisplayName, hint.FinderDisplayName));
+            var content = string.Join("\n", lines).Replace("**", "");
+            if (content.Length > 0)
+            {
+                using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                await BotCommands.SendFileAsync(channel, stream, $"hints_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt");
+            }
+        }
 
         await ChannelsAndUrlsCommands.UpdateLastCheckAsync(guild, channel);
 
         if (!isAddUrl)
         {
-            if (statuses.Count != 0 && statuses.All(x => x.Checks == x.Total))
+            if (normalizedSnapshot.IsComplete(SnapshotSections.Checks) && normalizedSnapshot.PlayerStates.Length > 0 &&
+                normalizedSnapshot.PlayerStates.All(player => player.TotalChecks is > 0 && player.CompletedChecks >= player.TotalChecks) &&
+                !await HasPendingNotificationsAsync(guild, channel, ctChan))
             {
                 ulong guildIdLong = ulong.Parse(guild);
                 await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
@@ -902,385 +969,35 @@ public static class TrackingDataManager
             }
         }
 
+        var events = v2Result.Events ?? [];
         return RoomPollResult.Ok(
-            normalizedSnapshot?.ContentHash,
-            newItemCount,
-            hintChanges.Added,
-            hintChanges.Updated,
-            completedGoalCount,
+            normalizedSnapshot.ContentHash,
+            events.OfType<ItemReceivedEvent>().Count(),
+            events.OfType<HintCreatedEvent>().Count(),
+            events.OfType<HintUpdatedEvent>().Count(),
+            events.OfType<GoalReachedEvent>().Count(),
             hasRecentActivity);
     }
 
-    private static async Task TryPersistTrackingV2Async(
-        NormalizedRoomSnapshot snapshot,
-        string destinationChannelId,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var store = new TrackingV2Store();
-            await store.ApplySnapshotAsync(
-                snapshot,
-                [TrackingDestination.DiscordChannel(destinationChannelId)],
-                cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            // Tracking V2 is a shadow write: a failure must not alter the legacy pipeline.
-            Console.WriteLine($"[TDM][V2] Shadow persistence failed ({exception.GetType().Name}).");
-        }
-    }
-
-    private sealed record ItemNotification(string Text, IReadOnlyList<string> MentionedUserIds);
-
-    private static async Task<ItemNotification?> BuildItemNotificationAsync(
+    private static async Task<bool> HasPendingNotificationsAsync(
         string guild,
         string channel,
-        DisplayedItem item,
-        bool silent)
+        CancellationToken cancellationToken)
     {
-        if (item.Finder == item.Receiver)
-            return null;
-
-        if ((int.TryParse(item.Location, out var loc) && loc < 0) || (int.TryParse(item.Item, out var itm) && itm < 0))
-            return null;
-
-        var text = string.Format(
-            Resource.TDPMEssageItemsNoMention,
-            item.Finder,
-            item.Item,
-            item.Receiver,
-            item.Location);
-
-        var userInfos = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, item.Receiver);
-        if (userInfos.Count == 0)
-            return silent ? null : new ItemNotification(text, []);
-
-        var excludedUserIds = await ExcludedItemsCommands.GetExcludedUserIdsAsync(
-            guild,
-            channel,
-            item.Receiver,
-            item.Item).ConfigureAwait(false);
-        var gameName = await AliasChoicesCommands.GetGameForAliasAsync(guild, channel, item.Receiver).ConfigureAwait(false);
-        var applyMentionFilter = !string.IsNullOrWhiteSpace(gameName);
-        var mentionedUserIds = userInfos
-            .Where(user => !string.IsNullOrWhiteSpace(user.UserId))
-            .Where(user => !excludedUserIds.Contains(user.UserId))
-            .Where(user => !applyMentionFilter || !HasFlag(user.Flag, item.Flag))
-            .Select(user => user.UserId)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(userId => userId, StringComparer.Ordinal)
-            .ToArray();
-
-        return mentionedUserIds.Length == 0
-            ? null
-            : new ItemNotification(text, mentionedUserIds);
-    }
-
-    private static async Task<int> ProcessItemsTableAsync(string guild, string channel, List<DisplayedItem> receivedItem, bool silent, CancellationToken ctChan)
-    {
-        var channelExists = await DatabaseCommands.CheckIfChannelExistsAsync(guild, channel, "DisplayedItemTable");
-        var existingKeys = new HashSet<string>(await DisplayItemCommands.GetExistingKeysAsync(guild, channel));
-        var newItems = new List<DisplayedItem>();
-
-        foreach (var di in receivedItem)
-        {
-            var key = $"{di.Finder}|{di.Receiver}|{di.Item}|{di.Location}|{di.Game}|{di.Flag}";
-            if (!existingKeys.Contains(key))
-                newItems.Add(di);
-        }
-
-        if (newItems.Count != 0)
-        {
-            await DisplayItemCommands.AddItemsAsync(newItems, guild, channel);
-            await RecapListCommands.AddOrEditRecapListItemsForAllAsync(guild, channel, newItems);
-            await ChannelsAndUrlsCommands.UpdateLastItemCheckAsync(guild, channel);
-
-            if (channelExists)
-            {
-                ulong guildIdLong = ulong.Parse(guild);
-
-                var groupedByReceiver = newItems.GroupBy(item => item.Receiver ?? "Inconnu");
-
-                foreach (var group in groupedByReceiver)
-                {
-                    var receiver = group.Key;
-
-                    var notifications = (await Task.WhenAll(
-                            group.Select(item => BuildItemNotificationAsync(guild, channel, item, silent))))
-                        .Where(notification => notification != null)
-                        .Cast<ItemNotification>()
-                        .ToArray();
-
-                    foreach (var recipientGroup in notifications.GroupBy(
-                                 notification => string.Join(",", notification.MentionedUserIds),
-                                 StringComparer.Ordinal))
-                    {
-                        var recipientNotifications = recipientGroup.ToArray();
-                        var mentions = string.Join(" ", recipientNotifications[0].MentionedUserIds.Select(id => $"<@{id}>"));
-                        var chunks = ChunkMessages(recipientNotifications.Select(notification => notification.Text)).ToList();
-
-                        for (int i = 0; i < chunks.Count; i++)
-                        {
-                            string header = chunks.Count > 1
-                                ? $"**{Resource.ItemFor} {receiver} {mentions} ({recipientNotifications.Length}) [{i + 1}/{chunks.Count}]:**"
-                                : $"**{Resource.ItemFor} {receiver} {mentions} ({recipientNotifications.Length}):**";
-
-                            string finalMessage = header + "\n>>> " + chunks[i];
-
-                            await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
-                            try
-                            {
-                                await BotCommands.SendMessageAsync(finalMessage, channel);
-                            }
-                            finally
-                            {
-                                RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
-                            }
-
-                            await Task.Delay(1100, ctChan);
-                        }
-                    }
-                }
-            }
-        }
-
-        return newItems.Count;
-    }
-
-    private static async Task<(int Added, int Updated)> ProcessHintTableAsync(string guild, string channel, List<HintStatus> hintsList, bool silent, CancellationToken ctChan = default, bool isAddUrl = false)
-    {
-        var existingList = await HintStatusCommands.GetHintStatus(guild, channel);
-        var existingByKey = existingList.ToDictionary(MakeKey);
-
-        var hintsToAdd = new List<HintStatus>();
-        var hintsToUpdate = new List<HintStatus>();
-
-        if (hintsList == null || hintsList.Count == 0)
-            return (0, 0);
-
-        foreach (var hint in hintsList)
-        {
-            var key = MakeKey(hint);
-            if (existingByKey.TryGetValue(key, out var existing))
-            {
-                if (!string.Equals(existing.Flag, hint.Flag.ToString(), StringComparison.Ordinal))
-                {
-                    existing.Flag = hint.Flag.ToString();
-                    hintsToUpdate.Add(existing);
-                }
-            }
-            else
-            {
-                hintsToAdd.Add(hint);
-            }
-        }
-
-        if (hintsToAdd.Count > 0)
-        {
-            await HintStatusCommands.AddHintStatusAsync(guild, channel, hintsToAdd);
-
-            if (!silent)
-            {
-                ulong guildIdLong = ulong.Parse(guild);
-
-                var eligible = hintsToAdd.Where(h => h.Finder != h.Receiver).ToList();
-                if (eligible.Count > 0)
-                {
-                    var lines = await BuildUnifiedLinesAsync(eligible, isAddUrl, guild, channel);
-
-                    if (isAddUrl)
-                    {
-                        var content = string.Join("\n", lines).Replace("**", "");
-                        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-                        var fileName = $"hints_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
-
-                        await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
-                        try
-                        {
-                            await BotCommands.SendFileAsync(channel, ms, fileName);
-                        }
-                        finally
-                        {
-                            RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
-                        }
-                        await Task.Delay(1100, ctChan);
-                    }
-                    else
-                    {
-                        foreach (var chunk in ChunkMessages(lines, 1900))
-                        {
-                            await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
-                            try
-                            {
-                                await BotCommands.SendMessageAsync(chunk, channel);
-                            }
-                            finally
-                            {
-                                RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
-                            }
-                            await Task.Delay(1100, ctChan);
-                        }
-                    }
-                }
-            }
-        }
-
-        // --- UPDATED HINTS ---
-        if (hintsToUpdate.Count > 0)
-        {
-            await HintStatusCommands.UpdateHintStatusAsync(guild, channel, hintsToUpdate);
-
-            if (!silent)
-            {
-                ulong guildIdLong = ulong.Parse(guild);
-
-                var eligible = hintsToUpdate.Where(h => h.Finder != h.Receiver).ToList();
-                if (eligible.Count > 0)
-                {
-                    var lines = await BuildUnifiedLinesUpdatedAsync(eligible, isAddUrl, guild, channel);
-
-                    if (isAddUrl)
-                    {
-                        var content = string.Join("\n", lines);
-                        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-                        var fileName = $"hints_updated_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
-
-                        await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
-                        try
-                        {
-                            await BotCommands.SendFileAsync(channel, ms, fileName);
-                        }
-                        finally
-                        {
-                            RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
-                        }
-                        await Task.Delay(1100, ctChan);
-                    }
-                    else
-                    {
-                        foreach (var chunk in ChunkMessages(lines, 1900))
-                        {
-                            await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
-                            try
-                            {
-                                await BotCommands.SendMessageAsync(chunk, channel);
-                            }
-                            finally
-                            {
-                                RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
-                            }
-                            await Task.Delay(1100, ctChan);
-                        }
-                    }
-                }
-            }
-        }
-
-        return (hintsToAdd.Count, hintsToUpdate.Count);
-    }
-
-    private static async Task<int> ProcessGameStatusTableAsync(string guild, string channel, List<GameStatus> statuses, bool silent, CancellationToken ctChan)
-    {
-        if (statuses == null || statuses.Count == 0)
-            return 0;
-
-        var previous = await GameStatusCommands.GetGameStatusForGuildAndChannelAsync(guild, channel).ConfigureAwait(false);
-        var prevByKey = previous.ToDictionary(
-            x => MakeKey(x.Name, x.Game),
-            x => x,
-            StringComparer.Ordinal);
-
-        var newlyCompleted = new List<GameStatus>();
-
-        foreach (var cur in statuses)
-        {
-            var key = MakeKey(cur.Name, cur.Game);
-
-            bool prevComplete = prevByKey.TryGetValue(key, out var prev)
-                && IsComplete(prev.Checks, prev.Total);
-
-            bool nowComplete = IsComplete(cur.Checks, cur.Total);
-
-            if (!prevComplete && nowComplete)
-            {
-                newlyCompleted.Add(cur);
-            }
-        }
-
-        await GameStatusCommands.UpdateGameStatusBatchAsync(guild, channel, statuses).ConfigureAwait(false);
-
-        if (newlyCompleted.Count > 0)
-        {
-            foreach (var done in newlyCompleted)
-            {
-                bool canAnnounce = !silent;
-
-                if (silent)
-                {
-                    var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, done.Name);
-                    canAnnounce = userIds.Count > 0;
-                }
-
-                if (previous.Count == 0)
-                    canAnnounce = false;
-
-                if (canAnnounce)
-                {
-                    ulong guildIdLong = ulong.Parse(guild);
-                    string text = string.Format(Resource.TDMGoalComplete, done.Name, done.Game);
-
-                    await RateLimitGuards.GetGuildSendGate(guildIdLong).WaitAsync(ctChan);
-                    try
-                    {
-                        await BotCommands.SendMessageAsync(text, channel);
-                    }
-                    finally
-                    {
-                        RateLimitGuards.GetGuildSendGate(guildIdLong).Release();
-                    }
-
-                    await Task.Delay(1100, ctChan);
-                }
-            }
-        }
-
-        return previous.Count == 0 ? 0 : newlyCompleted.Count;
-    }
-
-    private static string MakeKey(string? name, string? game)
-        => $"{name ?? ""}|{game ?? ""}";
-
-    private static bool IsComplete(string? checksStr, string? totalStr)
-    {
-        if (!int.TryParse(checksStr, out var checks)) checks = 0;
-        if (!int.TryParse(totalStr, out var total)) total = 0;
-        return total > 0 && checks >= total;
-    }
-
-    private static IEnumerable<string> ChunkMessages(IEnumerable<string> messages, int maxLength = 1900)
-    {
-        var sb = new StringBuilder();
-        foreach (var msg in messages)
-        {
-            if (string.IsNullOrWhiteSpace(msg)) continue;
-
-            if (sb.Length + msg.Length + (sb.Length > 0 ? 1 : 0) > maxLength)
-            {
-                yield return sb.ToString();
-                sb.Clear();
-            }
-
-            if (sb.Length > 0) sb.AppendLine();
-            sb.Append($"- {msg}");
-        }
-
-        if (sb.Length > 0)
-            yield return sb.ToString();
+        await using var connection = await Db.OpenReadAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"SELECT EXISTS (
+            SELECT 1 FROM EventDeliveries delivery
+            JOIN TrackingEvents event ON event.Id = delivery.EventId
+            WHERE event.GuildId = @Guild AND event.ChannelId = @Channel
+              AND delivery.DestinationType = @Type AND delivery.Status <> 'Delivered'
+            UNION ALL
+            SELECT 1 FROM TrackingReplayRequests
+            WHERE GuildId=@Guild AND ChannelId=@Channel AND Status='Pending');";
+        command.Parameters.AddWithValue("@Guild", guild);
+        command.Parameters.AddWithValue("@Channel", channel);
+        command.Parameters.AddWithValue("@Type", TrackingDestination.NotificationDestinationType);
+        return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken)) != 0;
     }
 
     /// <summary>
@@ -1327,104 +1044,6 @@ public static class TrackingDataManager
         public static TimeSpan ParseOrDefault(string? input, TimeSpan @default,
                                               TimeSpan? min = null, TimeSpan? max = null)
             => TryParse(input, out var ts, min, max) ? ts : @default;
-    }
-
-    private static string MakeKey(HintStatus h) =>
-        $"{h.Finder}|{h.Receiver}|{h.Item}|{h.Location}|{h.Game}";
-
-    private static async Task<List<string>> BuildUnifiedLinesAsync(
-        IEnumerable<HintStatus> hints,
-        bool isAddUrl,
-        string guild,
-        string channel)
-    {
-        var lines = new List<string>();
-
-        foreach (var group in hints.GroupBy(h => h.Receiver))
-        {
-            if (isAddUrl)
-            {
-                lines.Add($"{Resource.HintNew}: {group.Key}:");
-            }
-            else
-            {
-                var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, group.Key);
-                var mentions = string.Join(" ", userIds.Select(x => $"<@{x.UserId}>"));
-                lines.Add($"{Resource.HintNew}: {group.Key} {mentions}:");
-            }
-
-            foreach (var h in group)
-            {
-                if (isAddUrl)
-                {
-                    lines.Add(string.Format(Resource.HintItemNew, h.Item, h.Location, h.Finder));
-                }
-                else
-                {
-                    var finderIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, h.Finder);
-                    var finderMentions = string.Join(" ", finderIds.Select(x => $"<@{x.UserId}>"));
-                    lines.Add(string.Format(Resource.HintItemNew, h.Item, h.Location, $"{h.Finder} {finderMentions}"));
-                }
-            }
-
-            lines.Add(string.Empty);
-        }
-
-        return lines;
-    }
-
-    private static async Task<List<string>> BuildUnifiedLinesUpdatedAsync(
-        IEnumerable<HintStatus> hints,
-        bool isAddUrl,
-        string guild,
-        string channel)
-    {
-        var lines = new List<string>();
-
-        foreach (var group in hints.GroupBy(h => h.Receiver))
-        {
-            if (isAddUrl)
-            {
-                lines.Add($"{Resource.HintUpdated}: {group.Key}:");
-            }
-            else
-            {
-                var userIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, group.Key);
-                var mentions = string.Join(" ", userIds.Select(x => $"<@{x.UserId}>"));
-                lines.Add($"{Resource.HintUpdated}: {group.Key} {mentions}:");
-            }
-
-            foreach (var h in group)
-            {
-                if (isAddUrl)
-                {
-                    lines.Add(string.Format(Resource.HintItemUpdated, h.Item, h.Location, h.Finder));
-                }
-                else
-                {
-                    var finderIds = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(guild, channel, h.Finder);
-                    var finderMentions = string.Join(" ", finderIds.Select(x => $"<@{x.UserId}>"));
-                    lines.Add(string.Format(Resource.HintItemUpdated, h.Item, h.Location, $"{h.Finder} {finderMentions}"));
-                }
-            }
-
-            lines.Add(string.Empty);
-        }
-
-        return lines;
-    }
-
-    private static bool HasFlag(string maskString, string flagIndexString)
-    {
-        if (!int.TryParse(maskString, out var mask))
-            return false;
-
-        if (!int.TryParse(flagIndexString, out var flagIndex))
-            return false;
-
-        int flagValue = 1 << flagIndex;
-
-        return (mask & flagValue) != 0;
     }
 
     private static DateTimeOffset? TryParseIsoOrUnixMs(string? s)

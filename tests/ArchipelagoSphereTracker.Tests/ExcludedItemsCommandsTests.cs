@@ -56,7 +56,8 @@ public sealed class ExcludedItemsCommandsTests
         {
             using var command = connection.CreateCommand();
             command.CommandText = @"
-                INSERT INTO AliasChoicesTable (GuildId, ChannelId, Slot, Alias, Game)
+                INSERT INTO TrackedRooms (GuildId,ChannelId,CreatedAtUtc,UpdatedAtUtc) VALUES ('g','c','now','now');
+                INSERT INTO TrackingSlots (GuildId, ChannelId, Slot, Alias, Game)
                 VALUES ('g', 'c', 1, 'Slot%', 'Game A'),
                        ('g', 'c', 2, 'Slot Other', 'Game B');
                 INSERT INTO DatapackageGameMap (GuildId, ChannelId, GameName, DatasetKey, ImportedAt)

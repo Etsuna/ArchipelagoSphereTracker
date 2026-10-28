@@ -194,8 +194,7 @@ PORTAL_TOKEN_LIFETIME_DAYS=30
 # Optionnel (défaut : 90 jours, intervalle accepté : 1–3650)
 AUDIT_RETENTION_DAYS=90
 
-# Modèle V2 expérimental (non branché sur les notifications en production)
-ENABLE_TRACKING_V2=false
+# Suivi natif V2 : toujours actif
 
 # Rollback temporaire vers l'ancien scan minute
 USE_LEGACY_TRACKING_SCHEDULER=false
@@ -233,7 +232,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `SPOILER_LOG_RETENTION_DAYS` fixe la rétention des fichiers spoiler `.txt` et `.json`.
 - `PORTAL_TOKEN_LIFETIME_DAYS` fixe l'expiration des nouveaux liens du portail.
 - `AUDIT_RETENTION_DAYS` fixe la rétention du journal des actions sensibles.
-- `ENABLE_TRACKING_V2=true` active le dual-write expérimental des snapshots, événements et livraisons V2. Aucun worker Discord V2 n'est démarré dans cette version : les notifications historiques restent seules publiées.
+- Le suivi natif V2 alimente les commandes, le portail et les notifications Discord groupées. `ENABLE_TRACKING_V2` est obsolète et ignoré. La migration `5.0.18` termine l'import V1 puis supprime les quatre anciennes tables de suivi, avec sauvegarde préalable. Voir [la migration V2 native](docs/tracking-v2-native.fr.md).
 - `USE_LEGACY_TRACKING_SCHEDULER=true` réactive temporairement l'ancien scan minute ; le scheduler central est utilisé par défaut.
 - Le mode historique désactive les commandes de pause/reprise/synchronisation forcée et ne tient pas compte des pauses persistées. Revenir au scheduler central restaure leur application.
 - `TRACKING_GLOBAL_CONCURRENCY` et `TRACKING_ORIGIN_CONCURRENCY` bornent respectivement les requêtes WebHost simultanées du processus et d'une même origine.
@@ -690,8 +689,7 @@ PORTAL_TOKEN_LIFETIME_DAYS=30
 # Optional (default: 90 days, accepted range: 1–3650)
 AUDIT_RETENTION_DAYS=90
 
-# Experimental V2 model (not wired to production notifications)
-ENABLE_TRACKING_V2=false
+# Native V2 tracking is always active
 
 # Temporary rollback to the legacy minute scan
 USE_LEGACY_TRACKING_SCHEDULER=false
@@ -729,7 +727,7 @@ USER_ID_FOR_BIG_ASYNC=123456789012345678
 - `SPOILER_LOG_RETENTION_DAYS` controls retention of `.txt` and `.json` spoiler files.
 - `PORTAL_TOKEN_LIFETIME_DAYS` controls expiry for newly issued portal links.
 - `AUDIT_RETENTION_DAYS` controls retention of sensitive-action audit records.
-- `ENABLE_TRACKING_V2=true` enables experimental dual-write of V2 snapshots, events, and deliveries. No V2 Discord worker is started in this release, so only legacy notifications are published.
+- Native V2 tracking drives commands, the portal and grouped Discord notifications. `ENABLE_TRACKING_V2` is obsolete and ignored. Migration `5.0.18` finishes the V1 import and removes the four old tracking tables, with a pre-migration backup. See [native V2 migration](docs/tracking-v2-native.en.md).
 - `USE_LEGACY_TRACKING_SCHEDULER=true` temporarily restores the old minute scan; the central scheduler is the default.
 - Legacy mode disables pause/resume/forced-sync commands and ignores persisted pauses. Switching back to the central scheduler restores their enforcement.
 - `TRACKING_GLOBAL_CONCURRENCY` and `TRACKING_ORIGIN_CONCURRENCY` cap concurrent WebHost requests process-wide and per origin.

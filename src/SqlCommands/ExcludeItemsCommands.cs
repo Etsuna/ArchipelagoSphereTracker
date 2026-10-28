@@ -47,7 +47,7 @@ public static class ExcludedItemsCommands
 
             const string query = @"
             SELECT DISTINCT dpi.Name
-            FROM AliasChoicesTable a
+            FROM TrackingSlots a
             JOIN DatapackageGameMap gm
               ON gm.GuildId = a.GuildId
              AND gm.ChannelId = a.ChannelId

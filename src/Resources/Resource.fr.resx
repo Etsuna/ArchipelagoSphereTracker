@@ -2817,4 +2817,17 @@ Vos YAML ont été déposés, mais vous n’êtes pas déclarés prêts. Vos ré
   <data name="RoomDestinationChannel" xml:space="preserve"><value>Salon directement (sans thread)</value></data>
   <data name="RoomDestinationChannelNotice" xml:space="preserve"><value>En mode salon, les notifications sont publiées directement dans le salon choisi. Une seule room peut y être suivie ; arrêter le suivi conserve le salon et ses messages.</value></data>
   <data name="RoomDestinationInvalid" xml:space="preserve"><value>Choisissez un thread privé, un thread public ou le salon directement.</value></data>
+  <data name="TrackingItemsTitle" xml:space="preserve"><value>📦 **Objets pour {0}** · **({1})**</value></data>
+  <data name="TrackingHintsNewTitle" xml:space="preserve"><value>🔎 **Nouveaux indices · {0}** · **({1})**</value></data>
+  <data name="TrackingHintsUpdatedTitle" xml:space="preserve"><value>🧭 **Indices actualisés · {0}** · **({1})**</value></data>
+  <data name="TrackingItemDetails" xml:space="preserve"><value>De **{0}** · *{1}*</value></data>
+  <data name="TrackingHintDetails" xml:space="preserve"><value>*{0}* · Monde de **{1}**{2}</value></data>
+  <data name="TrackingGoalTitle" xml:space="preserve"><value>🏁 **Objectif atteint !**</value></data>
+  <data name="TrackingGoalDescription" xml:space="preserve"><value>**{0}** a terminé son objectif.
+🎮 *{1}*</value></data>
+  <data name="DatabaseMigrationTrackingNotifications" xml:space="preserve"><value>Migration vers la version 5.0.14 de la base : initialisation des notifications Discord V2 par room.</value></data>
+  <data name="DatabaseMigrationNotificationBatches" xml:space="preserve"><value>Migration vers la version 5.0.15 de la base : groupes de notifications, pages et reçus de livraison persistants.</value></data>
+  <data name="DatabaseMigrationNativeTracking" xml:space="preserve"><value>Migration vers la version 5.0.16 de la base : import des données de suivi V1 dans les tables natives V2.</value></data>
+  <data name="DatabaseMigrationItemReplay" xml:space="preserve"><value>Migration vers la version 5.0.17 de la base : file de réémission des notifications d’objets par joueur.</value></data>
+  <data name="DatabaseMigrationLegacyTrackingRetirement" xml:space="preserve"><value>Migration vers la version 5.0.18 de la base : import final V1 et suppression transactionnelle des quatre anciennes tables de suivi.</value></data>
 </root>

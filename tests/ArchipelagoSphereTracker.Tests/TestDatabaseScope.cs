@@ -11,7 +11,7 @@ public sealed class TestDatabaseScope : IDisposable
 
     public string BaseDirectory { get; }
 
-    public TestDatabaseScope()
+    public TestDatabaseScope(bool includeLegacyTrackingTables = false)
     {
         _originalDirectory = Environment.CurrentDirectory;
         BaseDirectory = Path.Combine(Path.GetTempPath(), $"ast-tests-{Guid.NewGuid():N}");
@@ -21,6 +21,15 @@ public sealed class TestDatabaseScope : IDisposable
 
         ChannelConfigCache.Clear();
         DatabaseInitializer.InitializeDatabaseAsync().GetAwaiter().GetResult();
+        if (includeLegacyTrackingTables)
+        {
+            Db.WriteAsync(async connection =>
+            {
+                using var command = connection.CreateCommand();
+                command.CommandText = LegacyTrackingSchema.Tables + LegacyTrackingSchema.Indexes;
+                await command.ExecuteNonQueryAsync();
+            }).GetAwaiter().GetResult();
+        }
     }
 
     public void Dispose()

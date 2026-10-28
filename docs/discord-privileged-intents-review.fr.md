@@ -1,6 +1,6 @@
 # AST : préparation de l'examen Discord des privileged intents
 
-> Mise à jour : les changements locaux suppriment maintenant les intents, remplacent l'ajout de masse par un bouton d'inscription et branchent les notifications V2. Voir [le guide de déploiement](tracking-v2-notifications.fr.md). Les constats ci-dessous décrivent l'audit AVANT ces changements ; aucun réglage du portail Discord ni déploiement de production n'a été effectué ici.
+> Mise à jour : les changements locaux suppriment maintenant les intents, remplacent l'ajout de masse par une inscription explicite et branchent les notifications V2. Voir [le guide de déploiement](tracking-v2-notifications.fr.md). Les constats ci-dessous décrivent l'audit AVANT ces changements ; aucun réglage du portail Discord ni déploiement de production n'a été effectué ici.
 
 Application : AST / Archipelago Sphere Tracker (`1408901673522430047`).
 Échéance indiquée dans la notification : 24/01/2027 à 19:28:50 (fuseau non précisé dans le texte fourni).

@@ -3,7 +3,7 @@ using ArchipelagoSphereTracker.src.TrackerLib.Services;
 
 namespace ArchipelagoSphereTracker.Tracking.V2;
 
-public static class LegacySnapshotAdapter
+public static class WebHostSnapshotParser
 {
     public static NormalizedRoomSnapshot FromWebHostResponse(
         ProcessingContext context,
@@ -30,9 +30,6 @@ public static class LegacySnapshotAdapter
         if (HasArray(root, "player_checks_done")) completeSections |= SnapshotSections.Checks;
         if (roomActivityKnown) completeSections |= SnapshotSections.RoomActivity;
 
-        var rawItems = TrackerStreamParser.ParseItems(context, runtimeJson);
-        var rawHints = TrackerStreamParser.ParseHints(context, runtimeJson);
-        var rawStatuses = TrackerStreamParser.ParseGameStatus(context, runtimeJson, totalsBySlot);
         var checkedLocations = TrackerStreamParser.ParseCheckedLocations(runtimeJson);
         var runtimeAliases = TrackerStreamParser.ParsePlayerAliases(runtimeJson);
         var runtimeStatuses = TrackerStreamParser.ParsePlayerStatuses(runtimeJson);
@@ -55,34 +52,48 @@ public static class LegacySnapshotAdapter
             return new NormalizedSlot(slot, playerName, alias, entry.Game);
         });
 
-        var items = rawItems.Select(item => new NormalizedItemTransfer(
-            item.FinderSlot,
-            item.ReceiverSlot,
-            item.ItemId,
-            item.LocationId,
-            int.TryParse(item.Flag, out var flags) ? flags : 0,
-            item.Finder,
-            item.Receiver,
-            item.Item,
-            item.Location,
-            context.SlotGame(item.FinderSlot),
-            context.SlotGame(item.ReceiverSlot)));
-
-        var hints = rawHints.Select(hint => new NormalizedHint(
-            hint.FinderSlot,
-            hint.ReceiverSlot,
-            hint.ItemId,
-            hint.LocationId,
-            bool.TryParse(hint.Flag, out var found) && found,
-            string.IsNullOrWhiteSpace(hint.Entrance) ? "Vanilla" : hint.Entrance,
-            hint.Finder,
-            hint.Receiver,
-            hint.Item,
-            hint.Location,
-            context.SlotGame(hint.FinderSlot),
-            context.SlotGame(hint.ReceiverSlot),
-            hint.ItemFlags,
-            hint.Status));
+        var items = new List<NormalizedItemTransfer>();
+        foreach (var entry in Array(root, "player_items_received"))
+        {
+            var receiver = (int)Number(entry.GetProperty("player"));
+            foreach (var tuple in Array(entry, "items"))
+            {
+                if (tuple.ValueKind != JsonValueKind.Array || tuple.GetArrayLength() < 4)
+                    throw new JsonException("Incomplete item transfer.");
+                var itemId = Number(tuple[0]);
+                var locationId = Number(tuple[1]);
+                var finder = (int)Number(tuple[2]);
+                var finderGame = context.SlotGame(finder);
+                var receiverGame = context.SlotGame(receiver);
+                items.Add(new(finder, receiver, itemId, locationId, (int)Number(tuple[3]),
+                    context.SlotAlias(finder), context.SlotAlias(receiver),
+                    context.TryGetItemName(receiverGame, itemId, out var itemName) ? itemName : itemId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    context.TryGetLocationName(finderGame, locationId, out var locationName) ? locationName : locationId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    finderGame, receiverGame));
+            }
+        }
+        var hints = new List<NormalizedHint>();
+        foreach (var entry in Array(root, "hints"))
+        foreach (var tuple in Array(entry, "hints"))
+        {
+            if (tuple.ValueKind != JsonValueKind.Array || tuple.GetArrayLength() < 6)
+                throw new JsonException("Incomplete hint.");
+            var receiver = (int)Number(tuple[0]);
+            var finder = (int)Number(tuple[1]);
+            var locationId = Number(tuple[2]);
+            var itemId = Number(tuple[3]);
+            var finderGame = context.SlotGame(finder);
+            var receiverGame = context.SlotGame(receiver);
+            var entrance = tuple[5].ValueKind == JsonValueKind.String ? tuple[5].GetString() : null;
+            hints.Add(new(finder, receiver, itemId, locationId, Boolean(tuple[4]),
+                string.IsNullOrWhiteSpace(entrance) ? "Vanilla" : entrance,
+                context.SlotAlias(finder), context.SlotAlias(receiver),
+                context.TryGetItemName(receiverGame, itemId, out var itemName) ? itemName : itemId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                context.TryGetLocationName(finderGame, locationId, out var locationName) ? locationName : locationId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                finderGame, receiverGame,
+                tuple.GetArrayLength() > 6 ? (int)Number(tuple[6]) : 0,
+                tuple.GetArrayLength() > 7 ? (int)Number(tuple[7]) : 0));
+        }
 
         var checks = checkedLocations.SelectMany(entry =>
             entry.Value.Select(locationId => new NormalizedCheck(entry.Key, locationId)));
@@ -93,16 +104,18 @@ public static class LegacySnapshotAdapter
             "completion",
             effectiveStatuses.GetValueOrDefault(slot) == NormalizedPlayerStatus.GoalReached));
 
-        var rawStatusBySlot = rawStatuses.ToDictionary(status => status.Slot);
+        var activity = Array(root, "activity_timers").ToDictionary(
+            entry => (int)Number(entry.GetProperty("player")),
+            entry => entry.TryGetProperty("time", out var time) && time.ValueKind == JsonValueKind.String ? time.GetString() : null);
         var states = Enumerable.Range(1, context.SlotIndex.Count).Select(slot =>
         {
-            rawStatusBySlot.TryGetValue(slot, out var rawStatus);
+
             return new NormalizedPlayerState(
                 slot,
                 effectiveStatuses.GetValueOrDefault(slot),
                 checksCountBySlot.GetValueOrDefault(slot),
                 totalsBySlot.TryGetValue(slot, out var total) ? total : null,
-                string.IsNullOrWhiteSpace(rawStatus?.LastActivity) ? null : rawStatus.LastActivity);
+                activity.GetValueOrDefault(slot));
         });
 
         return NormalizedRoomSnapshot.Create(
@@ -145,6 +158,20 @@ public static class LegacySnapshotAdapter
             errorCode,
             SnapshotSections.Tracking);
     }
+
+    private static IEnumerable<JsonElement> Array(JsonElement root, string property)
+        => root.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.Array
+            ? value.EnumerateArray().ToArray() : [];
+
+    private static long Number(JsonElement value)
+        => value.ValueKind == JsonValueKind.Number ? value.GetInt64()
+            : value.ValueKind == JsonValueKind.String && long.TryParse(value.GetString(), out var number)
+                ? number : throw new JsonException("Invalid numeric tracker identity.");
+
+    private static bool Boolean(JsonElement value)
+        => value.ValueKind == JsonValueKind.True ||
+           (value.ValueKind == JsonValueKind.Number && value.GetInt64() != 0) ||
+           (value.ValueKind == JsonValueKind.String && (value.GetString() == "1" || bool.TryParse(value.GetString(), out var found) && found));
 
     private static bool HasArray(JsonElement root, string propertyName)
         => root.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Array;

@@ -177,7 +177,7 @@ public static class DBMigration
 
                             await AddOrEditUrlChannelAsync(guildId, channelId, baseUrl, room, tracker, silent, checkFrequencyStr);
                             await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
-                            await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
+                            await WriteLegacySlotsAsync(guildId, channelId, aliasList);
 
                             await MigrateTableData(guildId, channelId, silent, baseUrl, tracker, OldDisplayedItems, ct);
 
@@ -201,7 +201,22 @@ public static class DBMigration
 
     public static async Task MigrateTableData(string guild, string channel, bool silent, string baseUrl, string tracker, List<DisplayedItem_Old> oldDisplayedItems, CancellationToken ct = default)
     {
-        var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent).ConfigureAwait(false);
+        var initial = new ProcessingContext { GuildId = guild, ChannelId = channel, Silent = silent };
+        await using (var connection = await Db.OpenReadAsync())
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT Slot,Alias,Game FROM AliasChoicesTable WHERE GuildId=@G AND ChannelId=@C ORDER BY Slot;";
+            command.Parameters.AddWithValue("@G", guild);
+            command.Parameters.AddWithValue("@C", channel);
+            using var reader = await command.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                var slot = Convert.ToInt32(reader[0]);
+                while (initial.SlotIndex.Count < slot) initial.SlotIndex.Add(($"Player{initial.SlotIndex.Count+1}", ""));
+                initial.SlotIndex[slot-1] = (reader[1].ToString() ?? "", reader[2].ToString() ?? "");
+            }
+        }
+        var ctx = await ProcessingContextLoader.LoadOneShotAsync(guild, channel, silent, initial).ConfigureAwait(false);
 
         var url = $"{baseUrl.TrimEnd('/')}/api/tracker/{tracker}";
         var json = await _http.GetStringAsync(url, ct).ConfigureAwait(false);
@@ -210,7 +225,93 @@ public static class DBMigration
 
         var cleaned = DisplayedItemCleaner.KeepOnlyCommon(newDisplayItems, oldDisplayedItems);
 
-        await DisplayItemCommands.AddItemsAsync(cleaned, guild, channel);
+        await WriteLegacyItemsAsync(cleaned, guild, channel);
+    }
+
+    private static async Task WriteLegacySlotsAsync(
+        string guildId,
+        string channelId,
+        List<(int slot, string alias, string game)> gameStatus
+        )
+    {
+        try
+        {
+            await Db.WriteAsync(async conn =>
+            {
+                using var command = conn.CreateCommand();
+                command.CommandText = @"
+                    INSERT OR REPLACE INTO AliasChoicesTable (GuildId, ChannelId, Slot, Alias, Game)
+                    VALUES (@GuildId, @ChannelId, @Slot, @Alias, @Game);";
+
+                command.Parameters.AddWithValue("@GuildId", guildId);
+                command.Parameters.AddWithValue("@ChannelId", channelId);
+
+                var slotParam = command.Parameters.Add("@Slot", System.Data.DbType.Int32);
+                var aliasParam = command.Parameters.Add("@Alias", System.Data.DbType.String);
+                var gameParam = command.Parameters.Add("@Game", System.Data.DbType.String);
+
+                command.Prepare();
+
+                foreach (var games in gameStatus)
+                {
+                    command.Parameters.AddWithValue("@Slot", games.slot);
+                    command.Parameters.AddWithValue("@Alias", games.alias);
+                    command.Parameters.AddWithValue("@Game", games.game);
+
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while adding or replacing the alias choice: {ex.Message}");
+        }
+    }
+
+
+    private static async Task WriteLegacyItemsAsync(
+        List<DisplayedItem> items,
+        string guildId,
+        string channelId
+        )
+    {
+        if (items == null || items.Count == 0)
+            return;
+
+        await Db.WriteAsync(async conn =>
+        {
+            using var command = conn.CreateCommand();
+            command.CommandText = @"
+                INSERT OR IGNORE INTO DisplayedItemTable
+                    (GuildId, ChannelId, Finder, Receiver, Item, Location, Game, Flag)
+                VALUES
+                    (@GuildId, @ChannelId, @Finder, @Receiver, @Item, @Location, @Game, @Flag);";
+
+            command.Parameters.Add("@GuildId", System.Data.DbType.String);
+            command.Parameters.Add("@ChannelId", System.Data.DbType.String);
+            command.Parameters.Add("@Finder", System.Data.DbType.String);
+            command.Parameters.Add("@Receiver", System.Data.DbType.String);
+            command.Parameters.Add("@Item", System.Data.DbType.String);
+            command.Parameters.Add("@Location", System.Data.DbType.String);
+            command.Parameters.Add("@Game", System.Data.DbType.String);
+            command.Parameters.Add("@Flag", System.Data.DbType.String);
+
+            command.Prepare();
+
+            foreach (var it in items)
+            {
+                command.Parameters["@GuildId"].Value = guildId;
+                command.Parameters["@ChannelId"].Value = channelId;
+                command.Parameters["@Finder"].Value = (object?)it.Finder ?? DBNull.Value;
+                command.Parameters["@Receiver"].Value = (object?)it.Receiver ?? DBNull.Value;
+                command.Parameters["@Item"].Value = (object?)it.Item ?? DBNull.Value;
+                command.Parameters["@Location"].Value = (object?)it.Location ?? DBNull.Value;
+                command.Parameters["@Game"].Value = (object?)it.Game ?? DBNull.Value;
+                command.Parameters["@Flag"].Value = (object?)it.Flag ?? DBNull.Value;
+
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+        });
     }
 
     public static class DisplayedItemCleaner

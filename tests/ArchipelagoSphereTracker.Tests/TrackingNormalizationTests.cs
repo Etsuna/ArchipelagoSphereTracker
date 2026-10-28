@@ -14,14 +14,14 @@ public sealed class TrackingNormalizationTests
     public void ReorderedPayload_ProducesSameNormalizedHashAndRawIdentities()
     {
         var totals = TrackerStreamParser.ParsePlayerLocationTotals(ReadFixture("tracker-static-current.json"));
-        var current = LegacySnapshotAdapter.FromWebHostResponse(
+        var current = WebHostSnapshotParser.FromWebHostResponse(
             CreateContext(),
             ReadFixture("tracker-runtime-current.json"),
             totals,
             InitialTime,
             InitialTime.AddMinutes(-5),
             roomActivityKnown: true);
-        var reordered = LegacySnapshotAdapter.FromWebHostResponse(
+        var reordered = WebHostSnapshotParser.FromWebHostResponse(
             CreateContext(),
             ReadFixture("tracker-runtime-reordered.json"),
             totals,
@@ -97,10 +97,10 @@ public sealed class TrackingNormalizationTests
     public void TrackingTransitions_EmitErrorOnceThenRecovery()
     {
         var healthy = CreateSnapshot();
-        var failed = LegacySnapshotAdapter.FromTrackingFailure(healthy, InitialTime.AddMinutes(1), "http_503");
-        var repeatedFailure = LegacySnapshotAdapter.FromTrackingFailure(failed, InitialTime.AddMinutes(2), "HTTP_503");
+        var failed = WebHostSnapshotParser.FromTrackingFailure(healthy, InitialTime.AddMinutes(1), "http_503");
+        var repeatedFailure = WebHostSnapshotParser.FromTrackingFailure(failed, InitialTime.AddMinutes(2), "HTTP_503");
         var recovered = CreateSnapshot(capturedAtUtc: InitialTime.AddMinutes(3));
-        var failedAgain = LegacySnapshotAdapter.FromTrackingFailure(recovered, InitialTime.AddMinutes(4), "HTTP_503");
+        var failedAgain = WebHostSnapshotParser.FromTrackingFailure(recovered, InitialTime.AddMinutes(4), "HTTP_503");
 
         var error = Assert.Single(TrackingSnapshotDiff.Diff(healthy, failed));
         var firstError = Assert.IsType<TrackingErrorEvent>(error);
@@ -150,7 +150,7 @@ public sealed class TrackingNormalizationTests
             }
             """;
 
-        var snapshot = LegacySnapshotAdapter.FromWebHostResponse(
+        var snapshot = WebHostSnapshotParser.FromWebHostResponse(
             CreateContext(),
             partialJson,
             new Dictionary<int, int>(),

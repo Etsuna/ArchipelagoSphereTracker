@@ -7,6 +7,8 @@ namespace ArchipelagoSphereTracker.Tracking.Persistence;
 public sealed record TrackingDestination(string Type, string Id)
 {
     public static TrackingDestination DiscordChannel(string channelId) => new("DiscordChannel", channelId);
+    public const string NotificationDestinationType = "DiscordNotificationV2";
+    public static TrackingDestination DiscordNotification(string channelId) => new(NotificationDestinationType, channelId);
 }
 
 public sealed record TrackingV2ApplyResult(
@@ -14,7 +16,8 @@ public sealed record TrackingV2ApplyResult(
     bool BaselineCreated,
     bool SnapshotChanged,
     int EventsCreated,
-    int DeliveriesCreated);
+    int DeliveriesCreated,
+    IReadOnlyList<NormalizedTrackingEvent>? Events = null);
 
 public enum TrackingV2FaultPoint
 {
@@ -44,7 +47,8 @@ public sealed class TrackingV2Store
     public Task<TrackingV2ApplyResult> ApplySnapshotAsync(
         NormalizedRoomSnapshot snapshot,
         IEnumerable<TrackingDestination>? destinations = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool enableNotifications = false)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
@@ -66,7 +70,25 @@ public sealed class TrackingV2Store
 
             await EnsureRoomAsync(connection, effective, now, cancellationToken);
 
-            if (room.BaselineInitialized &&
+            // A former shadow snapshot may already have been announced by V1.
+            // Establish a fresh baseline atomically when enabling Discord delivery.
+            var notificationBaseline = false;
+            if (enableNotifications)
+            {
+                using var activate = connection.CreateCommand();
+                activate.CommandText = @"
+                    UPDATE TrackedRooms SET NotificationsV2Initialized = 1
+                    WHERE GuildId = @GuildId AND ChannelId = @ChannelId
+                      AND NotificationsV2Initialized = 0;";
+                activate.Parameters.AddWithValue("@GuildId", snapshot.GuildId);
+                activate.Parameters.AddWithValue("@ChannelId", snapshot.ChannelId);
+                notificationBaseline = await activate.ExecuteNonQueryAsync(cancellationToken) == 1;
+                // A shadow snapshot may be older than the imported V1 command
+                // state. Missing sections stay provisional until observed live.
+                if (notificationBaseline) effective = snapshot;
+            }
+
+            if (!notificationBaseline && room.BaselineInitialized &&
                 string.Equals(room.CurrentSnapshotHash, effective.ContentHash, StringComparison.Ordinal))
             {
                 await TouchRoomAsync(connection, effective, now, cancellationToken);
@@ -79,15 +101,18 @@ public sealed class TrackingV2Store
             }
 
             var snapshotId = await InsertSnapshotAsync(connection, effective, cancellationToken);
+            await TrackingReadModel.ApplyAsync(connection, effective, cancellationToken, notificationBaseline ? null : previous);
             await ObserveAsync(TrackingV2FaultPoint.SnapshotInserted, cancellationToken);
 
-            var baselineCreated = !room.BaselineInitialized || previous == null;
+            var baselineCreated = notificationBaseline || !room.BaselineInitialized || previous == null;
             var eventsCreated = 0;
             var deliveriesCreated = 0;
+            var events = baselineCreated ? [] : TrackingSnapshotDiff.Diff(previous, effective).ToArray();
+            var recordedEvents = new List<NormalizedTrackingEvent>();
 
             if (!baselineCreated)
             {
-                foreach (var trackingEvent in TrackingSnapshotDiff.Diff(previous, effective))
+                foreach (var trackingEvent in events)
                 {
                     var eventId = await InsertEventAsync(
                         connection,
@@ -99,10 +124,16 @@ public sealed class TrackingV2Store
                         continue;
 
                     eventsCreated++;
+                    recordedEvents.Add(trackingEvent);
+                    if (trackingEvent is ItemReceivedEvent received)
+                        await TrackingReadModel.AppendRecapsAsync(connection, received, effective, cancellationToken);
                     await ObserveAsync(TrackingV2FaultPoint.EventInserted, cancellationToken);
 
                     foreach (var destination in normalizedDestinations)
                     {
+                        if (destination.Type == TrackingDestination.NotificationDestinationType &&
+                            !IsDiscordNotification(trackingEvent))
+                            continue;
                         if (await InsertDeliveryAsync(
                                 connection,
                                 eventId.Value,
@@ -118,14 +149,28 @@ public sealed class TrackingV2Store
             }
 
             await SetCurrentSnapshotAsync(connection, effective, now, cancellationToken);
+            if (recordedEvents.OfType<ItemReceivedEvent>().Any())
+            {
+                using var activity = connection.CreateCommand();
+                activity.CommandText = @"INSERT INTO LastItemsCheckTable(GuildId,ChannelId,LastItemCheck)
+                    VALUES(@G,@C,@Now) ON CONFLICT(GuildId,ChannelId) DO UPDATE SET LastItemCheck=excluded.LastItemCheck;";
+                activity.Parameters.AddWithValue("@G", effective.GuildId);
+                activity.Parameters.AddWithValue("@C", effective.ChannelId);
+                activity.Parameters.AddWithValue("@Now", now.ToString("O"));
+                await activity.ExecuteNonQueryAsync(cancellationToken);
+            }
             return new TrackingV2ApplyResult(
                 snapshotId,
                 baselineCreated,
                 SnapshotChanged: true,
                 eventsCreated,
-                deliveriesCreated);
+                deliveriesCreated,
+                recordedEvents);
         }, cancellationToken);
     }
+
+    internal static bool IsDiscordNotification(NormalizedTrackingEvent trackingEvent)
+        => trackingEvent is ItemReceivedEvent or HintCreatedEvent or HintUpdatedEvent or GoalReachedEvent;
 
     private static NormalizedRoomSnapshot Consolidate(
         NormalizedRoomSnapshot? previous,
@@ -135,8 +180,19 @@ public sealed class TrackingV2Store
             return current;
 
         var carriedSections = previous.CompleteSections & ~current.CompleteSections & StateSections;
-        if (carriedSections == SnapshotSections.None)
-            return current;
+        var oldStates = previous.PlayerStates.ToDictionary(value => value.Slot);
+        var states = current.PlayerStates.Select(value =>
+        {
+            if (!oldStates.TryGetValue(value.Slot, out var old)) return value;
+            return value with
+            {
+                Status = current.IsComplete(SnapshotSections.PlayerStatuses) ? value.Status : old.Status,
+                CompletedChecks = current.IsComplete(SnapshotSections.Checks) ? value.CompletedChecks : old.CompletedChecks,
+                TotalChecks = value.TotalChecks ?? old.TotalChecks,
+                ActivityValue = value.ActivityValue ?? old.ActivityValue
+            };
+        }).ToArray();
+        if (states.Length == 0) states = previous.PlayerStates.ToArray();
 
         return NormalizedRoomSnapshot.Create(
             current.GuildId,
@@ -146,7 +202,7 @@ public sealed class TrackingV2Store
             current.IsComplete(SnapshotSections.Hints) ? current.Hints : previous.Hints,
             current.IsComplete(SnapshotSections.Checks) ? current.Checks : previous.Checks,
             current.IsComplete(SnapshotSections.Goals) ? current.Goals : previous.Goals,
-            current.IsComplete(SnapshotSections.PlayerStatuses) ? current.PlayerStates : previous.PlayerStates,
+            states,
             current.IsComplete(SnapshotSections.RoomActivity) ? current.LastActivityUtc : previous.LastActivityUtc,
             current.CapturedAtUtc,
             current.LastSuccessfulSyncUtc ?? previous.LastSuccessfulSyncUtc,

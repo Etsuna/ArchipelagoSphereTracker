@@ -33,53 +33,6 @@ public static class RecapListCommands
         }
     }
 
-    // ==========================
-    // 🎯 RecapListItems (WRITE) — pour tous
-    // ==========================
-    public static async Task AddOrEditRecapListItemsForAllAsync(
-        string guildId,
-        string channelId,
-        List<DisplayedItem> items
-        )
-    {
-        if (items is null || items.Count == 0) return;
-
-        try
-        {
-            await Db.WriteAsync(async conn =>
-            {
-                using var insert = conn.CreateCommand();
-                insert.CommandText = @"
-                    INSERT INTO RecapListItemsTable (RecapListTableId, Item)
-                    VALUES (@RecapListTableId, @Item);";
-                var pId = insert.Parameters.Add("@RecapListTableId", System.Data.DbType.Int64);
-                var pItem = insert.Parameters.Add("@Item", System.Data.DbType.String);
-                insert.Prepare();
-
-                foreach (var it in items)
-                {
-                    if (it.Receiver == it.Finder) continue;
-
-                    var ids = await DatabaseCommands
-                        .GetIdsAsync(guildId, channelId, it.Receiver, "RecapListTable")
-                        .ConfigureAwait(false);
-                    if (ids is null || ids.Count == 0) continue;
-
-                    foreach (var id in ids)
-                    {
-                        pId.Value = id;
-                        pItem.Value = it.Item ?? string.Empty;
-                        await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
-                    }
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error while adding or updating RecapList items: {ex.Message}");
-        }
-    }
-
     public static async Task AddOrEditRecapListItemsAsync(
         string guildId,
         string channelId,
@@ -112,7 +65,7 @@ public static class RecapListCommands
 
                 foreach (var it in items)
                 {
-                    if (it.Receiver == it.Finder) continue;
+                    if (it.FinderSlot > 0 && it.ReceiverSlot > 0 ? it.FinderSlot == it.ReceiverSlot : it.Receiver == it.Finder) continue;
 
                     pItem.Value = it.Item ?? string.Empty;
                     await insert.ExecuteNonQueryAsync().ConfigureAwait(false);

@@ -241,6 +241,15 @@ public sealed record ItemSentEvent(string Guild, string Channel, DateTimeOffset 
     protected override string StableIdentity => NormalizedRoomSnapshot.ItemIdentity(Item);
 }
 
+// Explicit delivery request, distinct from observing a newly received item.
+// Its unique request ID allows intentional repeated tests without replaying recaps.
+public sealed record ItemsReplayRequestedEvent(string Guild, string Channel, DateTimeOffset OccurredAt,
+    long RequestId, int ReceiverSlot) : NormalizedTrackingEvent(Guild, Channel, OccurredAt)
+{
+    public override string EventType => "ItemsReplayRequested";
+    protected override string StableIdentity => $"{RequestId}:{ReceiverSlot}";
+}
+
 public sealed record HintCreatedEvent(string Guild, string Channel, DateTimeOffset OccurredAt, NormalizedHint Hint)
     : NormalizedTrackingEvent(Guild, Channel, OccurredAt)
 {

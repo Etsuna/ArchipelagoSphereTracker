@@ -34,13 +34,13 @@ public static class MetricsExporter
     private static readonly Gauge GameStatusChecks =
         Metrics.CreateGauge(
             "ast_game_status_checks",
-            "Checks du joueur dans GameStatusTable.",
+            "Checks du joueur dans TrackingPlayerStates.",
             new[] { "guild_id", "guild_name", "channel_id", "channel_name", "name", "game" });
 
     private static readonly Gauge GameStatusTotal =
         Metrics.CreateGauge(
             "ast_game_status_total",
-            "Total possible dans GameStatusTable.",
+            "Total possible dans TrackingPlayerStates.",
             new[] { "guild_id", "guild_name", "channel_id", "channel_name", "name", "game" });
 
     private static readonly Gauge GameStatusLastActivitySeconds =
@@ -55,7 +55,7 @@ public static class MetricsExporter
     private static readonly Gauge AliasChoice =
         Metrics.CreateGauge(
             "ast_alias_choice",
-            "Ligne de AliasChoicesTable.",
+            "Ligne de TrackingSlots.",
             new[] { "guild_id", "guild_name", "channel_id", "channel_name", "slot", "alias", "game" });
 
     // ==============
@@ -266,13 +266,13 @@ public static class MetricsExporter
         }
 
         // ====================
-        // GameStatusTable
+        // TrackingPlayerStates
         // ====================
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = @"
                 SELECT GuildId, ChannelId, IFNULL(Name,''), IFNULL(Game,''), IFNULL(Checks,'0'), IFNULL(Total,'0'), LastActivity
-                FROM GameStatusTable;";
+                FROM TrackingPlayerStates;";
             using var rdr = await cmd.ExecuteReaderAsync(ct);
             while (await rdr.ReadAsync(ct))
             {
@@ -316,13 +316,13 @@ public static class MetricsExporter
         }
 
         // ====================
-        // AliasChoicesTable
+        // TrackingSlots
         // ====================
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = @"
                 SELECT GuildId, ChannelId, Slot, Alias, IFNULL(Game,'')
-                FROM AliasChoicesTable;";
+                FROM TrackingSlots;";
             using var rdr = await cmd.ExecuteReaderAsync(ct);
             while (await rdr.ReadAsync(ct))
             {
