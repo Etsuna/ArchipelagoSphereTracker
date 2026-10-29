@@ -32,6 +32,43 @@ des événements.
 
 ## Déploiement sur le VPS
 
+### Complément : accélérer une file de notifications déjà en attente
+
+La recherche de la première livraison non terminée par destination ne disposait
+pas d'un index adapté. Elle pouvait reparcourir l'historique des livraisons pour
+chaque candidat, tout en chargeant les corps des snapshots avant le tri final.
+
+Le correctif crée un index partiel sur les livraisons non terminées et sélectionne
+d'abord seulement leurs métadonnées. Il charge ensuite le corps du seul snapshot
+retenu, dans la même transaction. L'ordre par destination, les délais de reprise,
+les leases et la déduplication ne changent pas.
+
+L'index est créé automatiquement au démarrage normal, y compris sur une base déjà
+en 5.0.19 ; ce complément ne nécessite pas une nouvelle version de schéma.
+Pour améliorer immédiatement la sélection dans le binaire déjà lancé, depuis le
+dossier du bot, exécuter :
+
+```bash
+sqlite3 -bail -cmd '.timeout 60000' ./AST.db "
+CREATE INDEX IF NOT EXISTS idx_eventdeliveries_unfinished_destination
+ON EventDeliveries(DestinationType, DestinationId, Id)
+WHERE Status <> 'Delivered';
+"
+```
+
+Cette opération peut brièvement attendre le verrou d'écriture. Elle ne change
+aucun événement ni statut de livraison et ne nécessite pas d'arrêter le bot.
+Sur un jeu synthétique local de 14 583 livraisons (9 433 livrées et 5 150 en attente,
+82 snapshots de 256 Kio), la sélection initiale prenait environ 3,4 secondes ;
+l'index seul l'a ramenée à environ 4 ms, et la sélection des seules métadonnées à
+environ 3 ms. Ce résultat n'est pas une mesure du débit Discord sur le VPS.
+
+Comparer `COUNT(*)` par statut à quelques minutes d'intervalle pour mesurer le
+rattrapage réel. Ne pas passer manuellement les livraisons à `Delivered` pour
+débloquer la purge : cela ferait abandonner leurs notifications.
+
+### Migration et démarrage
+
 Publier et déployer la version corrigée habituelle, autonome pour `linux-x64`.
 Aucune installation de .NET n'est nécessaire sur le VPS. La base et le `.env`
 doivent être conservés. Au premier démarrage, AST sauvegarde la base avant la

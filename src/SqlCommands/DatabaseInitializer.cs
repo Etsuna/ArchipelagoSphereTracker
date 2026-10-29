@@ -407,7 +407,8 @@ CREATE INDEX IF NOT EXISTS idx_roompollstate_due
         // A full VACUUM rewrites the entire database and belongs to explicit offline
         // maintenance, not every bot startup. Retention makes freed pages reusable.
         using var retentionIndexes = conn.CreateCommand();
-        retentionIndexes.CommandText = ArchipelagoSphereTracker.Tracking.Persistence.TrackingSnapshotRetention.Indexes;
+        retentionIndexes.CommandText = ArchipelagoSphereTracker.Tracking.Persistence.TrackingSnapshotRetention.Indexes
+            + ArchipelagoSphereTracker.Tracking.Persistence.TrackingDeliveryWorker.Indexes;
         retentionIndexes.ExecuteNonQuery();
     }
 }

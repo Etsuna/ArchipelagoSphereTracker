@@ -26,7 +26,7 @@ internal static class TrackingSnapshotRetention
         using var command = connection.CreateCommand();
         command.CommandText = (hasColumn ? "" : @"
             ALTER TABLE RoomSnapshots ADD COLUMN PayloadPruned INTEGER NOT NULL DEFAULT 0
-                CHECK (PayloadPruned IN (0, 1));") + Indexes;
+                CHECK (PayloadPruned IN (0, 1));") + Indexes + TrackingDeliveryWorker.Indexes;
         return await command.ExecuteNonQueryAsync(ct);
     }, ct);
 

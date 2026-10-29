@@ -29,6 +29,31 @@ public interface ITrackingEventPublisher
 
 public sealed class TrackingDeliveryWorker
 {
+    internal const string Indexes = @"
+        CREATE INDEX IF NOT EXISTS idx_eventdeliveries_unfinished_destination
+            ON EventDeliveries(DestinationType, DestinationId, Id) WHERE Status <> 'Delivered';";
+
+    // Select only queue metadata. Sorting candidates must never copy their large
+    // snapshot bodies into SQLite's temporary sort storage.
+    internal const string SelectNextDeliverySql = @"
+        SELECT delivery.Id, delivery.EventId, delivery.AttemptCount,
+               delivery.DestinationType, delivery.DestinationId
+        FROM EventDeliveries delivery
+        WHERE (@DestinationType IS NULL OR delivery.DestinationType = @DestinationType)
+          AND delivery.Status <> 'Delivered'
+          AND NOT EXISTS (
+            SELECT 1 FROM EventDeliveries earlier
+            WHERE earlier.DestinationType = delivery.DestinationType
+              AND earlier.DestinationId = delivery.DestinationId
+              AND earlier.Id < delivery.Id AND earlier.Status <> 'Delivered'
+          )
+          AND (
+            (delivery.Status IN ('Pending', 'Failed') AND delivery.NextAttemptAtUtc <= @Now)
+            OR (delivery.Status = 'Delivering' AND delivery.LeaseUntilUtc IS NOT NULL
+                AND delivery.LeaseUntilUtc <= @Now)
+          )
+        ORDER BY delivery.NextAttemptAtUtc, delivery.Id LIMIT 1;";
+
     private readonly ITrackingEventPublisher _publisher;
     private readonly TimeProvider _timeProvider;
     private readonly TimeSpan _leaseDuration;
@@ -84,46 +109,12 @@ public sealed class TrackingDeliveryWorker
         return Db.WriteAsync(async connection =>
         {
             using var select = connection.CreateCommand();
-            select.CommandText = @"
-                SELECT
-                    delivery.Id,
-                    delivery.AttemptCount,
-                    delivery.DestinationType,
-                    delivery.DestinationId,
-                    event.EventKey,
-                    event.EventType,
-                    event.PayloadJson,
-                    snapshot.PayloadJson AS SnapshotPayloadJson,
-                    snapshot.PayloadPruned,
-                    snapshot.Id AS SnapshotId
-                FROM EventDeliveries delivery
-                JOIN TrackingEvents event ON event.Id = delivery.EventId
-                JOIN RoomSnapshots snapshot ON snapshot.Id = event.SnapshotId
-                WHERE (@DestinationType IS NULL OR delivery.DestinationType = @DestinationType)
-                  AND NOT EXISTS (
-                    SELECT 1 FROM EventDeliveries earlier
-                    WHERE earlier.DestinationType = delivery.DestinationType
-                      AND earlier.DestinationId = delivery.DestinationId
-                      AND earlier.Id < delivery.Id AND earlier.Status <> 'Delivered'
-                  )
-                  AND (
-                    (
-                        delivery.Status IN ('Pending', 'Failed')
-                        AND delivery.NextAttemptAtUtc <= @Now
-                    )
-                    OR
-                    (
-                        delivery.Status = 'Delivering'
-                        AND delivery.LeaseUntilUtc IS NOT NULL
-                        AND delivery.LeaseUntilUtc <= @Now
-                    )
-                  )
-                ORDER BY delivery.NextAttemptAtUtc, delivery.Id
-                LIMIT 1;";
+            select.CommandText = SelectNextDeliverySql;
             select.Parameters.AddWithValue("@Now", TrackingV2Store.Format(now));
             select.Parameters.AddWithValue("@DestinationType", (object?)_destinationType ?? DBNull.Value);
 
             long id;
+            long eventId;
             int attemptCount;
             string destinationType;
             string destinationId;
@@ -136,14 +127,30 @@ public sealed class TrackingDeliveryWorker
             {
                 if (!await reader.ReadAsync(cancellationToken))
                     return null;
-
-                if (Convert.ToInt32(reader["PayloadPruned"], CultureInfo.InvariantCulture) != 0)
-                    throw new InvalidOperationException("An unfinished delivery requires its complete snapshot payload.");
-
                 id = Convert.ToInt64(reader["Id"], CultureInfo.InvariantCulture);
+                eventId = Convert.ToInt64(reader["EventId"], CultureInfo.InvariantCulture);
                 attemptCount = Convert.ToInt32(reader["AttemptCount"], CultureInfo.InvariantCulture);
                 destinationType = reader["DestinationType"].ToString() ?? string.Empty;
                 destinationId = reader["DestinationId"].ToString() ?? string.Empty;
+            }
+
+            // Still in the same write transaction: retention cannot prune this payload
+            // or another worker claim this delivery between selection and leasing.
+            select.Parameters.Clear();
+            select.CommandText = @"
+                SELECT event.EventKey, event.EventType, event.PayloadJson,
+                       snapshot.PayloadJson AS SnapshotPayloadJson,
+                       snapshot.PayloadPruned, snapshot.Id AS SnapshotId
+                FROM TrackingEvents event
+                JOIN RoomSnapshots snapshot ON snapshot.Id = event.SnapshotId
+                WHERE event.Id = @EventId;";
+            select.Parameters.AddWithValue("@EventId", eventId);
+            using (var reader = await select.ExecuteReaderAsync(cancellationToken))
+            {
+                if (!await reader.ReadAsync(cancellationToken))
+                    throw new InvalidOperationException("Delivery event or snapshot is missing.");
+                if (Convert.ToInt32(reader["PayloadPruned"], CultureInfo.InvariantCulture) != 0)
+                    throw new InvalidOperationException("An unfinished delivery requires its complete snapshot payload.");
                 eventKey = reader["EventKey"].ToString() ?? string.Empty;
                 eventType = reader["EventType"].ToString() ?? string.Empty;
                 eventPayload = reader["PayloadJson"].ToString() ?? string.Empty;
