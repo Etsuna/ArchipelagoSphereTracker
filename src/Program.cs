@@ -378,6 +378,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }
@@ -406,6 +407,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.1")
@@ -428,6 +430,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.2")
@@ -449,6 +452,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.3")
@@ -469,6 +473,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.4")
@@ -488,6 +493,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.5")
@@ -506,6 +512,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.6")
@@ -523,6 +530,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.7")
@@ -539,6 +547,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.8")
@@ -554,6 +563,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.9")
@@ -568,6 +578,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.10")
@@ -581,6 +592,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.11")
@@ -593,6 +605,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.12")
@@ -604,6 +617,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.13")
@@ -613,6 +627,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.14")
@@ -621,6 +636,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.15")
@@ -628,17 +644,25 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.16")
         {
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else if (bddVersion == "5.0.17")
         {
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
+            await DBMigration.SetDbVersionAsync(Declare.BddVersion);
+        }
+        else if (bddVersion == "5.0.18")
+        {
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
         }
         else
@@ -663,6 +687,7 @@ if (args.Length == 0)
             await DBMigration_5.Migrate_5_0_16(cts.Token);
             await DBMigration_5.Migrate_5_0_17(cts.Token);
             await DBMigration_5.Migrate_5_0_18(cts.Token);
+            await DBMigration_5.Migrate_5_0_19(cts.Token);
             await DBMigration.SetDbVersionAsync(Declare.BddVersion);
             await DBMigration.DropLegacyTablesAsync();
         }

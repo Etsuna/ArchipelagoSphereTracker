@@ -879,6 +879,12 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
         return ArchipelagoSphereTracker.Tracking.Persistence.TrackingLegacyRetirement.MigrateAsync(ct);
     }
 
+    public static Task Migrate_5_0_19(CancellationToken ct = default)
+    {
+        Console.WriteLine("Migrating to DB version 5.0.19: bounded historical snapshot payload retention.");
+        return ArchipelagoSphereTracker.Tracking.Persistence.TrackingSnapshotRetention.InitializeAsync(ct);
+    }
+
     private static async Task<HashSet<string>> GetColumnsAsync(
         System.Data.Common.DbConnection connection,
         string tableName,

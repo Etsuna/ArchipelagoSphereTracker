@@ -49,6 +49,10 @@ General portal access records, technical audit logs, existing backups and tracke
 
 Migration `5.0.18` imports the latest V1 tracking rows into the native V2 tables, then drops `AliasChoicesTable`, `DisplayedItemTable`, `GameStatusTable` and `HintStatusTable` in the same transaction. Active V2 snapshots remain authoritative. Startup backs up the database first and does not recreate the old tables. Configuration, subscriptions, exclusions and personal recaps are preserved. See [the migration guide](../docs/tracking-v2-native.en.md).
 
+### V2 snapshot storage retention
+
+Migration `5.0.19` keeps snapshot identifiers and event history while releasing obsolete JSON bodies in small background batches. The latest snapshot of every room and all snapshots needed by unfinished deliveries stay complete. SQLite can reuse freed pages immediately; shrinking the file requires an explicit offline `VACUUM`. GC and native SQLite memory metrics are now available through Prometheus. See [the deployment and compaction guide (French)](../docs/tracking-v2-storage.fr.md).
+
 ### Intentional plaintext storage
 
 Since SQLite migration `5.0.12`, the `Room`, `Tracker`, and `Patch` fields are stored in plaintext. No key, PEM pair, or recovery procedure is required for normal operation.
@@ -148,6 +152,10 @@ Les accès généraux au portail, audits techniques, sauvegardes existantes et r
 ### Migration du suivi natif V2
 
 La migration `5.0.18` importe les dernières données de suivi V1 dans les tables V2, puis supprime `AliasChoicesTable`, `DisplayedItemTable`, `GameStatusTable` et `HintStatusTable` dans la même transaction. Les snapshots V2 actifs gardent la priorité. Le démarrage sauvegarde d'abord la base et ne recrée plus les anciennes tables. Les configurations, abonnements, exclusions et récapitulatifs personnels sont conservés. Voir [le guide de migration](../docs/tracking-v2-native.fr.md).
+
+### Rétention des snapshots V2
+
+La migration `5.0.19` conserve les identifiants des snapshots et l'historique des événements, puis libère les anciens corps JSON par petits lots en arrière-plan. Le dernier snapshot de chaque room et ceux nécessaires aux livraisons non terminées restent complets. SQLite réutilise les pages libérées ; réduire le fichier nécessite un `VACUUM` explicite, service arrêté. Les métriques du GC et des allocations SQLite sont disponibles dans Prometheus. Voir [le guide de déploiement et de compactage](../docs/tracking-v2-storage.fr.md).
 
 ### Stockage en clair assumé
 

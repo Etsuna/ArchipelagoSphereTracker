@@ -94,6 +94,7 @@ public sealed class TrackingDeliveryWorker
                     event.EventType,
                     event.PayloadJson,
                     snapshot.PayloadJson AS SnapshotPayloadJson,
+                    snapshot.PayloadPruned,
                     snapshot.Id AS SnapshotId
                 FROM EventDeliveries delivery
                 JOIN TrackingEvents event ON event.Id = delivery.EventId
@@ -135,6 +136,9 @@ public sealed class TrackingDeliveryWorker
             {
                 if (!await reader.ReadAsync(cancellationToken))
                     return null;
+
+                if (Convert.ToInt32(reader["PayloadPruned"], CultureInfo.InvariantCulture) != 0)
+                    throw new InvalidOperationException("An unfinished delivery requires its complete snapshot payload.");
 
                 id = Convert.ToInt64(reader["Id"], CultureInfo.InvariantCulture);
                 attemptCount = Convert.ToInt32(reader["AttemptCount"], CultureInfo.InvariantCulture);

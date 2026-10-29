@@ -5,7 +5,7 @@ public static class Db
     public static readonly SemaphoreSlim WriteGate = new(1, 1);
 
     private static string Base =>
-        $"Data Source={Declare.DatabaseFile};Version=3;Pooling=True;Journal Mode=WAL;Synchronous=NORMAL;BusyTimeout=5000;";
+        $"Data Source={Declare.DatabaseFile};Version=3;Pooling=True;Max Pool Size=10;Journal Mode=WAL;Synchronous=NORMAL;BusyTimeout=5000;";
 
     private static string ReadCS => Base + "Read Only=True;";
     private static string WriteCS => Base;
@@ -21,7 +21,7 @@ public static class Db
             PRAGMA foreign_keys=ON;
             PRAGMA temp_store=MEMORY;
             PRAGMA busy_timeout=5000;
-            PRAGMA cache_size=-20000;
+            PRAGMA cache_size=-4096;
             PRAGMA mmap_size=268435456;";
         cmd.ExecuteNonQuery();
         return conn;

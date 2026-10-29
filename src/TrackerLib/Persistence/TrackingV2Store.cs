@@ -252,15 +252,18 @@ public sealed class TrackingV2Store
     {
         using var command = connection.CreateCommand();
         command.CommandText = @"
-            SELECT PayloadJson
+            SELECT PayloadJson, PayloadPruned
             FROM RoomSnapshots
             WHERE GuildId = @GuildId AND ChannelId = @ChannelId
             ORDER BY Id DESC
             LIMIT 1;";
         command.Parameters.AddWithValue("@GuildId", guildId);
         command.Parameters.AddWithValue("@ChannelId", channelId);
-        var payload = await command.ExecuteScalarAsync(cancellationToken);
-        return payload is string json ? TrackingSnapshotJson.Deserialize(json) : null;
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken)) return null;
+        if (Convert.ToInt32(reader["PayloadPruned"], CultureInfo.InvariantCulture) != 0)
+            throw new InvalidOperationException("The current room snapshot payload must not be pruned.");
+        return TrackingSnapshotJson.Deserialize(reader.GetString(0));
     }
 
     private static async Task EnsureRoomAsync(

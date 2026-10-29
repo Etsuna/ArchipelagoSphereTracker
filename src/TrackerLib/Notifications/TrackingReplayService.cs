@@ -60,7 +60,7 @@ CREATE INDEX IF NOT EXISTS IX_TrackingReplay_Pending ON TrackingReplayRequests(S
             await command.ExecuteNonQueryAsync(ct);
             return true;
         }
-        command.CommandText = @"SELECT snapshot.Id,snapshot.PayloadJson FROM RoomSnapshots snapshot
+        command.CommandText = @"SELECT snapshot.Id,snapshot.PayloadJson,snapshot.PayloadPruned FROM RoomSnapshots snapshot
             JOIN TrackedRooms room ON room.GuildId=snapshot.GuildId AND room.ChannelId=snapshot.ChannelId
             WHERE snapshot.GuildId=@G AND snapshot.ChannelId=@C AND room.IsBaselineInitialized=1 AND room.NotificationsV2Initialized=1
             ORDER BY snapshot.Id DESC LIMIT 1;";
@@ -69,6 +69,8 @@ CREATE INDEX IF NOT EXISTS IX_TrackingReplay_Pending ON TrackingReplayRequests(S
         using (var reader = await command.ExecuteReaderAsync(ct))
             if (await reader.ReadAsync(ct))
             {
+                if (Convert.ToInt32(reader[2], CultureInfo.InvariantCulture) != 0)
+                    throw new InvalidOperationException("Item replay requires the complete current snapshot.");
                 snapshotId = Convert.ToInt64(reader[0], CultureInfo.InvariantCulture);
                 snapshot = TrackingSnapshotJson.Deserialize(reader.GetString(1));
             }

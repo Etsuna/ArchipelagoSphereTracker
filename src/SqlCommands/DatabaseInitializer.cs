@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS RoomSnapshots (
     CompleteSections INTEGER NOT NULL,
     TrackingState TEXT NOT NULL CHECK (TrackingState IN ('Healthy', 'Error')),
     PayloadJson TEXT NOT NULL,
+    PayloadPruned INTEGER NOT NULL DEFAULT 0 CHECK (PayloadPruned IN (0, 1)),
     FOREIGN KEY (GuildId, ChannelId)
         REFERENCES TrackedRooms(GuildId, ChannelId) ON DELETE CASCADE
 );
@@ -403,10 +404,10 @@ CREATE INDEX IF NOT EXISTS idx_roompollstate_due
             analyze.ExecuteNonQuery();
         }
 
-        using (var vacuum = conn.CreateCommand())
-        {
-            vacuum.CommandText = "VACUUM;";
-            vacuum.ExecuteNonQuery();
-        }
+        // A full VACUUM rewrites the entire database and belongs to explicit offline
+        // maintenance, not every bot startup. Retention makes freed pages reusable.
+        using var retentionIndexes = conn.CreateCommand();
+        retentionIndexes.CommandText = ArchipelagoSphereTracker.Tracking.Persistence.TrackingSnapshotRetention.Indexes;
+        retentionIndexes.ExecuteNonQuery();
     }
 }

@@ -5,6 +5,35 @@ using System.Globalization;
 
 public static class MetricsExporter
 {
+    private static readonly Gauge GcCommittedBytes = Metrics.CreateGauge(
+        "ast_gc_committed_bytes", "Managed heap bytes committed by the GC at its last collection.");
+    private static readonly Gauge GcFragmentedBytes = Metrics.CreateGauge(
+        "ast_gc_fragmented_bytes", "Managed heap fragmentation at the last GC collection.");
+    private static readonly Gauge SqliteMemoryBytes = Metrics.CreateGauge(
+        "ast_sqlite_memory_bytes", "Native allocations currently reported by SQLite (excludes OS file cache).");
+
+    static MetricsExporter()
+    {
+        Metrics.DefaultRegistry.AddBeforeCollectCallback(() =>
+        {
+            var info = GC.GetGCMemoryInfo();
+            GcCommittedBytes.Set(info.TotalCommittedBytes);
+            GcFragmentedBytes.Set(info.FragmentedBytes);
+            try
+            {
+                IDictionary<string, long> statistics = new Dictionary<string, long>();
+                SQLiteConnection.GetMemoryStatistics(ref statistics);
+                SqliteMemoryBytes.Set(statistics.TryGetValue("MemoryUsed", out var used) && used >= 0
+                    ? used : double.NaN);
+            }
+            catch
+            {
+                // An unavailable native counter must not break the metrics endpoint.
+                SqliteMemoryBytes.Set(double.NaN);
+            }
+        });
+    }
+
     public static Func<string, string?> ResolveGuildName = gid => null;
     public static Func<string, string, string?> ResolveChannelName = (gid, cid) => null;
 

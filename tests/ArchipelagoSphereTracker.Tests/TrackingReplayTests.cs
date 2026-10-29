@@ -215,6 +215,38 @@ public sealed class TrackingReplayTests
         Assert.Equal(0, await TestDatabaseScope.CountRowsAsync("TrackingReplayRequests"));
     }
 
+    [Fact]
+    public async Task Replay_survives_historical_payload_cleanup_and_keeps_pending_inventory_until_sent()
+    {
+        using var scope = new TestDatabaseScope();
+        await SeedAsync();
+        var original = Snapshot();
+        NormalizedRoomSnapshot WithActivity(string activity) => NormalizedRoomSnapshot.Create("g", "c",
+            original.Slots, original.Items, original.Hints, original.Checks, original.Goals,
+            original.PlayerStates.Select(state => state with { ActivityValue = activity }),
+            null, DateTimeOffset.UtcNow, null, TrackingObservationState.Healthy, null, SnapshotSections.All);
+        var store = new TrackingV2Store();
+        await store.ApplySnapshotAsync(WithActivity("1:00"), enableNotifications: true);
+        await RequestAsync("Player1");
+        Assert.True(await TrackingReplayService.PrepareNextAsync());
+        await store.ApplySnapshotAsync(WithActivity("2:00"), enableNotifications: true);
+
+        // Only the original baseline may be pruned; the superseded replay inventory is pending.
+        Assert.Equal(1, await TrackingSnapshotRetention.PruneBatchAsync());
+        var transport = new FakeTransport();
+        Assert.True(await Worker(transport).RunOnceAsync());
+        Assert.Contains("Old Sword", Assert.Single(transport.Messages.Values).Content);
+        Assert.Equal(1, await TrackingSnapshotRetention.PruneBatchAsync());
+
+        // Subsequent replay uses the retained latest snapshot, not a historical tombstone.
+        await RequestAsync("Player1");
+        Assert.True(await TrackingReplayService.PrepareNextAsync());
+        Assert.True(await Worker(transport).RunOnceAsync());
+        Assert.Equal(2, transport.Messages.Count);
+        Assert.Equal(2, await TestDatabaseScope.CountRowsAsync("TrackingEvents"));
+        Assert.Equal(3, await TestDatabaseScope.CountRowsAsync("RoomSnapshots"));
+    }
+
     private static async Task SeedAsync(bool silent = false)
     {
         await ChannelsAndUrlsCommands.AddOrEditUrlChannelAsync("g", "c", "https://example.test", "room", "tracker", silent, "5m", "0");

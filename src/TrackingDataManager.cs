@@ -37,6 +37,7 @@ public static partial class TrackingDataManager
     private static CentralRoomScheduler? _centralScheduler;
     private static Task? _trackingTask;
     private static Task? _deliveryTask;
+    private static Task? _retentionTask;
 
     public static void StartTracking()
     {
@@ -91,7 +92,8 @@ public static partial class TrackingDataManager
         lock (SchedulerLifecycleLock)
         {
             Declare.Cts?.Cancel();
-            task = Task.WhenAll(_trackingTask ?? Task.CompletedTask, _deliveryTask ?? Task.CompletedTask);
+            task = Task.WhenAll(_trackingTask ?? Task.CompletedTask, _deliveryTask ?? Task.CompletedTask,
+                _retentionTask ?? Task.CompletedTask);
         }
 
         if (task != null)
@@ -109,6 +111,7 @@ public static partial class TrackingDataManager
     private static void StartDeliveryWorker(CancellationToken token)
     {
         _deliveryTask = Task.Run(() => RunDeliveryWorkerAsync(token), CancellationToken.None);
+        _retentionTask = Task.Run(() => TrackingSnapshotRetention.RunAsync(token), CancellationToken.None);
     }
 
     private static async Task RunDeliveryWorkerAsync(CancellationToken token)
