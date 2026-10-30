@@ -3256,6 +3256,7 @@ Your YAML files have been uploaded, but you are not marked ready. Are your setti
   <data name="RoomDestinationChannelNotice" xml:space="preserve"><value>In channel mode, notifications are posted directly in the selected channel. Only one room can be tracked there; stopping tracking keeps the channel and its messages.</value></data>
   <data name="RoomDestinationInvalid" xml:space="preserve"><value>Choose a private thread, a public thread, or the channel directly.</value></data>
   <data name="TrackingItemsTitle" xml:space="preserve"><value>📦 **Items for {0}** · **({1})**</value></data>
+  <data name="TrackingItemsSender" xml:space="preserve"><value>From **{0}**</value></data>
   <data name="TrackingHintsNewTitle" xml:space="preserve"><value>🔎 **New hints · {0}** · **({1})**</value></data>
   <data name="TrackingHintsUpdatedTitle" xml:space="preserve"><value>🧭 **Updated hints · {0}** · **({1})**</value></data>
   <data name="TrackingItemDetails" xml:space="preserve"><value>From **{0}** · *{1}*</value></data>

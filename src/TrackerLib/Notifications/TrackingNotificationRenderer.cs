@@ -6,6 +6,7 @@ using System.Text;
 public static partial class TrackingDataManager
 {
     internal sealed record RenderedNotification(TrackingDiscordNotification Notification, IReadOnlyList<string> EventKeys);
+    private sealed record NotificationEntry(string Text, string Key, int? SenderSlot = null, string? SenderHeading = null);
 
     internal static async Task<IReadOnlyList<RenderedNotification>> RenderTrackingNotificationsAsync(
         IReadOnlyList<NormalizedTrackingEvent> events, NormalizedRoomSnapshot snapshot, bool silent)
@@ -26,8 +27,13 @@ public static partial class TrackingDataManager
             foreach (var recipientIds in recipientChunks)
             {
                 var mentions = string.Join(" ", recipientIds.Select(id => $"<@{id}>"));
-                AddNotificationChunks(result, values.Select(value =>
-                    (FormatItemEntry(value.Event.Item), value.Event.EventKey)).ToArray(),
+                var entries = values.GroupBy(value => value.Event.Item.FinderSlot)
+                    .SelectMany(sender => sender.Select(value => new NotificationEntry(
+                        FormatItemEntry(value.Event.Item), value.Event.EventKey, sender.Key,
+                        NotificationDetailsFormatting.DetailsMarker + " " + string.Format(Resource.TrackingItemsSender,
+                            StyledNotificationLabel(value.Event.Item.FinderDisplayName)))))
+                    .ToArray();
+                AddNotificationChunks(result, entries,
                     (page, count) => FormatNotificationHeader(Resource.TrackingItemsTitle,
                         values[0].Event.Item.ReceiverDisplayName, values.Length, mentions, page, count), recipientIds);
             }
@@ -50,7 +56,7 @@ public static partial class TrackingDataManager
                     var users = await ReceiverAliasesCommands.GetReceiverUserIdsAsync(
                         snapshot.GuildId, snapshot.ChannelId, first.ReceiverDisplayName);
                     var userIds = new HashSet<string>(users.Select(user => user.UserId));
-                    var lines = new List<(string, string)>();
+                    var lines = new List<NotificationEntry>();
                     foreach (var value in values)
                     {
                         var hint = value.Hint!;
@@ -58,7 +64,7 @@ public static partial class TrackingDataManager
                             snapshot.GuildId, snapshot.ChannelId, hint.FinderDisplayName);
                         foreach (var user in finders) userIds.Add(user.UserId);
                         var mentions = string.Join(" ", finders.Select(user => $"<@{user.UserId}>"));
-                        lines.Add(($"**{StyledNotificationLabel(hint.ItemDisplayName)}**\n  ↳ " +
+                        lines.Add(new($"**{StyledNotificationLabel(hint.ItemDisplayName)}**\n  {NotificationDetailsFormatting.DetailsMarker} " +
                             string.Format(Resource.TrackingHintDetails, StyledNotificationLabel(hint.LocationDisplayName),
                                 StyledNotificationLabel(hint.FinderDisplayName),
                                 string.IsNullOrEmpty(mentions) ? "" : " " + mentions), value.Event.EventKey));
@@ -81,29 +87,32 @@ public static partial class TrackingDataManager
     }
 
     private static void AddNotificationChunks(List<RenderedNotification> result,
-        IReadOnlyList<(string Text, string Key)> lines, Func<int, int, string> header, IEnumerable<string> userIds)
+        IReadOnlyList<NotificationEntry> lines, Func<int, int, string> header, IEnumerable<string> userIds)
     {
-        var limit = 1900 - header(int.MaxValue, int.MaxValue).Length - "\n\n>>> ".Length;
-        var chunks = new List<List<(string Text, string Key)>>();
-        var current = new List<(string Text, string Key)>();
+        var limit = 1900 - header(int.MaxValue, int.MaxValue).Length - "\n>>> ".Length;
+        var chunks = new List<List<NotificationEntry>>();
+        var current = new List<NotificationEntry>();
         var length = 0;
         foreach (var line in lines)
         {
-            var added = line.Text.Length + 2 + (current.Count > 0 ? 1 : 0);
+            var added = FormatNotificationEntry(line, current.LastOrDefault()).Length + (current.Count > 0 ? 1 : 0);
             if (current.Count > 0 && length + added > limit)
             {
                 chunks.Add(current);
                 current = [];
                 length = 0;
+                // A sender group spanning pages gets its heading on each page.
+                added = FormatNotificationEntry(line, null).Length;
             }
             current.Add(line);
-            length += line.Text.Length + 2 + (current.Count > 1 ? 1 : 0);
+            length += added;
         }
         if (current.Count > 0) chunks.Add(current);
         for (var index = 0; index < chunks.Count; index++)
         {
-            var content = header(index + 1, chunks.Count) + "\n\n>>> " +
-                string.Join("\n", chunks[index].Select(line => "- " + line.Text));
+            var content = header(index + 1, chunks.Count) + "\n>>> " +
+                string.Join("\n", chunks[index].Select((line, position) =>
+                    FormatNotificationEntry(line, position == 0 ? null : chunks[index][position - 1])));
             // Never silently drop an item when splitting long batches.
             if (content.Length > 2000) throw new InvalidOperationException("Notification line exceeds Discord's message limit.");
             result.Add(new(new TrackingDiscordNotification(content, userIds.Where(id => ulong.TryParse(id, out _))
@@ -111,16 +120,18 @@ public static partial class TrackingDataManager
         }
     }
 
+    private static string FormatNotificationEntry(NotificationEntry entry, NotificationEntry? previous)
+        => (entry.SenderHeading != null && (previous == null || previous.SenderSlot != entry.SenderSlot)
+            ? entry.SenderHeading + "\n" : "") + "• " + entry.Text;
+
     private static string FormatNotificationHeader(string template, string player, int total,
         string mentions, int page, int pageCount)
         => string.Format(template, StyledNotificationLabel(player), total)
             + (pageCount > 1 ? $" · {page}/{pageCount}" : "")
-            + (string.IsNullOrEmpty(mentions) ? "" : "\n" + mentions);
+            + (string.IsNullOrEmpty(mentions) ? "" : " **" + mentions + "**");
 
     private static string FormatItemEntry(NormalizedItemTransfer item)
-        => $"**{StyledNotificationLabel(item.ItemDisplayName)}**\n  ↳ "
-            + string.Format(Resource.TrackingItemDetails, StyledNotificationLabel(item.FinderDisplayName),
-                StyledNotificationLabel(item.LocationDisplayName));
+        => $"**{StyledNotificationLabel(item.ItemDisplayName)}** · *{StyledNotificationLabel(item.LocationDisplayName)}*";
 
     // Labels are external data, not Markdown. Bound the escaped text without
     // cutting a surrogate pair or leaving an unfinished escape sequence.

@@ -113,6 +113,47 @@ public sealed class TrackingDiscordTransportTests
     }
 
     [Fact]
+    public async Task Recovery_recognizes_an_image_notification_sent_before_image_titles_were_removed()
+    {
+        using var scope = new TestDatabaseScope();
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(Key))).ToLowerInvariant();
+        IMessage Uploaded(ulong id, ulong author, string filename) => Proxy<IMessage>((method, _) => method.Name switch
+        {
+            "get_Id" => id,
+            "get_Author" => Proxy<IUser>((_, _) => author),
+            "get_Content" => "",
+            "get_Attachments" => new[] { Proxy<IAttachment>((_, _) => filename) },
+            "get_Embeds" => Array.Empty<IEmbed>(),
+            _ => throw new InvalidOperationException(method.Name)
+        });
+        var channel = Proxy<IMessageChannel>((_, _) => Page([
+            Uploaded(40, 999, $"ast-banner-{hash}.png"),
+            Uploaded(41, 123, "different-message.png"),
+            Uploaded(42, 123, $"ast-banner-{hash}.png")]));
+        var transport = new DiscordTrackingTransport((_, _, _) => Task.FromResult(channel), () => 123);
+        Assert.Equal("42", await transport.FindPublicationAsync("1", "2", Key, DateTimeOffset.UtcNow,
+            TrackingDiscordNotification.Create("original text", []), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Stored_image_metadata_is_ignored_and_the_original_text_is_sent()
+    {
+        var notification = System.Text.Json.JsonSerializer.Deserialize<TrackingDiscordNotification>(
+            """{"Content":"original text","UserIds":[111],"Banner":{"ThemeId":"halloween","Title":"old title","Body":"old body","Language":"en"}}""")!;
+        var channel = Proxy<IMessageChannel>((method, args) =>
+        {
+            Assert.Equal("SendMessageAsync", method.Name);
+            Assert.Equal("original text", args![0]);
+            Assert.Null(args[2]);
+            Assert.Null(args[6]); // No image or Components V2 layout.
+            Assert.Equal(new[] { 111UL }, Assert.IsType<AllowedMentions>(args[4]).UserIds);
+            return Task.FromResult(Proxy<IUserMessage>((_, _) => 42UL));
+        });
+        var transport = new DiscordTrackingTransport((_, _, _) => Task.FromResult(channel), () => 123);
+        Assert.Equal("42", await transport.SendAsync("1", "2", Key, notification, CancellationToken.None));
+    }
+
+    [Fact]
     public void Long_messages_fit_Discord_limits_without_splitting_surrogate_pairs()
     {
         var message = TrackingDiscordNotification.Create(new string('x', 1898) + "😀" + new string('x', 300), []);

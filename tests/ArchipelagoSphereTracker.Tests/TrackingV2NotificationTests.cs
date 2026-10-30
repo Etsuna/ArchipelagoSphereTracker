@@ -81,10 +81,38 @@ public sealed class TrackingV2NotificationTests
         while (await worker.RunOnceAsync()) { }
         var message = Assert.Single(transport.Sent.Values);
         Assert.Contains("(12)", message.Content);
-        Assert.Equal(12, message.Content.Split('\n').Count(line => line.StartsWith("- ") || line.StartsWith(">>> - ")));
+        Assert.Equal(12, message.Content.Split('\n').Count(line => line.StartsWith("• ") || line.StartsWith(">>> • ")));
+        Assert.Equal(1, message.Content.Split("**Bob**").Length - 1);
+        Assert.Equal(1, message.Content.Split("➥").Length - 1);
         Assert.Equal(1, transport.SendCalls);
         Assert.Equal("12", await ScalarAsync("SELECT COUNT(*) FROM EventDeliveries WHERE Status = 'Delivered';"));
         Assert.DoesNotContain("AST •", message.Content);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Interleaved_items_are_grouped_by_sender_slot_with_one_heading_per_sender(bool identicalNames)
+    {
+        using var scope = new TestDatabaseScope();
+        var secondName = identicalNames ? "Bob" : "Charlie";
+        var transfers = new[]
+        {
+            Item with { ItemId = 101, ItemDisplayName = "Sword A", LocationDisplayName = "Castle A" },
+            Item with { ItemId = 102, FinderSlot = 3, FinderDisplayName = secondName,
+                ItemDisplayName = "Sword B", LocationDisplayName = "Castle B" },
+            Item with { ItemId = 103, ItemDisplayName = "Sword C", LocationDisplayName = "Castle C" }
+        };
+        var events = transfers.Select(item => new ItemReceivedEvent("123", "456", T0, item)).ToArray();
+        var rendered = Assert.Single(await TrackingDataManager.RenderTrackingNotificationsAsync(events, Snapshot(), silent: false));
+        var content = rendered.Notification.Content;
+        Assert.Contains("(3)", content);
+        Assert.Contains("• **Sword A** · *Castle A*\n• **Sword C** · *Castle C*", content);
+        Assert.True(content.IndexOf("Sword C", StringComparison.Ordinal) < content.IndexOf("Sword B", StringComparison.Ordinal));
+        Assert.Equal(2, content.Split("<:arrow_down_right:1565701680195182622>").Length - 1);
+        Assert.Equal(identicalNames ? 2 : 1, content.Split("**Bob**").Length - 1);
+        Assert.Equal(3, rendered.EventKeys.Distinct().Count());
+        Assert.DoesNotContain("\n\n", content);
     }
 
     [Theory]
@@ -109,14 +137,20 @@ public sealed class TrackingV2NotificationTests
                 Snapshot(completed: true), silent: false);
             Assert.Equal(4, messages.Count);
             var items = messages[0].Notification;
-            Assert.StartsWith($"📦 **{itemsTitle}** · **(1)**\n<@111>\n\n>>> ", items.Content);
-            Assert.Contains($"- **Magic Sword**\n  ↳ {sender} · *Castle*", items.Content);
+            Assert.Equal($"📦 **{itemsTitle}** · **(1)** **<@111>**\n>>> <:arrow_down_right:1565701680195182622> {sender}\n• **Magic Sword** · *Castle*", items.Content);
             Assert.Equal(new[] { 111UL }, items.UserIds);
             Assert.Contains(hintsTitle, messages[1].Notification.Content);
             Assert.Contains(updatedTitle, messages[2].Notification.Content);
             Assert.Contains("*Castle*", messages[1].Notification.Content);
             Assert.Contains("<@222>", messages[1].Notification.Content);
             Assert.Equal(new[] { 111UL, 222UL }, messages[1].Notification.UserIds);
+            Assert.All(messages.Take(3), value =>
+            {
+                Assert.Contains("**<@111>**\n>>> ", value.Notification.Content);
+                Assert.Contains("<:arrow_down_right:1565701680195182622> ", value.Notification.Content);
+                Assert.DoesNotContain("\n\n", value.Notification.Content);
+                Assert.DoesNotContain("↳", value.Notification.Content);
+            });
             var goal = messages[3].Notification;
             Assert.Contains(goalTitle, goal.Content);
             Assert.Contains("**Alice**", goal.Content);
@@ -124,7 +158,7 @@ public sealed class TrackingV2NotificationTests
             Assert.Empty(goal.UserIds);
             Assert.All(messages, value =>
             {
-                Assert.Contains("\n\n>>> ", value.Notification.Content);
+                Assert.Contains("\n>>> ", value.Notification.Content);
                 Assert.DoesNotContain("@everyone", value.Notification.Content);
             });
         }
@@ -182,6 +216,64 @@ public sealed class TrackingV2NotificationTests
         await Worker(transport, time).RunOnceAsync();
         Assert.Equal(oldText, Assert.Single(transport.Sent.Values).Content);
         time.Advance();
+        await Worker(transport, time).RunOnceAsync();
+        Assert.Equal(1, transport.SendCalls);
+        Assert.Equal(1, transport.FindCalls);
+        Assert.Equal("Delivered", await ScalarAsync("SELECT Status FROM EventDeliveries;"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task A_frozen_broken_emoji_is_repaired_and_persisted_only_after_checking_uncertain_sends(bool attempted)
+    {
+        using var scope = new TestDatabaseScope();
+        await SeedRoomAsync();
+        await QueueItemAsync();
+        var snapshotId = long.Parse(await ScalarAsync("SELECT MAX(Id) FROM RoomSnapshots;"));
+        var key = $"{snapshotId}:{TrackingDestination.NotificationDestinationType}:456:ItemReceived";
+        const string oldText = "📦 **Objets pour Alice** · **(1)**\n>>> - **Jus de Protagoniste**:arrow_down_right: De **Bob** · *Contrôle municipal 030*";
+        var frozen = new DiscordNotificationBatch(key,
+            [new("broken-arrow-page", new TrackingDiscordNotification(oldText, []), attempted ? T0 : null)]);
+        await Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"INSERT INTO DiscordNotificationBatches(BatchKey,SnapshotId,ChannelId,PayloadJson)
+                VALUES(@Key,@Snapshot,'456',@Payload);";
+            command.Parameters.AddWithValue("@Key", key);
+            command.Parameters.AddWithValue("@Snapshot", snapshotId);
+            command.Parameters.AddWithValue("@Payload", System.Text.Json.JsonSerializer.Serialize(frozen,
+                new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)));
+            await command.ExecuteNonQueryAsync();
+        });
+        var transport = new FakeTransport();
+        await Worker(transport).RunOnceAsync();
+        var message = Assert.Single(transport.Sent.Values);
+        Assert.Contains(">>> • **Jus de Protagoniste**\n  ➥ De **Bob**", message.Content);
+        Assert.Equal(attempted ? 1 : 0, transport.FindCalls);
+        var stored = await DiscordNotificationBatchStore.ReadAsync(key, CancellationToken.None);
+        Assert.Equal(message.Content, Assert.Single(stored!.Parts).Notification.Content);
+    }
+
+    [Theory]
+    [InlineData("<:arrow_down_right:1565718646989520957>")]
+    [InlineData("<:arrow_down_right:1565718735447269406>")]
+    [InlineData("<:arrow_down_right:1565701680195182622>")]
+    public async Task The_connected_applications_arrow_is_frozen_before_sending_and_recovered_without_a_duplicate(string marker)
+    {
+        using var scope = new TestDatabaseScope();
+        await SeedRoomAsync();
+        await QueueItemAsync();
+        var transport = new FakeTransport { DetailsMarker = marker, ThrowAfterSend = true };
+        var time = new ManualTimeProvider();
+        await Worker(transport, time).RunOnceAsync();
+        var message = Assert.Single(transport.Sent.Values);
+        Assert.Contains(">>> " + marker + " ", message.Content);
+        Assert.Contains("\n• **Magic Sword** · *Castle*", message.Content);
+        Assert.DoesNotContain("\n\n", message.Content);
+        time.Advance();
+        // A changed lookup must not change an uncertain message before recovery.
+        transport.DetailsMarker = "➥";
         await Worker(transport, time).RunOnceAsync();
         Assert.Equal(1, transport.SendCalls);
         Assert.Equal(1, transport.FindCalls);
@@ -262,6 +354,11 @@ public sealed class TrackingV2NotificationTests
         Assert.True(transport.Sent.Count > 2);
         Assert.Equal(transport.Sent.Count, transport.SendCalls);
         Assert.All(transport.Sent.Values, value => Assert.True(value.Content.Length <= 1900));
+        Assert.All(transport.Sent.Values, value =>
+        {
+            Assert.Equal(1, value.Content.Split("**Bob**").Length - 1);
+            Assert.Contains("**Bob**\n• ", value.Content);
+        });
         var text = string.Join("\n", transport.Sent.Values.Select(value => value.Content));
         for (var index = 1; index <= 35; index++)
             Assert.Equal(1, text.Split($"UniqueSword-{index:D2}:").Length - 1);
@@ -630,6 +727,9 @@ public sealed class TrackingV2NotificationTests
 
     private sealed class FakeTransport : ITrackingDiscordTransport
     {
+        public string DetailsMarker = NotificationDetailsFormatting.FallbackMarker;
+        public Task<string> GetDetailsMarkerAsync(CancellationToken ct) => Task.FromResult(DetailsMarker);
+
         public readonly Dictionary<string, TrackingDiscordNotification> Sent = [];
         private readonly Dictionary<string, string> _receipts = [];
         public bool ThrowBeforeSend;

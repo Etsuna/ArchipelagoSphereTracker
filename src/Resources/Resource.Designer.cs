@@ -8995,6 +8995,10 @@ namespace ArchipelagoSphereTracker.src.Resources {
             get { return ResourceManager.GetString("TrackingItemsTitle", resourceCulture); }
         }
 
+        internal static string TrackingItemsSender {
+            get { return ResourceManager.GetString("TrackingItemsSender", resourceCulture); }
+        }
+
         internal static string TrackingHintsNewTitle {
             get { return ResourceManager.GetString("TrackingHintsNewTitle", resourceCulture); }
         }

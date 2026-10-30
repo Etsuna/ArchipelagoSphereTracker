@@ -6421,6 +6421,1496 @@
           "version": "13.0.1+security-01"
         }
       }
+    },
+    "panel-70": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "process_working_set_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Physical memory resident in the AST process. This is not systemd service/cgroup memory: file cache charged to the service is not represented here.",
+        "id": 70,
+        "links": [],
+        "title": "Process resident memory (RSS)",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "decimals": 1,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-71": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "dotnet_total_memory_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "GC.GetTotalMemory(false): estimated allocated managed objects. It does not measure all committed GC segments or native allocations.",
+        "id": 71,
+        "links": [],
+        "title": "Managed objects (estimate)",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "decimals": 1,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-72": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "ast_gc_committed_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Managed heap backing memory reported at the last GC collection. Includes free space retained by the GC; it is not the same as resident memory.",
+        "id": 72,
+        "links": [],
+        "title": "GC committed memory",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "decimals": 1,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-73": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "ast_sqlite_memory_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Allocations tracked by the SQLite core library. Excludes OS file cache and does not represent every native allocation in the process. NaN/unavailable is not zero.",
+        "id": 73,
+        "links": [],
+        "title": "SQLite native allocations",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "decimals": 1,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-74": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "process_working_set_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "Process RSS | {{job}} / {{instance}}",
+                      "range": true,
+                      "instant": false
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              },
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "dotnet_total_memory_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "Managed objects | {{job}} / {{instance}}",
+                      "range": true,
+                      "instant": false
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "B"
+                }
+              },
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "ast_gc_committed_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "GC committed | {{job}} / {{instance}}",
+                      "range": true,
+                      "instant": false
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "C"
+                }
+              },
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "ast_gc_fragmented_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "GC fragmentation | {{job}} / {{instance}}",
+                      "range": true,
+                      "instant": false
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "D"
+                }
+              },
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "ast_sqlite_memory_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "SQLite native | {{job}} / {{instance}}",
+                      "range": true,
+                      "instant": false
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "E"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Compare trends, not a stacked total. Managed objects, GC committed memory, fragmentation and SQLite allocations overlap or use different accounting. RSS is process-only; systemd cgroup memory needs a separate system exporter.",
+        "id": 74,
+        "links": [],
+        "title": "Memory over time",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "decimals": 1,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 5,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 2,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "never",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "mode": "none",
+                    "group": "A"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "annotations": {
+                "clustering": -1,
+                "multiLane": false
+              },
+              "legend": {
+                "calcs": [
+                  "lastNotNull",
+                  "max"
+                ],
+                "displayMode": "table",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              }
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-75": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "sum by (job, instance, generation) (rate(dotnet_collection_count_total{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}[$__rate_interval])) * 60",
+                      "legendFormat": "Gen {{generation}} | {{job}} / {{instance}}",
+                      "range": true,
+                      "instant": false
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Collection rate by generation, calculated from the cumulative GC counter. Frequent collections can indicate allocation pressure, but do not alone prove a leak.",
+        "id": 75,
+        "links": [],
+        "title": "GC collections per minute",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "suffix:collections/min",
+                "decimals": 2,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": true,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 5,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 2,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "never",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "mode": "none",
+                    "group": "A"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "annotations": {
+                "clustering": -1,
+                "multiLane": false
+              },
+              "legend": {
+                "calcs": [
+                  "lastNotNull",
+                  "max"
+                ],
+                "displayMode": "table",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              }
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-76": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "deriv(process_working_set_bytes{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}[30m]) * 3600 / 1048576",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": true,
+                      "instant": false
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Linear trend over 30 minutes, expressed as MiB per hour. Positive means growth; negative means decline. Startup, restarts and workload changes affect this estimate. It is not a leak detector.",
+        "id": 76,
+        "links": [],
+        "title": "Process RSS growth (30-minute trend)",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "suffix:MiB/h",
+                "decimals": 1,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": true,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 5,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 2,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "never",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "mode": "none",
+                    "group": "A"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "annotations": {
+                "clustering": -1,
+                "multiLane": false
+              },
+              "legend": {
+                "calcs": [
+                  "lastNotNull",
+                  "max"
+                ],
+                "displayMode": "table",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              }
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-77": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "ast_event_deliveries{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\",state=\"pending\"}",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Event ledger rows, not Discord message count: multiple events may be grouped into one message. Database gauges refresh about every five minutes, independently of Prometheus scraping.",
+        "id": 77,
+        "links": [],
+        "title": "Pending deliveries",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "decimals": 0,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "green"
+                    },
+                    {
+                      "value": 100,
+                      "color": "yellow"
+                    },
+                    {
+                      "value": 1000,
+                      "color": "red"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-78": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "ast_event_deliveries{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\",state=\"failed\"}",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Event ledger rows, not Discord message count: multiple events may be grouped into one message. Database gauges refresh about every five minutes, independently of Prometheus scraping.",
+        "id": 78,
+        "links": [],
+        "title": "Failed deliveries",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "decimals": 0,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "green"
+                    },
+                    {
+                      "value": 1,
+                      "color": "red"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-79": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "ast_event_deliveries{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\",state=\"delivering\"}",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Event ledger rows, not Discord message count: multiple events may be grouped into one message. Database gauges refresh about every five minutes, independently of Prometheus scraping.",
+        "id": 79,
+        "links": [],
+        "title": "Deliveries in progress",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "decimals": 0,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-80": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "time() - ast_metrics_collection_last_success_timestamp_seconds{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Seconds since the last successful database metrics collection. The collector runs about every five minutes. Memory metrics are refreshed separately at scrape time.",
+        "id": 80,
+        "links": [],
+        "title": "Database metrics age",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "s",
+                "decimals": 0,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "green"
+                    },
+                    {
+                      "value": 600,
+                      "color": "yellow"
+                    },
+                    {
+                      "value": 720,
+                      "color": "red"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-81": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "ast_event_deliveries{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\",state=~\"pending|delivering|failed\"}",
+                      "legendFormat": "{{state}} | {{job}} / {{instance}}",
+                      "range": true,
+                      "instant": false
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Pending, delivering and failed event deliveries. The cumulative delivered ledger is intentionally omitted so that backlog remains visible. Counts refresh about every five minutes.",
+        "id": 81,
+        "links": [],
+        "title": "Unfinished deliveries over time",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "decimals": 0,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 5,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 2,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "never",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "mode": "none",
+                    "group": "A"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "annotations": {
+                "clustering": -1,
+                "multiLane": false
+              },
+              "legend": {
+                "calcs": [
+                  "lastNotNull",
+                  "max"
+                ],
+                "displayMode": "table",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "multi",
+                "sort": "desc"
+              }
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-82": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "time() - process_start_time_seconds{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\"}",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Process age. Check this alongside memory drops to distinguish a restart from memory being reclaimed during normal operation.",
+        "id": 82,
+        "links": [],
+        "title": "Process uptime",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "s",
+                "decimals": 0,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-83": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "group": "prometheus",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "editorMode": "code",
+                      "expr": "sum by (job, instance) (deriv(ast_event_deliveries{job=~\"${ast_job:regex}\",instance=~\"${ast_instance:regex}\",state=~\"pending|delivering|failed\"}[30m])) * 60",
+                      "legendFormat": "{{job}} / {{instance}}",
+                      "range": false,
+                      "instant": true
+                    },
+                    "version": "v0",
+                    "datasource": {
+                      "name": "df3j5yg0tm874e"
+                    }
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "Estimated net change of unfinished ledger rows per minute over 30 minutes. Positive: backlog growing; negative: backlog shrinking. This is a gauge trend, not send throughput. New events and room deletions affect it; the collector refreshes about every five minutes.",
+        "id": 83,
+        "links": [],
+        "title": "Backlog net growth (30-minute trend)",
+        "vizConfig": {
+          "group": "stat",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "unit": "suffix:events/min",
+                "decimals": 1,
+                "mappings": [],
+                "noValue": "No data",
+                "color": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": 0,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "horizontal",
+              "percentChangeColorMode": "standard",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showPercentChange": false,
+              "textMode": "value_and_name",
+              "wideLayout": true
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
+    },
+    "panel-84": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "",
+        "id": 84,
+        "links": [],
+        "title": "Reading memory and backlog correctly",
+        "vizConfig": {
+          "group": "text",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {},
+              "overrides": []
+            },
+            "options": {
+              "code": {
+                "language": "plaintext",
+                "showLineNumbers": false,
+                "showMiniMap": false
+              },
+              "content": "**Use the AST job and instance selectors above to separate production and test.** These selectors apply to the two new health sections; existing guild/room panels keep their original filters.\n\n- **RSS is process memory**, not the memory charged to a systemd service/cgroup. OS file cache can explain part of that difference.\n- **Do not add the memory curves together**: they overlap or measure different concepts. GC committed/fragmented values reflect the last collection.\n- **Database gauges update about every 5 minutes**. A short plateau does not prove a blocked worker. Memory metrics refresh when Prometheus scrapes.\n- **Backlog trend is net growth, not message throughput**. Negative is catch-up; failed deliveries retain snapshots until resolved.\n- Missing memory data on an older bot build remains **No data**, never a fake zero. Disk size and snapshot counts are not yet exported by AST.\n\n**Suggested alert starting points:** failed deliveries > 0 for 10 min; metrics age > 720 s for 5 min; sustained pending backlog above your normal baseline. Configure actual Grafana alerts separately; this JSON does not create alert rules.",
+              "mode": "markdown"
+            }
+          },
+          "version": "13.0.1+security-01"
+        }
+      }
     }
   },
   "layout": {
@@ -6492,6 +7982,231 @@
               }
             },
             "title": "Instance overview"
+          }
+        },
+        {
+          "kind": "RowsLayoutRow",
+          "spec": {
+            "title": "Memory & SQLite",
+            "collapse": false,
+            "hideHeader": false,
+            "layout": {
+              "kind": "GridLayout",
+              "spec": {
+                "items": [
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-70"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-71"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 12,
+                      "y": 0,
+                      "width": 6,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-72"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 18,
+                      "y": 0,
+                      "width": 6,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-73"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 0,
+                      "y": 4,
+                      "width": 24,
+                      "height": 8,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-74"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 0,
+                      "y": 12,
+                      "width": 12,
+                      "height": 7,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-75"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 12,
+                      "y": 12,
+                      "width": 12,
+                      "height": 7,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-76"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "kind": "RowsLayoutRow",
+          "spec": {
+            "title": "Notification backlog & collector",
+            "collapse": false,
+            "hideHeader": false,
+            "layout": {
+              "kind": "GridLayout",
+              "spec": {
+                "items": [
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 0,
+                      "y": 0,
+                      "width": 6,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-77"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 6,
+                      "y": 0,
+                      "width": 6,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-78"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 12,
+                      "y": 0,
+                      "width": 6,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-79"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 18,
+                      "y": 0,
+                      "width": 6,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-80"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 0,
+                      "y": 4,
+                      "width": 16,
+                      "height": 8,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-81"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 16,
+                      "y": 4,
+                      "width": 8,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-82"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 16,
+                      "y": 8,
+                      "width": 8,
+                      "height": 4,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-83"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "GridLayoutItem",
+                    "spec": {
+                      "x": 0,
+                      "y": 12,
+                      "width": 24,
+                      "height": 6,
+                      "element": {
+                        "kind": "ElementReference",
+                        "name": "panel-84"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
           }
         },
         {
@@ -7413,6 +9128,78 @@
   },
   "title": "Archipelago Sphere Tracker — Operations & Usage",
   "variables": [
+    {
+      "kind": "QueryVariable",
+      "spec": {
+        "allValue": "",
+        "allowCustomValue": false,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "definition": "label_values(ast_info,job)",
+        "hide": "dontHide",
+        "includeAll": true,
+        "label": "AST job (health panels)",
+        "multi": true,
+        "name": "ast_job",
+        "options": [],
+        "query": {
+          "group": "prometheus",
+          "kind": "DataQuery",
+          "spec": {
+            "qryType": 1,
+            "query": "label_values(ast_info,job)",
+            "refId": "PrometheusVariableQueryEditor-VariableQuery"
+          },
+          "version": "v0",
+          "datasource": {
+            "name": "df3j5yg0tm874e"
+          }
+        },
+        "refresh": "onDashboardLoad",
+        "regex": "",
+        "regexApplyTo": "value",
+        "skipUrlSync": false,
+        "sort": "disabled"
+      }
+    },
+    {
+      "kind": "QueryVariable",
+      "spec": {
+        "allValue": "",
+        "allowCustomValue": false,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "definition": "label_values(ast_info{job=~\"${ast_job:regex}\"},instance)",
+        "hide": "dontHide",
+        "includeAll": true,
+        "label": "AST instance (health panels)",
+        "multi": true,
+        "name": "ast_instance",
+        "options": [],
+        "query": {
+          "group": "prometheus",
+          "kind": "DataQuery",
+          "spec": {
+            "qryType": 1,
+            "query": "label_values(ast_info{job=~\"${ast_job:regex}\"},instance)",
+            "refId": "PrometheusVariableQueryEditor-VariableQuery"
+          },
+          "version": "v0",
+          "datasource": {
+            "name": "df3j5yg0tm874e"
+          }
+        },
+        "refresh": "onDashboardLoad",
+        "regex": "",
+        "regexApplyTo": "value",
+        "skipUrlSync": false,
+        "sort": "disabled"
+      }
+    },
     {
       "kind": "QueryVariable",
       "spec": {

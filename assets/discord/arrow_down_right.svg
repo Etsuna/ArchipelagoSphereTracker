@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 36 36">
+  <title>Flèche descendant puis tournant à droite</title>
+  <rect width="36" height="36" rx="4" fill="#3B88C3"/>
+  <path fill="#FFF" d="M7 6h4v12c0 3.314 2.686 6 6 6h6v-5l8 7-8 7v-5h-6C11.477 28 7 23.523 7 18V6z"/>
+</svg>

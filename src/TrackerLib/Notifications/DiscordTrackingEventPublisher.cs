@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using ArchipelagoSphereTracker.Tracking.Persistence;
 using ArchipelagoSphereTracker.Tracking.V2;
 using Discord;
@@ -22,6 +24,9 @@ public sealed record TrackingDiscordNotification(string Content, IReadOnlyList<u
 
 public interface ITrackingDiscordTransport
 {
+    Task<string> GetDetailsMarkerAsync(CancellationToken cancellationToken)
+        => Task.FromResult(NotificationDetailsFormatting.FallbackMarker);
+
     Task<string?> FindPublicationAsync(string guildId, string channelId, string eventKey,
         DateTimeOffset notBefore, TrackingDiscordNotification notification, CancellationToken cancellationToken);
     Task<string> SendAsync(string guildId, string channelId, string eventKey,
@@ -45,6 +50,7 @@ public sealed class DiscordTrackingEventPublisher(ITrackingDiscordTransport tran
         if (silent == null) return new("skipped:room-removed");
         var batch = await DiscordNotificationBatchStore.GetOrCreateAsync(delivery, snapshot, silent.Value, cancellationToken);
         if (batch.Parts.Count == 0) return new("skipped:notification-preferences");
+        var detailsMarker = await transport.GetDetailsMarkerAsync(cancellationToken);
         var receipts = new List<string>();
         for (var index = 0; index < batch.Parts.Count; index++)
         {
@@ -55,12 +61,17 @@ public sealed class DiscordTrackingEventPublisher(ITrackingDiscordTransport tran
                     part.Key, attemptedAt, part.Notification, cancellationToken);
             if (receipt == null)
             {
+                var notification = NotificationDetailsFormatting.Prepare(part.Notification, detailsMarker);
                 // Persist the exact text and attempt boundary before making the
                 // external request. A retry keeps the same groups and pages.
                 await DiscordNotificationBatchStore.UpdatePartAsync(batch.Key, index,
-                    value => value with { FirstAttemptAtUtc = value.FirstAttemptAtUtc ?? DateTimeOffset.UtcNow }, cancellationToken);
+                    value => value with
+                    {
+                        Notification = notification,
+                        FirstAttemptAtUtc = value.FirstAttemptAtUtc ?? DateTimeOffset.UtcNow
+                    }, cancellationToken);
                 receipt = await transport.SendAsync(trackingEvent.GuildId, trackingEvent.ChannelId,
-                    part.Key, part.Notification, cancellationToken);
+                    part.Key, notification, cancellationToken);
             }
             if (part.Receipt == null)
                 await DiscordNotificationBatchStore.UpdatePartAsync(batch.Key, index,
@@ -86,9 +97,11 @@ public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
 {
     private readonly Func<string, string, CancellationToken, Task<IMessageChannel>> _resolve;
     private readonly Func<ulong> _botUserId;
+    private readonly ApplicationDetailsMarkerResolver _detailsMarker;
 
     public DiscordTrackingTransport(DiscordSocketClient client)
     {
+        _detailsMarker = new(ct => client.Rest.GetApplicationEmotesAsync(Options(ct)));
         _botUserId = () => client.CurrentUser.Id;
         _resolve = async (guildId, channelId, ct) =>
         {
@@ -116,11 +129,16 @@ public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
     }
 
     internal DiscordTrackingTransport(
-        Func<string, string, CancellationToken, Task<IMessageChannel>> resolve, Func<ulong> botUserId)
+        Func<string, string, CancellationToken, Task<IMessageChannel>> resolve, Func<ulong> botUserId,
+        Func<CancellationToken, Task<IReadOnlyCollection<Emote>>>? applicationEmotes = null)
     {
         _resolve = resolve;
         _botUserId = botUserId;
+        _detailsMarker = new(applicationEmotes ?? (_ => Task.FromResult<IReadOnlyCollection<Emote>>([])));
     }
+
+    public Task<string> GetDetailsMarkerAsync(CancellationToken cancellationToken)
+        => _detailsMarker.GetAsync(cancellationToken);
 
     public async Task<string?> FindPublicationAsync(string guildId, string channelId, string eventKey,
         DateTimeOffset notBefore, TrackingDiscordNotification notification, CancellationToken cancellationToken)
@@ -136,6 +154,7 @@ public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
             foreach (var message in page.OrderBy(message => message.Id))
                 if (message.Author.Id == _botUserId() &&
                     (message.Content == notification.Content ||
+                     MatchesLegacyImagePublication(message, eventKey) ||
                      message.Embeds.Any(embed => embed.Footer?.Text == $"AST • {eventKey}")))
                 {
                     var receipt = message.Id.ToString(CultureInfo.InvariantCulture);
@@ -164,6 +183,15 @@ public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
             return message.Id.ToString(CultureInfo.InvariantCulture);
         }
         finally { gate.Release(); }
+    }
+
+    private static bool MatchesLegacyImagePublication(IMessage message, string eventKey)
+    {
+        // Read-only compatibility for an uncertain send made before image titles
+        // were removed. New notifications are always sent as plain text.
+        if (!string.IsNullOrEmpty(message.Content)) return false;
+        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(eventKey))).ToLowerInvariant();
+        return message.Attachments.Any(attachment => attachment.Filename == $"ast-banner-{key}.png");
     }
 
     // Do not let SDK timeout/502 retries repeat an uncertain POST invisibly.

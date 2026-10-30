@@ -2818,6 +2818,7 @@ Vos YAML ont été déposés, mais vous n’êtes pas déclarés prêts. Vos ré
   <data name="RoomDestinationChannelNotice" xml:space="preserve"><value>En mode salon, les notifications sont publiées directement dans le salon choisi. Une seule room peut y être suivie ; arrêter le suivi conserve le salon et ses messages.</value></data>
   <data name="RoomDestinationInvalid" xml:space="preserve"><value>Choisissez un thread privé, un thread public ou le salon directement.</value></data>
   <data name="TrackingItemsTitle" xml:space="preserve"><value>📦 **Objets pour {0}** · **({1})**</value></data>
+  <data name="TrackingItemsSender" xml:space="preserve"><value>De **{0}**</value></data>
   <data name="TrackingHintsNewTitle" xml:space="preserve"><value>🔎 **Nouveaux indices · {0}** · **({1})**</value></data>
   <data name="TrackingHintsUpdatedTitle" xml:space="preserve"><value>🧭 **Indices actualisés · {0}** · **({1})**</value></data>
   <data name="TrackingItemDetails" xml:space="preserve"><value>De **{0}** · *{1}*</value></data>
