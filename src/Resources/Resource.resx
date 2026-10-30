@@ -3255,12 +3255,12 @@ Your YAML files have been uploaded, but you are not marked ready. Are your setti
   <data name="RoomDestinationChannel" xml:space="preserve"><value>Channel directly (no thread)</value></data>
   <data name="RoomDestinationChannelNotice" xml:space="preserve"><value>In channel mode, notifications are posted directly in the selected channel. Only one room can be tracked there; stopping tracking keeps the channel and its messages.</value></data>
   <data name="RoomDestinationInvalid" xml:space="preserve"><value>Choose a private thread, a public thread, or the channel directly.</value></data>
-  <data name="TrackingItemsTitle" xml:space="preserve"><value>📦 **Items for {0}** · **({1})**</value></data>
+  <data name="TrackingItemsTitle" xml:space="preserve"><value>**Items for {0} ({1})**</value></data>
   <data name="TrackingItemsSender" xml:space="preserve"><value>From **{0}**</value></data>
-  <data name="TrackingHintsNewTitle" xml:space="preserve"><value>🔎 **New hints · {0}** · **({1})**</value></data>
-  <data name="TrackingHintsUpdatedTitle" xml:space="preserve"><value>🧭 **Updated hints · {0}** · **({1})**</value></data>
-  <data name="TrackingItemDetails" xml:space="preserve"><value>From **{0}** · *{1}*</value></data>
-  <data name="TrackingHintDetails" xml:space="preserve"><value>*{0}* · World: **{1}**{2}</value></data>
+  <data name="TrackingHintsNewTitle" xml:space="preserve"><value>**New hints for {0} ({1})**</value></data>
+  <data name="TrackingHintsUpdatedTitle" xml:space="preserve"><value>**Updated hints for {0} ({1})**</value></data>
+  <data name="TrackingItemDetails" xml:space="preserve"><value>{0} sent **{1}** ({2})</value></data>
+  <data name="TrackingHintDetails" xml:space="preserve"><value>**{0}** in {1}{2} ({3})</value></data>
   <data name="TrackingGoalTitle" xml:space="preserve"><value>🏁 **Goal completed!**</value></data>
   <data name="TrackingGoalDescription" xml:space="preserve"><value>**{0}** has completed their goal.
 🎮 *{1}*</value></data>
@@ -3269,4 +3269,17 @@ Your YAML files have been uploaded, but you are not marked ready. Are your setti
   <data name="DatabaseMigrationNativeTracking" xml:space="preserve"><value>Migrating to DB version 5.0.16: importing V1 tracking data into native V2 tables.</value></data>
   <data name="DatabaseMigrationItemReplay" xml:space="preserve"><value>Migrating to DB version 5.0.17: per-player item notification replay queue.</value></data>
   <data name="DatabaseMigrationLegacyTrackingRetirement" xml:space="preserve"><value>Migrating to DB version 5.0.18: final V1 import and transactional removal of the four legacy tracking tables.</value></data>
+  <data name="NotificationSettingsTitle" xml:space="preserve"><value>Room notifications</value></data>
+  <data name="NotificationSettingsDescription" xml:space="preserve"><value>Choose the players, item categories and hint notifications for this room. Personal item filters can narrow these rules further. All items and hints remain available in the tracker and recaps.</value></data>
+  <data name="NotificationAudience" xml:space="preserve"><value>Players announced</value></data>
+  <data name="NotificationAllPlayers" xml:space="preserve"><value>All players</value></data>
+  <data name="NotificationLinkedPlayers" xml:space="preserve"><value>Linked aliases only</value></data>
+  <data name="NotificationItems" xml:space="preserve"><value>Item categories</value></data>
+  <data name="NotificationAllItems" xml:space="preserve"><value>All items</value></data>
+  <data name="NotificationUsefulProgression" xml:space="preserve"><value>Useful + progression</value></data>
+  <data name="NotificationProgressionOnly" xml:space="preserve"><value>Progression only</value></data>
+  <data name="NotificationHints" xml:space="preserve"><value>Hint notifications</value></data>
+  <data name="NotificationSettingsSave" xml:space="preserve"><value>Save notifications</value></data>
+  <data name="NotificationSettingsSaved" xml:space="preserve"><value>Room notification settings updated.</value></data>
+  <data name="NotificationSettingsInvalid" xml:space="preserve"><value>Invalid notification settings or room no longer tracked.</value></data>
 </root>

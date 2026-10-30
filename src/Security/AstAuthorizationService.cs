@@ -62,7 +62,7 @@ public static class AstAuthorizationService
                 "ast-polling" or
                 "excluded-item" or
                 "delete-excluded-item" or
-                "update-silent-option" => AstAuthorizationLevel.RoomManager,
+                "update-silent-option" or "update-notifications" => AstAuthorizationLevel.RoomManager,
                 _ => AstAuthorizationLevel.GuildMember
             };
         }

@@ -24,9 +24,6 @@ public sealed record TrackingDiscordNotification(string Content, IReadOnlyList<u
 
 public interface ITrackingDiscordTransport
 {
-    Task<string> GetDetailsMarkerAsync(CancellationToken cancellationToken)
-        => Task.FromResult(NotificationDetailsFormatting.FallbackMarker);
-
     Task<string?> FindPublicationAsync(string guildId, string channelId, string eventKey,
         DateTimeOffset notBefore, TrackingDiscordNotification notification, CancellationToken cancellationToken);
     Task<string> SendAsync(string guildId, string channelId, string eventKey,
@@ -46,11 +43,11 @@ public sealed class DiscordTrackingEventPublisher(ITrackingDiscordTransport tran
             snapshot.GuildId != trackingEvent.GuildId || snapshot.ChannelId != trackingEvent.ChannelId)
             throw new InvalidOperationException("Notification scope does not match its event.");
 
-        var silent = await ReadSilentAsync(trackingEvent.GuildId, trackingEvent.ChannelId, cancellationToken);
-        if (silent == null) return new("skipped:room-removed");
-        var batch = await DiscordNotificationBatchStore.GetOrCreateAsync(delivery, snapshot, silent.Value, cancellationToken);
+        var preferences = await RoomNotificationPreferencesStore.ReadAsync(trackingEvent.GuildId, trackingEvent.ChannelId, cancellationToken);
+        if (preferences == null) return new("skipped:room-removed");
+        var batch = await DiscordNotificationBatchStore.GetOrCreateAsync(delivery, snapshot, preferences.LinkedAliasesOnly,
+            cancellationToken, preferences);
         if (batch.Parts.Count == 0) return new("skipped:notification-preferences");
-        var detailsMarker = await transport.GetDetailsMarkerAsync(cancellationToken);
         var receipts = new List<string>();
         for (var index = 0; index < batch.Parts.Count; index++)
         {
@@ -61,17 +58,15 @@ public sealed class DiscordTrackingEventPublisher(ITrackingDiscordTransport tran
                     part.Key, attemptedAt, part.Notification, cancellationToken);
             if (receipt == null)
             {
-                var notification = NotificationDetailsFormatting.Prepare(part.Notification, detailsMarker);
-                // Persist the exact text and attempt boundary before making the
-                // external request. A retry keeps the same groups and pages.
+                // Persist the attempt boundary before making the external
+                // request. Retries keep the frozen text and pages unchanged.
                 await DiscordNotificationBatchStore.UpdatePartAsync(batch.Key, index,
                     value => value with
                     {
-                        Notification = notification,
                         FirstAttemptAtUtc = value.FirstAttemptAtUtc ?? DateTimeOffset.UtcNow
                     }, cancellationToken);
                 receipt = await transport.SendAsync(trackingEvent.GuildId, trackingEvent.ChannelId,
-                    part.Key, notification, cancellationToken);
+                    part.Key, part.Notification, cancellationToken);
             }
             if (part.Receipt == null)
                 await DiscordNotificationBatchStore.UpdatePartAsync(batch.Key, index,
@@ -81,27 +76,15 @@ public sealed class DiscordTrackingEventPublisher(ITrackingDiscordTransport tran
         return new(string.Join(",", receipts));
     }
 
-    private static async Task<bool?> ReadSilentAsync(string guildId, string channelId, CancellationToken ct)
-    {
-        await using var connection = await Db.OpenReadAsync();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT Silent FROM ChannelsAndUrlsTable WHERE GuildId = @Guild AND ChannelId = @Channel;";
-        command.Parameters.AddWithValue("@Guild", guildId);
-        command.Parameters.AddWithValue("@Channel", channelId);
-        var result = await command.ExecuteScalarAsync(ct);
-        return result == null ? null : result != DBNull.Value && Convert.ToBoolean(result, CultureInfo.InvariantCulture);
-    }
 }
 
 public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
 {
     private readonly Func<string, string, CancellationToken, Task<IMessageChannel>> _resolve;
     private readonly Func<ulong> _botUserId;
-    private readonly ApplicationDetailsMarkerResolver _detailsMarker;
 
     public DiscordTrackingTransport(DiscordSocketClient client)
     {
-        _detailsMarker = new(ct => client.Rest.GetApplicationEmotesAsync(Options(ct)));
         _botUserId = () => client.CurrentUser.Id;
         _resolve = async (guildId, channelId, ct) =>
         {
@@ -129,16 +112,11 @@ public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
     }
 
     internal DiscordTrackingTransport(
-        Func<string, string, CancellationToken, Task<IMessageChannel>> resolve, Func<ulong> botUserId,
-        Func<CancellationToken, Task<IReadOnlyCollection<Emote>>>? applicationEmotes = null)
+        Func<string, string, CancellationToken, Task<IMessageChannel>> resolve, Func<ulong> botUserId)
     {
         _resolve = resolve;
         _botUserId = botUserId;
-        _detailsMarker = new(applicationEmotes ?? (_ => Task.FromResult<IReadOnlyCollection<Emote>>([])));
     }
-
-    public Task<string> GetDetailsMarkerAsync(CancellationToken cancellationToken)
-        => _detailsMarker.GetAsync(cancellationToken);
 
     public async Task<string?> FindPublicationAsync(string guildId, string channelId, string eventKey,
         DateTimeOffset notBefore, TrackingDiscordNotification notification, CancellationToken cancellationToken)

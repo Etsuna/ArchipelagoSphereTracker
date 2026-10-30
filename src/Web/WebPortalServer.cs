@@ -1,5 +1,6 @@
 using ArchipelagoSphereTracker.src.Resources;
 using ArchipelagoSphereTracker.Tracking.Scheduling;
+using ArchipelagoSphereTracker.Tracking.Notifications;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Builder;
@@ -717,6 +718,20 @@ public static class WebPortalServer
             return Results.File(yamlPath, "application/x-yaml", safeYamlName);
         });
 
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/notification-preferences", async (
+            string guildId, string channelId, string token) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.RoomManager);
+            if (actor == null || !Declare.EnableWebPortal) return Results.NotFound();
+            var preferences = await RoomNotificationPreferencesStore.ReadAsync(guildId, channelId);
+            return preferences == null ? Results.NotFound() : Results.Ok(new
+            {
+                audience = preferences.LinkedAliasesOnly ? "linked" : "all",
+                itemFilter = preferences.ItemFilter.ToString(),
+                hints = preferences.HintsEnabled ? "on" : "off"
+            });
+        });
+
         app.MapGet("/api/portal/{guildId}/{channelId}/{token}/thread-commands/patches", async (
             string guildId,
             string channelId,
@@ -986,6 +1001,15 @@ public static class WebPortalServer
                     {
                         var silent = form["silent"].FirstOrDefault();
                         message = await ChannelsAndUrlsCommands.UpdateSilentOptionFromWeb(silent, channelId, guildId);
+                        break;
+                    }
+                case "update-notifications":
+                    {
+                        if (!RoomNotificationPreferences.TryParse(form["audience"].FirstOrDefault(),
+                            form["itemFilter"].FirstOrDefault(), form["hints"].FirstOrDefault(), out var preferences) ||
+                            !await RoomNotificationPreferencesStore.SetAsync(guildId, channelId, preferences))
+                            return Results.BadRequest(new { message = Resource.ResourceManager.GetString("NotificationSettingsInvalid") });
+                        message = Resource.ResourceManager.GetString("NotificationSettingsSaved")!;
                         break;
                     }
                 case "delete-url":

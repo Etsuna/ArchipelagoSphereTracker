@@ -2817,12 +2817,12 @@ Vos YAML ont été déposés, mais vous n’êtes pas déclarés prêts. Vos ré
   <data name="RoomDestinationChannel" xml:space="preserve"><value>Salon directement (sans thread)</value></data>
   <data name="RoomDestinationChannelNotice" xml:space="preserve"><value>En mode salon, les notifications sont publiées directement dans le salon choisi. Une seule room peut y être suivie ; arrêter le suivi conserve le salon et ses messages.</value></data>
   <data name="RoomDestinationInvalid" xml:space="preserve"><value>Choisissez un thread privé, un thread public ou le salon directement.</value></data>
-  <data name="TrackingItemsTitle" xml:space="preserve"><value>📦 **Objets pour {0}** · **({1})**</value></data>
+  <data name="TrackingItemsTitle" xml:space="preserve"><value>**Objets pour {0} ({1})**</value></data>
   <data name="TrackingItemsSender" xml:space="preserve"><value>De **{0}**</value></data>
-  <data name="TrackingHintsNewTitle" xml:space="preserve"><value>🔎 **Nouveaux indices · {0}** · **({1})**</value></data>
-  <data name="TrackingHintsUpdatedTitle" xml:space="preserve"><value>🧭 **Indices actualisés · {0}** · **({1})**</value></data>
-  <data name="TrackingItemDetails" xml:space="preserve"><value>De **{0}** · *{1}*</value></data>
-  <data name="TrackingHintDetails" xml:space="preserve"><value>*{0}* · Monde de **{1}**{2}</value></data>
+  <data name="TrackingHintsNewTitle" xml:space="preserve"><value>**Nouveaux indices pour {0} ({1})**</value></data>
+  <data name="TrackingHintsUpdatedTitle" xml:space="preserve"><value>**Indices actualisés pour {0} ({1})**</value></data>
+  <data name="TrackingItemDetails" xml:space="preserve"><value>{0} a envoyé **{1}** ({2})</value></data>
+  <data name="TrackingHintDetails" xml:space="preserve"><value>**{0}** chez {1}{2} ({3})</value></data>
   <data name="TrackingGoalTitle" xml:space="preserve"><value>🏁 **Objectif atteint !**</value></data>
   <data name="TrackingGoalDescription" xml:space="preserve"><value>**{0}** a terminé son objectif.
 🎮 *{1}*</value></data>
@@ -2831,4 +2831,17 @@ Vos YAML ont été déposés, mais vous n’êtes pas déclarés prêts. Vos ré
   <data name="DatabaseMigrationNativeTracking" xml:space="preserve"><value>Migration vers la version 5.0.16 de la base : import des données de suivi V1 dans les tables natives V2.</value></data>
   <data name="DatabaseMigrationItemReplay" xml:space="preserve"><value>Migration vers la version 5.0.17 de la base : file de réémission des notifications d’objets par joueur.</value></data>
   <data name="DatabaseMigrationLegacyTrackingRetirement" xml:space="preserve"><value>Migration vers la version 5.0.18 de la base : import final V1 et suppression transactionnelle des quatre anciennes tables de suivi.</value></data>
+  <data name="NotificationSettingsTitle" xml:space="preserve"><value>Notifications de la room</value></data>
+  <data name="NotificationSettingsDescription" xml:space="preserve"><value>Choisissez les joueurs, les catégories d’objets et les notifications d’indices pour cette room. Les filtres personnels peuvent restreindre davantage ces règles. Tous les objets et indices restent disponibles dans le suivi et les récapitulatifs.</value></data>
+  <data name="NotificationAudience" xml:space="preserve"><value>Joueurs annoncés</value></data>
+  <data name="NotificationAllPlayers" xml:space="preserve"><value>Tous les joueurs</value></data>
+  <data name="NotificationLinkedPlayers" xml:space="preserve"><value>Alias associés uniquement</value></data>
+  <data name="NotificationItems" xml:space="preserve"><value>Catégories d’objets</value></data>
+  <data name="NotificationAllItems" xml:space="preserve"><value>Tous les objets</value></data>
+  <data name="NotificationUsefulProgression" xml:space="preserve"><value>Utiles + progression</value></data>
+  <data name="NotificationProgressionOnly" xml:space="preserve"><value>Progression uniquement</value></data>
+  <data name="NotificationHints" xml:space="preserve"><value>Notifications d’indices</value></data>
+  <data name="NotificationSettingsSave" xml:space="preserve"><value>Enregistrer les notifications</value></data>
+  <data name="NotificationSettingsSaved" xml:space="preserve"><value>Réglages des notifications de la room mis à jour.</value></data>
+  <data name="NotificationSettingsInvalid" xml:space="preserve"><value>Réglages de notifications invalides ou room supprimée.</value></data>
 </root>

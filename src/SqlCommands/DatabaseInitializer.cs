@@ -388,7 +388,8 @@ CREATE INDEX IF NOT EXISTS idx_roompollstate_due
         using (var tracking = conn.CreateCommand())
         {
             tracking.CommandText = ArchipelagoSphereTracker.Tracking.Persistence.TrackingReadModel.Schema
-                + ArchipelagoSphereTracker.Tracking.Notifications.TrackingReplayService.Schema;
+                + ArchipelagoSphereTracker.Tracking.Notifications.TrackingReplayService.Schema
+                + ArchipelagoSphereTracker.Tracking.Notifications.RoomNotificationPreferencesStore.Schema;
             tracking.ExecuteNonQuery();
         }
 

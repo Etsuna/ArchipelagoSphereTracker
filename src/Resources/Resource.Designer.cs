@@ -9043,5 +9043,57 @@ namespace ArchipelagoSphereTracker.src.Resources {
             get { return ResourceManager.GetString("DatabaseMigrationLegacyTrackingRetirement", resourceCulture); }
         }
 
+        internal static string NotificationSettingsTitle {
+            get { return ResourceManager.GetString("NotificationSettingsTitle", resourceCulture); }
+        }
+
+        internal static string NotificationSettingsDescription {
+            get { return ResourceManager.GetString("NotificationSettingsDescription", resourceCulture); }
+        }
+
+        internal static string NotificationAudience {
+            get { return ResourceManager.GetString("NotificationAudience", resourceCulture); }
+        }
+
+        internal static string NotificationAllPlayers {
+            get { return ResourceManager.GetString("NotificationAllPlayers", resourceCulture); }
+        }
+
+        internal static string NotificationLinkedPlayers {
+            get { return ResourceManager.GetString("NotificationLinkedPlayers", resourceCulture); }
+        }
+
+        internal static string NotificationItems {
+            get { return ResourceManager.GetString("NotificationItems", resourceCulture); }
+        }
+
+        internal static string NotificationAllItems {
+            get { return ResourceManager.GetString("NotificationAllItems", resourceCulture); }
+        }
+
+        internal static string NotificationUsefulProgression {
+            get { return ResourceManager.GetString("NotificationUsefulProgression", resourceCulture); }
+        }
+
+        internal static string NotificationProgressionOnly {
+            get { return ResourceManager.GetString("NotificationProgressionOnly", resourceCulture); }
+        }
+
+        internal static string NotificationHints {
+            get { return ResourceManager.GetString("NotificationHints", resourceCulture); }
+        }
+
+        internal static string NotificationSettingsSave {
+            get { return ResourceManager.GetString("NotificationSettingsSave", resourceCulture); }
+        }
+
+        internal static string NotificationSettingsSaved {
+            get { return ResourceManager.GetString("NotificationSettingsSaved", resourceCulture); }
+        }
+
+        internal static string NotificationSettingsInvalid {
+            get { return ResourceManager.GetString("NotificationSettingsInvalid", resourceCulture); }
+        }
+
     }
 }

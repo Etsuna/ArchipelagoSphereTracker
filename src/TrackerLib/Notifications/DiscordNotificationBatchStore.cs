@@ -16,7 +16,8 @@ internal static class DiscordNotificationBatchStore
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public static async Task<DiscordNotificationBatch> GetOrCreateAsync(
-        TrackingDeliveryEnvelope delivery, NormalizedRoomSnapshot snapshot, bool silent, CancellationToken ct)
+        TrackingDeliveryEnvelope delivery, NormalizedRoomSnapshot snapshot, bool silent, CancellationToken ct,
+        RoomNotificationPreferences? preferences = null)
     {
         if (delivery.SnapshotId <= 0) throw new InvalidOperationException("Delivery snapshot is missing.");
         var replay = delivery.EventType == "ItemsReplayRequested"
@@ -69,7 +70,7 @@ internal static class DiscordNotificationBatchStore
             if (notification != null)
                 parts.Add(new(value.EventKey, notification, value.OccurredAtUtc));
         }
-        var rendered = await TrackingDataManager.RenderTrackingNotificationsAsync(fresh, snapshot, silent);
+        var rendered = await TrackingDataManager.RenderTrackingNotificationsAsync(fresh, snapshot, silent, preferences);
         foreach (var value in rendered)
         {
             var partKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{key}:{parts.Count}"))).ToLowerInvariant();

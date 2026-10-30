@@ -3,6 +3,7 @@ using System.Globalization;
 using Discord;
 using Discord.WebSocket;
 using ArchipelagoSphereTracker.src.Resources;
+using ArchipelagoSphereTracker.Tracking.Notifications;
 
 public enum AstUiScreen
 {
@@ -1069,13 +1070,13 @@ public static class AstCommandCenter
                 if (action == "delete-room-request")
                 {
                     Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, "delete-room", null, out session);
-                    await SetViewAsync(component, RenderManageMore(session)).ConfigureAwait(false);
+                    await SetViewAsync(component, await RenderManageMoreAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
                     return;
                 }
                 if (action == "cancel-delete-room")
                 {
                     Sessions.TrySetPending(session.Id, component.User.Id, guildId, sourceChannelId, null, null, out session);
-                    await SetViewAsync(component, RenderManageMore(session)).ConfigureAwait(false);
+                    await SetViewAsync(component, await RenderManageMoreAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
                     return;
                 }
                 var result = await AuditedAsync(session, deleteRoom, SecurityAuditAction.RoomDelete,
@@ -1623,7 +1624,7 @@ public static class AstCommandCenter
             return;
         }
 
-        if (action is "poll-policy" or "notifications")
+        if (action is "poll-policy" or "notifications" or "notification-audience" or "notification-items" or "notification-hints")
         {
             if (session.RoomChannelId is not { } selectedRoomId)
             {
@@ -1648,10 +1649,17 @@ public static class AstCommandCenter
                         () => ChannelsAndUrlsCommands.UpdatePollingPolicyFromWeb(parts[0], parts[1], roomText, guildText)).ConfigureAwait(false)
                     : (Resource.AstCenterInvalidPollingChoice);
             }
-            else
+            else if (action == "notifications")
             {
                 result = await AuditedAsync(session, selectedRoomId, SecurityAuditAction.RoomSettingsUpdate,
                     () => ChannelsAndUrlsCommands.UpdateSilentOptionFromWeb(selected, roomText, guildText)).ConfigureAwait(false);
+            }
+            else
+            {
+                result = await AuditedAsync(session, selectedRoomId, SecurityAuditAction.RoomSettingsUpdate, async () =>
+                    NotificationText(await RoomNotificationPreferencesStore.SetOptionAsync(guildText, roomText,
+                        action["notification-".Length..], selected).ConfigureAwait(false)
+                        ? "NotificationSettingsSaved" : "NotificationSettingsInvalid")).ConfigureAwait(false);
             }
             var refreshed = await RenderAsync(session, managerAuthorization).ConfigureAwait(false);
             await component.ModifyOriginalResponseAsync(properties =>
@@ -1878,7 +1886,7 @@ public static class AstCommandCenter
             AstUiScreen.InstanceAdministration => await RenderInstanceAdministrationAsync(session).ConfigureAwait(false),
             AstUiScreen.Help => RenderHelp(session),
             AstUiScreen.Polling => RenderPolling(session),
-            AstUiScreen.ManageMore => RenderManageMore(session),
+            AstUiScreen.ManageMore => await RenderManageMoreAsync(session).ConfigureAwait(false),
             AstUiScreen.ArchipelagoTools => RenderArchipelagoTools(session),
             AstUiScreen.Yaml => await RenderYamlAsync(session).ConfigureAwait(false),
             AstUiScreen.Templates => RenderTemplates(session),
@@ -2325,7 +2333,9 @@ public static class AstCommandCenter
         return new AstUiView(null, BaseEmbed("⚙️ Polling", Resource.AstCenterThisSettingIsAppliedDirectlyFromDiscord).Build(), components);
     }
 
-    private static AstUiView RenderManageMore(AstUiSession session)
+    private static string NotificationText(string key) => Resource.ResourceManager.GetString(key) ?? key;
+
+    internal static async Task<AstUiView> RenderManageMoreAsync(AstUiSession session)
     {
         if (session.PendingAction == "revoke-room-portal") return PortalRevokeConfirmation(session);
         if (session.PendingAction == "delete-room")
@@ -2337,20 +2347,39 @@ public static class AstCommandCenter
             return new AstUiView(null, BaseEmbed("⚠️ " + (Resource.AstCenterDeleteRoom),
                 Resource.AstCenterThisRemovesRoomTrackingAndItsLocalDataIt).Build(), confirmation);
         }
-        var notifications = new SelectMenuBuilder()
-            .WithCustomId(Id(session, "notifications"))
-            .WithPlaceholder(Resource.AstCenterNotificationMode)
-            .AddOption(Resource.AstCenterNormalNotifications, "false")
-            .AddOption(Resource.WebSilentMode, "true");
+        var preferences = session.RoomChannelId is { } roomId
+            ? await RoomNotificationPreferencesStore.ReadAsync(session.GuildId.ToString(CultureInfo.InvariantCulture),
+                roomId.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false)
+            : null;
+        if (preferences == null)
+            return new AstUiView(Resource.AstCenterNoRoomSelected, BaseEmbed(Resource.AstCenterAdvancedSettings, Resource.AstCenterNoRoomSelected).Build(),
+                new ComponentBuilder().WithButton(Resource.AstCenterBack, Id(session, "manage"), ButtonStyle.Primary).Build());
+        var audience = new SelectMenuBuilder().WithCustomId(Id(session, "notification-audience"))
+            .WithPlaceholder(NotificationText("NotificationAudience"))
+            .AddOption(NotificationText("NotificationAllPlayers"), "all", isDefault: !preferences.LinkedAliasesOnly)
+            .AddOption(NotificationText("NotificationLinkedPlayers"), "linked", isDefault: preferences.LinkedAliasesOnly);
+        var items = new SelectMenuBuilder().WithCustomId(Id(session, "notification-items"))
+            .WithPlaceholder(NotificationText("NotificationItems"))
+            .AddOption(NotificationText("NotificationAllItems"), "All", isDefault: preferences.ItemFilter == RoomItemNotificationFilter.All)
+            .AddOption(NotificationText("NotificationUsefulProgression"), "UsefulAndProgression",
+                isDefault: preferences.ItemFilter == RoomItemNotificationFilter.UsefulAndProgression)
+            .AddOption(NotificationText("NotificationProgressionOnly"), "ProgressionOnly",
+                isDefault: preferences.ItemFilter == RoomItemNotificationFilter.ProgressionOnly);
+        var hints = new SelectMenuBuilder().WithCustomId(Id(session, "notification-hints"))
+            .WithPlaceholder(NotificationText("NotificationHints"))
+            .AddOption(Resource.WebEnabled, "on", isDefault: preferences.HintsEnabled)
+            .AddOption(Resource.WebDisabled, "off", isDefault: !preferences.HintsEnabled);
         var components = new ComponentBuilder()
             .WithButton(Resource.AstCenterRoomPortal, Id(session, "room-portal"), ButtonStyle.Primary, row: 0)
             .WithButton(Resource.AstCenterRevokePortal, Id(session, "room-portal-revoke-request"), ButtonStyle.Secondary, row: 0)
             .WithButton(Resource.AstCenterDeleteRoom, Id(session, "delete-room-request"), ButtonStyle.Danger, row: 0)
             .WithButton(Resource.AstCenterBack, Id(session, "manage"), ButtonStyle.Primary, row: 0)
-            .WithSelectMenu(notifications, row: 1)
+            .WithSelectMenu(audience, row: 1)
+            .WithSelectMenu(items, row: 2)
+            .WithSelectMenu(hints, row: 3)
             .Build();
         return new AstUiView(null, BaseEmbed(Resource.AstCenterAdvancedSettings,
-            Resource.AstCenterTheSettingsBelowExecuteDirectlyInDiscord).Build(), components);
+            NotificationText("NotificationSettingsDescription")).Build(), components);
     }
 
     private static async Task<AstUiView> RenderSpoilerAnalysisAsync(AstUiSession session)
@@ -3345,5 +3374,5 @@ public static class AstCommandCenter
     private static Task SetErrorAsync(SocketMessageComponent component, string message)
         => component.ModifyOriginalResponseAsync(properties => properties.Content = Clamp(message));
 
-    private sealed record AstUiView(string? Content, Embed Embed, MessageComponent Components);
+    internal sealed record AstUiView(string? Content, Embed Embed, MessageComponent Components);
 }

@@ -885,6 +885,9 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
         return ArchipelagoSphereTracker.Tracking.Persistence.TrackingSnapshotRetention.InitializeAsync(ct);
     }
 
+    public static Task Migrate_5_0_20(CancellationToken ct = default)
+        => ArchipelagoSphereTracker.Tracking.Notifications.RoomNotificationPreferencesStore.InitializeAsync(ct);
+
     private static async Task<HashSet<string>> GetColumnsAsync(
         System.Data.Common.DbConnection connection,
         string tableName,

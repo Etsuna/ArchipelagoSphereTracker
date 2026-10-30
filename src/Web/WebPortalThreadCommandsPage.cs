@@ -158,15 +158,31 @@ public static class WebPortalThreadCommandsPage
     </section>
 
     <section class=""panel"">
-      <h2>{T("WebSilentMode")}</h2>
-      <form data-command=""update-silent-option"">
-        <label>{T("WebSilentMode")}
-          <select name=""silent"" required>
-            <option value=""true"">{T("WebEnabled")}</option>
-            <option value=""false"">{T("WebDisabled")}</option>
-          </select>
-        </label>
-        <button type=""submit"">{T("WebUpdateSilentMode")}</button>
+      <h2>{T("NotificationSettingsTitle")}</h2>
+      <p>{T("NotificationSettingsDescription")}</p>
+      <form id=""notification-preferences-form"" data-command=""update-notifications"">
+        <fieldset disabled style=""border:0;padding:0;margin:0"">
+          <label>{T("NotificationAudience")}
+            <select name=""audience"" required>
+              <option value=""all"">{T("NotificationAllPlayers")}</option>
+              <option value=""linked"">{T("NotificationLinkedPlayers")}</option>
+            </select>
+          </label>
+          <label>{T("NotificationItems")}
+            <select name=""itemFilter"" required>
+              <option value=""All"">{T("NotificationAllItems")}</option>
+              <option value=""UsefulAndProgression"">{T("NotificationUsefulProgression")}</option>
+              <option value=""ProgressionOnly"">{T("NotificationProgressionOnly")}</option>
+            </select>
+          </label>
+          <label>{T("NotificationHints")}
+            <select name=""hints"" required>
+              <option value=""on"">{T("WebEnabled")}</option>
+              <option value=""off"">{T("WebDisabled")}</option>
+            </select>
+          </label>
+          <button type=""submit"">{T("NotificationSettingsSave")}</button>
+        </fieldset>
         <div class=""result"" data-result></div>
       </form>
     </section>
@@ -405,6 +421,24 @@ public static class WebPortalThreadCommandsPage
       revokePortalResult.textContent = {Js("WebUnableToReachServer")};
     }}
   }});
+
+  const loadNotificationPreferences = async () => {{
+    const form = document.getElementById('notification-preferences-form');
+    if (!form) return;
+    const result = form.querySelector('[data-result]');
+    result.textContent = {Js("WebProcessing")};
+    try {{
+      const response = await fetch(securedApiBase + '/notification-preferences');
+      const settings = await parsePayload(response);
+      if (!response.ok || !settings || !['all', 'linked'].includes(settings.audience) ||
+          !['All', 'UsefulAndProgression', 'ProgressionOnly'].includes(settings.itemFilter) ||
+          !['on', 'off'].includes(settings.hints)) throw new Error('Settings unavailable');
+      ['audience', 'itemFilter', 'hints'].forEach(name => {{ form.elements.namedItem(name).value = settings[name]; }});
+      form.querySelector('fieldset').disabled = false;
+      result.textContent = '';
+    }} catch {{ result.textContent = {Js("WebUnableToReachServer")}; }}
+  }};
+  loadNotificationPreferences();
 
   document.querySelectorAll('form[data-command]').forEach((form) => {{
     form.addEventListener('submit', async (event) => {{
