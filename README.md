@@ -167,6 +167,9 @@ DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
 # Optionnel (défaut: en)
 LANGUAGE=fr
 
+# Optionnel (défaut : 100 joueurs par room, hors mode Big Async)
+MAX_PLAYER=100
+
 # Optionnel (défaut: true)
 ENABLE_WEB_PORTAL=true
 
@@ -661,6 +664,9 @@ DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
 
 # Optional (default: en)
 LANGUAGE=en
+
+# Optional (default: 100 players per room, outside Big Async mode)
+MAX_PLAYER=100
 
 # Optional (default: true)
 ENABLE_WEB_PORTAL=true

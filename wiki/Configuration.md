@@ -12,6 +12,7 @@ AST loads the `.env` file located next to the executable. Restart the process af
 |---|---:|---|
 | `DISCORD_TOKEN` | — | **Required.** Secret Discord bot token |
 | `LANGUAGE` | `en` | Interface language: `fr` or `en` |
+| `MAX_PLAYER` | `100` | Maximum players per tracked room outside Big Async mode. Positive integer; missing, empty or invalid values fall back to `100` |
 | `ENABLE_WEB_PORTAL` | `true` | Enables the built-in Web server |
 | `WEB_PORT` | `5199` | HTTP port listened to by AST |
 | `WEB_BASE_URL` | empty | Public URL used in generated links, for example `https://ast.example.com` |
@@ -150,6 +151,7 @@ AST charge le fichier `.env` placé à côté de l’exécutable. Redémarrez le
 |---|---:|---|
 | `DISCORD_TOKEN` | — | **Obligatoire.** Token secret du bot Discord |
 | `LANGUAGE` | `en` | Langue de l’interface : `fr` ou `en` |
+| `MAX_PLAYER` | `100` | Nombre maximal de joueurs par room suivie hors mode Big Async. Entier positif ; valeur absente, vide ou invalide : retour à `100` |
 | `ENABLE_WEB_PORTAL` | `true` | Active le serveur Web intégré |
 | `WEB_PORT` | `5199` | Port HTTP écouté par AST |
 | `WEB_BASE_URL` | vide | URL publique utilisée dans les liens, par exemple `https://ast.example.com` |

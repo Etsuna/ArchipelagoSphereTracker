@@ -8,6 +8,7 @@ public static class GuiConfigManager
     {
         ["DISCORD_TOKEN"] = "",
         ["LANGUAGE"] = "en",
+        ["MAX_PLAYER"] = "100",
         ["ENABLE_WEB_PORTAL"] = "true",
         ["WEB_PORT"] = "5199",
         ["WEB_BASE_URL"] = "",
