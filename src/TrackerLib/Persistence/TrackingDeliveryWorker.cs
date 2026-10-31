@@ -12,7 +12,42 @@ public sealed record TrackingDeliveryEnvelope(
     string DestinationId,
     int AttemptNumber,
     string SnapshotPayloadJson = "",
-    long SnapshotId = 0);
+    long SnapshotId = 0,
+    string SnapshotGuildId = "",
+    string SnapshotChannelId = "")
+{
+    internal async Task<string> ReadSnapshotPayloadAsync(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Other publishers can still receive an eagerly loaded snapshot.
+        if (SnapshotPayloadJson.Length > 0) return SnapshotPayloadJson;
+
+        await using var connection = await Db.OpenReadAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT snapshot.PayloadJson
+            FROM EventDeliveries delivery
+            JOIN TrackingEvents event ON event.Id = delivery.EventId
+            JOIN RoomSnapshots snapshot ON snapshot.Id = event.SnapshotId
+            WHERE delivery.Id = @Delivery AND delivery.Status = 'Delivering'
+              AND delivery.AttemptCount = @Attempt AND event.EventKey = @EventKey
+              AND delivery.DestinationType = @Type AND delivery.DestinationId = @Destination
+              AND snapshot.Id = @Snapshot AND snapshot.PayloadPruned = 0
+              AND snapshot.GuildId = @Guild AND snapshot.ChannelId = @Channel
+              AND event.GuildId = snapshot.GuildId AND event.ChannelId = snapshot.ChannelId;";
+        command.Parameters.AddWithValue("@Delivery", DeliveryId);
+        command.Parameters.AddWithValue("@Attempt", AttemptNumber);
+        command.Parameters.AddWithValue("@EventKey", EventKey);
+        command.Parameters.AddWithValue("@Type", DestinationType);
+        command.Parameters.AddWithValue("@Destination", DestinationId);
+        command.Parameters.AddWithValue("@Snapshot", SnapshotId);
+        command.Parameters.AddWithValue("@Guild", SnapshotGuildId);
+        command.Parameters.AddWithValue("@Channel", SnapshotChannelId);
+        return await command.ExecuteScalarAsync(ct) is string payload && payload.Length > 0
+            ? payload
+            : throw new InvalidOperationException("The claimed delivery's complete snapshot is unavailable.");
+    }
+}
 
 public sealed record TrackingPublicationResult(string? ExternalReceiptId = null);
 
@@ -121,8 +156,10 @@ public sealed class TrackingDeliveryWorker
             string eventKey;
             string eventType;
             string eventPayload;
-            string snapshotPayload;
+            var snapshotPayload = "";
             long snapshotId;
+            string snapshotGuildId;
+            string snapshotChannelId;
             using (var reader = await select.ExecuteReaderAsync(cancellationToken))
             {
                 if (!await reader.ReadAsync(cancellationToken))
@@ -134,12 +171,13 @@ public sealed class TrackingDeliveryWorker
                 destinationId = reader["DestinationId"].ToString() ?? string.Empty;
             }
 
-            // Still in the same write transaction: retention cannot prune this payload
-            // or another worker claim this delivery between selection and leasing.
+            // Validate snapshot metadata while claiming, without materializing its body.
+            // The unfinished delivery protects the body from retention until completion.
             select.Parameters.Clear();
             select.CommandText = @"
                 SELECT event.EventKey, event.EventType, event.PayloadJson,
-                       snapshot.PayloadJson AS SnapshotPayloadJson,
+                       event.GuildId AS EventGuildId, event.ChannelId AS EventChannelId,
+                       snapshot.GuildId, snapshot.ChannelId,
                        snapshot.PayloadPruned, snapshot.Id AS SnapshotId
                 FROM TrackingEvents event
                 JOIN RoomSnapshots snapshot ON snapshot.Id = event.SnapshotId
@@ -154,8 +192,21 @@ public sealed class TrackingDeliveryWorker
                 eventKey = reader["EventKey"].ToString() ?? string.Empty;
                 eventType = reader["EventType"].ToString() ?? string.Empty;
                 eventPayload = reader["PayloadJson"].ToString() ?? string.Empty;
-                snapshotPayload = reader["SnapshotPayloadJson"].ToString() ?? string.Empty;
                 snapshotId = Convert.ToInt64(reader["SnapshotId"], CultureInfo.InvariantCulture);
+                snapshotGuildId = reader["GuildId"].ToString() ?? string.Empty;
+                snapshotChannelId = reader["ChannelId"].ToString() ?? string.Empty;
+                if (snapshotGuildId != reader["EventGuildId"].ToString() ||
+                    snapshotChannelId != reader["EventChannelId"].ToString())
+                    throw new InvalidOperationException("Delivery event and snapshot scopes do not match.");
+            }
+
+            // Preserve the envelope contract for publishers outside Discord notifications.
+            if (destinationType != TrackingDestination.NotificationDestinationType)
+            {
+                select.CommandText = "SELECT PayloadJson FROM RoomSnapshots WHERE Id = @Snapshot;";
+                select.Parameters.Clear();
+                select.Parameters.AddWithValue("@Snapshot", snapshotId);
+                snapshotPayload = (string)(await select.ExecuteScalarAsync(cancellationToken))!;
             }
 
             using var update = connection.CreateCommand();
@@ -181,7 +232,9 @@ public sealed class TrackingDeliveryWorker
                 destinationId,
                 attemptCount + 1,
                 snapshotPayload,
-                snapshotId);
+                snapshotId,
+                snapshotGuildId,
+                snapshotChannelId);
         }, cancellationToken);
     }
 

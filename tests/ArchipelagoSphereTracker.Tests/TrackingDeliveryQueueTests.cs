@@ -99,7 +99,12 @@ public sealed class TrackingDeliveryQueueTests
         Assert.True(await worker.RunOnceAsync());
         Assert.Equal(new[] { "event-9434", "event-9435" }, publisher.Deliveries.Select(delivery => delivery.EventKey));
         Assert.All(publisher.Deliveries, delivery =>
-            Assert.Equal("c", TrackingSnapshotJson.Deserialize(delivery.SnapshotPayloadJson).ChannelId));
+        {
+            Assert.Empty(delivery.SnapshotPayloadJson);
+            Assert.Equal("g", delivery.SnapshotGuildId);
+            Assert.Equal("c", delivery.SnapshotChannelId);
+            Assert.Equal(1, delivery.SnapshotId);
+        });
         Assert.Equal(14583, await TestDatabaseScope.CountRowsAsync("EventDeliveries"));
     }
 

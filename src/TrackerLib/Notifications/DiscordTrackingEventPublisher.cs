@@ -38,14 +38,30 @@ public sealed class DiscordTrackingEventPublisher(ITrackingDiscordTransport tran
         if (delivery.DestinationType != TrackingDestination.NotificationDestinationType)
             throw new InvalidOperationException("Unexpected Discord delivery destination.");
         var trackingEvent = TrackingSnapshotJson.DeserializeEvent(delivery.EventType, delivery.EventPayloadJson);
-        var snapshot = TrackingSnapshotJson.Deserialize(delivery.SnapshotPayloadJson);
+
+        async Task<NormalizedRoomSnapshot> LoadSnapshotAsync(CancellationToken ct)
+        {
+            var snapshot = TrackingSnapshotJson.Deserialize(await delivery.ReadSnapshotPayloadAsync(ct));
+            if (snapshot.GuildId != trackingEvent.GuildId || snapshot.ChannelId != trackingEvent.ChannelId)
+                throw new InvalidOperationException("Notification scope does not match its snapshot.");
+            return snapshot;
+        }
+
         if (delivery.EventKey != trackingEvent.EventKey || delivery.DestinationId != trackingEvent.ChannelId ||
-            snapshot.GuildId != trackingEvent.GuildId || snapshot.ChannelId != trackingEvent.ChannelId)
+            (delivery.SnapshotGuildId.Length > 0 && delivery.SnapshotGuildId != trackingEvent.GuildId) ||
+            (delivery.SnapshotChannelId.Length > 0 && delivery.SnapshotChannelId != trackingEvent.ChannelId))
             throw new InvalidOperationException("Notification scope does not match its event.");
+
+        // Envelopes constructed outside the worker have no validated snapshot metadata.
+        // Keep their original scope validation even when a frozen batch exists.
+        NormalizedRoomSnapshot? validatedSnapshot = null;
+        if (delivery.SnapshotGuildId.Length == 0 || delivery.SnapshotChannelId.Length == 0)
+            validatedSnapshot = await LoadSnapshotAsync(cancellationToken);
 
         var preferences = await RoomNotificationPreferencesStore.ReadAsync(trackingEvent.GuildId, trackingEvent.ChannelId, cancellationToken);
         if (preferences == null) return new("skipped:room-removed");
-        var batch = await DiscordNotificationBatchStore.GetOrCreateAsync(delivery, snapshot, preferences.LinkedAliasesOnly,
+        var batch = await DiscordNotificationBatchStore.GetOrCreateAsync(delivery,
+            ct => validatedSnapshot != null ? Task.FromResult(validatedSnapshot) : LoadSnapshotAsync(ct), preferences.LinkedAliasesOnly,
             cancellationToken, preferences);
         if (batch.Parts.Count == 0) return new("skipped:notification-preferences");
         var receipts = new List<string>();

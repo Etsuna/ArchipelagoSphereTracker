@@ -32,6 +32,32 @@ des événements.
 
 ## Déploiement sur le VPS
 
+### Chargement des snapshots pour les notifications
+
+Le worker `DiscordNotificationV2` prend en charge une livraison avec les métadonnées
+du snapshot, sans lire son gros corps JSON. Il cherche d'abord le lot de messages
+déjà enregistré dans `DiscordNotificationBatches`. Un lot existant suffit pour
+reprendre ses pages et ses reçus ; seul un lot absent charge et désérialise le
+snapshot historique pour préparer les messages.
+
+Les identités de l'événement, du snapshot et de la destination restent vérifiées.
+Le chargement différé vérifie aussi le numéro de tentative courant. La livraison
+non terminée protège toujours son snapshot contre la purge. Les lots restent en
+SQLite, sans cache permanent en RAM ; les réémissions conservent leurs clés propres.
+Le polling Archipelago, la détection des changements et le contenu des messages
+restent inchangés. Les autres types de publishers gardent leur snapshot préchargé.
+
+Ce complément ne modifie pas le schéma : déployer le nouveau binaire et redémarrer
+normalement suffit, sans `--updatebdd` ni `VACUUM` supplémentaire.
+
+Les tests utilisent un snapshot de plus de 1 Mio et observent les accès SQL à sa
+colonne `PayloadJson` : 20 ou 100 livraisons partageant le même lot n'entraînent
+qu'une lecture du corps, même avec un nouveau worker pour chaque livraison.
+Ils couvrent aussi la reprise d'un groupe partiellement envoyé après perte de
+réponse, les contrôles de portée et la protection contre la purge. Ce résultat
+mesure le nombre de lectures évitées, pas un gain garanti de RAM résidente ou de
+débit Discord sur le VPS.
+
 ### Complément : accélérer une file de notifications déjà en attente
 
 La recherche de la première livraison non terminée par destination ne disposait

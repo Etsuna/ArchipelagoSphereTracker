@@ -16,7 +16,8 @@ internal static class DiscordNotificationBatchStore
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public static async Task<DiscordNotificationBatch> GetOrCreateAsync(
-        TrackingDeliveryEnvelope delivery, NormalizedRoomSnapshot snapshot, bool silent, CancellationToken ct,
+        TrackingDeliveryEnvelope delivery, Func<CancellationToken, Task<NormalizedRoomSnapshot>> loadSnapshot,
+        bool silent, CancellationToken ct,
         RoomNotificationPreferences? preferences = null)
     {
         if (delivery.SnapshotId <= 0) throw new InvalidOperationException("Delivery snapshot is missing.");
@@ -28,6 +29,9 @@ internal static class DiscordNotificationBatchStore
         var existing = await ReadAsync(key, ct);
         if (existing != null) return existing;
 
+        // Frozen messages and receipts are sufficient for retries and sibling deliveries.
+        // Only creating a new batch needs the complete historical room state.
+        var snapshot = await loadSnapshot(ct);
         var fresh = new List<NormalizedTrackingEvent>();
         var attempted = new List<NormalizedTrackingEvent>();
         if (replay != null)
