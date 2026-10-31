@@ -1,4 +1,4 @@
-# Correctif de croissance des snapshots V2 (base 5.0.19)
+# Optimisations du stockage V2 (base 5.0.21)
 
 La V2 enregistrait un état JSON complet à chaque changement, y compris les variations
 d'activité. Les événements référençaient ces snapshots sans limite de rétention.
@@ -31,6 +31,76 @@ restent enregistrés : ce correctif ne modifie pas la sémantique des empreintes
 des événements.
 
 ## Déploiement sur le VPS
+
+### Suppression des index de noms redondants (5.0.21)
+
+Les tables `DatapackageItems` et `DatapackageLocations` possèdent une contrainte
+`UNIQUE (GuildId, ChannelId, DatasetKey, Name)`. Son index automatique couvre déjà
+les recherches par nom ; les index explicites `IX_DatapackageItems_GCD_Name` et
+`IX_DatapackageLocations_GCD_Name` répétaient les mêmes colonnes.
+
+La migration **5.0.21** vérifie les contraintes équivalentes puis supprime seulement
+ces deux index supplémentaires dans une transaction. Les données, les index de
+clé primaire, les contraintes d'unicité et les clés étrangères sont conservés.
+La création d'une nouvelle base et les redémarrages ne recréent plus ces doublons.
+
+Déployer le nouveau binaire et démarrer normalement : le démarrage crée une
+sauvegarde préalable dans `extern/database-backups/`, puis applique la migration.
+On peut aussi exécuter `--updatebdd`, bot arrêté, avant le démarrage normal.
+Conserver la sauvegarde pour un éventuel retour à un ancien binaire.
+
+Le gain est de l'espace réutilisable dans SQLite et deux index de moins à maintenir
+lors des écritures de datapackages. Dans les anciens relevés du VPS, ces deux
+index représentaient environ 314 Mio ; le gain actuel dépend de leur taille au
+moment de la migration. Le fichier `.db` ne rétrécit pas nécessairement : les
+pages deviennent réutilisables, sans `VACUUM` automatique. Il ne s'agit pas d'une
+économie équivalente garantie en RAM.
+
+### Mises à jour ciblées de l'inventaire
+
+Après une première observation complète, `TrackingItems` est mis à jour par
+différence avec le snapshot précédent : insertion des nouveaux objets, mise à
+jour des champs affichés modifiés, suppression des identités disparues. Les
+objets inchangés ne sont pas réécrits. Les deux inventaires normalisés étant déjà
+triés par identité, la comparaison se fait en un passage sans recopier les
+inventaires dans des dictionnaires. Les commandes SQL sont réutilisées.
+
+Les changements des noms canoniques des joueurs mettent à jour les lignes
+concernées, sans nouvelle notification d'objet. Une section `Items` absente garde
+l'inventaire précédent ; une section complète et vide le supprime réellement.
+L'initialisation, la bascule vers les notifications et les anciens inventaires
+incomplets conservent un remplacement complet pour éliminer les lignes provisoires.
+
+Les écritures restent dans la même transaction que le snapshot, les événements,
+les récaps et les livraisons. Il n'y a pas de changement de schéma ni de requête
+Archipelago supplémentaire. Les hints et les états des joueurs gardent leur
+fonctionnement actuel.
+
+Un test avec 10 000 objets puis un ajout compte les écritures via des triggers
+SQLite : une insertion et aucune mise à jour/suppression, au lieu de supprimer
+10 000 lignes puis d'en insérer 10 001. Cette mesure concerne la projection
+`TrackingItems`, pas les autres écritures du poll ni son temps total.
+
+### Calcul de l'empreinte pendant la persistance
+
+`TrackingV2Store` calcule l'empreinte une seule fois après la consolidation des
+sections partielles et l'éventuelle bascule vers la première référence de
+notifications. La comparaison avec l'état courant, l'insertion du snapshot et la
+mise à jour de la room réutilisent cette même valeur locale. Pour un changement
+sur une room déjà initialisée, cela remplace trois sérialisations et calculs
+SHA-256 par un seul ; pour une première référence, deux deviennent un. Un état
+inchangé nécessitait déjà un seul calcul.
+
+Le format de l'empreinte et les règles de détection restent identiques. Il n'y a
+pas de cache global ni de changement de schéma. Ce gain concerne le calcul de
+l'empreinte dans la persistance, pas l'ensemble du traitement d'un poll.
+
+Une mesure locale en Release sur un snapshot synthétique de 5 000 objets,
+30 itérations et la médiane de trois passages compare les trois calculs à leur
+réutilisation : environ 301 ms et 147,6 Mio alloués cumulativement avant, contre
+95 ms et 49,2 Mio après. Ces allocations cumulées ne représentent pas la RAM
+résidente. La mesure isole le hachage et exclut SQLite, le diff et les appels
+réseau ; elle ne prédit pas le gain global sur le VPS.
 
 ### Chargement des snapshots pour les notifications
 

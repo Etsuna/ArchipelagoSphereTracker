@@ -146,16 +146,7 @@ CREATE TABLE IF NOT EXISTS TrackingReadModelMigrations (Version INTEGER PRIMARY 
         if (snapshot.IsComplete(SnapshotSections.Items) && (slotsChanged || previous == null ||
             !previous.IsComplete(SnapshotSections.Items) || !previous.Items.SequenceEqual(snapshot.Items)))
         {
-            await ClearAsync(connection, "TrackingItems", snapshot, ct);
-            foreach (var item in snapshot.Items)
-                await InsertAsync(connection, "TrackingItems", snapshot, ct,
-                    ("Identity", NormalizedRoomSnapshot.ItemIdentity(item)),
-                    ("FinderSlot", item.FinderSlot), ("ReceiverSlot", item.ReceiverSlot),
-                    ("ItemId", item.ItemId), ("LocationId", item.LocationId),
-                    ("Finder", CanonicalName(snapshot, item.FinderSlot, item.FinderDisplayName)),
-                    ("Receiver", CanonicalName(snapshot, item.ReceiverSlot, item.ReceiverDisplayName)),
-                    ("Item", item.ItemDisplayName), ("Location", item.LocationDisplayName),
-                    ("Game", item.FinderGame), ("Flag", item.Flags.ToString(CultureInfo.InvariantCulture)));
+            await ApplyItemsAsync(connection, snapshot, previous, ct);
         }
         if (snapshot.IsComplete(SnapshotSections.Hints) && (slotsChanged || previous == null ||
             !previous.IsComplete(SnapshotSections.Hints) || !previous.Hints.SequenceEqual(snapshot.Hints)))
@@ -209,6 +200,98 @@ CREATE TABLE IF NOT EXISTS TrackingReadModelMigrations (Version INTEGER PRIMARY 
                     ("GoalCompleted", snapshot.IsComplete(SnapshotSections.Goals)
                         ? (snapshot.Goals.Any(goal => goal.Slot == player.Slot && goal.Completed) ? 1 : 0) : stored?.Goal ?? 0));
             }
+        }
+    }
+
+    private static async Task ApplyItemsAsync(SQLiteConnection connection, NormalizedRoomSnapshot snapshot,
+        NormalizedRoomSnapshot? previous, CancellationToken ct)
+    {
+        var names = snapshot.Slots.ToDictionary(slot => slot.Slot, slot => slot.PlayerName);
+        using var upsert = connection.CreateCommand();
+        upsert.CommandText = @"
+            INSERT INTO TrackingItems
+                (GuildId,ChannelId,Identity,FinderSlot,ReceiverSlot,ItemId,LocationId,Finder,Receiver,Item,Location,Game,Flag)
+            VALUES (@G,@C,@Identity,@FinderSlot,@ReceiverSlot,@ItemId,@LocationId,@Finder,@Receiver,@Item,@Location,@Game,@Flag)
+            ON CONFLICT(GuildId,ChannelId,Identity) DO UPDATE SET
+                FinderSlot=excluded.FinderSlot, ReceiverSlot=excluded.ReceiverSlot,
+                ItemId=excluded.ItemId, LocationId=excluded.LocationId,
+                Finder=excluded.Finder, Receiver=excluded.Receiver, Item=excluded.Item,
+                Location=excluded.Location, Game=excluded.Game, Flag=excluded.Flag;";
+        upsert.Parameters.AddWithValue("@G", snapshot.GuildId);
+        upsert.Parameters.AddWithValue("@C", snapshot.ChannelId);
+        foreach (var name in new[] { "@Identity", "@Finder", "@Receiver", "@Item", "@Location", "@Game", "@Flag" })
+            upsert.Parameters.Add(name, System.Data.DbType.String);
+        foreach (var name in new[] { "@FinderSlot", "@ReceiverSlot", "@ItemId", "@LocationId" })
+            upsert.Parameters.Add(name, System.Data.DbType.Int64);
+
+        async Task UpsertAsync(NormalizedItemTransfer item, string identity)
+        {
+            upsert.Parameters["@Identity"].Value = identity;
+            upsert.Parameters["@FinderSlot"].Value = item.FinderSlot;
+            upsert.Parameters["@ReceiverSlot"].Value = item.ReceiverSlot;
+            upsert.Parameters["@ItemId"].Value = item.ItemId;
+            upsert.Parameters["@LocationId"].Value = item.LocationId;
+            upsert.Parameters["@Finder"].Value = (object?)(names.GetValueOrDefault(item.FinderSlot) ?? item.FinderDisplayName) ?? DBNull.Value;
+            upsert.Parameters["@Receiver"].Value = (object?)(names.GetValueOrDefault(item.ReceiverSlot) ?? item.ReceiverDisplayName) ?? DBNull.Value;
+            upsert.Parameters["@Item"].Value = (object?)item.ItemDisplayName ?? DBNull.Value;
+            upsert.Parameters["@Location"].Value = (object?)item.LocationDisplayName ?? DBNull.Value;
+            upsert.Parameters["@Game"].Value = (object?)item.FinderGame ?? DBNull.Value;
+            upsert.Parameters["@Flag"].Value = item.Flags.ToString(CultureInfo.InvariantCulture);
+            await upsert.ExecuteNonQueryAsync(ct);
+        }
+
+        // Without an authoritative previous inventory (first baseline, cutover or
+        // migration), replace provisional rows, including legacy identities.
+        if (previous == null || !previous.IsComplete(SnapshotSections.Items))
+        {
+            await ClearAsync(connection, "TrackingItems", snapshot, ct);
+            foreach (var item in snapshot.Items)
+                await UpsertAsync(item, NormalizedRoomSnapshot.ItemIdentity(item));
+            return;
+        }
+
+        using var delete = connection.CreateCommand();
+        delete.CommandText = "DELETE FROM TrackingItems WHERE GuildId=@G AND ChannelId=@C AND Identity=@Identity;";
+        delete.Parameters.AddWithValue("@G", snapshot.GuildId);
+        delete.Parameters.AddWithValue("@C", snapshot.ChannelId);
+        delete.Parameters.Add("@Identity", System.Data.DbType.String);
+        var oldNames = previous.Slots.ToDictionary(slot => slot.Slot, slot => slot.PlayerName);
+
+        bool SameProjection(NormalizedItemTransfer old, NormalizedItemTransfer item)
+            // Equal identities already guarantee the four raw IDs/slots match.
+            // Only compare stored fields, including renamed canonical player names.
+            => old.Flags == item.Flags && old.ItemDisplayName == item.ItemDisplayName &&
+               old.LocationDisplayName == item.LocationDisplayName && old.FinderGame == item.FinderGame &&
+               (oldNames.GetValueOrDefault(item.FinderSlot) ?? old.FinderDisplayName) ==
+                   (names.GetValueOrDefault(item.FinderSlot) ?? item.FinderDisplayName) &&
+               (oldNames.GetValueOrDefault(item.ReceiverSlot) ?? old.ReceiverDisplayName) ==
+                   (names.GetValueOrDefault(item.ReceiverSlot) ?? item.ReceiverDisplayName);
+
+        // Normalized snapshots are unique and ordinally sorted by ItemIdentity.
+        // Merge them in one pass without copying the complete inventories into maps.
+        var oldIndex = 0;
+        var newIndex = 0;
+        var oldIdentity = previous.Items.Length > 0 ? NormalizedRoomSnapshot.ItemIdentity(previous.Items[0]) : null;
+        var newIdentity = snapshot.Items.Length > 0 ? NormalizedRoomSnapshot.ItemIdentity(snapshot.Items[0]) : null;
+        while (oldIdentity != null || newIdentity != null)
+        {
+            ct.ThrowIfCancellationRequested();
+            var comparison = oldIdentity == null ? 1 : newIdentity == null ? -1 : string.CompareOrdinal(oldIdentity, newIdentity);
+            if (comparison < 0)
+            {
+                delete.Parameters["@Identity"].Value = oldIdentity!;
+                await delete.ExecuteNonQueryAsync(ct);
+            }
+            else
+            {
+                var item = snapshot.Items[newIndex];
+                if (comparison > 0 || !SameProjection(previous.Items[oldIndex], item))
+                    await UpsertAsync(item, newIdentity!);
+            }
+            if (comparison <= 0)
+                oldIdentity = ++oldIndex < previous.Items.Length ? NormalizedRoomSnapshot.ItemIdentity(previous.Items[oldIndex]) : null;
+            if (comparison >= 0)
+                newIdentity = ++newIndex < snapshot.Items.Length ? NormalizedRoomSnapshot.ItemIdentity(snapshot.Items[newIndex]) : null;
         }
     }
 

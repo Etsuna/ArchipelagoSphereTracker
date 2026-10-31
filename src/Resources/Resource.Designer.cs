@@ -9043,6 +9043,22 @@ namespace ArchipelagoSphereTracker.src.Resources {
             get { return ResourceManager.GetString("DatabaseMigrationLegacyTrackingRetirement", resourceCulture); }
         }
 
+        internal static string DatabaseMigrationSnapshotRetention {
+            get { return ResourceManager.GetString("DatabaseMigrationSnapshotRetention", resourceCulture); }
+        }
+
+        internal static string DatabaseMigrationNotificationPreferences {
+            get { return ResourceManager.GetString("DatabaseMigrationNotificationPreferences", resourceCulture); }
+        }
+
+        internal static string DatabaseMigrationDatapackageIndexes {
+            get { return ResourceManager.GetString("DatabaseMigrationDatapackageIndexes", resourceCulture); }
+        }
+
+        internal static string DatabaseMigrationUnsupportedVersion {
+            get { return ResourceManager.GetString("DatabaseMigrationUnsupportedVersion", resourceCulture); }
+        }
+
         internal static string NotificationSettingsTitle {
             get { return ResourceManager.GetString("NotificationSettingsTitle", resourceCulture); }
         }

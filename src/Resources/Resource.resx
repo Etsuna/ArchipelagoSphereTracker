@@ -3269,6 +3269,10 @@ Your YAML files have been uploaded, but you are not marked ready. Are your setti
   <data name="DatabaseMigrationNativeTracking" xml:space="preserve"><value>Migrating to DB version 5.0.16: importing V1 tracking data into native V2 tables.</value></data>
   <data name="DatabaseMigrationItemReplay" xml:space="preserve"><value>Migrating to DB version 5.0.17: per-player item notification replay queue.</value></data>
   <data name="DatabaseMigrationLegacyTrackingRetirement" xml:space="preserve"><value>Migrating to DB version 5.0.18: final V1 import and transactional removal of the four legacy tracking tables.</value></data>
+  <data name="DatabaseMigrationSnapshotRetention" xml:space="preserve"><value>Migrating to DB version 5.0.19: bounded historical snapshot payload retention.</value></data>
+  <data name="DatabaseMigrationNotificationPreferences" xml:space="preserve"><value>Migrating to DB version 5.0.20: per-room notification preferences and item category filters.</value></data>
+  <data name="DatabaseMigrationDatapackageIndexes" xml:space="preserve"><value>Migrating to DB version 5.0.21: removing redundant datapackage name indexes.</value></data>
+  <data name="DatabaseMigrationUnsupportedVersion" xml:space="preserve"><value>This build cannot migrate database version '{0}' to '{1}'. No migration has been started.</value></data>
   <data name="NotificationSettingsTitle" xml:space="preserve"><value>Room notifications</value></data>
   <data name="NotificationSettingsDescription" xml:space="preserve"><value>Choose the players, item categories and hint notifications for this room. Personal item filters can narrow these rules further. All items and hints remain available in the tracker and recaps.</value></data>
   <data name="NotificationAudience" xml:space="preserve"><value>Players announced</value></data>

@@ -239,8 +239,6 @@ CREATE TABLE IF NOT EXISTS DatapackageItems(
     PRIMARY KEY (GuildId, ChannelId, DatasetKey, Id),
     UNIQUE (GuildId, ChannelId, DatasetKey, Name)
 );
-CREATE INDEX IF NOT EXISTS IX_DatapackageItems_GCD_Name 
-    ON DatapackageItems(GuildId, ChannelId, DatasetKey, Name);
 
 CREATE TABLE IF NOT EXISTS DatapackageItemGroups(
     GuildId    TEXT NOT NULL,
@@ -264,8 +262,6 @@ CREATE TABLE IF NOT EXISTS DatapackageLocations(
     PRIMARY KEY (GuildId, ChannelId, DatasetKey, Id),
     UNIQUE (GuildId, ChannelId, DatasetKey, Name)
 );
-CREATE INDEX IF NOT EXISTS IX_DatapackageLocations_GCD_Name 
-    ON DatapackageLocations(GuildId, ChannelId, DatasetKey, Name);
 
 CREATE TABLE IF NOT EXISTS DatapackageLocationGroups(
     GuildId    TEXT NOT NULL,

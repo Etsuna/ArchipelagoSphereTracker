@@ -881,12 +881,52 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
 
     public static Task Migrate_5_0_19(CancellationToken ct = default)
     {
-        Console.WriteLine("Migrating to DB version 5.0.19: bounded historical snapshot payload retention.");
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationSnapshotRetention);
         return ArchipelagoSphereTracker.Tracking.Persistence.TrackingSnapshotRetention.InitializeAsync(ct);
     }
 
     public static Task Migrate_5_0_20(CancellationToken ct = default)
-        => ArchipelagoSphereTracker.Tracking.Notifications.RoomNotificationPreferencesStore.InitializeAsync(ct);
+    {
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationNotificationPreferences);
+        return ArchipelagoSphereTracker.Tracking.Notifications.RoomNotificationPreferencesStore.InitializeAsync(ct);
+    }
+
+    public static Task Migrate_5_0_21(CancellationToken ct = default)
+    {
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationDatapackageIndexes);
+        return Db.WriteAsync(async connection =>
+        {
+            using var command = connection.CreateCommand();
+            // Only remove the extra indexes after confirming that both UNIQUE
+            // constraints still provide equivalent ordered, binary name indexes.
+            foreach (var table in new[] { "DatapackageItems", "DatapackageLocations" })
+            {
+                command.CommandText = @"
+                    SELECT EXISTS (
+                        SELECT 1 FROM pragma_index_list(@Table) AS candidate
+                        WHERE candidate.origin = 'u' AND candidate.[unique] = 1
+                          AND (SELECT group_concat(name, ',') FROM (
+                              SELECT name FROM pragma_index_xinfo(candidate.name)
+                              WHERE [key] = 1 ORDER BY seqno
+                          )) = 'GuildId,ChannelId,DatasetKey,Name'
+                          AND NOT EXISTS (
+                              SELECT 1 FROM pragma_index_xinfo(candidate.name)
+                              WHERE [key] = 1 AND (coll <> 'BINARY' OR [desc] <> 0)
+                          )
+                    );";
+                command.Parameters.Clear();
+                command.Parameters.AddWithValue("@Table", table);
+                if (Convert.ToInt32(await command.ExecuteScalarAsync(ct)) != 1)
+                    throw new InvalidOperationException($"Cannot remove the redundant name index: {table} has no equivalent UNIQUE constraint.");
+            }
+            command.Parameters.Clear();
+            command.CommandText = @"
+                DROP INDEX IF EXISTS IX_DatapackageItems_GCD_Name;
+                DROP INDEX IF EXISTS IX_DatapackageLocations_GCD_Name;";
+            await command.ExecuteNonQueryAsync(ct);
+            return 0;
+        }, ct);
+    }
 
     private static async Task<HashSet<string>> GetColumnsAsync(
         System.Data.Common.DbConnection connection,

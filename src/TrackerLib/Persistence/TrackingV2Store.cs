@@ -88,8 +88,11 @@ public sealed class TrackingV2Store
                 if (notificationBaseline) effective = snapshot;
             }
 
+            // Consolidation and notification cutover can replace the input snapshot.
+            // Hash the final state once, then reuse the same value for persistence.
+            var contentHash = effective.ContentHash;
             if (!notificationBaseline && room.BaselineInitialized &&
-                string.Equals(room.CurrentSnapshotHash, effective.ContentHash, StringComparison.Ordinal))
+                string.Equals(room.CurrentSnapshotHash, contentHash, StringComparison.Ordinal))
             {
                 await TouchRoomAsync(connection, effective, now, cancellationToken);
                 return new TrackingV2ApplyResult(
@@ -100,7 +103,7 @@ public sealed class TrackingV2Store
                     DeliveriesCreated: 0);
             }
 
-            var snapshotId = await InsertSnapshotAsync(connection, effective, cancellationToken);
+            var snapshotId = await InsertSnapshotAsync(connection, effective, contentHash, cancellationToken);
             await TrackingReadModel.ApplyAsync(connection, effective, cancellationToken, notificationBaseline ? null : previous);
             await ObserveAsync(TrackingV2FaultPoint.SnapshotInserted, cancellationToken);
 
@@ -148,7 +151,7 @@ public sealed class TrackingV2Store
                 }
             }
 
-            await SetCurrentSnapshotAsync(connection, effective, now, cancellationToken);
+            await SetCurrentSnapshotAsync(connection, effective, contentHash, now, cancellationToken);
             if (recordedEvents.OfType<ItemReceivedEvent>().Any())
             {
                 using var activity = connection.CreateCommand();
@@ -307,6 +310,7 @@ public sealed class TrackingV2Store
     private static async Task<long> InsertSnapshotAsync(
         SQLiteConnection connection,
         NormalizedRoomSnapshot snapshot,
+        string contentHash,
         CancellationToken cancellationToken)
     {
         using var command = connection.CreateCommand();
@@ -320,7 +324,7 @@ public sealed class TrackingV2Store
             SELECT last_insert_rowid();";
         command.Parameters.AddWithValue("@GuildId", snapshot.GuildId);
         command.Parameters.AddWithValue("@ChannelId", snapshot.ChannelId);
-        command.Parameters.AddWithValue("@ContentHash", snapshot.ContentHash);
+        command.Parameters.AddWithValue("@ContentHash", contentHash);
         command.Parameters.AddWithValue("@CapturedAtUtc", Format(snapshot.CapturedAtUtc));
         command.Parameters.AddWithValue(
             "@LastSuccessfulSyncUtc",
@@ -387,6 +391,7 @@ public sealed class TrackingV2Store
     private static async Task SetCurrentSnapshotAsync(
         SQLiteConnection connection,
         NormalizedRoomSnapshot snapshot,
+        string contentHash,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
@@ -399,7 +404,7 @@ public sealed class TrackingV2Store
                 IsBaselineInitialized = 1
             WHERE GuildId = @GuildId AND ChannelId = @ChannelId;";
         AddRoomParameters(command, snapshot, now);
-        command.Parameters.AddWithValue("@CurrentSnapshotHash", snapshot.ContentHash);
+        command.Parameters.AddWithValue("@CurrentSnapshotHash", contentHash);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 

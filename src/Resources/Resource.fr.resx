@@ -2831,6 +2831,10 @@ Vos YAML ont été déposés, mais vous n’êtes pas déclarés prêts. Vos ré
   <data name="DatabaseMigrationNativeTracking" xml:space="preserve"><value>Migration vers la version 5.0.16 de la base : import des données de suivi V1 dans les tables natives V2.</value></data>
   <data name="DatabaseMigrationItemReplay" xml:space="preserve"><value>Migration vers la version 5.0.17 de la base : file de réémission des notifications d’objets par joueur.</value></data>
   <data name="DatabaseMigrationLegacyTrackingRetirement" xml:space="preserve"><value>Migration vers la version 5.0.18 de la base : import final V1 et suppression transactionnelle des quatre anciennes tables de suivi.</value></data>
+  <data name="DatabaseMigrationSnapshotRetention" xml:space="preserve"><value>Migration vers la version 5.0.19 de la base : rétention limitée des données complètes des anciens snapshots.</value></data>
+  <data name="DatabaseMigrationNotificationPreferences" xml:space="preserve"><value>Migration vers la version 5.0.20 de la base : préférences de notification par salon et filtres par catégorie d’objets.</value></data>
+  <data name="DatabaseMigrationDatapackageIndexes" xml:space="preserve"><value>Migration vers la version 5.0.21 de la base : suppression des index de noms redondants des datapackages.</value></data>
+  <data name="DatabaseMigrationUnsupportedVersion" xml:space="preserve"><value>Cette version du programme ne peut pas migrer la base de la version « {0} » vers « {1} ». Aucune migration n’a été lancée.</value></data>
   <data name="NotificationSettingsTitle" xml:space="preserve"><value>Notifications de la room</value></data>
   <data name="NotificationSettingsDescription" xml:space="preserve"><value>Choisissez les joueurs, les catégories d’objets et les notifications d’indices pour cette room. Les filtres personnels peuvent restreindre davantage ces règles. Tous les objets et indices restent disponibles dans le suivi et les récapitulatifs.</value></data>
   <data name="NotificationAudience" xml:space="preserve"><value>Joueurs annoncés</value></data>
