@@ -215,9 +215,9 @@ public static partial class TrackingDataManager
         // Individual rendering is retained verbatim for pre-batch send recovery.
         var text = legacy
             ? string.Format(Resource.TDMGoalComplete, SafeNotificationLabel(slot.Alias), SafeNotificationLabel(slot.Game))
-            : Resource.TrackingGoalTitle + "\n\n>>> " + string.Format(Resource.TrackingGoalDescription,
+            : Resource.TrackingGoalTitle + " @everyone\n>>> " + string.Format(Resource.TrackingGoalDescription,
                 StyledNotificationLabel(slot.Alias), StyledNotificationLabel(slot.Game));
-        return TrackingDiscordNotification.Create(text, []);
+        return TrackingDiscordNotification.Create(text, []) with { MentionEveryone = !legacy };
     }
 
     private static async Task<TrackingDiscordNotification?> RenderHintNotificationAsync(

@@ -10,6 +10,8 @@ namespace ArchipelagoSphereTracker.Tracking.Notifications;
 
 public sealed record TrackingDiscordNotification(string Content, IReadOnlyList<ulong> UserIds)
 {
+    public bool MentionEveryone { get; init; }
+
     public static TrackingDiscordNotification Create(string content, IEnumerable<string> userIds)
     {
         if (content.Length > 1900)
@@ -172,7 +174,11 @@ public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
         {
             var channel = await _resolve(guildId, channelId, cancellationToken);
             var message = await channel.SendMessageAsync(notification.Content,
-                allowedMentions: new AllowedMentions { UserIds = notification.UserIds.ToList() },
+                allowedMentions: new AllowedMentions
+                {
+                    AllowedTypes = notification.MentionEveryone ? AllowedMentionTypes.Everyone : null,
+                    UserIds = notification.UserIds.ToList()
+                },
                 options: Options(cancellationToken));
             return message.Id.ToString(CultureInfo.InvariantCulture);
         }

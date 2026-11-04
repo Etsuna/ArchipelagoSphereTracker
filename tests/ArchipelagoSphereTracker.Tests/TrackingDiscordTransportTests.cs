@@ -35,8 +35,10 @@ public sealed class TrackingDiscordTransportTests
         Assert.Equal(new[] { SnowflakeUtils.ToSnowflake(observed.AddSeconds(-5)), firstId + 100 }, cursors);
     }
 
-    [Fact]
-    public async Task Send_uses_plain_grouped_text_without_embed_or_visible_identifiers()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Send_uses_plain_text_and_only_allows_everyone_when_requested(bool mentionEveryone)
     {
         var called = false;
         using var cts = new CancellationTokenSource();
@@ -50,12 +52,16 @@ public sealed class TrackingDiscordTransportTests
             Assert.Equal(cts.Token, options.CancelToken);
             Assert.Equal(RetryMode.RetryRatelimit, options.RetryMode);
             var mentions = Assert.IsType<AllowedMentions>(args[4]);
-            Assert.Null(mentions.AllowedTypes); // never parse @everyone or arbitrary user mentions
+            Assert.Equal(mentionEveryone ? AllowedMentionTypes.Everyone : (AllowedMentionTypes?)null,
+                mentions.AllowedTypes);
             Assert.Equal(new[] { 111UL }, mentions.UserIds);
             return Task.FromResult(Proxy<IUserMessage>((_, _) => 42UL));
         });
         var transport = new DiscordTrackingTransport((_, _, _) => Task.FromResult(channel), () => 123);
-        var notification = TrackingDiscordNotification.Create("test <@111> @everyone", ["111", "111", "invalid"]);
+        var notification = TrackingDiscordNotification.Create("test <@111> @everyone", ["111", "111", "invalid"])
+            with { MentionEveryone = mentionEveryone };
+        notification = System.Text.Json.JsonSerializer.Deserialize<TrackingDiscordNotification>(
+            System.Text.Json.JsonSerializer.Serialize(notification))!;
         Assert.Equal("42", await transport.SendAsync("1", "2", Key, notification, cts.Token));
         Assert.True(called);
     }
@@ -140,6 +146,7 @@ public sealed class TrackingDiscordTransportTests
     {
         var notification = System.Text.Json.JsonSerializer.Deserialize<TrackingDiscordNotification>(
             """{"Content":"original text","UserIds":[111],"Banner":{"ThemeId":"halloween","Title":"old title","Body":"old body","Language":"en"}}""")!;
+        Assert.False(notification.MentionEveryone);
         var channel = Proxy<IMessageChannel>((method, args) =>
         {
             Assert.Equal("SendMessageAsync", method.Name);

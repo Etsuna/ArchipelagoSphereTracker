@@ -162,16 +162,20 @@ public sealed class TrackingV2NotificationTests : IDisposable
                 Assert.Equal(2, value.Notification.Content.Split('\n').Length);
                 Assert.DoesNotContain("\n\n", value.Notification.Content);
                 Assert.DoesNotContain("↳", value.Notification.Content);
+                Assert.DoesNotContain("@everyone", value.Notification.Content);
+                Assert.False(value.Notification.MentionEveryone);
             });
             var goal = messages[3].Notification;
             Assert.Contains(goalTitle, goal.Content);
             Assert.Contains("**Alice**", goal.Content);
             Assert.Contains("🎮 *GameA*", goal.Content);
             Assert.Empty(goal.UserIds);
+            Assert.Contains("** @everyone\n>>> ", goal.Content);
+            Assert.DoesNotContain("\n\n", goal.Content);
+            Assert.True(goal.MentionEveryone);
             Assert.All(messages, value =>
             {
                 Assert.Contains(">>> ", value.Notification.Content);
-                Assert.DoesNotContain("@everyone", value.Notification.Content);
             });
         }
         finally { CultureInfo.CurrentUICulture = previousCulture; }
