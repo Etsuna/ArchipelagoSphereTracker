@@ -3231,10 +3231,12 @@ URL: `{6}`
   <data name="PrepArchiveTooLarge" xml:space="preserve"><value>Generation complete! The ZIP exceeds Discord’s upload limit. The organizer and registered players can download it through the preparation portal below.</value></data>
   <data name="PrepYamlReceived" xml:space="preserve"><value>{0} added to your preparation files. Archipelago validation is queued; the player list and your YAML files update automatically.</value></data>
   <data name="PrepRemind" xml:space="preserve"><value>Remind unready players</value></data>
-  <data name="PrepReminderEmpty" xml:space="preserve"><value>No registered player with a YAML file is waiting to mark themselves ready.</value></data>
+  <data name="PrepReminderEmpty" xml:space="preserve"><value>All registered players are ready; there is nobody to remind.</value></data>
   <data name="PrepReminderCooldown" xml:space="preserve"><value>Please wait five minutes between readiness reminders.</value></data>
   <data name="PrepReminderMessage" xml:space="preserve"><value>{0}
 Your YAML files have been uploaded, but you are not marked ready. Are your settings final? Please select Ready when they are, or let the organizer know you are still preparing.</value></data>
+  <data name="PrepReminderMissingYamlMessage" xml:space="preserve"><value>{0}
+You are registered, but you have not uploaded any YAML files yet. Please upload your YAML files or let the organizer know if you no longer wish to participate.</value></data>
   <data name="PrepDeletedCancelled" xml:space="preserve"><value>Preparation cancelled. Its registrations, YAML files, history and working files have been deleted. A new preparation can be created in this channel.</value></data>
   <data name="PrepDeletedGenerated" xml:space="preserve"><value>Generation complete. The ZIP or its download link was posted in this channel. All preparation data has been deleted; this channel is available for a new preparation.</value></data>
   <data name="PrepDeliveryUnavailable" xml:space="preserve"><value>The ZIP could not be delivered and the web portal is disabled. The preparation is retained so delivery can be retried.</value></data>

@@ -6,6 +6,7 @@ public sealed record PreparationYamlUpload(string FileName, string Content);
 public sealed record PreparationFile(string Id, string UserId, string FileName, string Content, string Hash,
     string Validation, string? Error, IReadOnlyList<PreparationSlot> Slots);
 public sealed record PreparationParticipant(string UserId, string DisplayName, bool Ready);
+public sealed record PreparationReminder(string UserId, bool HasYaml);
 public sealed record PreparationRoom(string Id, string GuildId, string ParentChannelId, string ChannelId,
     string OwnerId, string Title, bool IsPrivate, int MaximumPlayers, PreparationState State,
     string? MessageId, string? RunId, string? ZipPath, string? TrackingChannelId, string? LastError,

@@ -296,11 +296,13 @@ public static class PreparationDiscord
             var target = Declare.Client.GetChannel(ulong.Parse(channel)) as IMessageChannel
                 ?? await Declare.Client.Rest.GetChannelAsync(ulong.Parse(channel)) as IMessageChannel
                 ?? throw new PreparationException(Resource.PrepSourceChannel);
-            foreach (var group in users.Chunk(40))
+            foreach (var group in users.GroupBy(user => user.HasYaml))
+            foreach (var batch in group.Chunk(40))
             {
-                var ids = group.Select(ulong.Parse).ToList();
+                var ids = batch.Select(user => ulong.Parse(user.UserId)).ToList();
                 var mentions = string.Join(" ", ids.Select(id => $"<@{id}>"));
-                await target.SendMessageAsync(string.Format(Text("PrepReminderMessage"), mentions),
+                var template = Text(group.Key ? "PrepReminderMessage" : "PrepReminderMissingYamlMessage");
+                await target.SendMessageAsync(string.Format(template, mentions),
                     allowedMentions:new AllowedMentions { UserIds = ids });
             }
         });

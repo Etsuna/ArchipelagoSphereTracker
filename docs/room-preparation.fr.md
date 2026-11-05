@@ -22,7 +22,7 @@ Limites : 1 Mio UTF-8 et 20 documents par fichier, 20 fichiers par joueur, 200 s
 
 L’organisateur dispose du bouton **Relancer les non-prêts**, sur Discord et sur le portail, ainsi que de l’action correspondante de `/organize-room`.
 
-La relance mentionne uniquement les inscrits qui ont au moins un fichier YAML et ne sont pas prêts. Elle leur demande si leurs réglages sont définitifs ou s’ils préparent encore leurs fichiers. Aucun rôle ni `@everyone` n’est mentionné. Un délai de cinq minutes entre deux relances est conservé en DB, y compris après redémarrage. Un échec ou un envoi partiel garde ce délai pour éviter les répétitions.
+La relance mentionne tous les inscrits qui ne sont pas prêts. Ceux qui n’ont pas encore envoyé de YAML sont invités à déposer leurs fichiers ou à prévenir l’organisateur s’ils ne souhaitent plus participer. Ceux qui ont déjà déposé des YAML reçoivent une demande de confirmation de leurs réglages et de leur disponibilité. Aucun rôle ni `@everyone` n’est mentionné. Un délai de cinq minutes entre deux relances est conservé en DB, y compris après redémarrage. Un échec ou un envoi partiel garde ce délai pour éviter les répétitions.
 
 ## Générer et récupérer le ZIP
 

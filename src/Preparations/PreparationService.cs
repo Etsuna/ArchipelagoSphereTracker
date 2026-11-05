@@ -572,18 +572,19 @@ public sealed class PreparationService
                 try { File.Delete(path); } catch (IOException) { }
     }
 
-    public async Task RemindAsync(string guild, string channel, string actor, Func<IReadOnlyList<string>,Task> send)
+    public async Task RemindAsync(string guild, string channel, string actor, Func<IReadOnlyList<PreparationReminder>,Task> send)
     {
         await _deliveryGate.WaitAsync();
         await _reminderGate.WaitAsync();
         try
         {
-            var users = new List<string>();
+            var users = new List<PreparationReminder>();
             await Db.WriteAsync(async connection => {
                 var room = await LoadAsync(connection, guild, channel) ?? throw new PreparationException(Resource.PrepNotFound);
                 Owner(room, actor); Editable(room);
-                users = room.Participants.Where(player => !player.Ready && room.Files.Any(file => file.UserId == player.UserId))
-                    .Select(player => player.UserId).ToList();
+                users = room.Participants.Where(player => !player.Ready)
+                    .Select(player => new PreparationReminder(player.UserId,
+                        room.Files.Any(file => file.UserId == player.UserId))).ToList();
                 if (users.Count == 0) throw new PreparationException(Text("PrepReminderEmpty"));
                 using var query = Query(connection, "SELECT LastSentAtUtc FROM PreparationReminders WHERE PreparationId=@id", ("@id", room.Id));
                 var last = (await query.ExecuteScalarAsync())?.ToString();

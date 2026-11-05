@@ -159,25 +159,41 @@ public sealed class PreparationTests
     }
 
     [Fact]
-    public async Task Reminders_only_target_unready_uploaders_and_enforce_owner_and_persistent_cooldown()
+    public async Task Reminders_target_all_unready_players_and_enforce_owner_and_persistent_cooldown()
     {
         using var scope = new TestDatabaseScope();
         var service = Service(scope, new()); await Create(service);
         await AddReady(service, "ready", Alice);
         await AddReady(service, "waiting", Bob); await service.ReadyAsync("guild", "thread", "waiting", false);
         await service.JoinAsync("guild", "thread", "empty", "Empty");
-        var sent = new List<string>();
-        Task Send(IReadOnlyList<string> users) { sent.AddRange(users); return Task.CompletedTask; }
+        var sent = new List<PreparationReminder>();
+        Task Send(IReadOnlyList<PreparationReminder> users) { sent.AddRange(users); return Task.CompletedTask; }
         await Assert.ThrowsAsync<PreparationException>(() => service.RemindAsync("guild", "thread", "waiting", Send));
         await Assert.ThrowsAsync<PreparationException>(() => service.RemindAsync("other", "thread", "owner", Send));
         await service.RemindAsync("guild", "thread", "owner", Send);
-        Assert.Equal(new[] { "waiting" }, sent);
+        Assert.Equal(new[] { new PreparationReminder("empty", false), new PreparationReminder("waiting", true) }, sent);
         await Assert.ThrowsAsync<PreparationException>(() => service.RemindAsync("guild", "thread", "owner", Send));
         var restarted = Service(scope, new());
         await Assert.ThrowsAsync<PreparationException>(() => restarted.RemindAsync("guild", "thread", "owner", Send));
         await service.ReadyAsync("guild", "thread", "waiting", true);
+        await service.LeaveAsync("guild", "thread", "empty");
         await Assert.ThrowsAsync<PreparationException>(() => service.RemindAsync("guild", "thread", "owner", Send));
-        Assert.Single(sent);
+        Assert.Equal(2, sent.Count);
+    }
+
+    [Fact]
+    public async Task Reminders_ping_registered_players_even_when_nobody_has_uploaded_yaml()
+    {
+        using var scope = new TestDatabaseScope();
+        var service = Service(scope, new()); await Create(service);
+        await service.JoinAsync("guild", "thread", "empty", "Empty");
+        var sent = new List<PreparationReminder>();
+        await service.RemindAsync("guild", "thread", "owner", users =>
+        {
+            sent.AddRange(users);
+            return Task.CompletedTask;
+        });
+        Assert.Equal(new PreparationReminder("empty", false), Assert.Single(sent));
     }
 
     [Fact]

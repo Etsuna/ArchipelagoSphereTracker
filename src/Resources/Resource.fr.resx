@@ -2793,10 +2793,12 @@ URL : `{6}`
   <data name="PrepArchiveTooLarge" xml:space="preserve"><value>Génération terminée ! Le ZIP dépasse la limite d’envoi Discord. L’organisateur et les inscrits peuvent le télécharger depuis le portail de préparation ci-dessous.</value></data>
   <data name="PrepYamlReceived" xml:space="preserve"><value>{0} ajouté à vos fichiers de préparation. Validation Archipelago en attente ; la liste des joueurs et vos fichiers YAML se mettent à jour automatiquement.</value></data>
   <data name="PrepRemind" xml:space="preserve"><value>Relancer les non-prêts</value></data>
-  <data name="PrepReminderEmpty" xml:space="preserve"><value>Aucun inscrit ayant un YAML n’est en attente de se déclarer prêt.</value></data>
+  <data name="PrepReminderEmpty" xml:space="preserve"><value>Tous les inscrits sont prêts ; aucun joueur à relancer.</value></data>
   <data name="PrepReminderCooldown" xml:space="preserve"><value>Attendez cinq minutes entre deux relances de disponibilité.</value></data>
   <data name="PrepReminderMessage" xml:space="preserve"><value>{0}
 Vos YAML ont été déposés, mais vous n’êtes pas déclarés prêts. Vos réglages sont-ils définitifs ? Cliquez sur Prêt si tout est bon, ou indiquez à l’organisateur que vous préparez encore vos fichiers.</value></data>
+  <data name="PrepReminderMissingYamlMessage" xml:space="preserve"><value>{0}
+Vous êtes inscrits, mais vous n’avez pas encore envoyé de YAML. Merci d’envoyer vos fichiers YAML ou de prévenir l’organisateur si vous ne souhaitez plus participer.</value></data>
   <data name="PrepDeletedCancelled" xml:space="preserve"><value>Préparation annulée. Ses inscriptions, YAML, historiques et fichiers de travail ont été supprimés. Une nouvelle préparation peut être créée dans ce salon.</value></data>
   <data name="PrepDeletedGenerated" xml:space="preserve"><value>Génération terminée. Le ZIP ou son lien de téléchargement a été publié dans ce salon. Toutes les données de préparation sont supprimées ; le salon est disponible pour une nouvelle préparation.</value></data>
   <data name="PrepDeliveryUnavailable" xml:space="preserve"><value>Le ZIP n’a pas pu être transmis et le portail web est désactivé. La préparation est conservée pour pouvoir retenter l’envoi.</value></data>
