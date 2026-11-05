@@ -4858,7 +4858,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à No registered player with a YAML file is waiting to mark themselves ready..
+        ///   Recherche une chaîne localisée semblable à All registered players are ready; there is nobody to remind..
         /// </summary>
         internal static string PrepReminderEmpty {
             get {
@@ -4873,6 +4873,16 @@ namespace ArchipelagoSphereTracker.src.Resources {
         internal static string PrepReminderMessage {
             get {
                 return ResourceManager.GetString("PrepReminderMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à {0}
+        ///You are registered, but you have not uploaded any YAML files yet. Please upload your YAML files or let the organizer know if you no longer wish to participate..
+        /// </summary>
+        internal static string PrepReminderMissingYamlMessage {
+            get {
+                return ResourceManager.GetString("PrepReminderMissingYamlMessage", resourceCulture);
             }
         }
 
