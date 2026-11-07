@@ -126,14 +126,30 @@ public sealed class TrackingDeliveryWorker
         }
         catch (Exception exception)
         {
+            var failureCode = DescribeFailure(exception);
             await MarkFailedAsync(
                 delivery.DeliveryId,
-                exception.GetType().Name.ToUpperInvariant(),
+                failureCode,
                 delivery.AttemptNumber,
                 cancellationToken);
+            // Log only routing IDs and bounded codes. Exception messages, HTTP
+            // requests and response bodies can contain tokens or user content.
+            Console.WriteLine(FormattableString.Invariant(
+                $"[TDM][V2] Delivery failed: delivery={delivery.DeliveryId} guild={delivery.SnapshotGuildId} channel={delivery.DestinationId} attempt={delivery.AttemptNumber} error={failureCode}."));
         }
 
         return true;
+    }
+
+    private static string DescribeFailure(Exception exception)
+    {
+        if (exception is not Discord.Net.HttpException http)
+            return exception.GetType().Name.ToUpperInvariant();
+
+        var discordCode = http.DiscordCode is { } code
+            ? ((int)code).ToString(CultureInfo.InvariantCulture)
+            : "UNKNOWN";
+        return FormattableString.Invariant($"HTTP_{(int)http.HttpCode}_DISCORD_{discordCode}");
     }
 
     private Task<TrackingDeliveryEnvelope?> ClaimNextAsync(CancellationToken cancellationToken)
