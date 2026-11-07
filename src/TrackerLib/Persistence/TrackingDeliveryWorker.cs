@@ -24,9 +24,10 @@ public sealed record TrackingDeliveryEnvelope(
 
         await using var connection = await Db.OpenReadAsync();
         using var command = connection.CreateCommand();
+        // This is one claimed row: use its rowid rather than a queue index.
         command.CommandText = @"
             SELECT snapshot.PayloadJson
-            FROM EventDeliveries delivery
+            FROM EventDeliveries delivery NOT INDEXED
             JOIN TrackingEvents event ON event.Id = delivery.EventId
             JOIN RoomSnapshots snapshot ON snapshot.Id = event.SnapshotId
             WHERE delivery.Id = @Delivery AND delivery.Status = 'Delivering'
@@ -66,7 +67,7 @@ public sealed class TrackingDeliveryWorker
 {
     internal const string Indexes = @"
         CREATE INDEX IF NOT EXISTS idx_eventdeliveries_unfinished_destination
-            ON EventDeliveries(DestinationType, DestinationId, Id) WHERE Status <> 'Delivered';";
+            ON EventDeliveries(DestinationType, DestinationId, Id) WHERE Status IN ('Pending','Delivering','Failed','Suspended');";
 
     // Select only queue metadata. Sorting candidates must never copy their large
     // snapshot bodies into SQLite's temporary sort storage.
@@ -75,12 +76,16 @@ public sealed class TrackingDeliveryWorker
                delivery.DestinationType, delivery.DestinationId
         FROM EventDeliveries delivery
         WHERE (@DestinationType IS NULL OR delivery.DestinationType = @DestinationType)
-          AND delivery.Status <> 'Delivered'
+          AND delivery.Status IN ('Pending','Delivering','Failed','Suspended') AND delivery.Status <> 'Suspended'
+          AND (delivery.DestinationType <> 'DiscordNotificationV2' OR NOT EXISTS (
+            SELECT 1 FROM NotificationDeliveryStates state JOIN TrackingEvents event ON event.Id=delivery.EventId
+            WHERE state.GuildId=event.GuildId AND state.ChannelId=event.ChannelId AND state.SuspendedAtUtc IS NOT NULL
+          ))
           AND NOT EXISTS (
             SELECT 1 FROM EventDeliveries earlier
             WHERE earlier.DestinationType = delivery.DestinationType
               AND earlier.DestinationId = delivery.DestinationId
-              AND earlier.Id < delivery.Id AND earlier.Status <> 'Delivered'
+              AND earlier.Id < delivery.Id AND earlier.Status IN ('Pending','Delivering','Failed','Suspended')
           )
           AND (
             (delivery.Status IN ('Pending', 'Failed') AND delivery.NextAttemptAtUtc <= @Now)
@@ -118,7 +123,7 @@ public sealed class TrackingDeliveryWorker
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(_leaseDuration / 2);
             var result = await _publisher.PublishAsync(delivery, timeout.Token);
-            await MarkDeliveredAsync(delivery.DeliveryId, delivery.AttemptNumber, result.ExternalReceiptId, cancellationToken);
+            await MarkDeliveredAsync(delivery, result.ExternalReceiptId, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -127,15 +132,17 @@ public sealed class TrackingDeliveryWorker
         catch (Exception exception)
         {
             var failureCode = DescribeFailure(exception);
-            await MarkFailedAsync(
-                delivery.DeliveryId,
+            var suspended = await MarkFailedAsync(
+                delivery,
                 failureCode,
-                delivery.AttemptNumber,
+                TrackingDeliveryAccessPolicy.IsAccessFailure(exception),
                 cancellationToken);
             // Log only routing IDs and bounded codes. Exception messages, HTTP
             // requests and response bodies can contain tokens or user content.
             Console.WriteLine(FormattableString.Invariant(
                 $"[TDM][V2] Delivery failed: delivery={delivery.DeliveryId} guild={delivery.SnapshotGuildId} channel={delivery.DestinationId} attempt={delivery.AttemptNumber} error={failureCode}."));
+            if (suspended)
+                Console.WriteLine($"[TDM][V2] Notifications suspended: guild={delivery.SnapshotGuildId} channel={delivery.SnapshotChannelId}; access checks every 15 minutes, all unfinished notifications retained until access returns.");
         }
 
         return true;
@@ -143,6 +150,7 @@ public sealed class TrackingDeliveryWorker
 
     private static string DescribeFailure(Exception exception)
     {
+        if (exception is TrackingDestinationAccessException access) return access.ErrorCode;
         if (exception is not Discord.Net.HttpException http)
             return exception.GetType().Name.ToUpperInvariant();
 
@@ -150,6 +158,39 @@ public sealed class TrackingDeliveryWorker
             ? ((int)code).ToString(CultureInfo.InvariantCulture)
             : "UNKNOWN";
         return FormattableString.Invariant($"HTTP_{(int)http.HttpCode}_DISCORD_{discordCode}");
+    }
+
+    internal async Task RunMaintenanceOnceAsync(CancellationToken ct = default)
+    {
+        await TrackingDeliveryAccessPolicy.ParkExpiredClaimsAsync(_timeProvider.GetUtcNow(), ct);
+        if (_publisher is not ITrackingDestinationAccessProbe accessProbe) return;
+        var probe = await TrackingDeliveryAccessPolicy.ClaimProbeAsync(_timeProvider.GetUtcNow(), ct);
+        if (probe == null) return;
+        string? error = null;
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(30));
+            await accessProbe.CheckAccessAsync(probe.GuildId, probe.ChannelId, timeout.Token);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch (Exception exception) { error = DescribeFailure(exception); }
+        if (await TrackingDeliveryAccessPolicy.CompleteProbeAsync(probe, _timeProvider.GetUtcNow(), error, ct))
+            Console.WriteLine(error == null
+                ? $"[TDM][V2] Notification access restored: guild={probe.GuildId} channel={probe.ChannelId}; resuming all suspended deliveries in order."
+                : $"[TDM][V2] Notification access check failed: guild={probe.GuildId} channel={probe.ChannelId} error={error}.");
+    }
+
+    internal async Task RunMaintenanceAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            try { await RunMaintenanceOnceAsync(ct); }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { break; }
+            catch (Exception exception) { Console.WriteLine($"[TDM][V2] Notification maintenance retry ({exception.GetType().Name})."); }
+            try { await Task.Delay(TimeSpan.FromMinutes(1), ct); }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { break; }
+        }
     }
 
     private Task<TrackingDeliveryEnvelope?> ClaimNextAsync(CancellationToken cancellationToken)
@@ -255,8 +296,7 @@ public sealed class TrackingDeliveryWorker
     }
 
     private Task MarkDeliveredAsync(
-        long deliveryId,
-        int attemptNumber,
+        TrackingDeliveryEnvelope delivery,
         string? externalReceiptId,
         CancellationToken cancellationToken)
     {
@@ -276,21 +316,22 @@ public sealed class TrackingDeliveryWorker
             command.Parameters.AddWithValue(
                 "@ExternalReceiptId",
                 string.IsNullOrWhiteSpace(externalReceiptId) ? DBNull.Value : externalReceiptId);
-            command.Parameters.AddWithValue("@Id", deliveryId);
-            command.Parameters.AddWithValue("@AttemptNumber", attemptNumber);
-            await command.ExecuteNonQueryAsync(cancellationToken);
+            command.Parameters.AddWithValue("@Id", delivery.DeliveryId);
+            command.Parameters.AddWithValue("@AttemptNumber", delivery.AttemptNumber);
+            if (await command.ExecuteNonQueryAsync(cancellationToken) == 1)
+                await TrackingDeliveryAccessPolicy.RecordSuccessAsync(connection, delivery, cancellationToken);
             return 0;
         }, cancellationToken);
     }
 
-    private Task MarkFailedAsync(
-        long deliveryId,
+    private Task<bool> MarkFailedAsync(
+        TrackingDeliveryEnvelope delivery,
         string errorCode,
-        int attemptNumber,
+        bool accessFailure,
         CancellationToken cancellationToken)
     {
         var now = _timeProvider.GetUtcNow();
-        var delaySeconds = Math.Min(300, Math.Pow(2, Math.Min(attemptNumber, 8)));
+        var delaySeconds = Math.Min(300, Math.Pow(2, Math.Min(delivery.AttemptNumber, 8)));
         var nextAttempt = now.AddSeconds(delaySeconds);
 
         return Db.WriteAsync(async connection =>
@@ -305,10 +346,10 @@ public sealed class TrackingDeliveryWorker
                 WHERE Id = @Id AND Status = 'Delivering' AND AttemptCount = @AttemptNumber;";
             command.Parameters.AddWithValue("@NextAttemptAtUtc", TrackingV2Store.Format(nextAttempt));
             command.Parameters.AddWithValue("@LastErrorCode", errorCode);
-            command.Parameters.AddWithValue("@Id", deliveryId);
-            command.Parameters.AddWithValue("@AttemptNumber", attemptNumber);
-            await command.ExecuteNonQueryAsync(cancellationToken);
-            return 0;
+            command.Parameters.AddWithValue("@Id", delivery.DeliveryId);
+            command.Parameters.AddWithValue("@AttemptNumber", delivery.AttemptNumber);
+            if (await command.ExecuteNonQueryAsync(cancellationToken) != 1) return false;
+            return await TrackingDeliveryAccessPolicy.RecordFailureAsync(connection, delivery, accessFailure, errorCode, now, cancellationToken);
         }, cancellationToken);
     }
 }

@@ -12,8 +12,8 @@ avec `System.Version` : `5.0.10` vient après `5.0.9`.
 | Version cible déjà installée | Aucun changement ni nouvelle sauvegarde |
 | Version inconnue, plus récente ou cible non enregistrée | Arrêt avant toute migration ou sauvegarde ; aucune conversion V1 de secours |
 
-Par exemple, de `5.0.18` vers `5.0.21`, le plan contient uniquement `5.0.19`,
-`5.0.20` et `5.0.21`.
+Par exemple, de `5.0.18` vers `5.0.22`, le plan contient uniquement `5.0.19`,
+`5.0.20`, `5.0.21` et `5.0.22`.
 
 ## Sauvegarde et erreurs
 

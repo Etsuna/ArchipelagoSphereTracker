@@ -37,6 +37,7 @@ public static partial class TrackingDataManager
     private static CentralRoomScheduler? _centralScheduler;
     private static Task? _trackingTask;
     private static Task? _deliveryTask;
+    private static Task? _deliveryMaintenanceTask;
     private static Task? _retentionTask;
 
     public static void StartTracking()
@@ -93,7 +94,7 @@ public static partial class TrackingDataManager
         {
             Declare.Cts?.Cancel();
             task = Task.WhenAll(_trackingTask ?? Task.CompletedTask, _deliveryTask ?? Task.CompletedTask,
-                _retentionTask ?? Task.CompletedTask);
+                _retentionTask ?? Task.CompletedTask, _deliveryMaintenanceTask ?? Task.CompletedTask);
         }
 
         if (task != null)
@@ -110,15 +111,16 @@ public static partial class TrackingDataManager
 
     private static void StartDeliveryWorker(CancellationToken token)
     {
-        _deliveryTask = Task.Run(() => RunDeliveryWorkerAsync(token), CancellationToken.None);
-        _retentionTask = Task.Run(() => TrackingSnapshotRetention.RunAsync(token), CancellationToken.None);
-    }
-
-    private static async Task RunDeliveryWorkerAsync(CancellationToken token)
-    {
         var worker = new TrackingDeliveryWorker(
             new DiscordTrackingEventPublisher(new DiscordTrackingTransport(Declare.Client)),
             destinationType: TrackingDestination.NotificationDestinationType);
+        _deliveryTask = Task.Run(() => RunDeliveryWorkerAsync(worker, token), CancellationToken.None);
+        _deliveryMaintenanceTask = Task.Run(() => worker.RunMaintenanceAsync(token), CancellationToken.None);
+        _retentionTask = Task.Run(() => TrackingSnapshotRetention.RunAsync(token), CancellationToken.None);
+    }
+
+    private static async Task RunDeliveryWorkerAsync(TrackingDeliveryWorker worker, CancellationToken token)
+    {
         while (!token.IsCancellationRequested)
         {
             try
@@ -527,6 +529,11 @@ public static partial class TrackingDataManager
 
         try
         {
+            // Notification suspension does not stop observing Archipelago or
+            // updating command views and recaps when Discord hides the channel.
+            if (await TrackingDeliveryAccessPolicy.IsSuspendedAsync(scheduled.GuildId, scheduled.ChannelId, cancellationToken))
+                return await GetTableDataResultAsync(scheduled.GuildId, scheduled.ChannelId, scheduled.BaseUrl,
+                    scheduled.Tracker, scheduled.Silent, cancellationToken).ConfigureAwait(false);
             var guild = Declare.Client.GetGuild(guildId);
             if (guild == null)
             {
@@ -993,10 +1000,12 @@ public static partial class TrackingDataManager
             SELECT 1 FROM EventDeliveries delivery
             JOIN TrackingEvents event ON event.Id = delivery.EventId
             WHERE event.GuildId = @Guild AND event.ChannelId = @Channel
-              AND delivery.DestinationType = @Type AND delivery.Status <> 'Delivered'
+              AND delivery.DestinationType = @Type AND delivery.Status IN ('Pending','Delivering','Failed','Suspended')
             UNION ALL
             SELECT 1 FROM TrackingReplayRequests
-            WHERE GuildId=@Guild AND ChannelId=@Channel AND Status='Pending');";
+            WHERE GuildId=@Guild AND ChannelId=@Channel AND Status='Pending') OR EXISTS (
+            SELECT 1 FROM NotificationDeliveryStates
+            WHERE GuildId=@Guild AND ChannelId=@Channel AND SuspendedAtUtc IS NOT NULL);";
         command.Parameters.AddWithValue("@Guild", guild);
         command.Parameters.AddWithValue("@Channel", channel);
         command.Parameters.AddWithValue("@Type", TrackingDestination.NotificationDestinationType);

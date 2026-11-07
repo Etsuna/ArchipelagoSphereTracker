@@ -48,6 +48,7 @@ public sealed class TrackingSnapshotRetentionTests
     [InlineData("Pending")]
     [InlineData("Failed")]
     [InlineData("Delivering")]
+    [InlineData("Suspended")]
     public async Task Every_unfinished_delivery_protects_its_snapshot_even_when_another_destination_is_delivered(string status)
     {
         using var scope = new TestDatabaseScope();

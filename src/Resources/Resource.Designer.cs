@@ -9065,6 +9065,10 @@ namespace ArchipelagoSphereTracker.src.Resources {
             get { return ResourceManager.GetString("DatabaseMigrationDatapackageIndexes", resourceCulture); }
         }
 
+        internal static string DatabaseMigrationNotificationAccessPolicy {
+            get { return ResourceManager.GetString("DatabaseMigrationNotificationAccessPolicy", resourceCulture); }
+        }
+
         internal static string DatabaseMigrationUnsupportedVersion {
             get { return ResourceManager.GetString("DatabaseMigrationUnsupportedVersion", resourceCulture); }
         }

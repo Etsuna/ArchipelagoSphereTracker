@@ -47,7 +47,7 @@ internal static class DiscordNotificationBatchStore
                 FROM EventDeliveries delivery JOIN TrackingEvents event ON event.Id = delivery.EventId
                 WHERE event.SnapshotId = @Snapshot AND event.EventType = @EventType
                   AND delivery.DestinationType = @Type AND delivery.DestinationId = @Channel
-                  AND delivery.Status <> 'Delivered' ORDER BY delivery.Id;";
+                  AND delivery.Status IN ('Pending','Delivering','Failed','Suspended') ORDER BY delivery.Id;";
             command.Parameters.AddWithValue("@Snapshot", delivery.SnapshotId);
             command.Parameters.AddWithValue("@EventType", delivery.EventType);
             command.Parameters.AddWithValue("@Type", delivery.DestinationType);

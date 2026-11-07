@@ -379,8 +379,11 @@ public sealed class TrackingV2Store
         command.CommandText = @"
             INSERT OR IGNORE INTO EventDeliveries
                 (EventId, DestinationType, DestinationId, Status, AttemptCount, NextAttemptAtUtc)
-            VALUES
-                (@EventId, @DestinationType, @DestinationId, 'Pending', 0, @NextAttemptAtUtc);";
+            SELECT @EventId, @DestinationType, @DestinationId,
+                CASE WHEN @DestinationType='DiscordNotificationV2' AND EXISTS (
+                    SELECT 1 FROM NotificationDeliveryStates state JOIN TrackingEvents event ON event.Id=@EventId
+                    WHERE state.GuildId=event.GuildId AND state.ChannelId=event.ChannelId AND state.SuspendedAtUtc IS NOT NULL
+                ) THEN 'Suspended' ELSE 'Pending' END, 0, @NextAttemptAtUtc;";
         command.Parameters.AddWithValue("@EventId", eventId);
         command.Parameters.AddWithValue("@DestinationType", destination.Type);
         command.Parameters.AddWithValue("@DestinationId", destination.Id);

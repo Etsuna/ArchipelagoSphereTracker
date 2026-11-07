@@ -599,6 +599,37 @@ public sealed class TrackingV2NotificationTests : IDisposable
     }
 
     [Fact]
+    public async Task Suspended_notifications_do_not_stop_item_tracking_or_remove_a_completed_room()
+    {
+        using var scope = new TestDatabaseScope();
+        await SeedRoomAsync();
+        await ExecuteAsync("INSERT INTO RecapListTable(GuildId,ChannelId,UserId,Alias) VALUES('123','456','789','Alice');");
+        var context = new ProcessingContext { GuildId = "123", ChannelId = "456" };
+        context.SlotIndex.Add(("Alice", "GameA"));
+        context.SlotIndex.Add(("Bob", "GameB"));
+        var totals = new Dictionary<int, int> { [1] = 1, [2] = 1 };
+        const string baseline = """{"player_items_received":[],"hints":[],"player_checks_done":[],"player_status":[{"player":1,"status":20},{"player":2,"status":20}]}""";
+        const string completed = """{"player_items_received":[{"player":1,"items":[[100,200,2,1]]}],"hints":[],"player_checks_done":[{"player":1,"locations":[200]},{"player":2,"locations":[201]}],"player_status":[{"player":1,"status":30},{"player":2,"status":30}]}""";
+        await TrackingDataManager.ProcessTrackerResponseAsync(context, baseline, totals, false, false);
+        var now = DateTimeOffset.UtcNow;
+        await ExecuteAsync($@"INSERT INTO NotificationDeliveryStates
+            (GuildId,ChannelId,ConsecutiveAccessFailures,FirstFailureAtUtc,LastErrorCode,SuspendedAtUtc,NextAccessCheckAtUtc)
+            VALUES('123','456',3,'{now:O}','HTTP_403_DISCORD_50001','{now:O}','{now.AddMinutes(15):O}');");
+        var result = await TrackingDataManager.ProcessTrackerResponseAsync(context, completed, totals, false, false);
+        Assert.False(result.RemoveRoom);
+        Assert.Equal(1, result.NewItemCount);
+        Assert.Equal(1, await TestDatabaseScope.CountRowsAsync("TrackingItems"));
+        Assert.Equal(1, await TestDatabaseScope.CountRowsAsync("RecapListItemsTable"));
+        Assert.Equal(3, await TestDatabaseScope.CountRowsAsync("EventDeliveries"));
+        var again = await TrackingDataManager.ProcessTrackerResponseAsync(context, completed, totals, false, false);
+        Assert.False(again.RemoveRoom);
+        Assert.Equal(0, again.NewItemCount);
+        Assert.Equal(1, await TestDatabaseScope.CountRowsAsync("ChannelsAndUrlsTable"));
+        Assert.Equal("3", await ScalarAsync("SELECT COUNT(*) FROM EventDeliveries WHERE Status='Suspended';"));
+        Assert.Equal(1, await TestDatabaseScope.CountRowsAsync("RecapListItemsTable"));
+    }
+
+    [Fact]
     public async Task Migration_from_5013_is_repeatable_and_preserves_shadow_data()
     {
         using var scope = new TestDatabaseScope();

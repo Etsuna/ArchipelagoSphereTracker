@@ -13,6 +13,30 @@ public sealed class TrackingDiscordTransportTests
     private const string Key = "aaaa1111";
 
     [Fact]
+    public async Task Access_probe_only_reads_one_history_message_and_propagates_the_cancellation_token()
+    {
+        using var cts = new CancellationTokenSource();
+        var reads = 0;
+        var channel = Proxy<IMessageChannel>((method, args) =>
+        {
+            Assert.Equal("GetMessagesAsync", method.Name);
+            Assert.Equal(1, args![0]);
+            Assert.Equal(cts.Token, Assert.IsType<RequestOptions>(args[2]).CancelToken);
+            reads++;
+            return Page([]);
+        });
+        var transport = new DiscordTrackingTransport((guild, destination, ct) =>
+        {
+            Assert.Equal("1", guild);
+            Assert.Equal("2", destination);
+            Assert.Equal(cts.Token, ct);
+            return Task.FromResult(channel);
+        }, () => 123);
+        await transport.CheckAccessAsync("1", "2", cts.Token);
+        Assert.Equal(1, reads);
+    }
+
+    [Fact]
     public async Task Recovery_walks_past_the_first_page_and_only_accepts_the_bots_own_text()
     {
         using var scope = new TestDatabaseScope();

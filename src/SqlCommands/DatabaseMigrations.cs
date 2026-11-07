@@ -29,7 +29,8 @@ internal static class DatabaseMigrations
         new(new Version(5, 0, 18), DBMigration_5.Migrate_5_0_18),
         new(new Version(5, 0, 19), DBMigration_5.Migrate_5_0_19),
         new(new Version(5, 0, 20), DBMigration_5.Migrate_5_0_20),
-        new(new Version(5, 0, 21), DBMigration_5.Migrate_5_0_21)
+        new(new Version(5, 0, 21), DBMigration_5.Migrate_5_0_21),
+        new(new Version(5, 0, 22), DBMigration_5.Migrate_5_0_22)
     ];
 
     internal static IReadOnlyList<DatabaseMigrationStep> GetPending(string currentVersion, string targetVersion)

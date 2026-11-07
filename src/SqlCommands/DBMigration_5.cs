@@ -928,6 +928,12 @@ ALTER TABLE ReceiverAliasesTable_new RENAME TO ReceiverAliasesTable;
         }, ct);
     }
 
+    public static Task Migrate_5_0_22(CancellationToken ct = default)
+    {
+        Console.WriteLine(ArchipelagoSphereTracker.src.Resources.Resource.DatabaseMigrationNotificationAccessPolicy);
+        return ArchipelagoSphereTracker.Tracking.Persistence.TrackingDeliveryAccessPolicy.InitializeAsync(ct);
+    }
+
     private static async Task<HashSet<string>> GetColumnsAsync(
         System.Data.Common.DbConnection connection,
         string tableName,

@@ -1,4 +1,4 @@
-# Optimisations du stockage V2 (base 5.0.21)
+# Optimisations du stockage V2 (base 5.0.22)
 
 La V2 enregistrait un état JSON complet à chaque changement, y compris les variations
 d'activité. Les événements référençaient ces snapshots sans limite de rétention.
@@ -8,7 +8,7 @@ nombre de rooms restait stable.
 ## Comportement du correctif
 
 - Le dernier snapshot de **chaque** room reste complet (suivi, commandes et replay).
-- Tous les snapshots nécessaires aux livraisons `Pending`, `Failed` ou `Delivering`
+- Tous les snapshots nécessaires aux livraisons `Pending`, `Failed`, `Delivering` ou `Suspended`
   restent complets, quelle que soit leur ancienneté ou leur destination.
 - Les autres anciens corps JSON sont vidés et signalés par `PayloadPruned=1`.
   Les identifiants, empreintes, métadonnées, événements, clés de déduplication,
@@ -25,8 +25,11 @@ nombre de rooms restait stable.
 - Le `VACUUM` systématique au démarrage est retiré.
 
 La purge borne la conservation des **gros corps JSON**, pas la taille de l'historique
-des événements et de ses métadonnées. Un backlog durable de notifications bloque
-volontairement la purge des snapshots correspondants. Les changements d'activité
+des événements et de ses métadonnées. Les livraisons actives protègent leurs
+snapshots. Depuis `5.0.22`, trois refus d'accès consécutifs suspendent un salon et
+ses notifications passent en `Suspended`, sans expiration ni abandon automatique.
+Elles continuent de protéger leurs snapshots et reprennent en ordre au retour de l’accès. Voir [la politique d'accès Discord](notification-access-policy.fr.md).
+Les changements d'activité
 restent enregistrés : ce correctif ne modifie pas la sémantique des empreintes ou
 des événements.
 

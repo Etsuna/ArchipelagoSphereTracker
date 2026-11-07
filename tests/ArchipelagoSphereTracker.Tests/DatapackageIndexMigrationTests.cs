@@ -52,7 +52,7 @@ public sealed class DatapackageIndexMigrationTests
         await DBMigration.SetDbVersionAsync(version);
         var check = typeof(Program).GetMethod("CheckBdd", BindingFlags.Static | BindingFlags.NonPublic)!;
         await (Task)check.Invoke(null, null)!;
-        Assert.Equal("5.0.21", await DBMigration.GetCurrentDbVersionAsync());
+        Assert.Equal(Declare.BddVersion, await DBMigration.GetCurrentDbVersionAsync());
         Assert.Equal(0L, await ScalarAsync("SELECT COUNT(*) FROM sqlite_master WHERE name IN ('IX_DatapackageItems_GCD_Name','IX_DatapackageLocations_GCD_Name');"));
         Assert.Equal("Name1", await ScalarAsync("SELECT Name FROM DatapackageItems WHERE Id=1;"));
         Assert.Equal("Name1", await ScalarAsync("SELECT Name FROM DatapackageLocations WHERE Id=1;"));

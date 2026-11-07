@@ -59,6 +59,8 @@ Migration `5.0.19` keeps snapshot identifiers and event history while releasing 
 
 Migration `5.0.21` removes two explicit name indexes already covered by the `UNIQUE (GuildId, ChannelId, DatasetKey, Name)` constraints on items and locations. Startup backs up the database first. Data, uniqueness, foreign keys and indexed name lookups are preserved. Freed pages become reusable; no automatic `VACUUM` runs. See [the storage guide (French)](../docs/tracking-v2-storage.fr.md).
 
+Migration `5.0.22` adds durable per-channel notification suspension after three consecutive access refusals. Unfinished notifications move to `Suspended` and remain stored without an age limit, alongside events, recaps and receipts. Read-only checks run every 15 minutes to resume the entire queue in order when access returns. Other rooms continue normally. See [the access policy and deployment guide (French)](../docs/notification-access-policy.fr.md).
+
 ### Intentional plaintext storage
 
 Since SQLite migration `5.0.12`, the `Room`, `Tracker`, and `Patch` fields are stored in plaintext. No key, PEM pair, or recovery procedure is required for normal operation.
@@ -168,6 +170,8 @@ La migration `5.0.19` conserve les identifiants des snapshots et l'historique de
 ### Nettoyage des index de datapackages
 
 La migration `5.0.21` supprime deux index de noms explicites déjà couverts par les contraintes `UNIQUE (GuildId, ChannelId, DatasetKey, Name)` des objets et locations. Le démarrage sauvegarde d'abord la base. Les données, l'unicité, les clés étrangères et les recherches indexées par nom sont conservées. Les pages libérées deviennent réutilisables, sans `VACUUM` automatique. Voir [le guide de stockage](../docs/tracking-v2-storage.fr.md).
+
+La migration `5.0.22` ajoute la suspension durable des notifications après trois refus d'accès consécutifs pour un salon. Ses notifications passent en `Suspended` et restent conservées sans limite d’âge, avec les événements, récaps et reçus. Des vérifications en lecture seule toutes les 15 minutes permettent de reprendre toute la file en ordre lorsque l’accès revient. Les autres salons continuent normalement. Voir [la politique et le déploiement](../docs/notification-access-policy.fr.md).
 
 ### Stockage en clair assumé
 

@@ -9,14 +9,14 @@ using Xunit;
 public sealed class DatabaseMigrationPlanTests
 {
     public static IEnumerable<object[]> SupportedVersions()
-        => Enumerable.Range(0, 22).Select(patch => new object[] { patch });
+        => Enumerable.Range(0, 23).Select(patch => new object[] { patch });
 
     [Theory]
     [MemberData(nameof(SupportedVersions))]
     public void Every_supported_v2_version_runs_only_its_successors_in_numeric_order(int currentPatch)
     {
-        var pending = DatabaseMigrations.GetPending($"5.0.{currentPatch}", "5.0.21");
-        Assert.Equal(Enumerable.Range(currentPatch + 1, 21 - currentPatch).Select(patch => new Version(5, 0, patch)),
+        var pending = DatabaseMigrations.GetPending($"5.0.{currentPatch}", "5.0.22");
+        Assert.Equal(Enumerable.Range(currentPatch + 1, 22 - currentPatch).Select(patch => new Version(5, 0, patch)),
             pending.Select(step => step.Version));
         // Also verify registration points at each real migration, not just its label.
         Assert.All(pending, step => Assert.Equal($"Migrate_5_0_{step.Version.Build}", step.Apply.Method.Name));
@@ -29,41 +29,41 @@ public sealed class DatabaseMigrationPlanTests
     [InlineData("4.9.12")]
     public void Unversioned_and_pre_v2_databases_start_with_the_legacy_conversion(string current)
     {
-        var pending = DatabaseMigrations.GetPending(current, "5.0.21");
+        var pending = DatabaseMigrations.GetPending(current, "5.0.22");
         Assert.Equal("Migrate_4_to_5Async", pending[0].Apply.Method.Name);
-        Assert.Equal(Enumerable.Range(0, 22).Select(patch => new Version(5, 0, patch)), pending.Select(step => step.Version));
+        Assert.Equal(Enumerable.Range(0, 23).Select(patch => new Version(5, 0, patch)), pending.Select(step => step.Version));
     }
 
     [Theory]
-    [InlineData("5.0.22")]
+    [InlineData("5.0.23")]
     [InlineData("5.1.0")]
     [InlineData("6.0.0")]
     [InlineData("unknown")]
     [InlineData("")]
     [InlineData("5.0")]
-    [InlineData("5.0.21.1")]
+    [InlineData("5.0.22.1")]
     public void Unsupported_or_newer_versions_never_fall_back_to_v1_conversion(string current)
-        => Assert.Throws<InvalidOperationException>(() => DatabaseMigrations.GetPending(current, "5.0.21"));
+        => Assert.Throws<InvalidOperationException>(() => DatabaseMigrations.GetPending(current, "5.0.22"));
 
     [Fact]
     public void Target_version_must_be_registered_and_cannot_skip_later_steps()
     {
-        Assert.Throws<InvalidOperationException>(() => DatabaseMigrations.GetPending("5.0.20", "5.0.22"));
+        Assert.Throws<InvalidOperationException>(() => DatabaseMigrations.GetPending("5.0.20", "5.0.23"));
         var intermediate = Assert.Single(DatabaseMigrations.GetPending("5.0.19", "5.0.20"));
         Assert.Equal(new Version(5, 0, 20), intermediate.Version);
         Assert.Equal(new Version(Declare.BddVersion), DatabaseMigrations.GetPending("5.0.0", Declare.BddVersion)[^1].Version);
     }
 
     [Theory]
-    [InlineData("5.0.21")]
     [InlineData("5.0.22")]
+    [InlineData("5.0.23")]
     [InlineData("unknown")]
     public async Task Current_or_unsupported_database_does_not_create_a_backup_or_modify_its_schema(string version)
     {
         using var database = new TestDatabaseScope();
         using var backups = new BackupDirectoryScope(database.BaseDirectory);
         await PrepareAsync(version);
-        if (version == "5.0.21") await CheckAsync();
+        if (version == "5.0.22") await CheckAsync();
         else await Assert.ThrowsAsync<InvalidOperationException>(CheckAsync);
         Assert.False(Directory.Exists(Declare.DatabaseBackupPath));
         Assert.Equal(version, await DBMigration.GetCurrentDbVersionAsync());

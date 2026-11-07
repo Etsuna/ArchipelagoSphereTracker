@@ -32,8 +32,13 @@ public interface ITrackingDiscordTransport
         TrackingDiscordNotification notification, CancellationToken cancellationToken);
 }
 
-public sealed class DiscordTrackingEventPublisher(ITrackingDiscordTransport transport) : ITrackingEventPublisher
+public sealed class DiscordTrackingEventPublisher(ITrackingDiscordTransport transport) : ITrackingEventPublisher, ITrackingDestinationAccessProbe
 {
+    public Task CheckAccessAsync(string guildId, string channelId, CancellationToken ct)
+        => transport is ITrackingDestinationAccessProbe probe
+            ? probe.CheckAccessAsync(guildId, channelId, ct)
+            : throw new NotSupportedException("The Discord transport does not support read-only access checks.");
+
     public async Task<TrackingPublicationResult> PublishAsync(
         TrackingDeliveryEnvelope delivery, CancellationToken cancellationToken)
     {
@@ -96,7 +101,7 @@ public sealed class DiscordTrackingEventPublisher(ITrackingDiscordTransport tran
 
 }
 
-public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
+public sealed class DiscordTrackingTransport : ITrackingDiscordTransport, ITrackingDestinationAccessProbe
 {
     private readonly Func<string, string, CancellationToken, Task<IMessageChannel>> _resolve;
     private readonly Func<ulong> _botUserId;
@@ -107,6 +112,8 @@ public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
         _resolve = async (guildId, channelId, ct) =>
         {
             var channel = await client.Rest.GetChannelAsync(ulong.Parse(channelId), Options(ct));
+            if (channel == null)
+                throw new TrackingDestinationAccessException("DISCORD_ACCESS_CHANNEL_UNAVAILABLE");
             if (channel is not IMessageChannel messages || channel is not IGuildChannel guildChannel ||
                 guildChannel.GuildId != ulong.Parse(guildId))
                 throw new InvalidOperationException("Discord notification channel is unavailable in this guild.");
@@ -123,8 +130,21 @@ public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
                     throw new InvalidOperationException("Discord thread parent belongs to another guild.");
             }
             var permissions = client.GetGuild(guildChannel.GuildId)?.CurrentUser.GetPermissions(permissionChannel);
-            if (permissions?.ViewChannel != true || permissions?.ReadMessageHistory != true)
-                throw new InvalidOperationException("Discord notification recovery requires Read Message History.");
+            if (permissions == null)
+                throw new InvalidOperationException("Discord guild permissions are not available in the gateway cache.");
+            if (!permissions.Value.ViewChannel)
+                throw new TrackingDestinationAccessException("DISCORD_ACCESS_VIEW_CHANNEL");
+            if (!permissions.Value.ReadMessageHistory)
+                throw new TrackingDestinationAccessException("DISCORD_ACCESS_READ_HISTORY");
+            if (channel is IThreadChannel destinationThread)
+            {
+                if (!permissions.Value.SendMessagesInThreads)
+                    throw new TrackingDestinationAccessException("DISCORD_ACCESS_SEND_IN_THREADS");
+                if (destinationThread.IsLocked && !permissions.Value.ManageThreads)
+                    throw new TrackingDestinationAccessException("DISCORD_ACCESS_THREAD_LOCKED");
+            }
+            else if (!permissions.Value.SendMessages)
+                throw new TrackingDestinationAccessException("DISCORD_ACCESS_SEND_MESSAGES");
             return messages;
         };
     }
@@ -134,6 +154,13 @@ public sealed class DiscordTrackingTransport : ITrackingDiscordTransport
     {
         _resolve = resolve;
         _botUserId = botUserId;
+    }
+
+    public async Task CheckAccessAsync(string guildId, string channelId, CancellationToken ct)
+    {
+        var channel = await _resolve(guildId, channelId, ct);
+        // Confirm history access through REST; never post a test message.
+        await channel.GetMessagesAsync(limit: 1, options: Options(ct)).FlattenAsync();
     }
 
     public async Task<string?> FindPublicationAsync(string guildId, string channelId, string eventKey,

@@ -58,6 +58,37 @@ public sealed class TrackingLazyNotificationTests
         Assert.Equal(40, await ScalarAsync("SELECT COUNT(*) FROM EventDeliveries WHERE Status='Delivered';"));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Access_policy_recovers_every_page_without_resending_acknowledged_pages_even_after_a_long_outage(bool longOutage)
+    {
+        using var database = new TestDatabaseScope();
+        await QueueAsync(40);
+        var transport = new Transport { RefuseAccessAfterFirstPage = true };
+        var clock = new Clock();
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.True(await Worker(transport, clock).RunOnceAsync());
+            clock.Current += TimeSpan.FromMinutes(5);
+        }
+        Assert.Single(transport.Messages);
+        Assert.True(await TrackingDeliveryAccessPolicy.IsSuspendedAsync("123", "456", default));
+        Assert.Equal(40, await ScalarAsync("SELECT COUNT(*) FROM EventDeliveries WHERE Status='Suspended';"));
+        using var reads = new SnapshotReads();
+        Assert.False(await Worker(transport, clock).RunOnceAsync());
+        Assert.Equal(0, reads.Count);
+        transport.RefuseAccessAfterFirstPage = false;
+        clock.Current += longOutage ? TimeSpan.FromDays(45) : TimeSpan.FromMinutes(15);
+        await Worker(transport, clock).RunMaintenanceOnceAsync();
+        while (await Worker(transport, clock).RunOnceAsync()) { }
+        Assert.Equal(1, await TestDatabaseScope.CountRowsAsync("DiscordNotificationBatches"));
+        Assert.Equal(transport.SendCalls - 3, transport.Messages.Count); // exactly three refused sends
+        Assert.Equal(40, await ScalarAsync("SELECT COUNT(*) FROM EventDeliveries WHERE Status='Delivered';"));
+        Assert.True(transport.Messages.Count > 1);
+        Assert.Equal(0, reads.Count);
+    }
+
     [Fact]
     public async Task New_batch_requires_a_valid_snapshot_and_keeps_failed_deliveries_retryable()
     {
@@ -185,12 +216,14 @@ public sealed class TrackingLazyNotificationTests
         public void Dispose() => SQLiteConnection.Changed -= OnConnectionChanged;
     }
 
-    private sealed class Transport : ITrackingDiscordTransport
+    private sealed class Transport : ITrackingDiscordTransport, ITrackingDestinationAccessProbe
     {
         public readonly Dictionary<string, string> Messages = [];
         public int SendCalls;
         public int FindCalls;
         public int LoseResponseOnCall;
+        public bool RefuseAccessAfterFirstPage;
+        public Task CheckAccessAsync(string guild, string channel, CancellationToken ct) => Task.CompletedTask;
         public Task<string?> FindPublicationAsync(string guild, string channel, string key, DateTimeOffset notBefore,
             TrackingDiscordNotification notification, CancellationToken ct)
         {
@@ -201,6 +234,9 @@ public sealed class TrackingLazyNotificationTests
             TrackingDiscordNotification notification, CancellationToken ct)
         {
             SendCalls++;
+            if (RefuseAccessAfterFirstPage && SendCalls >= 2)
+                throw new Discord.Net.HttpException(System.Net.HttpStatusCode.Forbidden, null!,
+                    (Discord.DiscordErrorCode)50001, "no access", []);
             var receipt = $"receipt-{SendCalls}";
             Messages.Add(key, receipt);
             if (SendCalls == LoseResponseOnCall) throw new InvalidOperationException("Lost response after send.");

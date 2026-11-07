@@ -43,6 +43,7 @@ tous les jobs Prometheus.
 | GC collections per minute | `rate(dotnet_collection_count_total[...]) * 60`, par génération |
 | Process RSS growth | Tendance linéaire de la RAM sur 30 minutes, en Mio/heure |
 | Pending / failed / in progress | `ast_event_deliveries`, par état (`pending`, `failed`, `delivering`) |
+| Suspended deliveries (base 5.0.22) | `ast_event_deliveries{state="suspended"}`, notifications conservées jusqu'au retour de l'accès Discord |
 | Database metrics age | Temps depuis `ast_metrics_collection_last_success_timestamp_seconds` |
 | Unfinished deliveries over time | Historique des états non terminés, sans le cumul des livraisons terminées |
 | Process uptime | Temps depuis `process_start_time_seconds` |
@@ -53,6 +54,14 @@ rattrapage net, positif = accumulation. Il ne donne **pas** le débit réel d'en
 Les nouveaux événements et les suppressions de rooms influencent cette pente.
 Un `rate()` sur le nombre de livraisons terminées serait trompeur, car cette
 métrique est une gauge du contenu de la base, pas un compteur monotone.
+
+Depuis la base `5.0.22`, les notifications d'un salon inaccessible passent en
+`suspended`, avec conservation sans limite de durée. Leurs tentatives sont en
+pause jusqu'à ce qu'une vérification d'accès permette de reprendre toute la file.
+Le dashboard de référence inclut `suspended` dans la courbe des livraisons non
+terminées et dans la tendance du backlog. Un passage de `pending` à `suspended`
+ne doit pas être interprété comme un envoi réussi. Le nombre de salons suspendus
+est disponible via `ast_notification_destinations_suspended`.
 
 ## Lire les résultats correctement
 

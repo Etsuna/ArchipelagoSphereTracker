@@ -168,22 +168,7 @@ CREATE TABLE IF NOT EXISTS TrackingEvents (
     FOREIGN KEY (SnapshotId) REFERENCES RoomSnapshots(Id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS EventDeliveries (
-    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    EventId INTEGER NOT NULL,
-    DestinationType TEXT NOT NULL,
-    DestinationId TEXT NOT NULL,
-    Status TEXT NOT NULL CHECK (Status IN ('Pending', 'Delivering', 'Delivered', 'Failed')),
-    AttemptCount INTEGER NOT NULL DEFAULT 0,
-    NextAttemptAtUtc TEXT NOT NULL,
-    LeaseUntilUtc TEXT,
-    LastAttemptAtUtc TEXT,
-    DeliveredAtUtc TEXT,
-    LastErrorCode TEXT,
-    ExternalReceiptId TEXT,
-    UNIQUE (EventId, DestinationType, DestinationId),
-    FOREIGN KEY (EventId) REFERENCES TrackingEvents(Id) ON DELETE CASCADE
-);
+" + ArchipelagoSphereTracker.Tracking.Persistence.TrackingDeliveryAccessPolicy.DeliveryTable + @"
 
 CREATE TABLE IF NOT EXISTS DiscordNotificationBatches (
     BatchKey TEXT PRIMARY KEY,
@@ -385,7 +370,8 @@ CREATE INDEX IF NOT EXISTS idx_roompollstate_due
         {
             tracking.CommandText = ArchipelagoSphereTracker.Tracking.Persistence.TrackingReadModel.Schema
                 + ArchipelagoSphereTracker.Tracking.Notifications.TrackingReplayService.Schema
-                + ArchipelagoSphereTracker.Tracking.Notifications.RoomNotificationPreferencesStore.Schema;
+                + ArchipelagoSphereTracker.Tracking.Notifications.RoomNotificationPreferencesStore.Schema
+                + ArchipelagoSphereTracker.Tracking.Persistence.TrackingDeliveryAccessPolicy.Schema;
             tracking.ExecuteNonQuery();
         }
 

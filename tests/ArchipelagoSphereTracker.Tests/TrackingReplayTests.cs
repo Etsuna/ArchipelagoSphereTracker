@@ -14,6 +14,29 @@ public sealed class TrackingReplayTests
         "Player2", "Player1", "Old Sword", "Castle", "Game", "Game");
 
     [Fact]
+    public async Task Replay_requested_during_suspension_is_kept_and_sent_when_access_returns()
+    {
+        using var scope = new TestDatabaseScope();
+        await SeedAsync();
+        await TrackingDeliveryAccessTests.SuspendAsync("c");
+        var request = await RequestAsync("Player1");
+        Assert.True(await TrackingReplayService.PrepareNextAsync());
+        Assert.Equal("Queued", await ScalarAsync($"SELECT Status FROM TrackingReplayRequests WHERE Id={request};"));
+        Assert.Equal("Suspended", await ScalarAsync("SELECT Status FROM EventDeliveries;"));
+        var transport = new FakeTransport();
+        Assert.False(await Worker(transport).RunOnceAsync());
+        Assert.Empty(transport.Messages);
+        var clock = new Clock();
+        clock.Advance(TimeSpan.FromDays(45));
+        var later = clock.GetUtcNow();
+        var probe = Assert.IsType<TrackingAccessProbe>(await TrackingDeliveryAccessPolicy.ClaimProbeAsync(later, default));
+        Assert.True(await TrackingDeliveryAccessPolicy.CompleteProbeAsync(probe, later, null, default));
+        Assert.True(await Worker(transport, clock).RunOnceAsync());
+        Assert.Contains("Old Sword", Assert.Single(transport.Messages.Values).Content);
+        Assert.Equal("Delivered", await ScalarAsync("SELECT Status FROM EventDeliveries;"));
+    }
+
+    [Fact]
     public async Task Imported_v1_baseline_items_can_be_replayed_without_existing_notifications()
     {
         using var scope = new TestDatabaseScope();
@@ -294,6 +317,7 @@ public sealed class TrackingReplayTests
         private DateTimeOffset _now = DateTimeOffset.UtcNow.AddMinutes(1);
         public override DateTimeOffset GetUtcNow() => _now;
         public void Advance() => _now = _now.AddMinutes(1);
+        public void Advance(TimeSpan duration) => _now += duration;
     }
 
     private sealed class FakeTransport : ITrackingDiscordTransport

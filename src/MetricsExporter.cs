@@ -132,6 +132,10 @@ public static class MetricsExporter
         "Tracking event deliveries by bounded state.",
         new[] { "state" });
 
+    private static readonly Gauge SuspendedNotificationDestinations = Metrics.CreateGauge(
+        "ast_notification_destinations_suspended",
+        "Discord notification destinations suspended after repeated access failures.");
+
     private static readonly Gauge PortalTokens = Metrics.CreateGauge(
         "ast_portal_tokens",
         "Portal tokens by bounded lifecycle state.",
@@ -421,8 +425,10 @@ public static class MetricsExporter
             conn,
             "SELECT Status, COUNT(*) FROM EventDeliveries GROUP BY Status;",
             EventDeliveries,
-            ["pending", "delivering", "delivered", "failed", "other"],
+            ["pending", "delivering", "delivered", "failed", "suspended", "other"],
             ct).ConfigureAwait(false);
+        SuspendedNotificationDestinations.Set(await ReadCountAsync(conn,
+            "SELECT COUNT(*) FROM NotificationDeliveryStates WHERE SuspendedAtUtc IS NOT NULL;", ct).ConfigureAwait(false));
         await SetGroupedGaugeAsync(
             conn,
             @"SELECT CASE

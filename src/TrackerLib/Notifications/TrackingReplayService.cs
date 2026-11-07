@@ -105,7 +105,9 @@ CREATE INDEX IF NOT EXISTS IX_TrackingReplay_Pending ON TrackingReplayRequests(S
         command.Parameters.AddWithValue("@Destination", TrackingDestination.NotificationDestinationType);
         command.Parameters.AddWithValue("@Count", count);
         command.CommandText = @"INSERT INTO EventDeliveries(EventId,DestinationType,DestinationId,Status,AttemptCount,NextAttemptAtUtc)
-            VALUES(@Event,@Destination,@C,'Pending',0,@Now);
+            VALUES(@Event,@Destination,@C,CASE WHEN EXISTS (
+                SELECT 1 FROM NotificationDeliveryStates WHERE GuildId=@G AND ChannelId=@C AND SuspendedAtUtc IS NOT NULL
+            ) THEN 'Suspended' ELSE 'Pending' END,0,@Now);
             UPDATE TrackingReplayRequests SET Status='Queued',EventId=@Event,ItemCount=@Count,ReasonCode=NULL WHERE Id=@Id;";
         await command.ExecuteNonQueryAsync(ct);
         return true;

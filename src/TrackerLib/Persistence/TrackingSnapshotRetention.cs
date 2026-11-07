@@ -48,7 +48,7 @@ internal static class TrackingSnapshotRetention
                       AND NOT EXISTS (
                           SELECT 1 FROM TrackingEvents event
                           JOIN EventDeliveries delivery ON delivery.EventId = event.Id
-                          WHERE event.SnapshotId = snapshot.Id AND delivery.Status <> 'Delivered')
+                          WHERE event.SnapshotId = snapshot.Id AND delivery.Status IN ('Pending','Delivering','Failed','Suspended'))
                     ORDER BY snapshot.Id LIMIT @BatchSize
                 );";
             command.Parameters.AddWithValue("@BatchSize", batchSize);
