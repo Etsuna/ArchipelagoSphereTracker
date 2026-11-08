@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Http;
 
 public static class PreparationWeb
 {
-    public static object View(PreparationRoom room, string user, PreparationService? service = null)
+    public static object View(PreparationRoom room, string user, PreparationService? service = null, bool authorizedManager = false)
     {
         service ??= PreparationService.Instance;
-        var canManage = room.OwnerId == user;
+        var canManage = room.OwnerId == user || authorizedManager;
         var me = room.Participants.FirstOrDefault(player => player.UserId == user);
         var ownFiles = room.Files.Where(file => file.UserId == user).ToArray();
         return new
@@ -18,7 +18,9 @@ public static class PreparationWeb
             meReady = me?.Ready ?? false, canReady = ownFiles.Length > 0 && ownFiles.All(file => file.Validation == "Valid"),
             canGenerate = canManage && room.CanGenerate,
             canTest = canManage && room.CanEdit && room.Files.Count > 0 && room.Files.All(file => file.Validation == "Valid"),
-            canDownload = service.GetArchivePath(room, user) != null,
+            canDownload = service.GetArchivePath(room, canManage ? room.OwnerId : user) != null,
+            deadline = room.Schedule is { State:"Scheduled" } schedule ? schedule.Deadline.ToString("O") : null,
+            timerState = room.Schedule?.State,
             trackingChannelId = room.TrackingChannelId,
             testPassed = room.LastRunStatus == "Validated",
             error = canManage ? room.LastError : room.LastError != null ? Resource.PrepGenerationFailed : null,
@@ -81,7 +83,8 @@ public static class PreparationWeb
             var actor = await Actor(guild, channel, token);
             if (actor == null) return Results.NotFound();
             var room = await service.GetAsync(guild, channel);
-            return room == null ? Results.Json(new { message = Resource.ResourceManager.GetString("PrepGone") }, statusCode:410) : Results.Ok(View(room, actor.UserId, service));
+            return room == null ? Results.Json(new { message = Resource.ResourceManager.GetString("PrepGone") }, statusCode:410) : Results.Ok(View(room, actor.UserId, service,
+                AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager,actor.Authorization)));
         });
         app.MapGet(route + "/files/{fileId}", async (string guild, string channel, string token, string fileId) =>
         {
@@ -96,7 +99,8 @@ public static class PreparationWeb
             var actor = await Actor(guild, channel, token);
             if (actor == null) return Results.NotFound();
             var room = await service.GetAsync(guild, channel);
-            var archive = room == null ? null : service.GetArchivePath(room, actor.UserId);
+            var archive = room == null ? null : service.GetArchivePath(room,
+                AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager,actor.Authorization) ? room.OwnerId : actor.UserId);
             if (archive == null) return Results.NotFound();
             await SecurityAuditLog.WriteAsync(Guid.NewGuid().ToString("N"), SecurityAuditSource.Web, actor.UserId, guild, channel,
                 SecurityAuditAction.YamlDownload, SecurityAuditOutcome.Succeeded);
@@ -133,6 +137,12 @@ public static class PreparationWeb
                 else if (action == "remove")
                 {
                     await service.RemoveFileAsync(guild, channel, actor.UserId, form["fileId"].FirstOrDefault() ?? "");
+                    message = Resource.PrepSaved;
+                }
+                else if (action == "schedule")
+                {
+                    var hours = PreparationService.ParseTimerHours(form["hours"].FirstOrDefault()) ?? throw new PreparationException(Resource.PrepInvalidSettings);
+                    await service.ScheduleAsync(guild,channel,actor.UserId,hours,form["skipBalancing"].FirstOrDefault()=="true");
                     message = Resource.PrepSaved;
                 }
                 else if (action == "generate" || action == "test")

@@ -29,6 +29,7 @@ public static class WebPortalCommandsPage
       <h2>{T("PrepTitle")}</h2>
       <form data-command=""organize-room"">
         <label>{T("PrepName")}<input name=""name"" maxlength=""80"" required /></label>
+        <label>{T("PrepTimerHours")}<input name=""hours"" type=""number"" min=""0"" max=""720"" step=""1"" placeholder=""72"" /></label><p class=""meta"">{T("PrepTimerHelp")}</p>
         <button type=""submit"">{T("PrepCreate")}</button><div class=""result"" data-result></div>
       </form>
     </section>

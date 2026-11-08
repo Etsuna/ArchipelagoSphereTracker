@@ -1132,7 +1132,8 @@ public static class WebPortalServer
                     {
                         var title = form["name"].FirstOrDefault() ?? "";
                         PreparationRoom room;
-                        try { room = await PreparationDiscord.CreateAsync(guildId, channelId, actor.User, title); }
+                        try { room = await PreparationDiscord.CreateAsync(guildId, channelId, actor.User, title,
+                            PreparationService.ParseTimerHours(form["hours"].FirstOrDefault())); }
                         catch (PreparationException ex) { return Results.BadRequest(new { message = ex.Message }); }
                         message = string.Format(Resource.PrepCreated, room.ChannelId);
                         downloadUrl = $"https://discord.com/channels/{guildId}/{room.ChannelId}/{room.MessageId}";

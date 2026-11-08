@@ -2706,7 +2706,7 @@ URL : `{6}`
   <data name="PrepInvalidSettings" xml:space="preserve"><value>Nom, visibilité ou limite de joueurs invalide.</value></data>
   <data name="PrepAlreadyExists" xml:space="preserve"><value>Ce salon possède déjà une préparation.</value></data>
   <data name="PrepNotFound" xml:space="preserve"><value>Aucune préparation dans ce thread.</value></data>
-  <data name="PrepOwnerOnly" xml:space="preserve"><value>Cette action est réservée à l’organisateur.</value></data>
+  <data name="PrepOwnerOnly" xml:space="preserve"><value>Cette action est réservée à l’organisateur ou à un gestionnaire autorisé par AST.</value></data>
   <data name="PrepJoinFirst" xml:space="preserve"><value>Inscrivez-vous avant de gérer vos YAML ou votre statut.</value></data>
   <data name="PrepLocked" xml:space="preserve"><value>Cette préparation est verrouillée ou terminée.</value></data>
   <data name="PrepRegistrationsClosed" xml:space="preserve"><value>Les inscriptions sont fermées.</value></data>
@@ -2851,4 +2851,15 @@ Vous êtes inscrits, mais vous n’avez pas encore envoyé de YAML. Merci d’en
   <data name="NotificationSettingsSave" xml:space="preserve"><value>Enregistrer les notifications</value></data>
   <data name="NotificationSettingsSaved" xml:space="preserve"><value>Réglages des notifications de la room mis à jour.</value></data>
   <data name="NotificationSettingsInvalid" xml:space="preserve"><value>Réglages de notifications invalides ou room supprimée.</value></data>
+  <data name="PrepTimer" xml:space="preserve"><value>Timer de génération</value></data>
+  <data name="PrepOptionHours" xml:space="preserve"><value>heures</value></data>
+  <data name="PrepTimerHours" xml:space="preserve"><value>Échéance en heures (0 = désactivé)</value></data>
+  <data name="PrepTimerHelp" xml:space="preserve"><value>Générer dans 1 à 720 h ; 0 désactive le timer. Les participations incomplètes seront exclues.</value></data>
+  <data name="PrepTimerPolicy" xml:space="preserve"><value>À l’échéance, seuls les participants prêts dont tous les YAML sont validés sont inclus. Les autres sont exclus de cette génération. Rappels automatiques 24 h, 6 h et 1 h avant l’échéance.</value></data>
+  <data name="PrepTimerInvalid" xml:space="preserve"><value>Saisissez un nombre entier entre 1 et 720 heures, ou 0 pour désactiver le timer.</value></data>
+  <data name="PrepDeadlineReached" xml:space="preserve"><value>L’échéance de préparation est atteinte. Attendez la génération automatique ou demandez à un organisateur de modifier le timer.</value></data>
+  <data name="PrepTimerEmpty" xml:space="preserve"><value>Génération programmée arrêtée : aucun participant prêt ne dispose d’un ensemble de YAML validé. Les organisateurs peuvent corriger la préparation puis générer manuellement ou fixer une nouvelle échéance.</value></data>
+  <data name="PrepTimerStarted" xml:space="preserve"><value>Génération programmée lancée avec {0} participants prêts. {1} participations incomplètes ont été exclues de cette génération.</value></data>
+  <data name="PrepTimerBoard" xml:space="preserve"><value>Génération automatique : &lt;t:{0}:F&gt; (&lt;t:{0}:R&gt;). Seuls les participants prêts dont tous les YAML sont validés seront inclus.</value></data>
+  <data name="PrepTimerReminder" xml:space="preserve"><value>{0} Génération automatique prévue &lt;t:{1}:F&gt; (&lt;t:{1}:R&gt;). Déposez vos YAML valides et confirmez votre disponibilité avant l’échéance, sinon vous serez exclus de cette génération.</value></data>
 </root>

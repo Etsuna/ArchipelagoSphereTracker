@@ -50,13 +50,23 @@ Outside a preparation, `/send-yaml` retains its historical generation-folder beh
 
 ### Organizer controls
 
+The organizer and authorized AST guild managers can manage a preparation, including configured delegated manager roles. Live channel/tool access is still required. Managing a preparation does not grant access to another player's YAML contents or file edits.
+
 - **Close registrations** blocks new players but lets existing participants correct files or readiness. **Reopen registrations** allows new registrations again.
-- **Remind unready players** mentions all registered players who are not ready. Players without YAML files are asked to upload them or tell the organizer if they no longer wish to participate. Players who have already uploaded YAML files are asked whether their settings are final. The control is available on Discord, the preparation page, and as an action of `/organize-room`. Only the organizer may use it. A five-minute cooldown persists across restarts; no role or `@everyone` is mentioned.
+- **Remind unready players** mentions all registered players who are not ready. Players without YAML files are asked to upload them or tell the organizer if they no longer wish to participate. Players who have already uploaded YAML files are asked whether their settings are final. The control is available on Discord, the preparation page, and as an action of `/organize-room`. The organizer and authorized AST managers may use it. A five-minute cooldown persists across restarts; no role or `@everyone` is mentioned.
 - **Test YAML files** tests the full set without producing a ZIP or requiring every player to be ready. Changing files invalidates the previous combined test result.
 - **Generate** requires at least one registered player, all ready with valid YAML files. AST freezes the inputs, locks changes, tests the full set again, then generates the archive. The page offers an option to skip progression balancing.
 - **Cancel preparation** permanently deletes the preparation data and working files, freeing the channel. It is available before generation starts; a running generation remains locked.
 
 Each Archipelago process has a 30-minute timeout. Individual validations and preparation generation run one at a time within this workflow. The older standalone generation commands remain independent. A failed generation retains the preparation for correction and retry.
+
+### Scheduled generation
+
+An optional timer can be set at creation or through **Generation timer**, `/organize-room action:schedule hours:72`, or the preparation page. Choose 1–720 hours; 0 disables it. The board displays the deadline and exclusion rule. Targeted reminders run 24 hours, 6 hours and 1 hour beforehand, sharing the manual reminder cooldown. Missed reminders are not replayed in a burst.
+
+At the deadline, only ready participants with at least one YAML and all their files validated are included. Missing, invalid, pending or unconfirmed participation is excluded as a whole. Inputs are frozen atomically; concurrent timer ticks cannot start the same generation twice. Excluded registrations/files remain available if generation fails and follow normal cleanup after successful archive delivery. If nobody qualifies, generation stops with an explanation. A failed or interrupted generation needs manual correction/retry or a new timer; it is not retried in a loop.
+
+Timers persist across restarts and overdue untriggered deadlines are processed when the connected bot returns. Manual generation consumes the active timer. Scheduling is opt-in; existing preparations remain manual. The additive `PreparationSchedules` table is created at startup. See [the detailed guide (French)](../docs/room-preparation.fr.md).
 
 ### ZIP delivery and automatic cleanup
 
@@ -133,13 +143,23 @@ Hors préparation, `/send-yaml` conserve son fonctionnement historique dans le d
 
 ### Commandes de l’organisateur
 
+L’organisateur et les gestionnaires de guilde autorisés par AST, dont les rôles délégués configurés, peuvent gérer la préparation. L’accès au salon et aux outils Archipelago reste nécessaire. Ces droits ne donnent pas accès au contenu ni à la modification des YAML personnels des autres joueurs.
+
 - **Fermer les inscriptions** bloque les nouveaux joueurs, mais permet aux inscrits de corriger leurs fichiers ou leur disponibilité. **Rouvrir les inscriptions** autorise à nouveau les inscriptions.
-- **Relancer les non-prêts** mentionne tous les inscrits qui ne sont pas prêts. Les joueurs sans YAML sont invités à envoyer leurs fichiers ou à prévenir l’organisateur s’ils ne souhaitent plus participer. Ceux qui ont déjà déposé des YAML sont invités à confirmer leurs réglages. Disponible sur Discord, sur la page de préparation et comme action de `/organize-room`, ce contrôle est réservé à l’organisateur. Le délai de cinq minutes entre deux relances persiste après redémarrage. Aucun rôle ni `@everyone` n’est mentionné.
+- **Relancer les non-prêts** mentionne tous les inscrits qui ne sont pas prêts. Les joueurs sans YAML sont invités à envoyer leurs fichiers ou à prévenir l’organisateur s’ils ne souhaitent plus participer. Ceux qui ont déjà déposé des YAML sont invités à confirmer leurs réglages. Disponible sur Discord, sur la page de préparation et comme action de `/organize-room`, ce contrôle est accessible à l’organisateur et aux gestionnaires AST autorisés. Le délai de cinq minutes entre deux relances persiste après redémarrage. Aucun rôle ni `@everyone` n’est mentionné.
 - **Tester les YAML** teste l’ensemble sans ZIP et sans exiger que tous soient prêts. Modifier les fichiers invalide le résultat du test global précédent.
 - **Générer** exige au moins un inscrit, tous prêts avec des YAML valides. AST fige les fichiers, bloque les modifications, reteste l’ensemble puis génère l’archive. La page permet d’ignorer l’équilibrage de progression.
 - **Annuler la préparation** supprime définitivement ses données et fichiers de travail, puis libère le salon. Ce bouton est disponible avant la génération ; une génération en cours reste verrouillée.
 
 Chaque processus Archipelago est limité à 30 minutes. Les validations individuelles et générations de ce parcours sont exécutées une à la fois. Les anciennes commandes de génération restent indépendantes. Un échec de génération conserve la préparation pour permettre sa correction et une nouvelle tentative.
+
+### Génération programmée
+
+Un timer facultatif se règle à la création, avec **Timer de génération**, `/organize-room action:schedule heures:72`, ou sur le portail. De 1 à 720 heures ; 0 désactive le timer. Le tableau affiche l’échéance et la règle d’exclusion. Des rappels ciblés sont prévus 24 h, 6 h et 1 h avant, avec le délai commun des relances manuelles, sans rafale de rappels anciens après une interruption.
+
+À l’échéance, seuls les participants prêts, possédant au moins un YAML et dont tous les fichiers sont validés, sont retenus. Une participation sans YAML, invalide, encore en validation ou non prête est exclue avec tous ses fichiers. Les entrées sont figées dans une transaction, empêchant un double lancement. Les données exclues restent disponibles si la génération échoue et suivent le nettoyage normal après transmission réussie du ZIP. Si personne n’est éligible, la génération s’arrête avec une explication. Un échec ou une interruption exige une correction/reprise manuelle ou un nouveau timer ; aucune boucle de génération automatique n’est lancée.
+
+Les timers persistent après redémarrage. Une échéance dépassée et non encore déclenchée est traitée au retour du bot connecté. Une génération manuelle consomme le timer actif. Les préparations existantes restent manuelles. La table additive `PreparationSchedules` est créée au démarrage. Voir [le guide détaillé](../docs/room-preparation.fr.md).
 
 ### Transmission du ZIP et nettoyage automatique
 

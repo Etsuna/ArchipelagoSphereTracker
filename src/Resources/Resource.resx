@@ -3144,7 +3144,7 @@ URL: `{6}`
   <data name="PrepInvalidSettings" xml:space="preserve"><value>Invalid name, visibility or player limit.</value></data>
   <data name="PrepAlreadyExists" xml:space="preserve"><value>This channel already has a preparation.</value></data>
   <data name="PrepNotFound" xml:space="preserve"><value>No preparation exists in this thread.</value></data>
-  <data name="PrepOwnerOnly" xml:space="preserve"><value>Only the organizer can perform this action.</value></data>
+  <data name="PrepOwnerOnly" xml:space="preserve"><value>Only the organizer or an authorized AST manager can perform this action.</value></data>
   <data name="PrepJoinFirst" xml:space="preserve"><value>Register before managing YAML files or readiness.</value></data>
   <data name="PrepLocked" xml:space="preserve"><value>This preparation is locked or finished.</value></data>
   <data name="PrepRegistrationsClosed" xml:space="preserve"><value>Registrations are closed.</value></data>
@@ -3289,4 +3289,15 @@ You are registered, but you have not uploaded any YAML files yet. Please upload 
   <data name="NotificationSettingsSave" xml:space="preserve"><value>Save notifications</value></data>
   <data name="NotificationSettingsSaved" xml:space="preserve"><value>Room notification settings updated.</value></data>
   <data name="NotificationSettingsInvalid" xml:space="preserve"><value>Invalid notification settings or room no longer tracked.</value></data>
+  <data name="PrepTimer" xml:space="preserve"><value>Generation timer</value></data>
+  <data name="PrepOptionHours" xml:space="preserve"><value>hours</value></data>
+  <data name="PrepTimerHours" xml:space="preserve"><value>Deadline in hours (0 = disabled)</value></data>
+  <data name="PrepTimerHelp" xml:space="preserve"><value>Generate in 1–720 hours; 0 disables the timer. Incomplete participants will be excluded.</value></data>
+  <data name="PrepTimerPolicy" xml:space="preserve"><value>At the deadline, only ready participants with all YAML files validated are included. Others are excluded from this generation. Automatic reminders are sent 24 hours, 6 hours and 1 hour before the deadline.</value></data>
+  <data name="PrepTimerInvalid" xml:space="preserve"><value>Enter a whole number from 1 to 720 hours, or 0 to disable the timer.</value></data>
+  <data name="PrepDeadlineReached" xml:space="preserve"><value>The preparation deadline has been reached. Please wait for automatic generation or ask an organizer to change the timer.</value></data>
+  <data name="PrepTimerEmpty" xml:space="preserve"><value>Scheduled generation stopped: no ready participant has a fully validated set of YAML files. The organizers can correct the preparation and generate manually or set another deadline.</value></data>
+  <data name="PrepTimerStarted" xml:space="preserve"><value>Scheduled generation started with {0} ready participants. {1} incomplete participants were excluded from this generation.</value></data>
+  <data name="PrepTimerBoard" xml:space="preserve"><value>Automatic generation: &lt;t:{0}:F&gt; (&lt;t:{0}:R&gt;). Only ready participants with fully validated YAML files will be included.</value></data>
+  <data name="PrepTimerReminder" xml:space="preserve"><value>{0} Automatic generation is scheduled for &lt;t:{1}:F&gt; (&lt;t:{1}:R&gt;). Upload valid YAML files and mark yourself ready before the deadline, or you will be excluded from this generation.</value></data>
 </root>

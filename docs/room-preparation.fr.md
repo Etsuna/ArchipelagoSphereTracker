@@ -20,11 +20,58 @@ Limites : 1 Mio UTF-8 et 20 documents par fichier, 20 fichiers par joueur, 200 s
 
 ## Relancer les joueurs
 
-L’organisateur dispose du bouton **Relancer les non-prêts**, sur Discord et sur le portail, ainsi que de l’action correspondante de `/organize-room`.
+L’organisateur et les gestionnaires autorisés par AST disposent du bouton **Relancer les non-prêts**, sur Discord et sur le portail, ainsi que de l’action correspondante de `/organize-room`.
 
 La relance mentionne tous les inscrits qui ne sont pas prêts. Ceux qui n’ont pas encore envoyé de YAML sont invités à déposer leurs fichiers ou à prévenir l’organisateur s’ils ne souhaitent plus participer. Ceux qui ont déjà déposé des YAML reçoivent une demande de confirmation de leurs réglages et de leur disponibilité. Aucun rôle ni `@everyone` n’est mentionné. Un délai de cinq minutes entre deux relances est conservé en DB, y compris après redémarrage. Un échec ou un envoi partiel garde ce délai pour éviter les répétitions.
 
 ## Générer et récupérer le ZIP
+
+### Programmer la génération
+
+La création propose un délai facultatif en heures, par exemple **72**. Sans délai,
+la préparation reste manuelle. Le bouton **Timer de génération**, l’action
+`/organize-room action:schedule heures:72` (option `hours` en anglais) et le
+formulaire du portail permettent de fixer ou remplacer cette échéance. **0**
+désactive le timer. Limite : de 1 à 720 heures à partir de l’enregistrement.
+L’heure exacte et la règle d’exclusion sont affichées sur le tableau et le portail.
+
+Le bot relance les participants incomplets **24 h, 6 h et 1 h** avant l’échéance,
+en mentionnant uniquement les personnes concernées. Les seuils déjà dépassés lors
+de la programmation ne sont pas envoyés immédiatement. Après une interruption,
+seul le rappel pertinent le plus proche est envoyé, sans rafale de rappels anciens.
+Le délai de cinq minutes des relances manuelles est partagé avec les rappels automatiques.
+
+À l’échéance, les modifications des participants sont bloquées. Le bot retient
+uniquement les participants **prêts**, avec **au moins un YAML et tous leurs YAML
+validés**. Un participant sans YAML, non prêt, ou possédant un fichier invalide
+ou encore en validation est exclu de cette génération, avec tous ses fichiers.
+Les données exclues restent disponibles pour correction si la génération échoue ;
+elles suivent le nettoyage normal après transmission réussie de l’archive.
+Le bot annonce le nombre de participants retenus et exclus, reteste l’ensemble,
+puis génère et transmet le ZIP selon le parcours habituel.
+
+S’il ne reste aucun participant éligible, aucune génération vide n’est lancée :
+la préparation est fermée et un message explique la situation. En cas d’erreur
+de génération, les données sont conservées. Il faut corriger puis générer
+manuellement ou programmer une nouvelle échéance ; les échecs ne tournent pas en boucle.
+
+Le contrôle des échéances se fait chaque minute quand le bot est connecté. Une
+échéance non encore déclenchée survit à un redémarrage et sera traitée au retour
+du bot si elle est dépassée. Une génération déjà lancée puis interrompue reste
+à reprendre manuellement. Une génération manuelle consomme le timer actif pour
+éviter un second lancement automatique.
+
+Les gestionnaires reconnus par les droits Discord/AST existants (dont les rôles
+délégués configurés dans AST) peuvent gérer la préparation même s’ils ne l’ont
+pas créée : fermeture, réouverture, timer, relance, test, génération, annulation,
+invitation et nouvelle tentative de transmission. Ils doivent avoir accès au
+salon et aux outils Archipelago. Ils n’obtiennent pas le droit de télécharger,
+modifier ou supprimer les YAML personnels des autres joueurs.
+
+Le schéma additif `PreparationSchedules` est créé au démarrage, sans modifier les
+préparations existantes ni activer de timer par défaut.
+
+### Génération manuelle
 
 **Fermer les inscriptions** bloque seulement les nouveaux inscrits ; les participants peuvent encore corriger leurs fichiers. **Tester les YAML** teste l’ensemble sans ZIP et sans exiger que tous soient prêts.
 

@@ -21,10 +21,12 @@ pre {{ white-space:pre-wrap; overflow-wrap:anywhere; }} .prep-slots {{ color:var
 <div class=""toolbar""><button data-action=""join"">{T("PrepJoin")}</button><button data-action=""ready"" id=""ready"">{T("PrepReady")}</button><button data-action=""leave"">{T("PrepLeave")}</button></div>
 <p class=""meta"">{T("PrepInstructions")}</p><div class=""table-wrap""><table class=""tracker-table""><thead><tr><th scope=""col"">{T("PrepPlayer")}</th><th scope=""col"">{T("PrepSlots")}</th><th scope=""col"">YAML</th><th scope=""col"">{T("PrepReadiness")}</th></tr></thead><tbody id=""players""></tbody></table></div>
 <p class=""status"" id=""prep-error""></p><p class=""meta"" id=""prep-validation""></p></section>
+<section class=""panel"" id=""timer-info"" hidden><h2>{T("PrepTimer")}</h2><p id=""deadline""></p><p>{T("PrepTimerPolicy")}</p></section>
 <section class=""panel""><h2>{T("PrepFiles")}</h2><p class=""meta"">{T("PrepValidationNote")}</p>
 <p class=""meta"">{T("PrepMultiUploadHelp")}</p><form id=""yaml-form""><label>{T("PrepUpload")}<input type=""file"" name=""file"" accept="".yaml,.yml,.zip"" multiple required /></label><button type=""submit"">{T("PrepUpload")}</button></form><div class=""prep-files"" id=""files""></div></section>
 <section class=""panel"" id=""organizer"" hidden><h2>{T("PrepManage")}</h2><div class=""toolbar""><button data-action=""close"">{T("PrepClose")}</button><button data-action=""reopen"">{T("PrepReopen")}</button><button data-action=""remind"">{T("PrepRemind")}</button><button data-action=""test"">{T("PrepTest")}</button><button data-action=""generate"">{T("PrepGenerate")}</button><button data-action=""cancel"" class=""danger"">{T("PrepCancel")}</button></div>
 <label class=""inline-check""><input type=""checkbox"" id=""skip-balancing"" />{T("PrepSkipBalancing")}</label>
+<form id=""timer-form""><label>{T("PrepTimerHours")}<input name=""hours"" type=""number"" min=""0"" max=""720"" step=""1"" placeholder=""72"" required /></label><button type=""submit"">{T("PrepTimer")}</button><p class=""meta"">{T("PrepTimerHelp")}</p></form>
 <form id=""invite-form""><label>{T("PrepInviteId")}<input name=""userId"" pattern=""[0-9]+"" required /></label><button type=""submit"">{T("PrepInvite")}</button></form>
 </section>
 <section class=""panel"" id=""generation-result"" hidden><h2>{T("PrepStateGenerated")}</h2><p>{T("PrepGenerated")}</p><a id=""archive"">{T("PrepDownload")}</a><button data-action=""deliver"" id=""retry-delivery"">{T("PrepRetryDelivery")}</button><p id=""tracking""></p></section>
@@ -42,6 +44,9 @@ const render = view => {{
   document.getElementById('prep-state').textContent = view.stateLabel;
   document.getElementById('prep-summary').textContent = view.summary;
   document.getElementById('prep-error').textContent = view.error || '';
+  document.getElementById('timer-info').hidden = !view.deadline;
+  document.getElementById('deadline').textContent = view.deadline ? new Date(view.deadline).toLocaleString() : '';
+  document.querySelectorAll('#timer-form input, #timer-form button').forEach(control => control.disabled = !view.canManage || !view.canEdit);
   document.getElementById('prep-validation').textContent = view.testPassed ? {Js("PrepTestPassed")} : '';
   document.getElementById('organizer').hidden = !view.canManage;
   document.getElementById('yaml-form').hidden = !view.canEdit || !view.isMember;
@@ -133,6 +138,7 @@ const act = async (action, data = new FormData()) => {{
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => act(button.dataset.action)));
 document.getElementById('yaml-form').addEventListener('submit', async event => {{ event.preventDefault(); const form = event.currentTarget; if (await act('upload',new FormData(form))) form.reset(); }});
 document.getElementById('invite-form').addEventListener('submit', async event => {{ event.preventDefault(); await act('invite',new FormData(event.currentTarget)); }});
+document.getElementById('timer-form').addEventListener('submit', async event => {{ event.preventDefault(); const form=event.currentTarget; if (await act('schedule',new FormData(form))) form.reset(); }});
 document.getElementById('refresh').addEventListener('click',load);
 document.addEventListener('visibilitychange', () => {{ if (document.visibilityState === 'visible') load(); else clearTimeout(timer); }});
 load();

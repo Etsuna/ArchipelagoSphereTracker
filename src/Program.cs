@@ -305,6 +305,7 @@ if (args.Length == 0)
             await WebPortalPages.EnsureMissingUserPagesAsync();
             WebPortalServer.Start();
             await PreparationDiscord.RefreshBoardsAsync();
+            PreparationDiscord.StartScheduler();
 
             if (Declare.ExportMetrics && !string.IsNullOrEmpty(Declare.MetricsPort))
             {

@@ -9073,6 +9073,18 @@ namespace ArchipelagoSphereTracker.src.Resources {
             get { return ResourceManager.GetString("DatabaseMigrationUnsupportedVersion", resourceCulture); }
         }
 
+        internal static string PrepTimer { get { return ResourceManager.GetString("PrepTimer", resourceCulture); } }
+        internal static string PrepOptionHours { get { return ResourceManager.GetString("PrepOptionHours", resourceCulture); } }
+        internal static string PrepTimerHours { get { return ResourceManager.GetString("PrepTimerHours", resourceCulture); } }
+        internal static string PrepTimerHelp { get { return ResourceManager.GetString("PrepTimerHelp", resourceCulture); } }
+        internal static string PrepTimerPolicy { get { return ResourceManager.GetString("PrepTimerPolicy", resourceCulture); } }
+        internal static string PrepTimerInvalid { get { return ResourceManager.GetString("PrepTimerInvalid", resourceCulture); } }
+        internal static string PrepDeadlineReached { get { return ResourceManager.GetString("PrepDeadlineReached", resourceCulture); } }
+        internal static string PrepTimerEmpty { get { return ResourceManager.GetString("PrepTimerEmpty", resourceCulture); } }
+        internal static string PrepTimerStarted { get { return ResourceManager.GetString("PrepTimerStarted", resourceCulture); } }
+        internal static string PrepTimerBoard { get { return ResourceManager.GetString("PrepTimerBoard", resourceCulture); } }
+        internal static string PrepTimerReminder { get { return ResourceManager.GetString("PrepTimerReminder", resourceCulture); } }
+
         internal static string NotificationSettingsTitle {
             get { return ResourceManager.GetString("NotificationSettingsTitle", resourceCulture); }
         }

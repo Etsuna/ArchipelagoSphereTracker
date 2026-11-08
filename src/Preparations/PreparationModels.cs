@@ -7,11 +7,13 @@ public sealed record PreparationFile(string Id, string UserId, string FileName, 
     string Validation, string? Error, IReadOnlyList<PreparationSlot> Slots);
 public sealed record PreparationParticipant(string UserId, string DisplayName, bool Ready);
 public sealed record PreparationReminder(string UserId, bool HasYaml);
+public sealed record PreparationSchedule(DateTimeOffset Deadline, string State, bool SkipBalancing, int ReminderStage);
 public sealed record PreparationRoom(string Id, string GuildId, string ParentChannelId, string ChannelId,
     string OwnerId, string Title, bool IsPrivate, int MaximumPlayers, PreparationState State,
     string? MessageId, string? RunId, string? ZipPath, string? TrackingChannelId, string? LastError,
     IReadOnlyList<PreparationParticipant> Participants, IReadOnlyList<PreparationFile> Files, string? LastRunStatus = null)
 {
+    public PreparationSchedule? Schedule { get; init; }
     public bool CanGenerate => (State is PreparationState.Open or PreparationState.Closed) &&
         Participants.Count > 0 && Participants.All(player => player.Ready &&
             Files.Any(file => file.UserId == player.UserId) &&
@@ -56,5 +58,11 @@ public static class PreparationSchema
         CREATE TABLE IF NOT EXISTS PreparationReminders (
             PreparationId TEXT PRIMARY KEY REFERENCES RoomPreparations(Id) ON DELETE CASCADE,
             LastSentAtUtc TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS PreparationSchedules (
+            PreparationId TEXT PRIMARY KEY REFERENCES RoomPreparations(Id) ON DELETE CASCADE,
+            DeadlineUtc TEXT NOT NULL, State TEXT NOT NULL CHECK(State IN ('Scheduled','Started','Failed','Consumed','Interrupted')),
+            SkipBalancing INTEGER NOT NULL DEFAULT 0, ReminderStage INTEGER NOT NULL DEFAULT 0,
+            ExcludedJson TEXT NOT NULL DEFAULT '[]');
+        CREATE INDEX IF NOT EXISTS idx_preparation_schedules_due ON PreparationSchedules(DeadlineUtc) WHERE State='Scheduled';
         """;
 }

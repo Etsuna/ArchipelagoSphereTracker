@@ -9,6 +9,39 @@ public static class PreparationDiscord
 {
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> BoardGates = new();
     private static int _subscribed;
+    private static int _schedulerStarted;
+    public static void StartScheduler()
+    {
+        if (!Declare.IsArchipelagoMode || Interlocked.Exchange(ref _schedulerStarted,1) != 0) return;
+        _ = Task.Run(async () => {
+            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
+            do
+            {
+                try
+                {
+                    if (Declare.Client.ConnectionState == ConnectionState.Connected)
+                        await PreparationService.Instance.RunSchedulesOnceAsync(SendScheduledNoticeAsync);
+                }
+                catch (Exception error) { Console.WriteLine($"[Preparation] Scheduler retry ({error.GetType().Name})."); }
+            } while (await timer.WaitForNextTickAsync());
+        });
+    }
+
+    private static async Task SendScheduledNoticeAsync(PreparationRoom room, IReadOnlyList<PreparationReminder> users, bool due)
+    {
+        var target = Declare.Client.GetChannel(ulong.Parse(room.ChannelId)) as IMessageChannel
+            ?? await Declare.Client.Rest.GetChannelAsync(ulong.Parse(room.ChannelId)) as IMessageChannel
+            ?? throw new PreparationException(Resource.PrepSourceChannel);
+        if (due)
+            await target.SendMessageAsync(room.LastError ?? string.Format(Text("PrepTimerStarted"),room.Participants.Count,users.Count), allowedMentions:AllowedMentions.None);
+        else
+            foreach (var batch in users.Chunk(40))
+            {
+                var ids = batch.Select(user => ulong.Parse(user.UserId)).ToList();
+                await target.SendMessageAsync(string.Format(Text("PrepTimerReminder"),string.Join(" ",ids.Select(id => $"<@{id}>")),room.Schedule!.Deadline.ToUnixTimeSeconds()),
+                    allowedMentions:new AllowedMentions { UserIds=ids });
+            }
+    }
     public static void Initialize()
     {
         if (Interlocked.Exchange(ref _subscribed, 1) == 0)
@@ -44,6 +77,7 @@ public static class PreparationDiscord
             (Resource.PrepClose,"close"), (Resource.PrepReopen,"reopen"), (Resource.PrepTest,"test"),
             (Resource.PrepGenerate,"generate"), (Resource.PrepCancel,"cancel"), (Text("PrepRemind"),"remind"),
             (Text("PrepRetryDelivery"),"deliver"),
+            (Text("PrepTimer"),"schedule"),
             (Resource.PrepInvite,"invite"), (Resource.PrepRemove,"remove") })
             action.AddChoice(label, value);
         return new SlashCommandBuilder().WithName("organize-room").WithDescription(Resource.PrepDescription)
@@ -51,7 +85,8 @@ public static class PreparationDiscord
             .AddOption(Resource.PrepOptionName, ApplicationCommandOptionType.String, Resource.PrepOptionNameDescription, isRequired:false)
             .AddOption(Resource.PrepOptionFile, ApplicationCommandOptionType.Attachment, Resource.PrepFileDescription, isRequired:false)
             .AddOption(Resource.PrepOptionUser, ApplicationCommandOptionType.User, Resource.PrepUserDescription, isRequired:false)
-            .AddOption(Resource.PrepOptionYamlName, ApplicationCommandOptionType.String, Resource.PrepYamlNameDescription, isRequired:false);
+            .AddOption(Resource.PrepOptionYamlName, ApplicationCommandOptionType.String, Resource.PrepYamlNameDescription, isRequired:false)
+            .AddOption(Text("PrepOptionHours"), ApplicationCommandOptionType.Integer, Text("PrepTimerHelp"), isRequired:false, minValue:0, maxValue:720);
     }
 
     private static async Task<AstAuthorizationContext?> AuthorizeAsync(ulong guild, ulong channel, IUser user, bool creating = false)
@@ -82,12 +117,18 @@ public static class PreparationDiscord
             {
                 if (await AuthorizeAsync(guild, channel, command.User, creating:true) == null) throw new PreparationException(AstAuthorizationService.DeniedMessage);
                 var created = await CreateAsync(guild.ToString(), channel.ToString(), command.User as IGuildUser,
-                    (string)Value(Resource.PrepOptionName)!);
+                    (string)Value(Resource.PrepOptionName)!, PreparationService.ParseTimerHours(Value(Text("PrepOptionHours"))?.ToString()));
                 message = string.Format(Resource.PrepCreated, created.ChannelId);
             }
             else if (action == "upload" && attachment != null)
             {
                 message = await UploadAttachmentAsync(guild.ToString(), channel.ToString(), command.User as IGuildUser, attachment);
+            }
+            else if (action == "schedule")
+            {
+                var hours = PreparationService.ParseTimerHours(Value(Text("PrepOptionHours"))?.ToString()) ?? throw new PreparationException(Text("PrepTimerInvalid"));
+                await PreparationService.Instance.ScheduleAsync(guild.ToString(),channel.ToString(),command.User.Id.ToString(),hours);
+                message = Resource.PrepSaved;
             }
             else if (action == "remove")
             {
@@ -120,6 +161,17 @@ public static class PreparationDiscord
         }
         var parts = component.Data.CustomId.Split(':');
         if (parts.Length != 3 || parts[0] != "astprep" || !Guid.TryParseExact(parts[1], "N", out _)) return;
+        if (parts[2] == "schedule")
+        {
+            if (component.GuildId is not { } guild || component.ChannelId is not { } channel ||
+                await AuthorizeAsync(guild,channel,component.User) == null ||
+                !await PreparationService.Instance.CanManageAsync(guild.ToString(),channel.ToString(),component.User.Id.ToString()) ||
+                (await PreparationService.Instance.GetAsync(guild.ToString(),channel.ToString()))?.Id != parts[1])
+            { await component.RespondAsync(AstAuthorizationService.DeniedMessage, ephemeral:true); return; }
+            await component.RespondWithModalAsync(new ModalBuilder().WithTitle(Text("PrepTimer")).WithCustomId("astprep-timer:"+parts[1])
+                .AddTextInput(Text("PrepTimerHours"),"hours",TextInputStyle.Short,placeholder:"72",required:true,maxLength:3).Build());
+            return;
+        }
         await component.DeferAsync(ephemeral:true);
         try
         {
@@ -161,27 +213,38 @@ public static class PreparationDiscord
         if (await AuthorizeAsync(guild, channel, interaction.User, creating:true) == null)
         { await interaction.RespondAsync(AstAuthorizationService.DeniedMessage, ephemeral:true); return; }
         var modal = new ModalBuilder().WithTitle(Resource.PrepTitle).WithCustomId("astprep-modal")
-            .AddTextInput(Resource.PrepName, "name", TextInputStyle.Short, maxLength:80, required:true);
+            .AddTextInput(Resource.PrepName, "name", TextInputStyle.Short, maxLength:80, required:true)
+            .AddTextInput(Text("PrepTimerHours"),"hours",TextInputStyle.Short,placeholder:"72",maxLength:3,required:false);
         await interaction.RespondWithModalAsync(modal.Build());
     }
 
     public static async Task HandleModalAsync(SocketModal modal)
     {
-        if (modal.Data.CustomId != "astprep-modal") return;
+        if (modal.Data.CustomId != "astprep-modal" && !modal.Data.CustomId.StartsWith("astprep-timer:",StringComparison.Ordinal)) return;
         await modal.DeferAsync(ephemeral:true);
         try
         {
-            if (modal.GuildId is not { } guild || modal.ChannelId is not { } channel || await AuthorizeAsync(guild, channel, modal.User, creating:true) == null)
+            var settingTimer = modal.Data.CustomId.StartsWith("astprep-timer:",StringComparison.Ordinal);
+            if (modal.GuildId is not { } guild || modal.ChannelId is not { } channel || await AuthorizeAsync(guild, channel, modal.User, creating:!settingTimer) == null)
                 throw new PreparationException(AstAuthorizationService.DeniedMessage);
             string Value(string name) => modal.Data.Components.FirstOrDefault(field => field.CustomId == name)?.Value ?? string.Empty;
-            var room = await CreateAsync(guild.ToString(), channel.ToString(), modal.User as IGuildUser, Value("name"));
+            var hours = PreparationService.ParseTimerHours(Value("hours"));
+            if (settingTimer)
+            {
+                if ((await PreparationService.Instance.GetAsync(guild.ToString(),channel.ToString()))?.Id != modal.Data.CustomId[14..])
+                    throw new PreparationException(Resource.PrepNotFound);
+                await PreparationService.Instance.ScheduleAsync(guild.ToString(),channel.ToString(),modal.User.Id.ToString(),hours);
+                await modal.FollowupAsync(Resource.PrepSaved,ephemeral:true);
+                return;
+            }
+            var room = await CreateAsync(guild.ToString(), channel.ToString(), modal.User as IGuildUser, Value("name"),hours);
             await modal.FollowupAsync(string.Format(Resource.PrepCreated, room.ChannelId), ephemeral:true);
         }
         catch (PreparationException error) { await modal.FollowupAsync(error.Message, ephemeral:true, allowedMentions:AllowedMentions.None); }
         catch { await modal.FollowupAsync(Resource.PrepGenerationFailed, ephemeral:true); }
     }
 
-    public static async Task<PreparationRoom> CreateAsync(string guild, string parent, IGuildUser? owner, string title)
+    public static async Task<PreparationRoom> CreateAsync(string guild, string parent, IGuildUser? owner, string title, int? timerHours = null)
     {
         if (!Declare.IsArchipelagoMode) throw new PreparationException(Resource.PrepArchOnly);
         if (owner == null || !ulong.TryParse(parent, out var parentId) || Declare.Client.GetChannel(parentId) is not ITextChannel channel ||
@@ -191,6 +254,7 @@ public static class PreparationDiscord
         if (authorization == null || !AstAuthorizationService.CanUseArchipelagoTools(authorization) || !AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager, authorization))
             throw new PreparationException(AstAuthorizationService.DeniedMessage);
         if (string.IsNullOrWhiteSpace(title) || title.Trim().Length > 80) throw new PreparationException(Resource.PrepInvalidSettings);
+        if (timerHours is < 0 or > 720) throw new PreparationException(Text("PrepTimerInvalid"));
         await using var audit = await SecurityAuditScope.StartAsync(SecurityAuditSource.Discord, owner.Id.ToString(), guild, parent, SecurityAuditAction.RoomAdd);
         var sourceThread = channel as IThreadChannel;
         if (sourceThread?.IsArchived == true)
@@ -201,7 +265,7 @@ public static class PreparationDiscord
             _ => parent
         };
         var room = await PreparationService.Instance.CreateAsync(guild, trackingParent,
-            parent, owner.Id.ToString(), title, sourceThread?.Type == ThreadType.PrivateThread);
+            parent, owner.Id.ToString(), title, sourceThread?.Type == ThreadType.PrivateThread, timerHours:timerHours);
         var message = await channel.SendMessageAsync(embed:Board(room), components:Buttons(room), allowedMentions:AllowedMentions.None);
         await PreparationService.Instance.SaveMessageAsync(guild, room.ChannelId, message.Id.ToString());
         audit.Succeed();
@@ -277,7 +341,7 @@ public static class PreparationDiscord
     {
         if (!Declare.IsArchipelagoMode) throw new PreparationException(Resource.PrepArchOnly);
         var room = await PreparationService.Instance.GetAsync(guild, channel) ?? throw new PreparationException(Resource.PrepNotFound);
-        if (room.OwnerId != organizer) throw new PreparationException(Resource.PrepOwnerOnly);
+        if (!await PreparationService.Instance.CanManageAsync(guild,channel,organizer)) throw new PreparationException(Resource.PrepOwnerOnly);
         if (room.State != PreparationState.Open || !ulong.TryParse(userId, out var memberId)) throw new PreparationException(Resource.PrepRegistrationsClosed);
         await using var audit = await SecurityAuditScope.StartAsync(SecurityAuditSource.Discord, organizer, guild, channel, SecurityAuditAction.RoomSettingsUpdate);
         var member = await Declare.Client.Rest.GetGuildUserAsync(ulong.Parse(guild), memberId);
@@ -311,7 +375,7 @@ public static class PreparationDiscord
     public static async Task RetryDeliveryAsync(string guild, string channel, string organizer)
     {
         var room = await PreparationService.Instance.GetAsync(guild, channel) ?? throw new PreparationException(Resource.PrepNotFound);
-        if (room.OwnerId != organizer) throw new PreparationException(Resource.PrepOwnerOnly);
+        if (!await PreparationService.Instance.CanManageAsync(guild,channel,organizer)) throw new PreparationException(Resource.PrepOwnerOnly);
         if (room.State != PreparationState.Generated) throw new PreparationException(Resource.PrepLocked);
         await UpdateBoardAsync(guild, channel);
     }
@@ -333,6 +397,8 @@ public static class PreparationDiscord
     {
         var text = new StringBuilder();
         text.AppendLine(PreparationTexts.State(room.State));
+        if (room.Schedule is { State:"Scheduled" } timer)
+            text.AppendLine(string.Format(Text("PrepTimerBoard"),timer.Deadline.ToUnixTimeSeconds()));
         text.AppendLine(string.Format(Resource.PrepSummary, room.Participants.Count, room.MaximumPlayers,
             room.Participants.Count(player => player.Ready), room.Files.Sum(file => file.Slots.Count)));
         text.AppendLine();
@@ -365,6 +431,7 @@ public static class PreparationDiscord
             .WithButton(Resource.PrepPortal, Id("portal"), ButtonStyle.Secondary, row:1)
             .WithButton(Text("PrepRemind"), Id("remind"), ButtonStyle.Secondary, disabled:!room.CanEdit, row:1)
             .WithButton(Text("PrepRetryDelivery"), Id("deliver"), ButtonStyle.Secondary, disabled:room.State != PreparationState.Generated, row:1)
+            .WithButton(Text("PrepTimer"),Id("schedule"),ButtonStyle.Secondary,disabled:!room.CanEdit,row:1)
             .WithButton(room.State == PreparationState.Open ? Resource.PrepClose : Resource.PrepReopen, Id("close-toggle"), ButtonStyle.Secondary, disabled:!room.CanEdit, row:2)
             .WithButton(Resource.PrepTest, Id("test"), ButtonStyle.Secondary, disabled:!room.CanEdit || room.Files.Count == 0, row:2)
             .WithButton(Resource.PrepGenerate, Id("generate"), ButtonStyle.Success, disabled:!room.CanGenerate, row:2)
