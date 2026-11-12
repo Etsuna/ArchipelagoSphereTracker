@@ -2760,7 +2760,7 @@ URL : `{6}`
   <data name="PrepDownloadYaml" xml:space="preserve"><value>Télécharger mon YAML</value></data>
   <data name="PrepAttach" xml:space="preserve"><value>Associer la room hébergée</value></data>
   <data name="PrepRoomUrl" xml:space="preserve"><value>URL de la room Archipelago hébergée</value></data>
-  <data name="PrepTracking" xml:space="preserve"><value>Thread de suivi</value></data>
+  <data name="PrepTracking" xml:space="preserve"><value>Suivi de la room</value></data>
   <data name="PrepSkipBalancing" xml:space="preserve"><value>Ignorer l’équilibrage de progression</value></data>
   <data name="PrepCancelConfirm" xml:space="preserve"><value>Annuler cette préparation et supprimer définitivement ses inscriptions, YAML et historiques ?</value></data>
   <data name="PrepCreate" xml:space="preserve"><value>Créer la préparation</value></data>
@@ -2789,7 +2789,7 @@ URL : `{6}`
   <data name="PrepOptionYamlName" xml:space="preserve"><value>nom-yaml</value></data>
   <data name="PrepYamlNameDescription" xml:space="preserve"><value>Nom de votre YAML à supprimer avec l’action supprimer.</value></data>
   <data name="PrepInviteId" xml:space="preserve"><value>Identifiant Discord du joueur à inviter</value></data>
-  <data name="PrepArchiveSent" xml:space="preserve"><value>Génération terminée ! Le ZIP est joint. Les données de préparation sont supprimées. Après hébergement du ZIP, utilisez /add-url pour démarrer le suivi.</value></data>
+  <data name="PrepArchiveSent" xml:space="preserve"><value>Génération terminée ! Le ZIP est joint.</value></data>
   <data name="PrepArchiveTooLarge" xml:space="preserve"><value>Génération terminée ! Le ZIP dépasse la limite d’envoi Discord. L’organisateur et les inscrits peuvent le télécharger depuis le portail de préparation ci-dessous.</value></data>
   <data name="PrepYamlReceived" xml:space="preserve"><value>{0} ajouté à vos fichiers de préparation. Validation Archipelago en attente ; la liste des joueurs et vos fichiers YAML se mettent à jour automatiquement.</value></data>
   <data name="PrepRemind" xml:space="preserve"><value>Relancer les non-prêts</value></data>
@@ -2802,7 +2802,7 @@ Vous êtes inscrits, mais vous n’avez pas encore envoyé de YAML. Merci d’en
   <data name="PrepDeletedCancelled" xml:space="preserve"><value>Préparation annulée. Ses inscriptions, YAML, historiques et fichiers de travail ont été supprimés. Une nouvelle préparation peut être créée dans ce salon.</value></data>
   <data name="PrepDeletedGenerated" xml:space="preserve"><value>Génération terminée. Le ZIP ou son lien de téléchargement a été publié dans ce salon. Toutes les données de préparation sont supprimées ; le salon est disponible pour une nouvelle préparation.</value></data>
   <data name="PrepDeliveryUnavailable" xml:space="preserve"><value>Le ZIP n’a pas pu être transmis et le portail web est désactivé. La préparation est conservée pour pouvoir retenter l’envoi.</value></data>
-  <data name="PrepArchiveLink" xml:space="preserve"><value>Le ZIP n’a pas pu être joint sur Discord. Téléchargez-le avec le bouton ci-dessous sous 24 heures. Les données de préparation sont supprimées ; seule cette archive temporaire est conservée. Après hébergement du ZIP, utilisez /add-url pour démarrer le suivi.</value></data>
+  <data name="PrepArchiveLink" xml:space="preserve"><value>Le ZIP n’a pas pu être joint sur Discord. Téléchargez-le avec le bouton ci-dessous sous 24 heures.</value></data>
   <data name="PrepGone" xml:space="preserve"><value>Cette préparation est terminée et ses données ont été supprimées. Si la génération a réussi, le ZIP ou son lien de téléchargement se trouve dans le salon Discord.</value></data>
   <data name="PrepEnded" xml:space="preserve"><value>Préparation terminée</value></data>
   <data name="PrepDeliveryRetry" xml:space="preserve"><value>Le ZIP ou son lien n’a pas pu être transmis, ou le nettoyage est incomplet. Les fichiers sont conservés. L’organisateur peut réessayer la transmission.</value></data>
@@ -2862,4 +2862,32 @@ Vous êtes inscrits, mais vous n’avez pas encore envoyé de YAML. Merci d’en
   <data name="PrepTimerStarted" xml:space="preserve"><value>Génération programmée lancée avec {0} participants prêts. {1} participations incomplètes ont été exclues de cette génération.</value></data>
   <data name="PrepTimerBoard" xml:space="preserve"><value>Génération automatique : &lt;t:{0}:F&gt; (&lt;t:{0}:R&gt;). Seuls les participants prêts dont tous les YAML sont validés seront inclus.</value></data>
   <data name="PrepTimerReminder" xml:space="preserve"><value>{0} Génération automatique prévue &lt;t:{1}:F&gt; (&lt;t:{1}:R&gt;). Déposez vos YAML valides et confirmez votre disponibilité avant l’échéance, sinon vous serez exclus de cette génération.</value></data>
+  <data name="PrepDestination" xml:space="preserve"><value>Dans quel salon organiser la préparation ?</value></data>
+  <data name="PrepExistingRoom" xml:space="preserve"><value>Choisir un salon existant</value></data>
+  <data name="PrepTrackingDestination" xml:space="preserve"><value>Où installer le suivi de la room après la génération ?</value></data>
+  <data name="PrepTrackInChannel" xml:space="preserve"><value>Suivi dans le salon de préparation</value></data>
+  <data name="PrepTrackInThread" xml:space="preserve"><value>Suivi dans un fil du salon</value></data>
+  <data name="PrepChannelUnavailable" xml:space="preserve"><value>Choisissez un salon où le bot peut publier et modifier le tableau de préparation.</value></data>
+  <data name="PrepInviteChannelForbidden" xml:space="preserve"><value>Discord a refusé la modification des accès. Le bot doit pouvoir gérer les permissions de ce salon.</value></data>
+  <data name="PrepManualTrack" xml:space="preserve"><value>Après hébergement, utilisez /add-url pour démarrer le suivi.</value></data>
+  <data name="PrepManualTrackInChannel" xml:space="preserve"><value>Après hébergement, lancez /add-url dans ce salon et choisissez le salon actuel pour le suivi.</value></data>
+  <data name="PrepManualTrackInThread" xml:space="preserve"><value>Après hébergement, lancez /add-url dans ce salon et choisissez un nouveau fil public pour le suivi.</value></data>
+  <data name="PrepWebHost" xml:space="preserve"><value>URL du WebHost (facultatif)</value></data>
+  <data name="PrepWebHostInvalid" xml:space="preserve"><value>Indiquez l’adresse HTTPS du WebHost, par exemple https://archipelago.gg.</value></data>
+  <data name="PrepWebHostBoard" xml:space="preserve"><value>Hébergement automatique sur {0}</value></data>
+  <data name="PrepWebHostFailed" xml:space="preserve"><value>L’hébergement ou l’ajout du suivi n’a pas abouti. Vous pouvez réessayer ou terminer manuellement avec le ZIP.</value></data>
+  <data name="PrepHostedRoom" xml:space="preserve"><value>Ouvrir la room hébergée</value></data>
+  <data name="PrepFinishHostingManually" xml:space="preserve"><value>Terminer manuellement</value></data>
+  <data name="PrepAliasMappingUnavailable" xml:space="preserve"><value>Le suivi est actif. AST n’a pas pu confirmer les propriétaires des slots pour attribuer les alias automatiquement.</value></data>
+  <data name="PrepEveryoneReady" xml:space="preserve"><value>{0} Tout le monde est prêt. Vous pouvez fermer les inscriptions ou lancer la génération.</value></data>
+  <data name="PrepWebHostSessionLabel" xml:space="preserve"><value>Identifiant utilisateur du WebHost</value></data>
+  <data name="PrepWebHostSessionLink" xml:space="preserve"><value>Ouvrir la page de session du WebHost</value></data>
+  <data name="PrepWebHostSessionEnter" xml:space="preserve"><value>Saisir mon identifiant</value></data>
+  <data name="PrepWebHostSessionPrompt" xml:space="preserve"><value>Copiez votre identifiant unique depuis la page de session du WebHost, puis saisissez-le ici pour héberger la room dans votre session.</value></data>
+  <data name="PrepWebHostSessionRequired" xml:space="preserve"><value>Votre identifiant utilisateur du WebHost est obligatoire pour l’hébergement automatique.</value></data>
+  <data name="PrepWebHostSessionInvalid" xml:space="preserve"><value>Copiez l’identifiant unique affiché sur la page de session du WebHost. Il doit être au format UUID.</value></data>
+  <data name="PrepWebHostSessionChanged" xml:space="preserve"><value>L’envoi a déjà commencé dans une autre session WebHost. Saisissez l’identifiant utilisé au départ ou terminez manuellement avec le ZIP.</value></data>
+  <data name="PrepWebHostScheduleAfterCreation" xml:space="preserve"><value>Avec un WebHost, programmez la génération depuis la préparation pour renseigner votre identifiant de session.</value></data>
+  <data name="PrepWebHostTimerMissingSession" xml:space="preserve"><value>La génération programmée est arrêtée. Renseignez votre identifiant WebHost en programmant un nouveau timer ou en lançant la génération manuellement.</value></data>
+  <data name="PrepWebHostUploadUncertain" xml:space="preserve"><value>Le WebHost n’a pas confirmé le seed créé. Vérifiez la session sur le WebHost et terminez manuellement avec le ZIP.</value></data>
 </root>

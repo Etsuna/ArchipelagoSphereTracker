@@ -189,6 +189,7 @@ public static class MetricsExporter
 
     public static Task StartAsync(CancellationToken token)
     {
+        var collectionInterval = TimeSpan.FromSeconds(Declare.MetricsCollectionIntervalSeconds);
         return Task.Run(async () =>
         {
             while (!token.IsCancellationRequested)
@@ -218,7 +219,7 @@ public static class MetricsExporter
 
                 try
                 {
-                    await Task.Delay(TimeSpan.FromMinutes(5), token);
+                    await Task.Delay(collectionInterval, token);
                 }
                 catch (OperationCanceledException) when (token.IsCancellationRequested)
                 {

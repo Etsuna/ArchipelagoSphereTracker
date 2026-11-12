@@ -25,11 +25,11 @@ public class GenerationClass : Declare
             start.ArgumentList.Add(outputDirectory);
         }
         if (skipBalancing) start.ArgumentList.Add("--skip_prog_balancing");
-        var result = await PreparationProcessRunner.RunAsync(start, TimeSpan.FromMinutes(30));
+        var result = await PreparationProcessRunner.RunAsync(start, TimeSpan.FromMinutes(30), captureSlots: !testOnly);
         if (!result.Success) return new(false, PreparationProcessRunner.FailureMessage(result));
         if (testOnly) return new(true, Resource.GenerationTestSuccessful);
         var zip = Directory.EnumerateFiles(outputDirectory, "*.zip").FirstOrDefault();
-        return zip == null ? new(false, Resource.GenerationZipNotFound) : new(true, Resource.PrepGenerated, zip);
+        return zip == null ? new(false, Resource.GenerationZipNotFound) : new(true, Resource.PrepGenerated, zip, result.SlotFiles);
     }
 
     public record GenerationResult(string Message, string? ZipPath);

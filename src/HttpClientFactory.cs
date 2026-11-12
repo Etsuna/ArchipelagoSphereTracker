@@ -5,7 +5,7 @@ internal static class HttpClientFactory
 {
     private static readonly TimeSpan DefaultJsonTimeout = TimeSpan.FromSeconds(120);
 
-    public static HttpClient CreateJsonClient(TimeSpan? timeout = null)
+    public static HttpClient CreateJsonClient(TimeSpan? timeout = null, bool allowAutoRedirect = true)
     {
         var handler = new SocketsHttpHandler
         {
@@ -13,6 +13,7 @@ internal static class HttpClientFactory
                                      | DecompressionMethods.Deflate
                                      | DecompressionMethods.Brotli,
             UseProxy = false,
+            AllowAutoRedirect = allowAutoRedirect,
             PooledConnectionLifetime = TimeSpan.FromMinutes(5),
             ConnectCallback = ConnectToValidatedHostAsync
         };

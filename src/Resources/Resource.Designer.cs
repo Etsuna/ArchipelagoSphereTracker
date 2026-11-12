@@ -4156,7 +4156,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à The ZIP could not be attached to Discord. Download it using the button below within 24 hours. Preparation data is deleted; only this temporary archive remains. After hosting the ZIP, use /add-url to start tracking..
+        ///   Recherche une chaîne localisée semblable à The ZIP could not be attached to Discord. Download it using the button below within 24 hours..
         /// </summary>
         internal static string PrepArchiveLink {
             get {
@@ -4165,7 +4165,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Generation complete! The ZIP is attached. Preparation data is deleted. After hosting the ZIP, use /add-url to start tracking..
+        ///   Recherche une chaîne localisée semblable à Generation complete! The ZIP is attached..
         /// </summary>
         internal static string PrepArchiveSent {
             get {
@@ -5067,7 +5067,7 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Tracking thread.
+        ///   Recherche une chaîne localisée semblable à Room tracking.
         /// </summary>
         internal static string PrepTracking {
             get {
@@ -9074,6 +9074,34 @@ namespace ArchipelagoSphereTracker.src.Resources {
         }
 
         internal static string PrepTimer { get { return ResourceManager.GetString("PrepTimer", resourceCulture); } }
+        internal static string PrepDestination { get { return ResourceManager.GetString("PrepDestination", resourceCulture); } }
+        internal static string PrepExistingRoom { get { return ResourceManager.GetString("PrepExistingRoom", resourceCulture); } }
+        internal static string PrepTrackingDestination { get { return ResourceManager.GetString("PrepTrackingDestination", resourceCulture); } }
+        internal static string PrepTrackInChannel { get { return ResourceManager.GetString("PrepTrackInChannel", resourceCulture); } }
+        internal static string PrepTrackInThread { get { return ResourceManager.GetString("PrepTrackInThread", resourceCulture); } }
+        internal static string PrepChannelUnavailable { get { return ResourceManager.GetString("PrepChannelUnavailable", resourceCulture); } }
+        internal static string PrepInviteChannelForbidden { get { return ResourceManager.GetString("PrepInviteChannelForbidden", resourceCulture); } }
+        internal static string PrepManualTrack { get { return ResourceManager.GetString("PrepManualTrack", resourceCulture); } }
+        internal static string PrepManualTrackInChannel { get { return ResourceManager.GetString("PrepManualTrackInChannel", resourceCulture); } }
+        internal static string PrepManualTrackInThread { get { return ResourceManager.GetString("PrepManualTrackInThread", resourceCulture); } }
+        internal static string PrepWebHost { get { return ResourceManager.GetString("PrepWebHost", resourceCulture); } }
+        internal static string PrepWebHostSessionLabel { get { return ResourceManager.GetString("PrepWebHostSessionLabel", resourceCulture); } }
+        internal static string PrepWebHostSessionLink { get { return ResourceManager.GetString("PrepWebHostSessionLink", resourceCulture); } }
+        internal static string PrepWebHostSessionEnter { get { return ResourceManager.GetString("PrepWebHostSessionEnter", resourceCulture); } }
+        internal static string PrepWebHostSessionPrompt { get { return ResourceManager.GetString("PrepWebHostSessionPrompt", resourceCulture); } }
+        internal static string PrepWebHostSessionRequired { get { return ResourceManager.GetString("PrepWebHostSessionRequired", resourceCulture); } }
+        internal static string PrepWebHostScheduleAfterCreation { get { return ResourceManager.GetString("PrepWebHostScheduleAfterCreation", resourceCulture); } }
+        internal static string PrepWebHostTimerMissingSession { get { return ResourceManager.GetString("PrepWebHostTimerMissingSession", resourceCulture); } }
+        internal static string PrepWebHostSessionInvalid { get { return ResourceManager.GetString("PrepWebHostSessionInvalid", resourceCulture); } }
+        internal static string PrepWebHostSessionChanged { get { return ResourceManager.GetString("PrepWebHostSessionChanged", resourceCulture); } }
+        internal static string PrepWebHostUploadUncertain { get { return ResourceManager.GetString("PrepWebHostUploadUncertain", resourceCulture); } }
+        internal static string PrepWebHostInvalid { get { return ResourceManager.GetString("PrepWebHostInvalid", resourceCulture); } }
+        internal static string PrepWebHostBoard { get { return ResourceManager.GetString("PrepWebHostBoard", resourceCulture); } }
+        internal static string PrepWebHostFailed { get { return ResourceManager.GetString("PrepWebHostFailed", resourceCulture); } }
+        internal static string PrepHostedRoom { get { return ResourceManager.GetString("PrepHostedRoom", resourceCulture); } }
+        internal static string PrepFinishHostingManually { get { return ResourceManager.GetString("PrepFinishHostingManually", resourceCulture); } }
+        internal static string PrepAliasMappingUnavailable { get { return ResourceManager.GetString("PrepAliasMappingUnavailable", resourceCulture); } }
+        internal static string PrepEveryoneReady { get { return ResourceManager.GetString("PrepEveryoneReady", resourceCulture); } }
         internal static string PrepOptionHours { get { return ResourceManager.GetString("PrepOptionHours", resourceCulture); } }
         internal static string PrepTimerHours { get { return ResourceManager.GetString("PrepTimerHours", resourceCulture); } }
         internal static string PrepTimerHelp { get { return ResourceManager.GetString("PrepTimerHelp", resourceCulture); } }

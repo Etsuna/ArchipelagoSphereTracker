@@ -6,6 +6,21 @@ using Xunit;
 
 public sealed class PreparationProcessRunnerTests
 {
+    [Fact]
+    public async Task Generated_slot_owners_are_captured_before_old_log_lines_are_discarded()
+    {
+        const string first = "11111111111111111111111111111111";
+        const string second = "22222222222222222222222222222222";
+        var lines = $"P1 Weights: {first}.yaml >> first\nP2 Weights: {second}.yaml >> second";
+        using var script = new ChildScript(
+            $"[Console]::Error.WriteLine(@'\n{lines}\n'@); [Console]::Error.WriteLine('x' * 7000)",
+            $"printf '%s\\n' '{lines}' >&2; printf '%07000d\\n' 0 >&2");
+        var result = await PreparationProcessRunner.RunAsync(script.Start, TimeSpan.FromSeconds(10), captureSlots:true);
+        Assert.True(result.Success,result.Diagnostics);
+        Assert.Equal(first,result.SlotFiles![1]);
+        Assert.Equal(second,result.SlotFiles[2]);
+    }
+
     private sealed class ChildScript : IDisposable
     {
         private readonly string _path;

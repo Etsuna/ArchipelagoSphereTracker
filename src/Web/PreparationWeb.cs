@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Http;
 
 public static class PreparationWeb
 {
-    public static object View(PreparationRoom room, string user, PreparationService? service = null, bool authorizedManager = false)
+    public static object View(PreparationRoom room, string user, PreparationService? service = null, bool authorizedManager = false,
+        bool canRetryWithStoredSession = false)
     {
         service ??= PreparationService.Instance;
         var canManage = room.OwnerId == user || authorizedManager;
@@ -13,7 +14,7 @@ public static class PreparationWeb
         var ownFiles = room.Files.Where(file => file.UserId == user).ToArray();
         return new
         {
-            title = room.Title, state = room.State.ToString(), stateLabel = PreparationTexts.State(room.State),
+            id = room.Id, title = room.Title, state = room.State.ToString(), stateLabel = PreparationTexts.State(room.State),
             maximumPlayers = room.MaximumPlayers, canManage, canInvite = canManage && room.IsPrivate, canEdit = room.CanEdit, isMember = me != null,
             meReady = me?.Ready ?? false, canReady = ownFiles.Length > 0 && ownFiles.All(file => file.Validation == "Valid"),
             canGenerate = canManage && room.CanGenerate,
@@ -22,6 +23,14 @@ public static class PreparationWeb
             deadline = room.Schedule is { State:"Scheduled" } schedule ? schedule.Deadline.ToString("O") : null,
             timerState = room.Schedule?.State,
             trackingChannelId = room.TrackingChannelId,
+            trackingDestination = room.TrackInThread is { } thread
+                ? Resource.ResourceManager.GetString(thread ? "PrepTrackInThread" : "PrepTrackInChannel") : null,
+            hostedRoomUrl = room.Hosting?.RoomUrl,
+            webHostSessionUrl = canManage && room.NeedsWebHostSession &&
+                (room.CanEdit || (room.State == PreparationState.Generated && !canRetryWithStoredSession))
+                ? PreparationWebHost.SessionPage(room.Hosting!.Origin) : null,
+            canFinishHostingManually = canManage && room.State == PreparationState.Generated &&
+                room.Hosting is { FinishManually: false } && room.TrackingChannelId == null,
             testPassed = room.LastRunStatus == "Validated",
             error = canManage ? room.LastError : room.LastError != null ? Resource.PrepGenerationFailed : null,
             summary = string.Format(Resource.PrepSummary, room.Participants.Count, room.MaximumPlayers,
@@ -83,8 +92,11 @@ public static class PreparationWeb
             var actor = await Actor(guild, channel, token);
             if (actor == null) return Results.NotFound();
             var room = await service.GetAsync(guild, channel);
-            return room == null ? Results.Json(new { message = Resource.ResourceManager.GetString("PrepGone") }, statusCode:410) : Results.Ok(View(room, actor.UserId, service,
-                AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager,actor.Authorization)));
+            if (room == null) return Results.Json(new { message = Resource.ResourceManager.GetString("PrepGone") }, statusCode:410);
+            var manager = AstAuthorizationService.IsAllowed(AstAuthorizationLevel.GuildManager,actor.Authorization);
+            var canRetry = (manager || room.OwnerId == actor.UserId) && room.State == PreparationState.Generated &&
+                await service.GetHostingSessionAsync(room) != null;
+            return Results.Ok(View(room, actor.UserId, service, manager, canRetry));
         });
         app.MapGet(route + "/files/{fileId}", async (string guild, string channel, string token, string fileId) =>
         {
@@ -114,6 +126,10 @@ public static class PreparationWeb
             {
                 if (!request.HasFormContentType) return Results.BadRequest(new { message = Resource.PrepInvalidSettings });
                 var form = await request.ReadFormAsync();
+                var webHostUserId = form["webHostUserId"].FirstOrDefault();
+                var expectedRoom = form["preparationId"].FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(webHostUserId) && !Guid.TryParseExact(expectedRoom, "N", out _))
+                    throw new PreparationException(Resource.PrepNotFound);
                 await using var audit = await SecurityAuditScope.StartAsync(SecurityAuditSource.Web, actor.UserId, guild, channel,
                     action == "upload" ? SecurityAuditAction.YamlUpload : action == "remove" ? SecurityAuditAction.YamlDelete :
                     action is "generate" or "test" ? SecurityAuditAction.Generation : SecurityAuditAction.RoomSettingsUpdate);
@@ -142,13 +158,15 @@ public static class PreparationWeb
                 else if (action == "schedule")
                 {
                     var hours = PreparationService.ParseTimerHours(form["hours"].FirstOrDefault()) ?? throw new PreparationException(Resource.PrepInvalidSettings);
-                    await service.ScheduleAsync(guild,channel,actor.UserId,hours,form["skipBalancing"].FirstOrDefault()=="true");
+                    await service.ScheduleAsync(guild,channel,actor.UserId,hours,form["skipBalancing"].FirstOrDefault()=="true",
+                        webHostUserId, expectedRoom);
                     message = Resource.PrepSaved;
                 }
                 else if (action == "generate" || action == "test")
                 {
                     await service.GenerateAsync(guild, channel, actor.UserId,
-                        form["skipBalancing"].FirstOrDefault() == "true", testOnly:action == "test");
+                        form["skipBalancing"].FirstOrDefault() == "true", testOnly:action == "test",
+                        webHostUserId:webHostUserId, expectedRoom:expectedRoom);
                     message = Resource.PrepQueued;
                 }
                 else if (action == "invite")
@@ -163,7 +181,12 @@ public static class PreparationWeb
                 }
                 else if (action == "deliver")
                 {
-                    await PreparationDiscord.RetryDeliveryAsync(guild, channel, actor.UserId);
+                    await PreparationDiscord.RetryDeliveryAsync(guild, channel, actor.UserId, webHostUserId, expectedRoom);
+                    message = Resource.PrepSaved;
+                }
+                else if (action == "manual-delivery")
+                {
+                    await service.FinishHostingManuallyAsync(guild,channel,actor.UserId);
                     message = Resource.PrepSaved;
                 }
                 else message = await service.ApplyActionAsync(guild, channel, actor.UserId, actor.User.Nickname ?? actor.User.Username, action);

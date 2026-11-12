@@ -29,7 +29,16 @@ public static class WebPortalCommandsPage
       <h2>{T("PrepTitle")}</h2>
       <form data-command=""organize-room"">
         <label>{T("PrepName")}<input name=""name"" maxlength=""80"" required /></label>
+        <label>{T("PrepDestination")}<select name=""targetChannelId"" id=""preparation-channel"" required>
+          <option value="""">{T("PrepExistingRoom")}</option>
+        </select></label>
+        <label>{T("PrepTrackingDestination")}<select name=""tracking"">
+          <option value=""Channel"">{T("PrepTrackInChannel")}</option>
+          <option value=""Thread"">{T("PrepTrackInThread")}</option>
+        </select></label>
+        <label>{T("PrepWebHost")}<input type=""url"" name=""webhost"" placeholder=""https://archipelago.gg"" maxlength=""250"" /></label>
         <label>{T("PrepTimerHours")}<input name=""hours"" type=""number"" min=""0"" max=""720"" step=""1"" placeholder=""72"" /></label><p class=""meta"">{T("PrepTimerHelp")}</p>
+        <p class=""meta"" id=""prep-hosted-timer-help"" hidden>{T("PrepWebHostScheduleAfterCreation")}</p>
         <button type=""submit"">{T("PrepCreate")}</button><div class=""result"" data-result></div>
       </form>
     </section>
@@ -250,6 +259,17 @@ public static class WebPortalCommandsPage
   </main>
 
 <script>
+  const preparationForm = document.querySelector('form[data-command=""organize-room""]');
+  if (preparationForm) {{
+    const host = preparationForm.elements.webhost;
+    const hours = preparationForm.elements.hours;
+    const updateHostedTimer = () => {{
+      hours.disabled = !!host.value.trim();
+      document.getElementById('prep-hosted-timer-help').hidden = !hours.disabled;
+    }};
+    host.addEventListener('input', updateHostedTimer);
+    updateHostedTimer();
+  }}
   const addUrlForm = document.querySelector('form[data-command=""add-url""]');
   const destinationSelect = addUrlForm.querySelector('[name=""threadType""]');
   const threadNameInput = addUrlForm.querySelector('[name=""threadName""]');
@@ -293,7 +313,7 @@ public static class WebPortalCommandsPage
   const basePath = idx >= 0 ? path.substring(0, idx) : '';
 
   // Base API (garde le préfixe dynamique)
-  const apiBase =
+  const securedApiBase =
     window.location.origin +
     basePath +
     '/api/portal/' +
@@ -301,19 +321,9 @@ public static class WebPortalCommandsPage
     '/' +
     channelId +
     '/' +
-    token +
-    '/commands/execute';
-
-  const yamlsApi =
-    window.location.origin +
-    basePath +
-    '/api/portal/' +
-    guildId +
-    '/' +
-    channelId +
-    '/' +
-    token +
-    '/commands/yamls';
+    token;
+  const apiBase = securedApiBase + '/commands/execute';
+  const yamlsApi = securedApiBase + '/commands/yamls';
 
   const yamlSelects = document.querySelectorAll('[data-yaml-select]');
   const roomLinksRoot = document.getElementById('room-links');
@@ -390,6 +400,24 @@ public static class WebPortalCommandsPage
     if (typeof payload === 'string') return payload || fallback;
     if (typeof payload === 'object' && payload.message) return payload.message;
     return fallback;
+  }};
+
+  const loadPreparationChannels = async () => {{
+    const select = document.getElementById('preparation-channel');
+    if (!select) return;
+    const placeholder = select.options[0];
+    try {{
+      const response = await fetch(securedApiBase + '/commands/preparation-channels');
+      const payload = await parsePayload(response);
+      if (!response.ok) {{
+        placeholder.textContent = extractMessage(payload, {Js("WebCommandError")});
+        return;
+      }}
+      for (const channel of payload.channels) select.add(new Option('#' + channel.name, channel.id));
+      if (select.options.length === 1) placeholder.textContent = {Js("PrepChannelUnavailable")};
+    }} catch {{
+      placeholder.textContent = {Js("WebUnableToReachServer")};
+    }}
   }};
 
   const setYamlSelectOptions = (optionsMarkup) => {{
@@ -598,6 +626,7 @@ public static class WebPortalCommandsPage
     loadRoomLinks();
     loadYamlOptions();
     loadAuditEntries();
+    loadPreparationChannels();
   }}
 </script>
 <script>{WebPortalTheme.NavigationScript}</script>

@@ -18,6 +18,7 @@ public class WebPortalSecurityMarkupTests
             Assert.Contains("token +", html);
             Assert.Contains("'/commands/execute'", html);
             Assert.Contains("'/commands/yamls'", html);
+            Assert.Contains("securedApiBase + '/commands/preparation-channels'", html);
             Assert.Contains("data-command=\"ast-health\"", html);
             Assert.Contains("name=\"skipProgBalancing\"", html);
             Assert.Contains("'/audit'", html);

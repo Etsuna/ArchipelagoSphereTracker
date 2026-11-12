@@ -670,6 +670,23 @@ public static class WebPortalServer
             return Results.File(templatePath, "application/x-yaml", safeTemplateName);
         });
 
+        app.MapGet("/api/portal/{guildId}/{channelId}/{token}/commands/preparation-channels", async (
+            string guildId, string channelId, string token) =>
+        {
+            var actor = await AuthorizePortalAsync(guildId, channelId, token, AstAuthorizationLevel.GuildManager);
+            if (actor == null || !AstAuthorizationService.CanUseArchipelagoTools(actor.Authorization) ||
+                Declare.Client.GetGuild(actor.User.GuildId) is not { } guild)
+                return Results.NotFound(new { message = AstAuthorizationService.DeniedMessage });
+
+            var channels = guild.TextChannels
+                .Where(channel => ((IChannel)channel).ChannelType == ChannelType.Text &&
+                    actor.User.GetPermissions(channel).ViewChannel && PreparationDiscord.CanPostBoard(guild.CurrentUser, channel))
+                .OrderBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(channel => new { id = channel.Id.ToString(), name = channel.Name })
+                .ToArray();
+            return Results.Ok(new { channels });
+        });
+
         app.MapGet("/api/portal/{guildId}/{channelId}/{token}/commands/yamls", async (
             string guildId,
             string channelId,
@@ -1131,9 +1148,16 @@ public static class WebPortalServer
                 case "organize-room":
                     {
                         var title = form["name"].FirstOrDefault() ?? "";
+                        var target = form["targetChannelId"].FirstOrDefault();
+                        if (string.IsNullOrWhiteSpace(target))
+                            return Results.BadRequest(new { message = Resource.PrepExistingRoom });
+                        var tracking = form["tracking"].FirstOrDefault() ?? "Channel";
+                        if (tracking is not ("Channel" or "Thread"))
+                            return Results.BadRequest(new { message = Resource.RoomDestinationInvalid });
                         PreparationRoom room;
-                        try { room = await PreparationDiscord.CreateAsync(guildId, channelId, actor.User, title,
-                            PreparationService.ParseTimerHours(form["hours"].FirstOrDefault())); }
+                        try { room = await PreparationDiscord.CreateAsync(guildId, target,
+                            actor.User, title, PreparationService.ParseTimerHours(form["hours"].FirstOrDefault()),
+                            form["webhost"].FirstOrDefault(), tracking == "Thread"); }
                         catch (PreparationException ex) { return Results.BadRequest(new { message = ex.Message }); }
                         message = string.Format(Resource.PrepCreated, room.ChannelId);
                         downloadUrl = $"https://discord.com/channels/{guildId}/{room.ChannelId}/{room.MessageId}";

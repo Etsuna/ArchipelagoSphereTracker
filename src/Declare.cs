@@ -15,6 +15,7 @@ public class Declare
     public static readonly string DiscordToken = Environment.GetEnvironmentVariable("DISCORD_TOKEN") ?? string.Empty;
     public static readonly bool ExportMetrics = (Environment.GetEnvironmentVariable("EXPORT_METRICS") ?? "false").Trim().ToLower() == "true";
     public static readonly string MetricsPort = Environment.GetEnvironmentVariable("METRICS_PORT") ?? string.Empty;
+    public static readonly int MetricsCollectionIntervalSeconds = ParseBoundedIntEnvironmentVariable("METRICS_COLLECTION_INTERVAL_SECONDS", 300, 60, 300);
     public static readonly string UserIdForBigAsync = Environment.GetEnvironmentVariable("USER_ID_FOR_BIG_ASYNC") ?? string.Empty;
     public static readonly string AllowDiscordGuildId = Environment.GetEnvironmentVariable("ALLOW_DISCORD") ?? string.Empty;
     public static readonly string InstanceOwnerUserId = Environment.GetEnvironmentVariable("AST_OWNER_USER_ID") ?? string.Empty;

@@ -6,7 +6,9 @@ Disponible uniquement en **Archipelago Mode**. La préparation rassemble les ins
 
 Depuis le salon souhaité, lancer `/organize-room` et choisir un nom. La limite est automatiquement fixée à 200 joueurs et 200 slots, sans champ de capacité à remplir. La création exige les permissions de gestion reconnues par AST. Le bouton correspondant de `/ast` et le formulaire du portail d’administration sont également disponibles.
 
-AST publie le tableau et ses boutons directement dans le salon courant. Aucun nouveau fil n’est créé. La visibilité suit les permissions du salon. L’organisateur peut organiser sans s’inscrire comme joueur. Dans un fil privé existant, il peut inviter un membre, qui devra ensuite s’inscrire.
+Choisir un salon textuel existant dans la liste. AST y publie le tableau et ses boutons. Les inscriptions et les YAML se gèrent dans ce salon, et les accès se règlent dans Discord.
+
+Choisir ensuite où installer le suivi après la génération. Il peut utiliser le salon de préparation ou un fil de ce salon. Ce fil reprend la visibilité du salon parent.
 
 1. Cliquer **S’inscrire**.
 2. Déposer ses YAML dans ce même salon via `/send-yaml file:…`, `/ast file:…`, `/organize-room fichier:…` (option `file` en anglais), ou le portail. Les commandes et le portail utilisent la même préparation.
@@ -20,6 +22,8 @@ Limites : 1 Mio UTF-8 et 20 documents par fichier, 20 fichiers par joueur, 200 s
 
 ## Relancer les joueurs
 
+La fermeture des inscriptions relance automatiquement les inscrits non prêts. Dès que tous les inscrits sont prêts, le bot mentionne l’organisateur et les gestionnaires AST délégués ayant accès au salon. Le même état prêt ne déclenche qu’une notification.
+
 L’organisateur et les gestionnaires autorisés par AST disposent du bouton **Relancer les non-prêts**, sur Discord et sur le portail, ainsi que de l’action correspondante de `/organize-room`.
 
 La relance mentionne tous les inscrits qui ne sont pas prêts. Ceux qui n’ont pas encore envoyé de YAML sont invités à déposer leurs fichiers ou à prévenir l’organisateur s’ils ne souhaitent plus participer. Ceux qui ont déjà déposé des YAML reçoivent une demande de confirmation de leurs réglages et de leur disponibilité. Aucun rôle ni `@everyone` n’est mentionné. Un délai de cinq minutes entre deux relances est conservé en DB, y compris après redémarrage. Un échec ou un envoi partiel garde ce délai pour éviter les répétitions.
@@ -28,8 +32,9 @@ La relance mentionne tous les inscrits qui ne sont pas prêts. Ceux qui n’ont 
 
 ### Programmer la génération
 
-La création propose un délai facultatif en heures, par exemple **72**. Sans délai,
-la préparation reste manuelle. Le bouton **Timer de génération**, l’action
+La création sans WebHost propose un délai facultatif en heures, par exemple **72**.
+Avec un WebHost, programmez le timer depuis la préparation pour fournir votre
+identifiant de session. Sans délai, la préparation reste manuelle. Le bouton **Timer de génération**, l’action
 `/organize-room action:schedule heures:72` (option `hours` en anglais) et le
 formulaire du portail permettent de fixer ou remplacer cette échéance. **0**
 désactive le timer. Limite : de 1 à 720 heures à partir de l’enregistrement.
@@ -87,7 +92,21 @@ Le portail web doit être actif et son URL publique (`WEB_BASE_URL`) correctemen
 
 Le message de préparation devient un message de fin sans noms de joueurs ni boutons actifs. Le salon est immédiatement disponible pour une nouvelle préparation. Le portail ouvert indique que la préparation est terminée et arrête ses actualisations.
 
-L’hébergement reste manuel : héberger le ZIP, puis utiliser `/add-url` ou le parcours habituel de `/ast` pour créer le suivi. Le rattachement depuis l’ancienne préparation n’est plus proposé, puisque celle-ci a été supprimée.
+L’URL du WebHost est facultative à la création. Avec un WebHost compatible, AST y envoie le ZIP, crée la room puis installe le suivi dans la destination choisie. Si un fil est demandé, AST le crée à partir du tableau de préparation et le réutilise si l’installation doit être réessayée. Les alias suivent les slots générés et leurs auteurs. Si cette correspondance est incomplète, le bot signale les alias à compléter.
+
+La personne qui lance ou programme la génération saisit son identifiant
+utilisateur en privé. AST fournit un lien vers la page `/session` du WebHost
+choisi. Copiez l’identifiant unique affiché sur cette page. L’identifiant est
+obligatoire pour l’hébergement automatique. AST le conserve chiffré pour le
+timer et les éventuels nouveaux essais, puis le supprime dès que la room est
+hébergée ou que l’organisateur termine manuellement.
+Un WebHost HTTP doit être explicitement autorisé dans `ARCHIPELAGO_ALLOWED_HOSTS`.
+
+Dans une session partagée, la reprise se base sur l’identifiant du seed confirmé
+par le WebHost. Si la réponse à l’envoi du ZIP est perdue avant cette confirmation,
+le bot conserve le ZIP et demande une vérification manuelle de la session.
+
+En cas d’échec, le ZIP reste disponible. **Réessayer la transmission** reprend l’hébergement ou le suivi à partir du résultat déjà enregistré. **Terminer manuellement** permet de terminer la préparation avec le ZIP et, si elle existe déjà, l’URL de la room hébergée. Sans WebHost, héberger le ZIP puis utiliser `/add-url` dans le salon de préparation. Le bot rappelle la destination de suivi choisie.
 
 ## Annuler et nettoyer
 

@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using ArchipelagoSphereTracker.src.Resources;
+using Microsoft.AspNetCore.DataProtection;
 using YamlDotNet.RepresentationModel;
 
 public sealed partial class PreparationService
@@ -13,6 +14,7 @@ public sealed partial class PreparationService
         Path.Combine(Declare.BasePath, "data", "room-preparations"));
     private readonly IPreparationGenerator _generator;
     private readonly string _root;
+    private readonly Lazy<IDataProtector> _hostingProtector;
     private readonly TimeProvider _clock;
     private readonly Func<string,string,string,Task<bool>> _manager;
     private readonly SemaphoreSlim _processGate = new(1, 1);
@@ -23,6 +25,8 @@ public sealed partial class PreparationService
     public bool IsValidating(string fileId) => _validatingFiles.ContainsKey(fileId);
     public event Func<string, string, Task>? Changed;
     public event Func<PreparationRoom, bool, Task>? Removed;
+    public event Func<PreparationRoom, Task>? RegistrationsClosed;
+    public event Func<PreparationRoom, Task>? EveryoneReady;
     public const int MaximumYamlBytes = 1024 * 1024;
 
     public PreparationService(IPreparationGenerator generator, string root, TimeProvider? clock = null,
@@ -30,6 +34,7 @@ public sealed partial class PreparationService
     {
         _generator = generator;
         _root = Path.GetFullPath(root);
+        _hostingProtector = new(() => CreateHostingProtector(_root));
         _clock = clock ?? TimeProvider.System;
         _manager = manager ?? ResolveManagerAsync;
     }
@@ -56,7 +61,12 @@ public sealed partial class PreparationService
 
     private static async Task<PreparationRoom?> LoadAsync(SQLiteConnection connection, string guildId, string channelId)
     {
-        using var query = Query(connection, "SELECT * FROM RoomPreparations WHERE GuildId=@g AND ChannelId=@c", ("@g", guildId), ("@c", channelId));
+        using var query = Query(connection, """
+            SELECT room.*, preferences.TrackInThread
+            FROM RoomPreparations room
+            LEFT JOIN PreparationTrackingPreferences preferences ON preferences.PreparationId=room.Id
+            WHERE room.GuildId=@g AND room.ChannelId=@c
+            """, ("@g", guildId), ("@c", channelId));
         PreparationRoom room;
         using (var reader = await query.ExecuteReaderAsync().ConfigureAwait(false))
         {
@@ -66,7 +76,10 @@ public sealed partial class PreparationService
             room = new(Text("Id"), guildId, Text("ParentChannelId"), channelId, Text("OwnerId"), Text("Title"),
                 Convert.ToInt32(reader["IsPrivate"]) != 0, Convert.ToInt32(reader["MaximumPlayers"]),
                 Enum.Parse<PreparationState>(Text("State")), Nullable("MessageId"), Nullable("RunId"), Nullable("ZipPath"),
-                Nullable("TrackingChannelId"), Nullable("LastError"), [], []);
+                Nullable("TrackingChannelId"), Nullable("LastError"), [], [])
+            {
+                TrackInThread = reader["TrackInThread"] is DBNull ? null : Convert.ToInt32(reader["TrackInThread"]) != 0
+            };
         }
         var participants = new List<PreparationParticipant>();
         using (var command = Query(connection, "SELECT * FROM PreparationParticipants WHERE PreparationId=@id ORDER BY UserId", ("@id", room.Id)))
@@ -91,14 +104,28 @@ public sealed partial class PreparationService
         using var scheduleReader = await scheduleQuery.ExecuteReaderAsync();
         var schedule = await scheduleReader.ReadAsync() ? new PreparationSchedule(DateTimeOffset.Parse(scheduleReader.GetString(0), CultureInfo.InvariantCulture),
             scheduleReader.GetString(1), scheduleReader.GetInt32(2) != 0, scheduleReader.GetInt32(3)) : null;
-        return room with { Participants = participants, Files = files, LastRunStatus = lastRunStatus, Schedule = schedule };
+        scheduleReader.Close();
+        using var hostQuery = Query(connection, """
+            SELECT Origin,Attempted,RoomUrl,SlotOwnersJson,FinishManually,SeedId,UploadStarted
+            FROM PreparationHosting WHERE PreparationId=@id
+            """, ("@id",room.Id));
+        using var hostReader = await hostQuery.ExecuteReaderAsync();
+        var hosting = await hostReader.ReadAsync() ? new PreparationHosting(hostReader.GetString(0), hostReader.GetInt32(1) != 0,
+            hostReader.IsDBNull(2) ? null : hostReader.GetString(2),
+            JsonSerializer.Deserialize<Dictionary<int,string>>(hostReader.GetString(3)) ?? [],hostReader.GetInt32(4) != 0,
+            hostReader.IsDBNull(5) ? null : hostReader.GetString(5),hostReader.GetInt32(6) != 0) : null;
+        return room with { Participants = participants, Files = files, LastRunStatus = lastRunStatus, Schedule = schedule, Hosting = hosting };
     }
 
-    public async Task<PreparationRoom> CreateAsync(string guild, string parent, string channel, string owner, string title, bool isPrivate, int maximumPlayers = 200, int? timerHours = null)
+    public async Task<PreparationRoom> CreateAsync(string guild, string parent, string channel, string owner, string title, bool isPrivate,
+        int maximumPlayers = 200, int? timerHours = null, string? webHost = null, bool? trackInThread = null)
     {
         title = title.Trim();
         if (title.Length is < 1 or > 80 || maximumPlayers is < 1 or > 200) throw new PreparationException(Resource.PrepInvalidSettings);
         if (timerHours is < 0 or > 720) throw new PreparationException(Text("PrepTimerInvalid"));
+        var origin = PreparationWebHost.ParseOrigin(webHost);
+        if (origin != null && timerHours is > 0)
+            throw new PreparationException(Resource.PrepWebHostScheduleAfterCreation);
         var id = Guid.NewGuid().ToString("N");
         await Db.WriteAsync(async connection =>
         {
@@ -110,6 +137,12 @@ public sealed partial class PreparationService
                 ("@o", owner), ("@t", title), ("@private", isPrivate ? 1 : 0), ("@max", maximumPlayers),
                 ("@now", DateTimeOffset.UtcNow.ToString("O")));
             if (timerHours is > 0) await SaveScheduleAsync(connection, id, timerHours.Value, false);
+            if (origin != null)
+                await Execute(connection, "INSERT INTO PreparationHosting(PreparationId,Origin) VALUES(@id,@origin)",
+                    ("@id",id),("@origin",origin.AbsoluteUri));
+            if (trackInThread is { } useThread)
+                await Execute(connection, "INSERT INTO PreparationTrackingPreferences(PreparationId,TrackInThread) VALUES(@id,@thread)",
+                    ("@id",id),("@thread",useThread ? 1 : 0));
         });
         return (await GetAsync(guild, channel))!;
     }
@@ -125,14 +158,14 @@ public sealed partial class PreparationService
         if (!room.Participants.Any(player => player.UserId == actor)) throw new PreparationException(Resource.PrepJoinFirst);
     }
 
-    private async Task MutateAsync(string guild, string channel, Func<SQLiteConnection, PreparationRoom, Task> work)
+    private async Task MutateAsync(string guild, string channel, Func<SQLiteConnection, PreparationRoom, Task> work, bool notify = true)
     {
         await Db.WriteAsync(async connection =>
         {
             var room = await LoadAsync(connection, guild, channel) ?? throw new PreparationException(Resource.PrepNotFound);
             await work(connection, room);
         });
-        await NotifyAsync(guild, channel);
+        if (notify) await NotifyAsync(guild, channel);
     }
 
     public Task JoinAsync(string guild, string channel, string actor, string name) => MutateAsync(guild, channel, async (connection, room) =>
@@ -164,12 +197,17 @@ public sealed partial class PreparationService
 
     public async Task SetStateAsync(string guild, string channel, string actor, PreparationState state)
     {
+        string? closedId = null;
         await MutateManagedAsync(guild, channel, actor, async (connection, room) => {
         if (!room.CanEdit) throw new PreparationException(Resource.PrepLocked);
         if (state is not (PreparationState.Open or PreparationState.Closed or PreparationState.Cancelled))
             throw new PreparationException(Resource.PrepInvalidSettings);
         await Execute(connection, "UPDATE RoomPreparations SET State=@state,LastError=NULL WHERE Id=@id", ("@state", state.ToString()), ("@id", room.Id));
+        if (room.State == PreparationState.Open && state == PreparationState.Closed) closedId = room.Id;
         });
+        if (closedId != null && RegistrationsClosed != null &&
+            await GetAsync(guild, channel) is { State: PreparationState.Closed } closed && closed.Id == closedId)
+            await PublishNoticeAsync(RegistrationsClosed, closed);
         if (state == PreparationState.Cancelled)
         {
             await _deliveryGate.WaitAsync();
@@ -353,7 +391,8 @@ public sealed partial class PreparationService
         await NotifyAsync(guild, channel);
     }
 
-    public async Task GenerateAsync(string guild, string channel, string actor, bool skipBalancing, bool testOnly = false)
+    public async Task GenerateAsync(string guild, string channel, string actor, bool skipBalancing, bool testOnly = false,
+        string? webHostUserId = null, string? expectedRoom = null)
     {
         var runId = Guid.NewGuid().ToString("N");
         PreparationRoom? frozen = null;
@@ -362,17 +401,20 @@ public sealed partial class PreparationService
             Editable(room);
             if (testOnly ? room.Files.Count == 0 || room.Files.Any(file => file.Validation != "Valid") : !room.CanGenerate)
                 throw new PreparationException(Resource.PrepNotEveryoneReady);
+            if (!testOnly && room.NeedsWebHostSession)
+                await SaveHostingCredentialAsync(connection, room, webHostUserId);
             frozen = room;
             await Execute(connection, """
                 INSERT INTO PreparationRuns(Id,PreparationId,SnapshotJson,State,CreatedAtUtc) VALUES(@run,@id,@snapshot,'Validating',@now)
                 """, ("@run", runId), ("@id", room.Id), ("@snapshot", JsonSerializer.Serialize(room.Files)), ("@now", DateTimeOffset.UtcNow.ToString("O")));
             await Execute(connection, "UPDATE RoomPreparations SET State='Validating',RunId=@run,LastError=NULL WHERE Id=@id", ("@run", runId), ("@id", room.Id));
             if (!testOnly) await Execute(connection, "UPDATE PreparationSchedules SET State='Consumed' WHERE PreparationId=@id", ("@id",room.Id));
-        });
+        }, expectedRoom:expectedRoom);
         Launch(runId, () => RunGenerationAsync(frozen!, runId, skipBalancing, testOnly));
     }
 
-    public async Task<string> ApplyActionAsync(string guild, string channel, string actor, string displayName, string action, bool skipBalancing = false)
+    public async Task<string> ApplyActionAsync(string guild, string channel, string actor, string displayName, string action,
+        bool skipBalancing = false, string? webHostUserId = null, string? expectedRoom = null)
     {
         switch (action)
         {
@@ -383,7 +425,7 @@ public sealed partial class PreparationService
             case "close": await SetStateAsync(guild, channel, actor, PreparationState.Closed); break;
             case "reopen": await SetStateAsync(guild, channel, actor, PreparationState.Open); break;
             case "cancel": await SetStateAsync(guild, channel, actor, PreparationState.Cancelled); break;
-            case "generate": await GenerateAsync(guild, channel, actor, skipBalancing); break;
+            case "generate": await GenerateAsync(guild, channel, actor, skipBalancing, webHostUserId:webHostUserId, expectedRoom:expectedRoom); break;
             case "test": await GenerateAsync(guild, channel, actor, skipBalancing, testOnly:true); break;
             default: throw new PreparationException(Resource.PrepInvalidSettings);
         }
@@ -421,12 +463,18 @@ public sealed partial class PreparationService
                 ("@error", result.Success ? null : result.Message), ("@id", frozen.Id), ("@run", runId));
             await Execute(connection, "UPDATE PreparationRuns SET State=@state WHERE Id=@run", ("@state", result.Success ? (testOnly ? "Validated" : "Generated") : "Failed"), ("@run", runId));
             if (!result.Success) await Execute(connection, "UPDATE PreparationSchedules SET State='Failed' WHERE PreparationId=@id AND State='Started'", ("@id",frozen.Id));
+            if (!result.Success && !testOnly && frozen.NeedsWebHostSession)
+                await ClearHostingCredentialAsync(connection, frozen.Id);
+            if (result.Success && !testOnly && frozen.Hosting != null)
+                await Execute(connection, "UPDATE PreparationHosting SET SlotOwnersJson=@owners WHERE PreparationId=@id",
+                    ("@id",frozen.Id),("@owners",JsonSerializer.Serialize(ResolveSlotOwners(frozen.Files,result.SlotFiles))));
         });
         await NotifyAsync(frozen.GuildId, frozen.ChannelId);
     }
 
     public Task SaveMessageAsync(string guild, string channel, string messageId) => MutateAsync(guild, channel,
-        (connection, room) => Execute(connection, "UPDATE RoomPreparations SET MessageId=@m WHERE Id=@id", ("@m", messageId), ("@id", room.Id)));
+        (connection, room) => Execute(connection, "UPDATE RoomPreparations SET MessageId=@m WHERE Id=@id",
+            ("@m", messageId), ("@id", room.Id)), notify:false);
 
     public Task BeginAttachAsync(string guild, string channel, string actor) => MutateManagedAsync(guild, channel, actor, (connection, room) =>
     {
@@ -450,7 +498,8 @@ public sealed partial class PreparationService
             ? path : null;
     }
 
-    public async Task DeliverArchiveAsync(string guild, string channel, Func<PreparationRoom, string, Task<string>> send)
+    public async Task DeliverArchiveAsync(string guild, string channel, Func<PreparationRoom, string, Task<string>> send,
+        Func<PreparationRoom,string,Task>? host = null, bool retryHosting = false)
     {
         await _deliveryGate.WaitAsync();
         string? preparationId = null;
@@ -459,22 +508,37 @@ public sealed partial class PreparationService
             var room = await GetAsync(guild, channel);
             if (room == null) return;
             preparationId = room.Id;
+            var archive = GetArchivePath(room, room.OwnerId);
+            if (archive != null && host != null && room.Hosting is { FinishManually: false } hosting && room.TrackingChannelId == null &&
+                (!hosting.Attempted || retryHosting))
+            {
+                await Db.WriteAsync(connection => Execute(connection,
+                    "UPDATE PreparationHosting SET Attempted=1 WHERE PreparationId=@id", ("@id",room.Id)));
+                try { await host(room, archive); }
+                catch (Exception error)
+                {
+                    await Db.WriteAsync(connection => Execute(connection,
+                        "UPDATE RoomPreparations SET LastError=@error WHERE Id=@id", ("@id",room.Id),
+                        ("@error",error is PreparationException ? error.Message : Text("PrepWebHostFailed"))));
+                }
+                room = (await GetAsync(guild,channel))!;
+            }
+            var canPurge = room.Hosting is null or { FinishManually: true } || room.TrackingChannelId != null;
             await using (var connection = await Db.OpenReadAsync())
             {
                 using var query = Query(connection, "SELECT MessageId FROM PreparationArchiveDeliveries WHERE RunId=@run", ("@run", room.RunId));
                 if (await query.ExecuteScalarAsync() != null)
                 {
-                    await PurgeAsync(room, false);
+                    if (canPurge) await PurgeAsync(room, false);
                     return;
                 }
             }
-            var archive = GetArchivePath(room, room.OwnerId);
             if (archive == null) return;
             var messageId = await send(room, archive);
             await Db.WriteAsync(connection => Execute(connection,
                 "INSERT INTO PreparationArchiveDeliveries(RunId,MessageId,DeliveredAtUtc) VALUES(@run,@message,@now)",
                 ("@run", room.RunId), ("@message", messageId), ("@now", DateTimeOffset.UtcNow.ToString("O"))));
-            await PurgeAsync(room, false);
+            if (canPurge) await PurgeAsync(room, false);
         }
         catch
         {
@@ -491,6 +555,12 @@ public sealed partial class PreparationService
     {
         await Db.WriteAsync(async connection =>
         {
+            await Execute(connection, """
+                DELETE FROM PreparationHostingCredentials WHERE PreparationId IN (
+                    SELECT room.Id FROM RoomPreparations room WHERE room.State IN ('Validating','Generating')
+                    AND NOT EXISTS (SELECT 1 FROM PreparationSchedules schedule
+                        WHERE schedule.PreparationId=room.Id AND schedule.State='Scheduled'))
+                """);
             await Execute(connection, "UPDATE PreparationSchedules SET State='Interrupted' WHERE State='Started' AND PreparationId IN (SELECT Id FROM RoomPreparations WHERE State IN ('Validating','Generating'))");
             await Execute(connection, "UPDATE RoomPreparations SET State='Closed',LastError=@e WHERE State IN ('Validating','Generating')", ("@e", Resource.PrepInterrupted));
             await Execute(connection, "UPDATE RoomPreparations SET State='Generated',LastError=@e WHERE State='Attaching'", ("@e", Resource.PrepInterrupted));
@@ -503,7 +573,8 @@ public sealed partial class PreparationService
         {
             using var query = Query(connection, """
                 SELECT GuildId,ChannelId FROM RoomPreparations WHERE State='Cancelled'
-                OR RunId IN (SELECT RunId FROM PreparationArchiveDeliveries)
+                OR (RunId IN (SELECT RunId FROM PreparationArchiveDeliveries) AND
+                    (TrackingChannelId IS NOT NULL OR Id NOT IN (SELECT PreparationId FROM PreparationHosting WHERE FinishManually=0)))
                 """);
             using var reader = await query.ExecuteReaderAsync();
             while (await reader.ReadAsync()) obsolete.Add((reader.GetString(0),reader.GetString(1)));
@@ -612,8 +683,79 @@ public sealed partial class PreparationService
 
     private async Task NotifyAsync(string guild, string channel)
     {
+        if (EveryoneReady != null && await ClaimReadyNoticeAsync(guild, channel) &&
+            await GetAsync(guild,channel) is { CanGenerate: true } ready)
+            await PublishNoticeAsync(EveryoneReady, ready);
         if (Changed == null) return;
         foreach (Func<string,string,Task> handler in Changed.GetInvocationList())
             try { await handler(guild, channel); } catch { /* Discord diagnostics cannot roll back a durable action. */ }
+    }
+
+    private static async Task PublishNoticeAsync(Func<PreparationRoom,Task> handlers, PreparationRoom room)
+    {
+        foreach (Func<PreparationRoom,Task> handler in handlers.GetInvocationList())
+            try { await handler(room); }
+            catch (Exception error) { Console.WriteLine($"[Preparation] Notice failed ({error.GetType().Name})."); }
+    }
+
+    private static Task<bool> ClaimReadyNoticeAsync(string guild, string channel) => Db.WriteAsync(async connection =>
+    {
+        const string ready = """
+            EXISTS(SELECT 1 FROM PreparationParticipants WHERE PreparationId=room.Id)
+            AND NOT EXISTS(SELECT 1 FROM PreparationParticipants player WHERE player.PreparationId=room.Id
+                AND (player.Ready=0 OR NOT EXISTS(SELECT 1 FROM PreparationFiles file
+                    WHERE file.PreparationId=room.Id AND file.UserId=player.UserId)
+                    OR EXISTS(SELECT 1 FROM PreparationFiles file WHERE file.PreparationId=room.Id
+                        AND file.UserId=player.UserId AND file.Validation!='Valid')))
+            """;
+        await Execute(connection, "DELETE FROM PreparationReadyNotices WHERE PreparationId IN (" +
+            "SELECT room.Id FROM RoomPreparations room WHERE room.GuildId=@g AND room.ChannelId=@c AND NOT ("+ready+"))",
+            ("@g",guild),("@c",channel));
+        using var claim = Query(connection, "INSERT OR IGNORE INTO PreparationReadyNotices SELECT room.Id FROM RoomPreparations room "+
+            "WHERE room.GuildId=@g AND room.ChannelId=@c AND room.State IN ('Open','Closed') AND "+ready,
+            ("@g",guild),("@c",channel));
+        return await claim.ExecuteNonQueryAsync() == 1;
+    }, default);
+
+    internal static Dictionary<int,string> ResolveSlotOwners(IReadOnlyList<PreparationFile> files, IReadOnlyDictionary<int,string>? slotFiles)
+    {
+        if (slotFiles == null || slotFiles.Count == 0 ||
+            !Enumerable.Range(1,slotFiles.Count).All(slotFiles.ContainsKey))
+            return [];
+        var owners = files.ToDictionary(file => file.Id,file => file.UserId,StringComparer.Ordinal);
+        if (slotFiles.Values.Any(file => !owners.ContainsKey(file)) ||
+            owners.Keys.Except(slotFiles.Values,StringComparer.Ordinal).Any()) return [];
+        return slotFiles.ToDictionary(slot => slot.Key,slot => owners[slot.Value]);
+    }
+
+    internal Task SaveHostedRoomAsync(PreparationRoom room, string url) => Db.WriteAsync(async connection =>
+    {
+        await Execute(connection, "UPDATE PreparationHosting SET RoomUrl=@url WHERE PreparationId=@id", ("@id",room.Id),("@url",url));
+        await ClearHostingCredentialAsync(connection, room.Id);
+    });
+
+    internal Task SaveWebHostUploadAsync(PreparationRoom room, string? seed) => Db.WriteAsync(connection =>
+        Execute(connection,"UPDATE PreparationHosting SET UploadStarted=1,SeedId=@seed WHERE PreparationId=@id",
+            ("@id",room.Id),("@seed",seed)));
+
+    internal Task SaveHostedTrackingAsync(PreparationRoom room, string channel, bool aliasesReady) => Db.WriteAsync(connection =>
+        Execute(connection, "UPDATE RoomPreparations SET TrackingChannelId=@channel,LastError=@error WHERE Id=@id AND RunId=@run",
+            ("@id",room.Id),("@run",room.RunId),("@channel",channel),("@error",aliasesReady ? null : Text("PrepAliasMappingUnavailable"))));
+
+    public async Task FinishHostingManuallyAsync(string guild, string channel, string actor)
+    {
+        await _deliveryGate.WaitAsync();
+        try
+        {
+            await MutateManagedAsync(guild,channel,actor,async (connection,room) =>
+            {
+                if (room.State != PreparationState.Generated || room.Hosting == null)
+                    throw new PreparationException(Resource.PrepLocked);
+                await Execute(connection, "UPDATE PreparationHosting SET FinishManually=1 WHERE PreparationId=@id", ("@id",room.Id));
+                await ClearHostingCredentialAsync(connection, room.Id);
+            },notify:false);
+        }
+        finally { _deliveryGate.Release(); }
+        await NotifyAsync(guild,channel);
     }
 }

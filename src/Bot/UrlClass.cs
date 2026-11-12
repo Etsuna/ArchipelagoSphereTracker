@@ -47,9 +47,10 @@ public class UrlClass
         bool Silent,
         string CheckFrequency,
         IGuildUser? RequestUser,
-        string PollingMode = "automatic");
+        string PollingMode = "automatic",
+        IReadOnlyDictionary<int, string>? PreparedSlotOwners = null);
 
-    public sealed record UrlAddResult(bool Success, string Message, string? TrackingChannelId = null);
+    public sealed record UrlAddResult(bool Success, string Message, string? TrackingChannelId = null, int PreparedAliases = 0);
 
     internal static bool TryResolvePollingPolicy(string? mode, string? frequency,
         out RoomPollingMode pollingMode, out string fixedFrequency)
@@ -141,9 +142,10 @@ public class UrlClass
 
         if (!TryResolveDestination(threadType, out var destinationMode))
             return new UrlAddResult(false, Resource.RoomDestinationInvalid);
-        if (channel is IThreadChannel || channel.Id.ToString() != channelId || channel.GuildId.ToString() != guildId)
+        var preparedDestination = options.PreparedSlotOwners != null && destinationMode == RoomDestinationMode.Channel;
+        if ((channel is IThreadChannel && !preparedDestination) || channel.Id.ToString() != channelId || channel.GuildId.ToString() != guildId)
             return new UrlAddResult(false, AstAuthorizationService.DeniedMessage);
-        if (destinationMode == RoomDestinationMode.Channel &&
+        if (destinationMode == RoomDestinationMode.Channel && !preparedDestination &&
             await DatabaseCommands.CheckIfChannelExistsAsync(guildId, channelId, "ChannelsAndUrlsTable"))
             return new UrlAddResult(false, Resource.URLAlreadySet);
 
@@ -173,6 +175,13 @@ public class UrlClass
 
         if (!string.IsNullOrEmpty(existingChannelForRoom))
         {
+            if (preparedDestination && existingChannelForRoom == channelId)
+            {
+                var players = roomInfo.Players.Select((player,index) => (index+1,player.Name,player.Game)).ToList();
+                await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId,channelId,players);
+                var aliases = await RegisterPreparedAliasesAsync(guildId,channelId,players,options.PreparedSlotOwners);
+                return new(true,Resource.UrlArchipelagoRoomConfiguredAndTrackingStarted,channelId,aliases);
+            }
             Console.WriteLine("Room Already Exist In Other Thread");
             message = string.Format(Resource.RoomAlreadyExistInOtherThread, existingChannelForRoom);
             return new UrlAddResult(false, message);
@@ -194,7 +203,7 @@ public class UrlClass
 
             var playersCount = roomInfo.Players.Count;
 
-            if (playersCount <= 1)
+            if (playersCount < (preparedDestination ? 1 : 2))
             {
                 return (false, Resource.CheckPlayerMin);
             }
@@ -210,6 +219,7 @@ public class UrlClass
             return (true, string.Empty);
         }
 
+        var preparedAliases = 0;
         if (destinationMode != RoomDestinationMode.Channel || await CanAddUrlAsync(guildId, channelId))
         {
             var (isValid, errorMessage) = await IsAllUrlIsValidAsync();
@@ -259,6 +269,7 @@ public class UrlClass
                         await TrackerDatapackageFetcher.SeedDatapackagesFromTrackerAsync(baseUrl, guildId, channelId, rootTracker);
                         await ChannelsAndUrlsCommands.AddOrEditUrlChannelPathAsync(guildId, channelId, patchLinkList);
                         await AliasChoicesCommands.AddOrReplaceAliasChoiceAsync(guildId, channelId, aliasList);
+                        preparedAliases = await RegisterPreparedAliasesAsync(guildId,channelId,aliasList,options.PreparedSlotOwners);
                         await BotCommands.SendMessageAsync(Resource.TDMAliasUpdated, channelId);
                         var info = await HelperClass.Info(channelId, guildId);
                         await BotCommands.SendMessageAsync(info, channelId);
@@ -287,7 +298,7 @@ public class UrlClass
             message = Resource.URLAlreadySet;
         }
 
-        return new UrlAddResult(succeeded, message, trackingChannelId);
+        return new UrlAddResult(succeeded, message, trackingChannelId, preparedAliases);
 
         static async Task<MemoryStream> SendPlayersInfoAsync(string channelId, IMessageChannel destination, List<(int slot, string alias, string game)> aliasList, RoomStatus roomInfo, string room)
         {
@@ -314,6 +325,21 @@ public class UrlClass
             );
             return playersStream;
         }
+    }
+
+    internal static async Task<int> RegisterPreparedAliasesAsync(string guild, string channel,
+        IReadOnlyList<(int Slot, string Alias, string Game)> players, IReadOnlyDictionary<int,string>? owners)
+    {
+        if (owners == null || owners.Count != players.Count || players.Any(player => !owners.ContainsKey(player.Slot)))
+            return 0;
+        foreach (var (slot, alias, _) in players)
+        {
+            var user = owners[slot];
+            await ReceiverAliasesCommands.InsertReceiverAlias(guild,channel,alias,user,"0");
+            if (!await RecapListCommands.CheckIfExists(guild,channel,user,alias))
+                await RecapListCommands.AddOrEditRecapListAsync(guild,channel,user,alias);
+        }
+        return players.Count;
     }
 
     public static async Task<string> DeleteUrl(IGuildUser? guildUser, string channelId, string guildId)

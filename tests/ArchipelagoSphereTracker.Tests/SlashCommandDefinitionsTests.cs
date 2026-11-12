@@ -19,11 +19,15 @@ public class SlashCommandDefinitionsTests
             CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
             var command = PreparationDiscord.Command();
             Assert.NotNull(command.Build());
+            Assert.DoesNotContain(command.Options, option => option.Name == "destination");
+            Assert.Equal(new[] { ChannelType.Text }, command.Options.Single(option => option.Name == "channel").ChannelTypes);
+            Assert.Equal(new[] { "Channel", "Thread" }, command.Options.Single(option => option.Name == "tracking")
+                .Choices.Select(choice => (string)choice.Value));
             Assert.InRange(command.Description.Length, 1, 100);
             Assert.All(command.Options, option => {
                 Assert.Matches("^[a-z0-9-]{1,32}$", option.Name);
                 Assert.InRange(option.Description.Length, 1, 100);
-                Assert.All(option.Choices, choice => Assert.InRange(choice.Name.Length, 1, 100));
+                Assert.All(option.Choices ?? [], choice => Assert.InRange(choice.Name.Length, 1, 100));
             });
         }
         finally { CultureInfo.CurrentUICulture = previousCulture; }

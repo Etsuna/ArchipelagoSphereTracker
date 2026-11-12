@@ -27,6 +27,7 @@ AST loads the `.env` file located next to the executable. Restart the process af
 | `USE_LEGACY_TRACKING_SCHEDULER` | `false` | Temporary rollback to the former scheduler |
 | `EXPORT_METRICS` | `false` | Enables Prometheus export |
 | `METRICS_PORT` | empty | Prometheus port when export is enabled |
+| `METRICS_COLLECTION_INTERVAL_SECONDS` | `300` | Delay between SQLite metrics collections in seconds, from 60 to 300 |
 | `ALLOW_DISCORD` | empty | Guild ID allowed in the advanced `--BigAsync` mode |
 | `USER_ID_FOR_BIG_ASYNC` | empty | User ID used by the advanced `--BigAsync` mode |
 
@@ -166,6 +167,7 @@ AST charge le fichier `.env` placé à côté de l’exécutable. Redémarrez le
 | `USE_LEGACY_TRACKING_SCHEDULER` | `false` | Rollback temporaire vers l’ancien scheduler |
 | `EXPORT_METRICS` | `false` | Active l’export Prometheus |
 | `METRICS_PORT` | vide | Port Prometheus lorsque l’export est actif |
+| `METRICS_COLLECTION_INTERVAL_SECONDS` | `300` | Délai en secondes entre les collectes des métriques SQLite, de 60 à 300 |
 | `ALLOW_DISCORD` | vide | Guild ID autorisé en mode avancé `--BigAsync` |
 | `USER_ID_FOR_BIG_ASYNC` | vide | User ID utilisé par le mode avancé `--BigAsync` |
 

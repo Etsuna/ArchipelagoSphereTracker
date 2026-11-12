@@ -20,9 +20,10 @@ public sealed partial class PreparationService
     }
 
     private async Task MutateManagedAsync(string guild, string channel, string actor,
-        Func<SQLiteConnection,PreparationRoom,Task> work, bool notify = true)
+        Func<SQLiteConnection,PreparationRoom,Task> work, bool notify = true, string? expectedRoom = null)
     {
         var original = await GetAsync(guild, channel) ?? throw new PreparationException(Resource.PrepNotFound);
+        if (expectedRoom != null && original.Id != expectedRoom) throw new PreparationException(Resource.PrepNotFound);
         // Resolve live permissions before taking the SQLite writer. Never turn an
         // authorization for an old preparation into permission on its replacement.
         var manager = original.OwnerId != actor && await _manager(guild, channel, actor);
@@ -46,17 +47,20 @@ public sealed partial class PreparationService
         return hours;
     }
 
-    public Task ScheduleAsync(string guild, string channel, string actor, int? hours, bool skipBalancing = false)
+    public Task ScheduleAsync(string guild, string channel, string actor, int? hours, bool skipBalancing = false,
+        string? webHostUserId = null, string? expectedRoom = null)
         => MutateManagedAsync(guild, channel, actor, async (connection, room) => {
             if (!room.CanEdit) throw new PreparationException(Resource.PrepLocked);
             if (hours is < 0 or > 720) throw new PreparationException(Text("PrepTimerInvalid"));
             if (hours is null or 0)
             {
                 await Execute(connection, "DELETE FROM PreparationSchedules WHERE PreparationId=@id", ("@id",room.Id));
+                if (room.NeedsWebHostSession) await ClearHostingCredentialAsync(connection, room.Id);
                 return;
             }
+            if (room.NeedsWebHostSession) await SaveHostingCredentialAsync(connection, room, webHostUserId);
             await SaveScheduleAsync(connection, room.Id, hours.Value, skipBalancing);
-        });
+        }, expectedRoom:expectedRoom);
 
     private Task SaveScheduleAsync(SQLiteConnection connection, string roomId, int hours, bool skipBalancing)
     {
@@ -124,12 +128,17 @@ public sealed partial class PreparationService
                     var included = eligible.Select(player => player.UserId).ToHashSet(StringComparer.Ordinal);
                     users = room.Participants.Where(player => !included.Contains(player.UserId))
                         .Select(player => new PreparationReminder(player.UserId,room.Files.Any(file => file.UserId==player.UserId))).ToArray();
+                    string? failure = null;
+                    if (eligible.Length == 0) failure = Text("PrepTimerEmpty");
+                    else if (room.NeedsWebHostSession && await ReadHostingSessionAsync(connection, room) == null)
+                        failure = Resource.PrepWebHostTimerMissingSession;
                     await Execute(connection, "UPDATE PreparationSchedules SET State=@state,ExcludedJson=@excluded WHERE PreparationId=@id",
-                        ("@state",eligible.Length==0 ? "Failed" : "Started"),("@excluded",JsonSerializer.Serialize(users)),("@id",room.Id));
-                    if (eligible.Length==0)
+                        ("@state",failure != null ? "Failed" : "Started"),("@excluded",JsonSerializer.Serialize(users)),("@id",room.Id));
+                    if (failure != null)
                     {
-                        await Execute(connection, "UPDATE RoomPreparations SET State='Closed',LastError=@error WHERE Id=@id", ("@error",Text("PrepTimerEmpty")),("@id",room.Id));
-                        notice = room with { State=PreparationState.Closed, LastError=Text("PrepTimerEmpty") };
+                        if (room.NeedsWebHostSession) await ClearHostingCredentialAsync(connection, room.Id);
+                        await Execute(connection, "UPDATE RoomPreparations SET State='Closed',LastError=@error WHERE Id=@id", ("@error",failure),("@id",room.Id));
+                        notice = room with { State=PreparationState.Closed, LastError=failure };
                         return;
                     }
                     run = Guid.NewGuid().ToString("N");

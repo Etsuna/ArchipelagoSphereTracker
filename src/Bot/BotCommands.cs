@@ -53,6 +53,7 @@ public static class BotCommands
                 PreparationDiscord.Initialize();
                 Declare.Client.SelectMenuExecuted += AstSetupWizard.HandleComponentAsync;
                 Declare.Client.SelectMenuExecuted += AstCommandCenter.HandleSelectMenuAsync;
+                Declare.Client.SelectMenuExecuted += PreparationDiscord.HandleSelectAsync;
                 Declare.Client.ModalSubmitted += AstSetupWizard.HandleModalAsync;
                 Declare.Client.ModalSubmitted += AstCommandCenter.HandleModalAsync;
                 Declare.Client.ModalSubmitted += PreparationDiscord.HandleModalAsync;

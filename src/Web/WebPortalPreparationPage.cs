@@ -17,11 +17,14 @@ pre {{ white-space:pre-wrap; overflow-wrap:anywhere; }} .prep-slots {{ color:var
 <header><div class=""hero""><div class=""title""><h1 id=""prep-title"">{T("PrepTitle")}</h1><span>Archipelago Sphere Tracker</span></div><span class=""badge"" id=""prep-state""></span></div></header>
 <main>
 <section class=""panel toolbar""><h2>{T("PrepRefresh")}</h2><button id=""refresh"">{T("PrepRefresh")}</button><div class=""status"" id=""status"" role=""status"" aria-live=""polite""></div></section>
-<section class=""panel""><h2>{T("PrepPlayers")}</h2><p id=""prep-summary"" class=""meta""></p>
+<section class=""panel""><h2>{T("PrepPlayers")}</h2><p id=""prep-summary"" class=""meta""></p><p id=""tracking-destination"" class=""meta"" hidden></p>
 <div class=""toolbar""><button data-action=""join"">{T("PrepJoin")}</button><button data-action=""ready"" id=""ready"">{T("PrepReady")}</button><button data-action=""leave"">{T("PrepLeave")}</button></div>
 <p class=""meta"">{T("PrepInstructions")}</p><div class=""table-wrap""><table class=""tracker-table""><thead><tr><th scope=""col"">{T("PrepPlayer")}</th><th scope=""col"">{T("PrepSlots")}</th><th scope=""col"">YAML</th><th scope=""col"">{T("PrepReadiness")}</th></tr></thead><tbody id=""players""></tbody></table></div>
 <p class=""status"" id=""prep-error""></p><p class=""meta"" id=""prep-validation""></p></section>
 <section class=""panel"" id=""timer-info"" hidden><h2>{T("PrepTimer")}</h2><p id=""deadline""></p><p>{T("PrepTimerPolicy")}</p></section>
+<section class=""panel"" id=""webhost-session"" hidden><h2>{T("PrepWebHostSessionLabel")}</h2>
+<p>{T("PrepWebHostSessionPrompt")} <a id=""webhost-session-link"" target=""_blank"" rel=""noopener noreferrer"">{T("PrepWebHostSessionLink")}</a></p>
+<label>{T("PrepWebHostSessionLabel")}<input type=""password"" id=""webhost-user-id"" maxlength=""36"" autocomplete=""off"" /></label></section>
 <section class=""panel""><h2>{T("PrepFiles")}</h2><p class=""meta"">{T("PrepValidationNote")}</p>
 <p class=""meta"">{T("PrepMultiUploadHelp")}</p><form id=""yaml-form""><label>{T("PrepUpload")}<input type=""file"" name=""file"" accept="".yaml,.yml,.zip"" multiple required /></label><button type=""submit"">{T("PrepUpload")}</button></form><div class=""prep-files"" id=""files""></div></section>
 <section class=""panel"" id=""organizer"" hidden><h2>{T("PrepManage")}</h2><div class=""toolbar""><button data-action=""close"">{T("PrepClose")}</button><button data-action=""reopen"">{T("PrepReopen")}</button><button data-action=""remind"">{T("PrepRemind")}</button><button data-action=""test"">{T("PrepTest")}</button><button data-action=""generate"">{T("PrepGenerate")}</button><button data-action=""cancel"" class=""danger"">{T("PrepCancel")}</button></div>
@@ -29,20 +32,27 @@ pre {{ white-space:pre-wrap; overflow-wrap:anywhere; }} .prep-slots {{ color:var
 <form id=""timer-form""><label>{T("PrepTimerHours")}<input name=""hours"" type=""number"" min=""0"" max=""720"" step=""1"" placeholder=""72"" required /></label><button type=""submit"">{T("PrepTimer")}</button><p class=""meta"">{T("PrepTimerHelp")}</p></form>
 <form id=""invite-form""><label>{T("PrepInviteId")}<input name=""userId"" pattern=""[0-9]+"" required /></label><button type=""submit"">{T("PrepInvite")}</button></form>
 </section>
-<section class=""panel"" id=""generation-result"" hidden><h2>{T("PrepStateGenerated")}</h2><p>{T("PrepGenerated")}</p><a id=""archive"">{T("PrepDownload")}</a><button data-action=""deliver"" id=""retry-delivery"">{T("PrepRetryDelivery")}</button><p id=""tracking""></p></section>
+<section class=""panel"" id=""generation-result"" hidden><h2>{T("PrepStateGenerated")}</h2><p>{T("PrepGenerated")}</p><a id=""archive"">{T("PrepDownload")}</a><p><a id=""hosted-room"" target=""_blank"" rel=""noopener noreferrer"">{T("PrepHostedRoom")}</a></p><button data-action=""deliver"" id=""retry-delivery"">{T("PrepRetryDelivery")}</button><button data-action=""manual-delivery"" id=""manual-delivery"">{T("PrepFinishHostingManually")}</button><p id=""tracking""></p></section>
 </main><script>
 const path = window.location.pathname;
 const portalIndex = path.indexOf('/portal/');
 const segments = path.substring(portalIndex + 8).split('/');
 const apiBase = window.location.origin + path.substring(0, portalIndex) + '/api/portal/' + segments.slice(0,3).join('/') + '/preparation';
 const status = document.getElementById('status');
+const webHostId = document.getElementById('webhost-user-id');
 let current = null, busy = false, timer = null, actionBusy = false, ended = false;
 const element = (tag, text) => {{ const node = document.createElement(tag); node.textContent = text; return node; }};
 const render = view => {{
+  if (current?.id !== view.id || !view.webHostSessionUrl) webHostId.value = '';
   current = view;
+  document.getElementById('webhost-session').hidden = !view.webHostSessionUrl;
+  document.getElementById('webhost-session-link').href = view.webHostSessionUrl || '#';
   document.getElementById('prep-title').textContent = view.title;
   document.getElementById('prep-state').textContent = view.stateLabel;
   document.getElementById('prep-summary').textContent = view.summary;
+  const trackingDestination = document.getElementById('tracking-destination');
+  trackingDestination.hidden = !view.trackingDestination;
+  trackingDestination.textContent = view.trackingDestination || '';
   document.getElementById('prep-error').textContent = view.error || '';
   document.getElementById('timer-info').hidden = !view.deadline;
   document.getElementById('deadline').textContent = view.deadline ? new Date(view.deadline).toLocaleString() : '';
@@ -53,6 +63,10 @@ const render = view => {{
   document.getElementById('invite-form').hidden = !view.canInvite || view.state !== 'Open';
   document.getElementById('generation-result').hidden = view.state !== 'Generated' && view.state !== 'Attaching';
   document.getElementById('retry-delivery').hidden = !view.canManage;
+  document.getElementById('manual-delivery').hidden = !view.canFinishHostingManually;
+  const hostedRoom = document.getElementById('hosted-room');
+  hostedRoom.hidden = !view.hostedRoomUrl;
+  hostedRoom.href = view.hostedRoomUrl || '#';
   const archive = document.getElementById('archive'); archive.hidden = !view.canDownload; archive.href = apiBase + '/download';
   const tracking = document.getElementById('tracking'); tracking.replaceChildren();
   if (view.trackingChannelId) {{
@@ -93,6 +107,7 @@ const render = view => {{
     else if (action === 'generate') button.disabled = !view.canGenerate;
     else if (action === 'test') button.disabled = !view.canTest;
     else if (action === 'deliver') button.disabled = !view.canManage || view.state !== 'Generated';
+    else if (action === 'manual-delivery') button.disabled = !view.canFinishHostingManually;
     else if (action === 'close') button.disabled = view.state !== 'Open';
     else if (action === 'reopen') button.disabled = view.state !== 'Closed';
     else button.disabled = !view.canEdit;
@@ -124,6 +139,18 @@ const act = async (action, data = new FormData()) => {{
   if (actionBusy) return;
   if (action === 'cancel' && !confirm({Js("PrepCancelConfirm")})) return;
   if (action === 'generate' && !confirm({Js("PrepGenerateConfirm")})) return;
+  if (current?.webHostSessionUrl &&
+      (action === 'generate' || action === 'deliver' || (action === 'schedule' && Number(data.get('hours')) > 0))) {{
+    const id = webHostId.value.trim();
+    if (!id) {{
+      status.textContent = {Js("PrepWebHostSessionRequired")};
+      webHostId.focus();
+      return;
+    }}
+    data.set('webHostUserId', id);
+    data.set('preparationId', current.id);
+    webHostId.value = '';
+  }}
   data.set('skipBalancing', String(document.getElementById('skip-balancing').checked));
   actionBusy = true; clearTimeout(timer);
   let succeeded = false;

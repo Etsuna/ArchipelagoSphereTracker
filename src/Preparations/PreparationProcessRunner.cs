@@ -1,12 +1,17 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using ArchipelagoSphereTracker.src.Resources;
 
 internal static class PreparationProcessRunner
 {
-    internal sealed record Result(bool Success, string Diagnostics, bool TimedOut = false);
+    internal sealed record Result(bool Success, string Diagnostics, bool TimedOut = false,
+        IReadOnlyDictionary<int, string>? SlotFiles = null);
 
-    internal static async Task<Result> RunAsync(ProcessStartInfo start, TimeSpan timeout)
+    private static readonly Regex WeightLine = new(
+        @"(?:^|\s)P([1-9][0-9]{0,2}) Weights: ([0-9a-f]{32})\.yaml\s+>>", RegexOptions.CultureInvariant);
+
+    internal static async Task<Result> RunAsync(ProcessStartInfo start, TimeSpan timeout, bool captureSlots = false)
     {
         start.UseShellExecute = false;
         start.CreateNoWindow = true;
@@ -18,11 +23,16 @@ internal static class PreparationProcessRunner
         var errors = new StringBuilder();
         var failed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var interactive = false;
+        var slotFiles = new Dictionary<int, string>();
+        var ambiguousSlots = false;
         void Capture(string? line, bool isError)
         {
             if (line == null) return;
             lock (log)
             {
+                if (captureSlots && WeightLine.Match(line) is { Success: true } match &&
+                    !slotFiles.TryAdd(int.Parse(match.Groups[1].Value), match.Groups[2].Value))
+                    ambiguousSlots = true;
                 // Keep the end: startup logs must not push the actual error out of the diagnostic.
                 var target = isError ? errors : log;
                 target.AppendLine(line[..Math.Min(line.Length, 6000)]);
@@ -58,7 +68,8 @@ internal static class PreparationProcessRunner
             {
                 var text = (errors.ToString().Trim() + "\n" + log.ToString().Trim()).Trim();
                 if (interactive) text = Text("PrepInteractiveValidation") + "\n" + text;
-                return new(process.ExitCode == 0 && !failed.Task.IsCompleted && !timedOut, text, timedOut);
+                return new(process.ExitCode == 0 && !failed.Task.IsCompleted && !timedOut, text, timedOut,
+                    captureSlots && !ambiguousSlots ? slotFiles : null);
             }
         }
         catch (Exception error) when (error is System.ComponentModel.Win32Exception or IOException or InvalidOperationException)

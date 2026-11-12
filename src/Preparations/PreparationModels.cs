@@ -8,12 +8,17 @@ public sealed record PreparationFile(string Id, string UserId, string FileName, 
 public sealed record PreparationParticipant(string UserId, string DisplayName, bool Ready);
 public sealed record PreparationReminder(string UserId, bool HasYaml);
 public sealed record PreparationSchedule(DateTimeOffset Deadline, string State, bool SkipBalancing, int ReminderStage);
+public sealed record PreparationHosting(string Origin, bool Attempted, string? RoomUrl,
+    IReadOnlyDictionary<int, string> SlotOwners, bool FinishManually, string? SeedId, bool UploadStarted);
 public sealed record PreparationRoom(string Id, string GuildId, string ParentChannelId, string ChannelId,
     string OwnerId, string Title, bool IsPrivate, int MaximumPlayers, PreparationState State,
     string? MessageId, string? RunId, string? ZipPath, string? TrackingChannelId, string? LastError,
     IReadOnlyList<PreparationParticipant> Participants, IReadOnlyList<PreparationFile> Files, string? LastRunStatus = null)
 {
     public PreparationSchedule? Schedule { get; init; }
+    public PreparationHosting? Hosting { get; init; }
+    public bool NeedsWebHostSession => Hosting is { RoomUrl: null, FinishManually: false };
+    public bool? TrackInThread { get; init; }
     public bool CanGenerate => (State is PreparationState.Open or PreparationState.Closed) &&
         Participants.Count > 0 && Participants.All(player => player.Ready &&
             Files.Any(file => file.UserId == player.UserId) &&
@@ -21,7 +26,8 @@ public sealed record PreparationRoom(string Id, string GuildId, string ParentCha
     public bool CanEdit => State is PreparationState.Open or PreparationState.Closed;
 }
 public sealed class PreparationException(string message) : Exception(message);
-public sealed record PreparationGenerationResult(bool Success, string Message, string? ZipPath = null);
+public sealed record PreparationGenerationResult(bool Success, string Message, string? ZipPath = null,
+    IReadOnlyDictionary<int, string>? SlotFiles = null);
 public interface IPreparationGenerator
 {
     Task<PreparationGenerationResult> RunAsync(string inputDirectory, string outputDirectory, bool testOnly, bool skipBalancing);
@@ -64,5 +70,18 @@ public static class PreparationSchema
             SkipBalancing INTEGER NOT NULL DEFAULT 0, ReminderStage INTEGER NOT NULL DEFAULT 0,
             ExcludedJson TEXT NOT NULL DEFAULT '[]');
         CREATE INDEX IF NOT EXISTS idx_preparation_schedules_due ON PreparationSchedules(DeadlineUtc) WHERE State='Scheduled';
+        CREATE TABLE IF NOT EXISTS PreparationHosting (
+            PreparationId TEXT PRIMARY KEY REFERENCES RoomPreparations(Id) ON DELETE CASCADE,
+            Origin TEXT NOT NULL, Attempted INTEGER NOT NULL DEFAULT 0, RoomUrl TEXT,
+            SlotOwnersJson TEXT NOT NULL DEFAULT '{}', FinishManually INTEGER NOT NULL DEFAULT 0,
+            SessionKey TEXT, SeedId TEXT, UploadStarted INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE IF NOT EXISTS PreparationHostingCredentials (
+            PreparationId TEXT PRIMARY KEY REFERENCES PreparationHosting(PreparationId) ON DELETE CASCADE,
+            ProtectedSession TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS PreparationReadyNotices (
+            PreparationId TEXT PRIMARY KEY REFERENCES RoomPreparations(Id) ON DELETE CASCADE);
+        CREATE TABLE IF NOT EXISTS PreparationTrackingPreferences (
+            PreparationId TEXT PRIMARY KEY REFERENCES RoomPreparations(Id) ON DELETE CASCADE,
+            TrackInThread INTEGER NOT NULL CHECK(TrackInThread IN (0,1)));
         """;
 }
